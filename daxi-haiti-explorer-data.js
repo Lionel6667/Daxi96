@@ -92,7 +92,7 @@
             color: '#f59e0b',
             highlights: [
                 'Plus grande forteresse des Amériques',
-                'Vue panoramique à 910 m d\'altitude',
+                'Vue panoramique sur la plaine du Nord',
                 'Canons, casernes et remparts d\'époque',
                 'Patrimoine mondial UNESCO'
             ],

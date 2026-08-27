@@ -984,7 +984,6 @@
             '<div class="daxi-explorer-detail-img" id="daxi-explorer-detail-hero" style="background-image:url(\'' + (place.detailImage || place.image) + '\')" role="button" tabindex="0" aria-label="Agrandir la photo"></div>' +
             '<div class="daxi-explorer-detail-scroll">' +
             '<h3>' + place.name + '</h3>' +
-            '<p class="daxi-explorer-detail-alt">≈ ' + (place.altitude || 0) + ' m d\'altitude</p>' +
             highlightsHtml +
             '<h4>Description</h4><p>' + place.description + '</p>' +
             '<h4>Histoire</h4><p>' + place.history + '</p>' +

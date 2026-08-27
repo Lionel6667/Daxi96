@@ -11956,7 +11956,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p class="location-share-desc" data-translate="map_benefit_desc">Nous n’accéderons à votre localisation qu’après votre accord. Vous pouvez aussi saisir l’adresse manuellement.</p>
                 <div class="location-share-actions">
                     <button class="loc-btn loc-btn-enable" id="locEnableBtn"><i class="ri-navigation-line"></i><span
-                            data-translate="share_location_btn">Autoriser ma position</span></button>
+                            data-translate="share_location_btn">Activer la localisation</span></button>
                     <button class="loc-btn loc-btn-manual" id="locManualBtn"><i class="ri-edit-line"></i><span
                             data-translate="manual_address_btn">Saisir l'adresse</span></button>
                 </div>
@@ -13271,7 +13271,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <div id="routesMapsContainer" class="routes-maps-container" role="list"></div>
 
             <script src="daxi-frequent-routes-data.js"></script>
-            <script src="daxi-haiti-explorer-data.js?v=20260702e"></script>
+            <script src="daxi-haiti-explorer-data.js?v=20260827a"></script>
             <script>
                 (function() {
                     const cityImages = window.DAXI_CITY_IMAGES || {};
@@ -24354,7 +24354,7 @@ function _scheduleNotificationPrompt() {
             return;
         }
         /* Never on first paint: only after GPS explain flow is settled, then wait 3 min */
-        var delay = 180000;
+        var delay = 120000;
         function tryShowNotificationPrompt() {
             if (document.hidden) {
                 setTimeout(tryShowNotificationPrompt, 15000);
@@ -27395,7 +27395,7 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Plages paradisiaques et eaux cristallines',
             verrieres_name: 'Monuments de Vertière',
             verrieres_desc: 'Mémorial historique de la bataille de Vertière',
-            share_location_btn: 'Autoriser ma position',
+            share_location_btn: 'Activer la localisation',
             manual_address_btn: 'Entrer l\'adresse manuellement',
             map_benefit_title: 'Pourquoi activer votre position',
             map_benefit_point1: 'Obtenez le prix de la course immédiatement, sans délai d’attente système',
@@ -27806,7 +27806,7 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Plaj paradi ak dlo klè',
             verrieres_name: 'Moniman Vètyè',
             verrieres_desc: 'Memoryèl istorik batay Vètyè',
-            share_location_btn: 'Otòrize pozisyon mwen',
+            share_location_btn: 'Aktive lokalizasyon',
             manual_address_btn: 'Antre adrès manyèlman',
             map_benefit_title: 'Poukisa aktive pozisyon ou',
             map_benefit_point1: 'Jwenn pri kous la touswit, san tann sistèm',
@@ -28216,7 +28216,7 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Paradise beaches and crystal clear waters',
             verrieres_name: 'Vertière Monuments',
             verrieres_desc: 'Historic memorial of the Battle of Vertière',
-            share_location_btn: 'Allow my location',
+            share_location_btn: 'Enable location',
             manual_address_btn: 'Enter address manually',
             map_benefit_title: 'Why enable your location',
             map_benefit_point1: 'Get the trip price immediately, without system waiting time',
@@ -28601,7 +28601,7 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Playas paradisíacas y aguas cristalinas',
             verrieres_name: 'Monumentos de Vertière',
             verrieres_desc: 'Memorial histórico de la batalla de Vertière',
-            share_location_btn: 'Autorizar mi ubicación',
+            share_location_btn: 'Activar ubicación',
             manual_address_btn: 'Ingresar dirección manualmente',
             map_benefit_title: 'Por qué activar su ubicación',
             map_benefit_point1: 'Obtenga el precio del viaje de inmediato, sin espera del sistema',
@@ -30589,6 +30589,9 @@ function _daxiStartLiveTracking(orderId) {
         } else if (st === 'payment_confirmed') {
             if (window._daxiRefreshOrderSheet) _daxiRefreshOrderSheet(orderId, { forceDom: true });
             _daxiPatchSheetStatus(orderId, d);
+            if (typeof window._daxiMaybeAskNotificationsNow === 'function') {
+                window._daxiMaybeAskNotificationsNow('payment_confirmed');
+            }
         } else if (st === 'cancelled' || st === 'completed' || st === 'price_refused') {
             if (window._daxiNotifyOrderEvent) _daxiNotifyOrderEvent(st, d);
             _daxiPatchSheetStatus(orderId, d);
@@ -32587,6 +32590,79 @@ function _daxiHasGpsUserConsent() {
     return false;
 }
 
+/** Must run inside a click handler so the browser shows the OS permission dialog. */
+function _daxiRequestBrowserGeoFromUserGesture(onDone) {
+    _daxiGrantGpsUserConsent();
+    function done(ok, err) {
+        if (typeof onDone === 'function') {
+            try { onDone(ok, err); } catch (e) {}
+        }
+    }
+    if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
+        window._daxiPendingNativeGpsBoot = true;
+        try { DaxiAndroid.requestLocationPermission(); } catch (e) {}
+        done(true, null);
+        return;
+    }
+    if (!navigator.geolocation || typeof navigator.geolocation.getCurrentPosition !== 'function') {
+        done(false, { code: 0, message: 'unsupported' });
+        return;
+    }
+    try {
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                _markGeoGranted();
+                done(true, null);
+                _daxiGpsFinalized = false;
+                _daxiGpsLocked = false;
+                _clientGpsBootStarted = false;
+                if (typeof _bootClientGps === 'function') _bootClientGps();
+                if (pos && pos.coords && typeof _placeClientPickupOnMap === 'function') {
+                    try {
+                        _placeClientPickupOnMap(pos.coords.latitude, pos.coords.longitude, {
+                            acc: pos.coords.accuracy || 0,
+                            forcePan: true,
+                            source: 'consent-gesture'
+                        });
+                    } catch (e2) {}
+                }
+            },
+            function(err) {
+                done(false, err || { code: 1 });
+                /* Chrome may block after repeated dismissals — show denied UI */
+                if (err && (err.code === 1 || /dismissed|blocked|denied/i.test(String(err.message || '')))) {
+                    if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(true);
+                } else {
+                    _daxiGpsFinalized = false;
+                    _daxiGpsLocked = false;
+                    _clientGpsBootStarted = false;
+                    if (typeof _bootClientGps === 'function') _bootClientGps();
+                }
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
+    } catch (e3) {
+        done(false, e3);
+    }
+}
+window._daxiRequestBrowserGeoFromUserGesture = _daxiRequestBrowserGeoFromUserGesture;
+
+function _daxiMaybeAskNotificationsNow(reason) {
+    if (typeof _daxiWasNotifAsked === 'function' && _daxiWasNotifAsked()) return;
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        if (typeof _daxiMarkNotifAsked === 'function') _daxiMarkNotifAsked();
+        return;
+    }
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        if (typeof _daxiMarkNotifAsked === 'function') _daxiMarkNotifAsked();
+        return;
+    }
+    var locEl = document.getElementById('locationSharePrompt');
+    if (locEl && locEl.classList.contains('show')) return;
+    if (typeof _showNotificationModal === 'function') _showNotificationModal();
+}
+window._daxiMaybeAskNotificationsNow = _daxiMaybeAskNotificationsNow;
+
 function _daxiScheduleNotifAfterLocFlow() {
     if (typeof _scheduleNotificationPrompt === 'function') {
         try { _scheduleNotificationPrompt(); } catch (e) {}
@@ -33144,7 +33220,7 @@ function _showLocationSharePrompt(forceDenied) {
     if (!el) return;
     var desc = el.querySelector('.location-share-desc');
     if (desc && forceDenied) {
-        desc.textContent = 'La localisation est désactivée dans le navigateur. Réactivez-la dans les paramètres du site, ou saisissez votre adresse manuellement pour obtenir le prix et être récupéré au bon endroit.';
+        desc.textContent = 'La localisation est bloquée pour ce site (refus répétés ou paramètres navigateur). Réactivez-la via l’icône cadenas / infos du site à côté de l’URL, ou saisissez votre adresse manuellement.';
     }
     el.classList.add('show');
 }
@@ -33182,34 +33258,20 @@ function _initLocationSharePrompt() {
     if (enableBtn && !enableBtn.dataset.bound) {
         enableBtn.dataset.bound = '1';
         enableBtn.addEventListener('click', function() {
-            _daxiGrantGpsUserConsent();
-            if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
-                window._daxiPendingNativeGpsBoot = true;
-                enableBtn.disabled = true;
-                var span = enableBtn.querySelector('span');
-                if (span) {
-                    if (!span.dataset.origLabel) span.dataset.origLabel = span.textContent;
-                    span.textContent = 'Ouverture des autorisations…';
-                }
-                DaxiAndroid.requestLocationPermission();
-                return;
-            }
-            _hideLocationSharePrompt();
             _markLocPromptDone();
-            _daxiGpsFinalized = false;
-            _daxiGpsLocked = false;
-            _clientGpsBootStarted = false;
-            _bootClientGps();
-            if (window._daxiPendingPickupAfterConsent) {
-                var pending = window._daxiPendingPickupAfterConsent;
-                window._daxiPendingPickupAfterConsent = null;
-                setTimeout(function() {
-                    if (typeof window._daxiUseMyPositionForInput === 'function') {
-                        window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
-                    }
-                }, 50);
-            }
-            _daxiScheduleNotifAfterLocFlow();
+            _hideLocationSharePrompt();
+            _daxiRequestBrowserGeoFromUserGesture(function() {
+                if (window._daxiPendingPickupAfterConsent) {
+                    var pending = window._daxiPendingPickupAfterConsent;
+                    window._daxiPendingPickupAfterConsent = null;
+                    setTimeout(function() {
+                        if (typeof window._daxiUseMyPositionForInput === 'function') {
+                            window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
+                        }
+                    }, 80);
+                }
+                _daxiScheduleNotifAfterLocFlow();
+            });
         });
     }
 }
@@ -33247,34 +33309,22 @@ function _bindLocationSharePromptDelegation() {
         if (enableBtn) {
             e.preventDefault();
             e.stopPropagation();
-            if (typeof _daxiGrantGpsUserConsent === 'function') _daxiGrantGpsUserConsent();
-            if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
-                window._daxiPendingNativeGpsBoot = true;
-                enableBtn.disabled = true;
-                var span = enableBtn.querySelector('span');
-                if (span) {
-                    if (!span.dataset.origLabel) span.dataset.origLabel = span.textContent;
-                    span.textContent = 'Ouverture des autorisations…';
-                }
-                DaxiAndroid.requestLocationPermission();
-                return;
-            }
-            if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
             if (typeof _markLocPromptDone === 'function') _markLocPromptDone();
-            _daxiGpsFinalized = false;
-            _daxiGpsLocked = false;
-            _clientGpsBootStarted = false;
-            if (typeof _bootClientGps === 'function') _bootClientGps();
-            if (window._daxiPendingPickupAfterConsent) {
-                var pending = window._daxiPendingPickupAfterConsent;
-                window._daxiPendingPickupAfterConsent = null;
-                setTimeout(function() {
-                    if (typeof window._daxiUseMyPositionForInput === 'function') {
-                        window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
+            if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
+            if (typeof _daxiRequestBrowserGeoFromUserGesture === 'function') {
+                _daxiRequestBrowserGeoFromUserGesture(function() {
+                    if (window._daxiPendingPickupAfterConsent) {
+                        var pending = window._daxiPendingPickupAfterConsent;
+                        window._daxiPendingPickupAfterConsent = null;
+                        setTimeout(function() {
+                            if (typeof window._daxiUseMyPositionForInput === 'function') {
+                                window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
+                            }
+                        }, 80);
                     }
-                }, 50);
+                    if (typeof _daxiScheduleNotifAfterLocFlow === 'function') _daxiScheduleNotifAfterLocFlow();
+                });
             }
-            if (typeof _daxiScheduleNotifAfterLocFlow === 'function') _daxiScheduleNotifAfterLocFlow();
         }
     }, true);
 }
@@ -34116,7 +34166,7 @@ function requestMyLocation() {
 
 </script>
 <script src="daxi-frequent-routes-map.js?v=20260803r"></script>
-<script src="daxi-haiti-explorer-map.js?v=20260803r"></script>
+<script src="daxi-haiti-explorer-map.js?v=20260827a"></script>
 <script>
 setTimeout(function () {
     if (window.DaxiExplorerMap && window.DaxiExplorerMap.preload) window.DaxiExplorerMap.preload();
