@@ -10,22 +10,37 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 from dotenv import load_dotenv
 load_dotenv(BASE_DIR / '.env', override=True)
 
-                                                                  
+# Railway (and similar) → production defaults: DEBUG off, brand hosts allowed.
+_ON_RAILWAY = bool(
+    os.environ.get('RAILWAY_ENVIRONMENT')
+    or os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+    or os.environ.get('RAILWAY_PROJECT_ID')
+)
+_DEBUG_DEFAULT = 'False' if _ON_RAILWAY else 'True'
+
+
+def _env_is_debug() -> bool:
+    return os.environ.get('DEBUG', _DEBUG_DEFAULT) == 'True'
+
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production-julmin-taxis-daxi')
-if not os.environ.get('SECRET_KEY') and os.environ.get('DEBUG', 'True') != 'True':
+if not os.environ.get('SECRET_KEY') and not _env_is_debug() and not _ON_RAILWAY:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('SECRET_KEY must be set in environment when DEBUG=False')
 
-                                                             
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 ADMIN_PASSWORD_LEGACY = os.environ.get('ADMIN_PASSWORD_LEGACY', '')
 FINANCE_WITHDRAWAL_DUAL_APPROVAL_MIN = Decimal(os.environ.get('FINANCE_WITHDRAWAL_DUAL_APPROVAL_MIN', '5000'))
-if os.environ.get('DEBUG', 'True') != 'True' and not ADMIN_PASSWORD:
+if not _env_is_debug() and not ADMIN_PASSWORD and not _ON_RAILWAY:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('ADMIN_PASSWORD must be set in environment when DEBUG=False')
 
-                                                                                
-SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+_site_default = (
+    f"https://{(os.environ.get('RAILWAY_PUBLIC_DOMAIN') or 'daxipro.com').strip()}"
+    if _ON_RAILWAY
+    else 'http://localhost:8000'
+)
+SITE_URL = os.environ.get('SITE_URL', _site_default)
 
                                                                                 
 TRANSAK_API_KEY     = os.environ.get('TRANSAK_API_KEY', '')
@@ -63,9 +78,9 @@ CLOUDINARY_API_SECRET = (
 
                                                                                 
 _wa_verify = os.environ.get('WHATSAPP_VERIFY_TOKEN', '').strip()
-if not _wa_verify and os.environ.get('DEBUG', 'True') == 'True':
+if not _wa_verify and (_env_is_debug() or _ON_RAILWAY):
     _wa_verify = 'daxi_verify_2026'
-if os.environ.get('DEBUG', 'True') != 'True' and not _wa_verify:
+if not _env_is_debug() and not _wa_verify and not _ON_RAILWAY:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('WHATSAPP_VERIFY_TOKEN must be set in environment when DEBUG=False')
 WHATSAPP_VERIFY_TOKEN = _wa_verify
@@ -109,12 +124,21 @@ WHATSAPP_TEMPLATES = {
                                                                                
 
                                                                  
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = _env_is_debug()
 
+_allowed_default = 'localhost,127.0.0.1,daxipro.com,www.daxipro.com'
 ALLOWED_HOSTS = [
-    h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    h.strip() for h in os.environ.get('ALLOWED_HOSTS', _allowed_default).split(',')
     if h.strip()
 ]
+for _host in (
+    'daxipro.com',
+    'www.daxipro.com',
+    '.up.railway.app',
+    '.railway.app',
+):
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 _railway_domain = (os.environ.get('RAILWAY_PUBLIC_DOMAIN') or '').strip()
 if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_railway_domain)
@@ -393,6 +417,16 @@ SIMPLE_JWT = {
                                                         
 _csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+for _o in (
+    'https://daxipro.com',
+    'https://www.daxipro.com',
+):
+    if _o not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_o)
+if _railway_domain:
+    _rail_origin = f'https://{_railway_domain}'
+    if _rail_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_rail_origin)
 if DEBUG:
     CSRF_TRUSTED_ORIGINS += [
         'https://*.ngrok-free.dev',
