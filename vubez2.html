@@ -73,12 +73,16 @@
     <script>
     (function(){
       window._daxiPreferServerPlaces = true;
-      var _warn = console.warn;
-      console.warn = function() {
-        var m = arguments[0];
-        if (m != null && String(m).indexOf('cdn.tailwindcss.com') !== -1) return;
-        return _warn.apply(console, arguments);
-      };
+      /* Production: zero console noise unless window.DAXI_DEBUG = true */
+      if (!window.DAXI_DEBUG) {
+        var _noop = function() {};
+        try {
+          console.log = _noop;
+          console.info = _noop;
+          console.debug = _noop;
+          console.warn = _noop;
+        } catch (e) {}
+      }
     })();
     </script>
     <script src="assets/js/tailwindcss-3.4.16.js"></script>
@@ -11914,18 +11918,18 @@ document.addEventListener('DOMContentLoaded', function () {
             <button type="button" class="loc-close" id="locPromptClose" aria-label="Fermer">&times;</button>
             <div class="location-share-box__hero">
                 <div class="location-share-box__icon"><i class="ri-map-pin-user-fill"></i></div>
-                <h3 data-translate="map_benefit_title">Retrouver votre chauffeur plus vite</h3>
+                <h3 data-translate="map_benefit_title">Pourquoi activer votre position</h3>
             </div>
             <div class="location-share-box__body">
                 <ul class="location-share-benefits" aria-hidden="true">
-                    <li><i class="ri-map-pin-time-line"></i><span data-translate="map_benefit_point1">Le chauffeur vous localise en quelques secondes</span></li>
-                    <li><i class="ri-timer-flash-line"></i><span data-translate="map_benefit_point2">Moins d'attente au point de départ</span></li>
-                    <li><i class="ri-price-tag-3-line"></i><span data-translate="map_benefit_point3">Estimation de tarif plus précise</span></li>
+                    <li><i class="ri-price-tag-3-line"></i><span data-translate="map_benefit_point1">Obtenez le prix de la course immédiatement, sans délai d’attente système</span></li>
+                    <li><i class="ri-map-2-line"></i><span data-translate="map_benefit_point2">Voyez votre position sur la carte et évitez les erreurs d’adresse</span></li>
+                    <li><i class="ri-steering-2-line"></i><span data-translate="map_benefit_point3">Le chauffeur accepte directement et vous récupère là où vous êtes</span></li>
                 </ul>
-                <p class="location-share-desc" data-translate="map_benefit_desc">Activez votre position ou saisissez votre adresse manuellement — vous gardez le contrôle à tout moment.</p>
+                <p class="location-share-desc" data-translate="map_benefit_desc">Nous n’accéderons à votre localisation qu’après votre accord. Vous pouvez aussi saisir l’adresse manuellement.</p>
                 <div class="location-share-actions">
                     <button class="loc-btn loc-btn-enable" id="locEnableBtn"><i class="ri-navigation-line"></i><span
-                            data-translate="share_location_btn">Activer ma position</span></button>
+                            data-translate="share_location_btn">Autoriser ma position</span></button>
                     <button class="loc-btn loc-btn-manual" id="locManualBtn"><i class="ri-edit-line"></i><span
                             data-translate="manual_address_btn">Saisir l'adresse</span></button>
                 </div>
@@ -15600,11 +15604,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h3 class="text-xl font-semibold text-gray-800 text-center mb-2" data-translate="location_access">Accès
                     à votre localisation</h3>
                 <p class="text-sm text-gray-600 text-center" data-translate="location_desc">
-                    Pour que votre chauffeur puisse vous prendre en charge à votre position exacte, nous avons besoin
-                    d'accéder à votre localisation.
+                    La localisation permet d’obtenir le prix sans attente, de vous voir sur la carte, d’éviter les erreurs d’adresse, et qu’un chauffeur accepte puis vous récupère directement où vous êtes.
                     <br><br>
-                    Si vous préférez ne pas partager votre position, activez l'option "Indiquer une adresse de départ
-                    différente" et saisissez manuellement votre adresse.
+                    Aucune demande navigateur n’est envoyée tant que vous n’avez pas accepté. Vous pouvez aussi saisir l’adresse manuellement.
                 </p>
             </div>
             <div class="flex gap-3 mt-6">
@@ -24320,14 +24322,17 @@ function _scheduleNotificationPrompt() {
             _daxiMarkNotifAsked();
             return;
         }
-        
         if (nativeAndroid && window.DaxiAndroid && typeof window._daxiNativePushGranted === 'boolean' && window._daxiNativePushGranted) {
             _daxiMarkNotifAsked();
             return;
         }
-        var delay = nativeAndroid ? 30000 : 20000;
+        /* Never on first paint: only after GPS explain flow is settled, then wait 3 min */
+        var delay = 180000;
         function tryShowNotificationPrompt() {
-            if (document.hidden) return;
+            if (document.hidden) {
+                setTimeout(tryShowNotificationPrompt, 15000);
+                return;
+            }
             if (_daxiWasNotifAsked()) return;
             if (window._daxiNativePushGranted) {
                 _daxiMarkNotifAsked();
@@ -24335,7 +24340,11 @@ function _scheduleNotificationPrompt() {
             }
             var locEl = document.getElementById('locationSharePrompt');
             if (locEl && locEl.classList.contains('show')) {
-                setTimeout(tryShowNotificationPrompt, 5000);
+                setTimeout(tryShowNotificationPrompt, 20000);
+                return;
+            }
+            if (typeof _wasLocPromptDone === 'function' && !_wasLocPromptDone()) {
+                setTimeout(tryShowNotificationPrompt, 20000);
                 return;
             }
             _showNotificationModal();
@@ -26213,7 +26222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    _scheduleNotificationPrompt();
+    /* Notifications: never on load — only after location explain is done (scheduled later) */
 
 
     setTimeout(function() {
@@ -27359,13 +27368,14 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Plages paradisiaques et eaux cristallines',
             verrieres_name: 'Monuments de Vertière',
             verrieres_desc: 'Mémorial historique de la bataille de Vertière',
-            share_location_btn: 'Activer la localisation',
+            share_location_btn: 'Autoriser ma position',
             manual_address_btn: 'Entrer l\'adresse manuellement',
-            map_benefit_title: 'Retrouver votre chauffeur plus vite',
-            map_benefit_point1: 'Le chauffeur vous localise en quelques secondes',
-            map_benefit_point2: 'Moins d\'attente au point de départ',
-            map_benefit_point3: 'Estimation de tarif plus précise',
-            map_benefit_desc: 'Activez votre position ou saisissez votre adresse manuellement — vous gardez le contrôle à tout moment.',
+            map_benefit_title: 'Pourquoi activer votre position',
+            map_benefit_point1: 'Obtenez le prix de la course immédiatement, sans délai d’attente système',
+            map_benefit_point2: 'Voyez votre position sur la carte et évitez les erreurs d’adresse',
+            map_benefit_point3: 'Le chauffeur accepte directement et vous récupère là où vous êtes',
+            map_benefit_desc: 'Nous n’accéderons à votre localisation qu’après votre accord. Vous pouvez aussi saisir l’adresse manuellement.',
+            location_desc: 'La localisation permet d’obtenir le prix sans attente, de vous voir sur la carte, d’éviter les erreurs d’adresse, et qu’un chauffeur accepte puis vous récupère directement où vous êtes.',
             plan1_title: 'Course Ville à Ville',
             plan1_sub: 'Prix à déterminer',
             plan1_preview: 'Déplacez-vous en toute sérénité entre les villes avec notre service de transport confortable et sécurisé.',
@@ -27475,7 +27485,7 @@ window._daxiPersistLang = function(lang) {
             close: 'Fermer',
             accept: 'Accepter',
             location_access: 'Accès à votre localisation',
-            location_desc: 'Pour que votre chauffeur puisse vous prendre en charge à votre position exacte, nous avons besoin d\'accéder à votre localisation.',
+            location_desc: 'La localisation permet d’obtenir le prix sans attente, de vous voir sur la carte, d’éviter les erreurs d’adresse, et qu’un chauffeur accepte puis vous récupère directement où vous êtes.',
             driver_reviews: 'Avis sur le chauffeur',
             description: 'Description',
             history: 'Histoire',
@@ -27769,13 +27779,14 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Plaj paradi ak dlo klè',
             verrieres_name: 'Moniman Vètyè',
             verrieres_desc: 'Memoryèl istorik batay Vètyè',
-            share_location_btn: 'Aktive lokalizasyon',
+            share_location_btn: 'Otòrize pozisyon mwen',
             manual_address_btn: 'Antre adrès manyèlman',
-            map_benefit_title: 'Jwenn chofè ou pi vit',
-            map_benefit_point1: 'Chofè a lokalize ou nan kèk segonn',
-            map_benefit_point2: 'Mwens tann nan pwen depa a',
-            map_benefit_point3: 'Estimasyon pri pi egzak',
-            map_benefit_desc: 'Aktive pozisyon ou oswa antre adrès ou manyèlman — ou kenbe kontwòl la tout tan.',
+            map_benefit_title: 'Poukisa aktive pozisyon ou',
+            map_benefit_point1: 'Jwenn pri kous la touswit, san tann sistèm',
+            map_benefit_point2: 'Wè pozisyon ou sou kat la epi evite erè adrès',
+            map_benefit_point3: 'Chofè a aksepte dirèkteman epi vin chèche ou kote ou ye',
+            map_benefit_desc: 'Nou p’ap jwenn lokalizasyon ou san ou dakò. Ou ka antre adrès la manyèlman tou.',
+            location_desc: 'Lokalizasyon pèmèt ou jwenn pri a san tann, wè tèt ou sou kat la, evite erè adrès, epi yon chofè aksepte epi vin chèche ou kote ou ye.',
             plan1_title: 'Kous Vil a Vil',
             plan1_sub: 'Pri pou detèmine',
             plan1_preview: 'Deplase ou san estrès ant vil yo ak sèvis transpò konfòtab e an sekirite nou an.',
@@ -27880,7 +27891,7 @@ window._daxiPersistLang = function(lang) {
             close: 'Fèmen',
             accept: 'Aksepte',
             location_access: 'Aksè nan lokalizasyon ou',
-            location_desc: 'Pou chofè ou a ka pran ou nan pozisyon egzak ou, nou bezwen aksè nan lokalizasyon ou.',
+            location_desc: 'Lokalizasyon pèmèt ou jwenn pri a san tann, wè tèt ou sou kat la, evite erè adrès, epi yon chofè aksepte epi vin chèche ou kote ou ye.',
             driver_reviews: 'Avis sou chofè a',
             description: 'Deskripsyon',
             history: 'Istwa',
@@ -28178,13 +28189,14 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Paradise beaches and crystal clear waters',
             verrieres_name: 'Vertière Monuments',
             verrieres_desc: 'Historic memorial of the Battle of Vertière',
-            share_location_btn: 'Enable location',
+            share_location_btn: 'Allow my location',
             manual_address_btn: 'Enter address manually',
-            map_benefit_title: 'Find your driver faster',
-            map_benefit_point1: 'Your driver locates you in seconds',
-            map_benefit_point2: 'Less waiting at pickup',
-            map_benefit_point3: 'More accurate fare estimate',
-            map_benefit_desc: 'Enable your location or enter your address manually — you stay in control.',
+            map_benefit_title: 'Why enable your location',
+            map_benefit_point1: 'Get the trip price immediately, without system waiting time',
+            map_benefit_point2: 'See yourself on the map and avoid address mistakes',
+            map_benefit_point3: 'A driver can accept right away and pick you up where you are',
+            map_benefit_desc: 'We only access your location after you agree. You can also enter the address manually.',
+            location_desc: 'Location lets you get the price without waiting, see yourself on the map, avoid address errors, and have a driver accept and pick you up where you are.',
             plan1_title: 'City to City',
             plan1_sub: 'Price on request',
             plan1_preview: 'Travel between cities with peace of mind thanks to our comfortable and secure transport service.',
@@ -28289,7 +28301,7 @@ window._daxiPersistLang = function(lang) {
             close: 'Close',
             accept: 'Accept',
             location_access: 'Access to your location',
-            location_desc: 'To allow your driver to pick you up at your exact location, we need access to your location.',
+            location_desc: 'Location lets you get the price without waiting, see yourself on the map, avoid address errors, and have a driver accept and pick you up where you are.',
             driver_reviews: 'Driver reviews',
             description: 'Description',
             history: 'History',
@@ -28562,13 +28574,14 @@ window._daxiPersistLang = function(lang) {
             labadee_desc: 'Playas paradisíacas y aguas cristalinas',
             verrieres_name: 'Monumentos de Vertière',
             verrieres_desc: 'Memorial histórico de la batalla de Vertière',
-            share_location_btn: 'Activar ubicación',
+            share_location_btn: 'Autorizar mi ubicación',
             manual_address_btn: 'Ingresar dirección manualmente',
-            map_benefit_title: 'Encontrar a su conductor más rápido',
-            map_benefit_point1: 'El conductor le localiza en segundos',
-            map_benefit_point2: 'Menos espera en el punto de partida',
-            map_benefit_point3: 'Estimación de tarifa más precisa',
-            map_benefit_desc: 'Active su ubicación o ingrese su dirección manualmente — usted mantiene el control.',
+            map_benefit_title: 'Por qué activar su ubicación',
+            map_benefit_point1: 'Obtenga el precio del viaje de inmediato, sin espera del sistema',
+            map_benefit_point2: 'Véase en el mapa y evite errores de dirección',
+            map_benefit_point3: 'Un conductor acepta de inmediato y le recoge donde está',
+            map_benefit_desc: 'Solo accedemos a su ubicación después de su acuerdo. También puede ingresar la dirección manualmente.',
+            location_desc: 'La ubicación permite obtener el precio sin espera, verse en el mapa, evitar errores de dirección, y que un conductor acepte y le recoja donde está.',
             plan1_title: 'Ciudad a Ciudad',
             plan1_sub: 'Precio a determinar',
             plan1_preview: 'Desplácese con tranquilidad entre ciudades con nuestro servicio de transporte cómodo y seguro.',
@@ -28673,7 +28686,7 @@ window._daxiPersistLang = function(lang) {
             close: 'Cerrar',
             accept: 'Aceptar',
             location_access: 'Acceso a su ubicación',
-            location_desc: 'Para que su conductor pueda recogerle en su ubicación exacta, necesitamos acceder a su ubicación.',
+            location_desc: 'La ubicación permite obtener el precio sin espera, verse en el mapa, evitar errores de dirección, y que un conductor acepte y le recoja donde está.',
             driver_reviews: 'Opiniones sobre el conductor',
             description: 'Descripción',
             history: 'Historia',
@@ -29288,7 +29301,9 @@ window._daxiPersistLang = function(lang) {
   document.addEventListener('DOMContentLoaded', function() {
     if (!window.DaxiAndroid && typeof _resolveGeoPermission === 'function') {
       _resolveGeoPermission(function(state) {
+        /* Only resume GPS if already granted — never trigger OS prompt here */
         if (state === 'granted' && typeof _bootClientGps === 'function') {
+          if (typeof _daxiGrantGpsUserConsent === 'function') _daxiGrantGpsUserConsent();
           if (window.DaxiWebGps) {
             DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
           }
@@ -29658,7 +29673,7 @@ window._daxiPersistLang = function(lang) {
     }
     var key = _daxiMapsApiKey();
     if (!key) {
-      console.warn('[DAXI] Google Maps API key missing — attente bootstrap');
+      if (window.DAXI_DEBUG) { /* maps key missing — wait bootstrap */ }
       if (window._daxiIsNativeApp && window._daxiIsNativeApp()) {
         window._daxiBootState = window._daxiBootState || {};
         window._daxiBootState.mapReady = true;
@@ -29667,8 +29682,8 @@ window._daxiPersistLang = function(lang) {
         }
         if (window._daxiTryDismissInitialLoader) window._daxiTryDismissInitialLoader();
       }
-      if (!_daxiMapsKeyWaitBound) {
-        _daxiMapsKeyWaitBound = true;
+      if (!window._daxiMapsKeyWaitBound) {
+        window._daxiMapsKeyWaitBound = true;
         document.addEventListener('daxi:bootstrap-ready', function() {
           if (!window.googleMapsLoaded && typeof window._daxiLoadGoogleMaps === 'function') {
             window._daxiLoadGoogleMaps();
@@ -32534,57 +32549,68 @@ function _daxiNativeGpsGranted() {
     return false;
 }
 
+function _daxiGrantGpsUserConsent() {
+    window._daxiGpsUserConsent = true;
+}
+
+function _daxiHasGpsUserConsent() {
+    if (window._daxiGpsUserConsent) return true;
+    if (typeof _wasGeoPreviouslyGranted === 'function' && _wasGeoPreviouslyGranted()) return true;
+    if (window._daxiGpsPerm) return true;
+    if (typeof _daxiNativeGpsGranted === 'function' && _daxiNativeGpsGranted()) return true;
+    return false;
+}
+
+function _daxiScheduleNotifAfterLocFlow() {
+    if (typeof _scheduleNotificationPrompt === 'function') {
+        try { _scheduleNotificationPrompt(); } catch (e) {}
+    }
+}
+
 function _daxiMaybeAskLocation() {
-    if (_daxiIsNativeClientApp()) {
-        if (window.DaxiWebGps && !window.DaxiAndroid) {
-            DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
-        }
-        _bootClientGps();
-        return;
-    }
-    if (_wasGeoPreviouslyGranted()) {
-        if (window.DaxiWebGps && !window.DaxiAndroid) {
-            DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
-        }
-        _bootClientGps();
-        return;
-    }
+    /* STRICT: never call browser geolocation while permission is "prompt".
+       Always show DAXI explain UI first; OS dialog only after user taps Autoriser. */
     if (window._daxiNativePermissionHost) {
         try {
             if (typeof _ensureClientGpsLiveRunning === 'function') _ensureClientGpsLiveRunning();
         } catch (e) {}
         return;
     }
-    if (_wasLocPromptDone()) {
-        if (navigator.permissions && navigator.permissions.query) {
-            navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
-                if (p.state === 'granted') {
-                    _markGeoGranted();
-                    _bootClientGps();
-                }
-            }).catch(function() {});
+    if (_daxiHasGpsUserConsent() && _wasGeoPreviouslyGranted()) {
+        if (window.DaxiWebGps && !window.DaxiAndroid) {
+            DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
         }
-        return;
-    }
-    if (window._daxiUseNativeGps || window.DaxiAndroid) {
         _bootClientGps();
         return;
     }
     if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
-            if (p.state === 'denied') {
-                _markLocPromptDone();
+            if (p.state === 'granted') {
+                _markGeoGranted();
+                _daxiGrantGpsUserConsent();
+                if (window.DaxiWebGps && !window.DaxiAndroid) {
+                    DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
+                }
+                _bootClientGps();
                 return;
             }
-            _markGeoGranted();
-            if (window.DaxiWebGps && !window.DaxiAndroid) {
-                DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
+            if (p.state === 'denied') {
+                _showLocationSharePrompt(true);
+                return;
             }
-            _bootClientGps();
-        }).catch(function() { _bootClientGps(); });
+            /* prompt — explain first, never getCurrentPosition */
+            _showLocationSharePrompt(false);
+        }).catch(function() {
+            if (!_wasGeoPreviouslyGranted()) _showLocationSharePrompt(false);
+            else _bootClientGps();
+        });
         return;
     }
-    _bootClientGps();
+    if (_wasGeoPreviouslyGranted()) {
+        _bootClientGps();
+        return;
+    }
+    _showLocationSharePrompt(false);
 }
 window._daxiMaybeAskLocation = _daxiMaybeAskLocation;
 var _gpsError = false;
@@ -33029,6 +33055,10 @@ function _requestPickupGps(onSuccess, onError, opts) {
 var _clientGpsBootRetries = 0;
 
 function _bootClientGps() {
+    if (!_daxiHasGpsUserConsent()) {
+        if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(false);
+        return;
+    }
     if (typeof _daxiIsNativeClientApp === 'function' && _daxiIsNativeClientApp() && typeof _daxiNativeGpsGranted === 'function' && !_daxiNativeGpsGranted()) {
         return;
     }
@@ -33099,7 +33129,7 @@ function _showLocationSharePrompt(forceDenied) {
     if (!el) return;
     var desc = el.querySelector('.location-share-desc');
     if (desc && forceDenied) {
-        desc.textContent = 'La localisation est désactivée. Activez-la pour que le chauffeur vous trouve rapidement, ou saisissez votre adresse manuellement.';
+        desc.textContent = 'La localisation est désactivée dans le navigateur. Réactivez-la dans les paramètres du site, ou saisissez votre adresse manuellement pour obtenir le prix et être récupéré au bon endroit.';
     }
     el.classList.add('show');
 }
@@ -33121,6 +33151,7 @@ function _initLocationSharePrompt() {
         closeBtn.addEventListener('click', function() {
             _markLocPromptDone();
             _hideLocationSharePrompt();
+            _daxiScheduleNotifAfterLocFlow();
         });
     }
     if (manualBtn && !manualBtn.dataset.bound) {
@@ -33130,11 +33161,13 @@ function _initLocationSharePrompt() {
             if (destinationSwitch) destinationSwitch.checked = true;
             if (destinationField) destinationField.classList.remove('hidden');
             _hideLocationSharePrompt();
+            _daxiScheduleNotifAfterLocFlow();
         });
     }
     if (enableBtn && !enableBtn.dataset.bound) {
         enableBtn.dataset.bound = '1';
         enableBtn.addEventListener('click', function() {
+            _daxiGrantGpsUserConsent();
             if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
                 window._daxiPendingNativeGpsBoot = true;
                 enableBtn.disabled = true;
@@ -33152,6 +33185,16 @@ function _initLocationSharePrompt() {
             _daxiGpsLocked = false;
             _clientGpsBootStarted = false;
             _bootClientGps();
+            if (window._daxiPendingPickupAfterConsent) {
+                var pending = window._daxiPendingPickupAfterConsent;
+                window._daxiPendingPickupAfterConsent = null;
+                setTimeout(function() {
+                    if (typeof window._daxiUseMyPositionForInput === 'function') {
+                        window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
+                    }
+                }, 50);
+            }
+            _daxiScheduleNotifAfterLocFlow();
         });
     }
 }
@@ -33171,6 +33214,7 @@ function _bindLocationSharePromptDelegation() {
             e.stopPropagation();
             if (typeof _markLocPromptDone === 'function') _markLocPromptDone();
             if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
+            if (typeof _daxiScheduleNotifAfterLocFlow === 'function') _daxiScheduleNotifAfterLocFlow();
             return;
         }
         if (manualBtn) {
@@ -33182,11 +33226,13 @@ function _bindLocationSharePromptDelegation() {
             if (destinationSwitch) destinationSwitch.checked = true;
             if (destinationField) destinationField.classList.remove('hidden');
             if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
+            if (typeof _daxiScheduleNotifAfterLocFlow === 'function') _daxiScheduleNotifAfterLocFlow();
             return;
         }
         if (enableBtn) {
             e.preventDefault();
             e.stopPropagation();
+            if (typeof _daxiGrantGpsUserConsent === 'function') _daxiGrantGpsUserConsent();
             if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
                 window._daxiPendingNativeGpsBoot = true;
                 enableBtn.disabled = true;
@@ -33204,6 +33250,16 @@ function _bindLocationSharePromptDelegation() {
             _daxiGpsLocked = false;
             _clientGpsBootStarted = false;
             if (typeof _bootClientGps === 'function') _bootClientGps();
+            if (window._daxiPendingPickupAfterConsent) {
+                var pending = window._daxiPendingPickupAfterConsent;
+                window._daxiPendingPickupAfterConsent = null;
+                setTimeout(function() {
+                    if (typeof window._daxiUseMyPositionForInput === 'function') {
+                        window._daxiUseMyPositionForInput(pending.inputEl, pending.btnEl);
+                    }
+                }, 50);
+            }
+            if (typeof _daxiScheduleNotifAfterLocFlow === 'function') _daxiScheduleNotifAfterLocFlow();
         }
     }, true);
 }
@@ -33909,6 +33965,12 @@ window._daxiUseMyPositionForInput = function(inputEl, btnEl) {
         if (state === 'denied') {
             _daxiGpsFailInput(inputEl, btnEl, typeof _daxiT === 'function' ? _daxiT('gps_permission_denied', 'Autorisez la localisation ou saisissez l\'adresse manuellement.') : null);
             _showLocationSharePrompt(true);
+            return;
+        }
+        if (state === 'prompt' && !_daxiHasGpsUserConsent()) {
+            window._daxiPendingPickupAfterConsent = { inputEl: inputEl, btnEl: btnEl };
+            window._daxiUserAskedLocationPrompt = true;
+            _showLocationSharePrompt(false);
             return;
         }
         var isMainPickup = (inputEl.id === 'destinationAddress');

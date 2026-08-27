@@ -1184,9 +1184,7 @@
             '/htmx/client/orders/?tab=active',
             '/htmx/client/orders/?tab=history',
             '/htmx/client/account/',
-            '/htmx/driver/orders/',
-            '/htmx/admin/dashboard/',
-            '/htmx/enterprise/dashboard/'
+            '/htmx/driver/orders/'
         ];
         urls.forEach(function(u) {
             try {
