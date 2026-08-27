@@ -24,6 +24,7 @@ from admin_panel.views import admin_dashboard_page
 from julmin_taxis.whatsapp_webhook_views import whatsapp_webhook
 from julmin_taxis.legal_views import data_deletion_page, privacy_policy_page
 from julmin_taxis.wellknown_views import android_assetlinks, apple_app_site_association
+from julmin_taxis.robots_views import robots_txt
 
 
                                                                                              
@@ -448,6 +449,7 @@ class ServeOriginalAsset(View):
 
 
 urlpatterns = [
+    path('robots.txt', robots_txt, name='robots-txt'),
     path('.well-known/assetlinks.json', android_assetlinks, name='android-assetlinks'),
     path('.well-known/assetlinks.json/', android_assetlinks, name='android-assetlinks-slash'),
     path('.well-known/apple-app-site-association', apple_app_site_association, name='apple-app-site-association'),
