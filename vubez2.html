@@ -33257,6 +33257,10 @@ function _bootClientGps() {
         });
         _endGpsScanVisual();
     }, function() {
+        if (window._daxiGeoBrowserBlocked) {
+            _endGpsScanVisual();
+            return;
+        }
         if (_clientGpsBootRetries < 4) {
             _clientGpsBootRetries++;
             _clientGpsBootStarted = false;
