@@ -73,6 +73,7 @@
     <script>
     (function(){
       window._daxiPreferServerPlaces = true;
+      window._daxiGpsUserConsent = false;
       /* Production: zero console noise unless window.DAXI_DEBUG = true */
       if (!window.DAXI_DEBUG) {
         var _noop = function() {};
@@ -83,6 +84,34 @@
           console.warn = _noop;
         } catch (e) {}
       }
+      /* STRICT: block navigator.geolocation until DAXI consent / prior grant */
+      try {
+        if (navigator.geolocation && !navigator.geolocation._daxiGated) {
+          var _geo = navigator.geolocation;
+          var _rawGet = _geo.getCurrentPosition.bind(_geo);
+          var _rawWatch = _geo.watchPosition.bind(_geo);
+          function _daxiGeoAllowed() {
+            if (window._daxiGpsUserConsent) return true;
+            if (window._daxiGpsPerm) return true;
+            try { if (localStorage.getItem('daxi_geo_granted') === '1') return true; } catch (e2) {}
+            return false;
+          }
+          function _deny(err) {
+            if (typeof err === 'function') {
+              try { err({ code: 1, message: 'DAXI: consent required', PERMISSION_DENIED: 1 }); } catch (e3) {}
+            }
+          }
+          _geo.getCurrentPosition = function(ok, err, opt) {
+            if (!_daxiGeoAllowed()) { _deny(err); return; }
+            return _rawGet(ok, err, opt);
+          };
+          _geo.watchPosition = function(ok, err, opt) {
+            if (!_daxiGeoAllowed()) { _deny(err); return -1; }
+            return _rawWatch(ok, err, opt);
+          };
+          _geo._daxiGated = true;
+        }
+      } catch (eGate) {}
     })();
     </script>
     <script src="assets/js/tailwindcss-3.4.16.js"></script>
