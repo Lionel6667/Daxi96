@@ -108,6 +108,22 @@ def _get_django_context_script(page_name):
         return f'<script>/* Django preload error: {e} */window.DJANGO_PRELOAD={{}};</script>'
 
 
+def _is_social_crawler(request) -> bool:
+    ua = (request.META.get('HTTP_USER_AGENT') or '').lower()
+    return any(
+        token in ua
+        for token in (
+            'facebookexternalhit',
+            'facebot',
+            'meta-externalagent',
+            'whatsapp',
+            'twitterbot',
+            'linkedinbot',
+            'slackbot',
+        )
+    )
+
+
 class ServeOriginalPage(View):
     """
     Serves original HTML pages directly from the project root.
@@ -392,9 +408,10 @@ class ServeOriginalPage(View):
                     pass
 
             resp = HttpResponse(content, content_type='text/html; charset=utf-8')
-            if cap_inject:
-                resp['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            if cap_inject or _is_social_crawler(request):
+                resp['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
                 resp['Pragma'] = 'no-cache'
+                resp['Expires'] = '0'
             return resp
         except FileNotFoundError:
             return HttpResponse(f'File not found: {self.filename}', status=404)
