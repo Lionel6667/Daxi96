@@ -6,7 +6,7 @@ if (keystorePropsFile.exists()) {
     keystoreProps.load(new FileInputStream(keystorePropsFile))
 }
 
-def signingProp(String envName, String propName) {
+def signingProp = { String envName, String propName ->
     def fromEnv = System.getenv(envName)?.trim()
     if (fromEnv) return fromEnv
     return keystoreProps.getProperty(propName)?.trim()
