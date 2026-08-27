@@ -6780,6 +6780,12 @@ def client_create_order(request):
         enterprise=enterprise_affiliate,
         enterprise_commission_pct=enterprise_commission_pct,
     )
+    if enterprise_affiliate:
+        try:
+            from lieux.services import refresh_enterprise_place_activity
+            refresh_enterprise_place_activity(enterprise_affiliate)
+        except Exception:
+            pass
     request._daxi_order = order
 
                                                                 
@@ -7815,6 +7821,11 @@ def enterprise_create_order(request):
         guest_id=guest_id,
         enterprise=ent, enterprise_commission_pct=ent.commission_percent,
     )
+    try:
+        from lieux.services import refresh_enterprise_place_activity
+        refresh_enterprise_place_activity(ent)
+    except Exception:
+        pass
 
     if not fixed_price and pickup_lat and pickup_lng and dest_lat and dest_lng:
         from pricing.services import apply_price_to_order
@@ -8195,6 +8206,14 @@ def enterprise_set_location(request):
         'address_lat', 'address_lng', 'address_label', 'location_status',
         'location_set_at', 'location_help_message', 'location_help_requested_at',
     ])
+    try:
+        from lieux.models import LieuxPlace
+        from lieux.services import sync_place_coords_from_enterprise, register_place_gps
+        for place in LieuxPlace.objects.filter(enterprise=ent):
+            if sync_place_coords_from_enterprise(place):
+                register_place_gps(place)
+    except Exception:
+        pass
     return render(request, 'htmx/enterprise_location_saved.html', {'enterprise': ent})
 
 

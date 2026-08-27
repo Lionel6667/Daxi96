@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var STATE = { places: [], categories: [], enterprises: [], editingId: null };
+  var STATE = { places: [], categories: [], enterprises: [], departments: [], editingId: null };
 
   function csrf() {
     var el = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -12,8 +12,7 @@
   async function api(url, opts) {
     opts = opts || {};
     var headers = opts.headers || {};
-    if (!(opts.body instanceof FormData)) headers['X-CSRFToken'] = csrf();
-    else headers['X-CSRFToken'] = csrf();
+    headers['X-CSRFToken'] = csrf();
     var res = await fetch(url, Object.assign({ credentials: 'same-origin', headers: headers }, opts));
     return res.json();
   }
@@ -24,6 +23,7 @@
     STATE.places = data.places || [];
     STATE.categories = data.categories || [];
     STATE.enterprises = data.enterprises || [];
+    STATE.departments = data.departments || [];
     renderLieuxList();
     renderLieuxCats();
   };
@@ -72,20 +72,39 @@
     var box = document.getElementById('lx-admin-list');
     if (!box) return;
     if (!STATE.places.length) {
-      box.innerHTML = '<p class="text-sm text-gray-400">Aucun lieu. Ajoute le premier restaurant, hôtel ou marché.</p>';
+      box.innerHTML = '<p class="text-sm text-gray-400">Aucun lieu. Les entreprises ajoutent leurs fiches depuis leur espace pro.</p>';
       return;
     }
-    box.innerHTML = STATE.places.map(function (p) {
+    var sorted = STATE.places.slice().sort(function (a, b) {
+      return (b.activity_score || 0) - (a.activity_score || 0);
+    });
+    box.innerHTML = sorted.map(function (p) {
       var img = p.cover ? '<img src="' + p.cover + '" alt="">' : '<div style="width:84px;height:84px;border-radius:12px;background:#1e293b;flex-shrink:0"></div>';
+      var loc = [p.department_label || p.department, p.city].filter(Boolean).join(' · ');
+      var status = [];
+      if (p.is_published) status.push('<span class="text-green-400">Publié</span>');
+      else status.push('<span class="text-amber-400">Brouillon</span>');
+      if (!p.is_listed) status.push('<span class="text-red-400">Retiré</span>');
       return '<div class="lx-admin-card">' + img +
         '<div style="flex:1;min-width:0"><div class="font-bold text-white">' + escapeHtml(p.name) +
         (p.featured ? ' · <span class="text-amber-400">Coup de cœur</span>' : '') + '</div>' +
-        '<div class="text-xs text-gray-400">' + escapeHtml(p.category_name || 'Sans catégorie') + ' · ' + escapeHtml(p.address || '') + '</div>' +
-        '<div class="text-xs mt-1">' + (p.is_published ? '<span class="text-green-400">Publié</span>' : '<span class="text-amber-400">Brouillon</span>') + '</div></div>' +
-        '<div class="flex flex-col gap-2"><button type="button" class="px-3 py-1 rounded-lg bg-slate-700 text-xs font-bold" onclick="lxEdit(' + p.id + ')">Éditer</button>' +
+        '<div class="text-xs text-gray-400">' + escapeHtml(p.category_name || 'Sans catégorie') + (loc ? ' · ' + escapeHtml(loc) : '') + '</div>' +
+        '<div class="text-xs text-purple-300 mt-1"><i class="ri-fire-line"></i> Activité ' + (p.activity_score || 0) +
+        ' · ' + (p.booking_count || 0) + ' cmd · ' + (p.link_clicks || 0) + ' clics</div>' +
+        '<div class="text-xs mt-1">' + status.join(' · ') + '</div></div>' +
+        '<div class="flex flex-col gap-2">' +
+        '<button type="button" class="px-3 py-1 rounded-lg ' + (p.is_listed ? 'bg-amber-700' : 'bg-green-700') + ' text-xs font-bold" onclick="lxToggleListed(' + p.id + ')">' +
+        (p.is_listed ? 'Retirer' : 'Activer') + '</button>' +
+        '<button type="button" class="px-3 py-1 rounded-lg bg-slate-700 text-xs font-bold" onclick="lxEdit(' + p.id + ')">Éditer</button>' +
         '<button type="button" class="px-3 py-1 rounded-lg bg-red-700 text-xs font-bold" onclick="lxDelete(' + p.id + ')">Supprimer</button></div></div>';
     }).join('');
   }
+
+  window.lxToggleListed = async function (id) {
+    var data = await api('/htmx/lieux/admin/' + id + '/toggle-listed/', { method: 'POST' });
+    if (!data.ok) { alert(data.error || 'Erreur'); return; }
+    loadLieuxAdmin();
+  };
 
   function escapeHtml(s) {
     return String(s || '').replace(/[&<>"']/g, function (c) {
@@ -170,7 +189,13 @@
     document.getElementById('lx-lat').value = p.latitude || '';
     document.getElementById('lx-lng').value = p.longitude || '';
     document.getElementById('lx-published').checked = p.is_published !== false;
+    document.getElementById('lx-listed').checked = p.is_listed !== false;
     document.getElementById('lx-featured').checked = !!p.featured;
+    var dept = document.getElementById('lx-department');
+    dept.innerHTML = '<option value="">Département</option>' + STATE.departments.map(function (d) {
+      return '<option value="' + d.slug + '"' + (p.department === d.slug ? ' selected' : '') + '>' + escapeHtml(d.name) + '</option>';
+    }).join('');
+    document.getElementById('lx-city').value = p.city || '';
     var cat = document.getElementById('lx-category');
     cat.innerHTML = '<option value="">Catégorie</option>' + STATE.categories.map(function (c) {
       return '<option value="' + c.id + '"' + (p.category_id === c.id ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
@@ -191,12 +216,10 @@
   };
 
   window.lxSave = async function () {
-    if (!document.getElementById('lx-lat').value || !document.getElementById('lx-lng').value) {
-      alert('Place le lieu sur la carte avant d’enregistrer.');
-      return;
-    }
     var fd = new FormData();
     fd.append('name', document.getElementById('lx-name').value);
+    fd.append('department', document.getElementById('lx-department').value);
+    fd.append('city', document.getElementById('lx-city').value);
     fd.append('address', document.getElementById('lx-address').value);
     fd.append('hours', document.getElementById('lx-hours').value);
     fd.append('description', document.getElementById('lx-desc').value);
@@ -205,6 +228,7 @@
     fd.append('category_id', document.getElementById('lx-category').value);
     fd.append('enterprise_id', document.getElementById('lx-enterprise').value);
     fd.append('is_published', document.getElementById('lx-published').checked ? '1' : '0');
+    fd.append('is_listed', document.getElementById('lx-listed').checked ? '1' : '0');
     fd.append('featured', document.getElementById('lx-featured').checked ? '1' : '0');
     var cover = document.getElementById('lx-cover').files[0];
     if (cover) fd.append('cover', cover);

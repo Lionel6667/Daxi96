@@ -1,5 +1,7 @@
 from django.db import models
 
+from admin_panel.models import HAITI_DEPARTMENTS
+
 
 class LieuxCategory(models.Model):
     slug = models.SlugField(max_length=40, unique=True)
@@ -26,25 +28,38 @@ class LieuxPlace(models.Model):
         'enterprises.Enterprise', on_delete=models.SET_NULL, null=True, blank=True, related_name='visit_places'
     )
     name = models.CharField(max_length=200)
+    department = models.CharField(max_length=30, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
     address = models.CharField(max_length=400, blank=True, default='')
     hours = models.CharField(max_length=240, blank=True, default='', verbose_name='Horaires')
     description = models.TextField(blank=True, default='')
     cover = models.ImageField(upload_to='lieux/covers/', blank=True, null=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    is_published = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=False, verbose_name='Publié par l\'entreprise')
+    is_listed = models.BooleanField(default=True, verbose_name='Visible côté client')
     featured = models.BooleanField(default=False)
+    booking_count = models.PositiveIntegerField(default=0)
+    activity_score = models.PositiveIntegerField(default=0, db_index=True)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-featured', 'order', 'name']
+        ordering = ['-activity_score', '-featured', 'order', 'name']
         verbose_name = 'Lieu à visiter'
         verbose_name_plural = 'Lieux à visiter'
 
     def __str__(self):
         return self.name
+
+    @property
+    def department_label(self):
+        return dict(HAITI_DEPARTMENTS).get(self.department or '', self.department or '')
+
+    @property
+    def has_gps(self):
+        return self.latitude is not None and self.longitude is not None
 
     @property
     def cover_url(self):

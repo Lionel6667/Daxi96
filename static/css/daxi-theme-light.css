@@ -666,6 +666,7 @@
 
 
 [data-theme="light"] .dpw-overlay { background: var(--daxi-overlay) !important; }
+[data-theme="light"] .dpw-shell,
 [data-theme="light"] .dpw-sheet {
   background: var(--daxi-surface) !important;
   border-color: var(--daxi-border) !important;

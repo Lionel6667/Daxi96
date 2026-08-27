@@ -364,6 +364,38 @@
       width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.2);
       border-radius: 10px; color: #f8fafc; padding: 10px; font-size: 12px; font-family: inherit;
     }
+    .ent-lieux-panel { display: grid; gap: 12px; }
+    .ent-lieux-intro { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,.7); }
+    .ent-lieux-stats { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700; }
+    .ent-lieux-stats span {
+      display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.16); color: rgba(255,255,255,.82);
+    }
+    .ent-lieux-stats .ent-lieux-muted { color: #fca5a5; border-color: rgba(248,113,113,.25); }
+    .ent-lieux-hint { margin: 0; font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.45; }
+    .ent-lieux-hint--ok { color: #6ee7b7; }
+    .ent-lieux-form { display: grid; gap: 10px; }
+    .ent-lieux-form input, .ent-lieux-form textarea, .ent-lieux-form select {
+      width: 100%; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,.2);
+      background: rgba(255,255,255,.06); color: #f8fafc; font-size: 13px; font-family: inherit;
+    }
+    .ent-lieux-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ent-lieux-file { font-size: 12px; color: rgba(255,255,255,.7); display: grid; gap: 6px; }
+    .ent-lieux-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,.85); }
+    .ent-lieux-gallery { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ent-lieux-gal-item { position: relative; }
+    .ent-lieux-gal-item img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; }
+    .ent-lieux-gal-item button {
+      position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border: none; border-radius: 50%;
+      background: #dc2626; color: #fff; font-size: 14px; cursor: pointer;
+    }
+    .ent-lieux-sync, .ent-lieux-save {
+      width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 13px; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+    }
+    .ent-lieux-sync { background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.25); }
+    .ent-lieux-save { background: linear-gradient(135deg, #f59e0b, #d97706); color: #111; }
+    @media (max-width: 520px) { .ent-lieux-row { grid-template-columns: 1fr; } }
     .ent-client-mini {
       display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 4px;
     }
@@ -738,6 +770,7 @@
   <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260732">
   <link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260732">
   <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <script src="/static/js/enterprise_lieux.js?v=20260827b"></script>
   <script src="/static/js/daxi-theme.js?v=20260725" defer></script>
 </head>
 <body data-page="enterprise">
@@ -925,6 +958,13 @@
     </div>
 
     
+    <div class="ent-panel" id="ent-lieux-panel">
+      <div class="panel-header"><i class="ri-map-pin-2-fill"></i> Mon lieu — À visiter</div>
+      <div class="panel-body ent-lieux-panel" id="ent-lieux-slot">
+        <div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement…</div>
+      </div>
+    </div>
+
     <div class="ent-panel">
       <div class="panel-header"><i class="ri-list-check-2"></i> Mes Commandes</div>
       <div class="orders-tabs">
@@ -2381,6 +2421,7 @@
 
     loadDashboardData();
     loadOrders(_currentTab);
+    if (typeof loadEntLieux === 'function') loadEntLieux();
     if (session.enterprise_id && window.DaxiRealtime) {
       DaxiRealtime.connect('enterprise-' + session.enterprise_id, DaxiRealtime.wsUrl('/ws/enterprise/' + session.enterprise_id + '/'), {
         onEvent: function(ev, payload) {

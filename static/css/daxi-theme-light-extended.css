@@ -1240,3 +1240,56 @@ nav.nav-gradient #loginBtn.gold-button {
 [data-theme="dark"] #map {
   background: #070b14;
 }
+
+
+/* Réservation client — attente aller-retour & programmation (thème clair) */
+[data-theme="light"] .daxi-rt-wait {
+  background: rgba(99, 102, 241, 0.06) !important;
+  border-color: rgba(99, 102, 241, 0.18) !important;
+}
+[data-theme="light"] .daxi-rt-wait-label {
+  color: #64748b !important;
+}
+[data-theme="light"] .daxi-rt-wait select {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+  color-scheme: light !important;
+}
+[data-theme="light"] .daxi-rt-wait select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .daxi-rt-allow {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .ent-daxi-rt-label,
+[data-theme="light"] .ent-daxi-rt-allow {
+  color: var(--ent-daxi-muted, #64748b) !important;
+}
+[data-theme="light"] .ent-daxi-datetime input {
+  background: var(--ent-daxi-surface, var(--daxi-input-bg)) !important;
+  border-color: var(--ent-daxi-surface-border, var(--daxi-border)) !important;
+  color: var(--ent-daxi-input, var(--daxi-text)) !important;
+  color-scheme: light !important;
+}
+[data-theme="light"] .app-sheet #bookingSection input[type=time],
+[data-theme="light"] .app-sheet #bookingSection input[type=date],
+[data-theme="light"] .app-sheet #bookingSection #dateTimeSection input,
+[data-theme="light"] #dateTimeSection .daxi-datetime-input,
+[data-theme="light"] #dateTimeSection input[type="date"],
+[data-theme="light"] #dateTimeSection input[type="time"] {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+  color-scheme: light !important;
+}
+[data-theme="light"] #dateTimeSection input[type=time]::-webkit-calendar-picker-indicator,
+[data-theme="light"] #dateTimeSection input[type=date]::-webkit-calendar-picker-indicator,
+[data-theme="light"] .app-sheet #bookingSection input[type=time]::-webkit-calendar-picker-indicator,
+[data-theme="light"] .app-sheet #bookingSection input[type=date]::-webkit-calendar-picker-indicator,
+[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: none !important;
+  opacity: 0.62 !important;
+}

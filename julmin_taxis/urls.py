@@ -369,6 +369,11 @@ class ServeOriginalPage(View):
                         Enterprise.objects.filter(pk=ent.pk).update(
                             link_clicks=F('link_clicks') + 1
                         )
+                        try:
+                            from lieux.services import refresh_enterprise_place_activity
+                            refresh_enterprise_place_activity(ent)
+                        except Exception:
+                            pass
                     except Exception:
                         pass
 

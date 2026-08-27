@@ -542,3 +542,47 @@ html[data-theme="light"] #forgotPasswordModal .modal-content {
 html[data-theme="light"] #forgotPasswordModal .modal-header h3 {
   color: #111827 !important;
 }
+
+
+/* Feuille de commande — attente aller-retour & programmation (priorité max) */
+html[data-theme="light"] .daxi-rt-wait {
+  background: rgba(99, 102, 241, 0.06) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+}
+html[data-theme="light"] .daxi-rt-wait-label {
+  color: #486581 !important;
+}
+html[data-theme="light"] .daxi-rt-wait select {
+  background: #F0F4F9 !important;
+  border: 1px solid #D9E2EC !important;
+  color: #102A43 !important;
+  color-scheme: light !important;
+}
+html[data-theme="light"] .daxi-rt-wait select option {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] .daxi-rt-allow {
+  color: #486581 !important;
+}
+html[data-theme="light"] .app-sheet #bookingSection #dateTimeSection input,
+html[data-theme="light"] .app-sheet #bookingSection input[type=time],
+html[data-theme="light"] .app-sheet #bookingSection input[type=date],
+html[data-theme="light"] #dateTimeSection .daxi-datetime-input,
+html[data-theme="light"] #dateTimeSection input[type="date"],
+html[data-theme="light"] #dateTimeSection input[type="time"],
+html[data-theme="light"] #bookingTime,
+html[data-theme="light"] #bookingDate {
+  background: #F0F4F9 !important;
+  border: 1.5px solid #D9E2EC !important;
+  color: #102A43 !important;
+  -webkit-text-fill-color: #102A43 !important;
+  color-scheme: light !important;
+}
+html[data-theme="light"] #dateTimeSection input[type=time]::-webkit-calendar-picker-indicator,
+html[data-theme="light"] #dateTimeSection input[type=date]::-webkit-calendar-picker-indicator,
+html[data-theme="light"] .app-sheet #bookingSection input[type=time]::-webkit-calendar-picker-indicator,
+html[data-theme="light"] .app-sheet #bookingSection input[type=date]::-webkit-calendar-picker-indicator {
+  filter: none !important;
+  opacity: 0.55 !important;
+}

@@ -11814,6 +11814,48 @@
         .daxi-blog-search-bar input, .daxi-blog-search-bar select { flex: 1; min-width: 160px; padding: 11px 14px; border-radius: 12px; border: 1px solid #e5e7eb; font-size: 14px; }
         .daxi-blog-empty { text-align: center; color: #9ca3af; padding: 40px; grid-column: 1 / -1; }
 
+        /* Thème clair — attente aller-retour & date/heure (override styles sombres ci-dessus) */
+        html[data-theme="light"] .daxi-rt-wait {
+            background: rgba(99, 102, 241, 0.06) !important;
+            border-color: rgba(99, 102, 241, 0.2) !important;
+        }
+        html[data-theme="light"] .daxi-rt-wait-label {
+            color: #486581 !important;
+        }
+        html[data-theme="light"] .daxi-rt-wait select {
+            background: #F0F4F9 !important;
+            border: 1px solid #D9E2EC !important;
+            color: #102A43 !important;
+            color-scheme: light !important;
+        }
+        html[data-theme="light"] .daxi-rt-wait select option {
+            background: #ffffff !important;
+            color: #102A43 !important;
+        }
+        html[data-theme="light"] .daxi-rt-allow {
+            color: #486581 !important;
+        }
+        html[data-theme="light"] .app-sheet #bookingSection #dateTimeSection input,
+        html[data-theme="light"] .app-sheet #bookingSection input[type=time],
+        html[data-theme="light"] .app-sheet #bookingSection input[type=date],
+        html[data-theme="light"] #dateTimeSection .daxi-datetime-input,
+        html[data-theme="light"] #dateTimeSection input[type="date"],
+        html[data-theme="light"] #dateTimeSection input[type="time"] {
+            background: #F0F4F9 !important;
+            border: 1.5px solid #D9E2EC !important;
+            color: #102A43 !important;
+            color-scheme: light !important;
+        }
+        html[data-theme="light"] #dateTimeSection input[type=time]::-webkit-calendar-picker-indicator,
+        html[data-theme="light"] #dateTimeSection input[type=date]::-webkit-calendar-picker-indicator,
+        html[data-theme="light"] .app-sheet #bookingSection input[type=time]::-webkit-calendar-picker-indicator,
+        html[data-theme="light"] .app-sheet #bookingSection input[type=date]::-webkit-calendar-picker-indicator,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-calendar-picker-indicator,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: none !important;
+            opacity: 0.55 !important;
+        }
+
     </style>
 
 <script src="assets/js/htmx.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js'"></script>
@@ -11821,7 +11863,7 @@
 <link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760">
 <link rel="stylesheet" href="/static/css/daxi-assist-ai.css?v=20260814f">
 <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260823q">
-<link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260824c">
+<link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260827a">
 <link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260823c">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260823c">
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731">
@@ -11844,8 +11886,8 @@
 <script src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
 <link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260759">
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a">
-<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260824a">
-<link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823w">
+<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260827b">
+<link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a">
 <script src="/static/js/daxi-network-banner.js?v=20260759"></script>
 <script src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
 <script src="/static/js/daxi-maplibre.js?v=20260777"></script>
@@ -32086,7 +32128,7 @@ window._daxiBookLieu = function(address, lat, lng) {
     lat = (lat === null || lat === undefined || lat === '') ? null : Number(lat);
     lng = (lng === null || lng === undefined || lng === '') ? null : Number(lng);
     if (!lat || !lng || !isFinite(lat) || !isFinite(lng)) {
-        alert('Ce lieu n’a pas encore de position GPS. L’admin doit le placer sur la carte.');
+        alert('Ce lieu n’a pas encore de position GPS. L’entreprise peut l’ajouter depuis son espace pro.');
         return;
     }
     if (typeof closeDaxiPage === 'function') closeDaxiPage();

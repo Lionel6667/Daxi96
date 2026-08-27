@@ -444,7 +444,7 @@
           <h2 class="text-lg font-bold text-white mr-2"><i class="ri-map-pin-2-fill text-amber-400"></i> Lieux à visiter</h2>
           <button type="button" onclick="lxNew()" class="px-4 py-2 rounded-xl text-sm font-bold bg-daxi-cyan text-gray-900 ml-auto"><i class="ri-add-line"></i> Nouveau lieu</button>
         </div>
-        <p class="text-sm text-gray-400">Ajoute restaurants, hôtels, supermarchés et adresses partenaires. Le client les voit dans Découvrir → Lieux.</p>
+        <p class="text-sm text-gray-400">Les entreprises gèrent leurs fiches depuis leur espace pro. Tu peux modérer, retirer ou mettre en avant. Le classement client suit l'activité (commandes + clics lien).</p>
         <div class="bg-gray-800 rounded-2xl p-4 space-y-3">
           <h3 class="font-bold text-white text-sm">Catégories</h3>
           <p class="text-xs text-gray-400">Toutes les catégories sont en base. Tu peux en ajouter ou supprimer, y compris celles d’origine.</p>
@@ -458,14 +458,18 @@
         </div>
         <div id="lx-admin-editor" class="hidden lx-admin-form bg-gray-800 rounded-2xl p-4">
           <input id="lx-name" type="text" placeholder="Nom du lieu">
-          <input id="lx-address" type="text" placeholder="Adresse">
+          <div class="lx-admin-row">
+            <select id="lx-department"></select>
+            <input id="lx-city" type="text" placeholder="Ville">
+          </div>
+          <input id="lx-address" type="text" placeholder="Adresse précise (détail uniquement)">
           <input id="lx-hours" type="text" placeholder="Horaires — ex. Lun–Sam 8h–22h">
           <textarea id="lx-desc" rows="4" placeholder="Description qui donne envie d'y aller"></textarea>
           <div class="lx-admin-row">
             <select id="lx-category"></select>
             <select id="lx-enterprise"></select>
           </div>
-          <p class="text-xs text-amber-300">Place le lieu sur la carte — le GPS est obligatoire pour commander un taxi vers cette adresse.</p>
+          <p class="text-xs text-amber-300">GPS optionnel — requis pour commander un taxi. Peut venir de l'entreprise liée.</p>
           <div id="lx-map" style="width:100%;height:240px;border-radius:14px;overflow:hidden;border:1px solid rgba(148,163,184,.2);background:#0f172a;"></div>
           <div class="lx-admin-row">
             <input id="lx-lat" type="text" placeholder="Latitude (obligatoire)">
@@ -475,6 +479,7 @@
           <label class="text-sm text-gray-300">Galerie <input id="lx-photos" type="file" accept="image/*" multiple></label>
           <div id="lx-gallery" class="flex flex-wrap gap-2"></div>
           <label class="text-sm text-white"><input id="lx-published" type="checkbox" checked> Publié</label>
+          <label class="text-sm text-white"><input id="lx-listed" type="checkbox" checked> Visible côté client</label>
           <label class="text-sm text-white"><input id="lx-featured" type="checkbox"> Coup de cœur</label>
           <div class="flex gap-2">
             <button type="button" onclick="lxSave()" class="px-4 py-2 rounded-xl bg-daxi-cyan font-bold text-gray-900">Enregistrer</button>
@@ -2619,7 +2624,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 <script src="/static/js/daxi-order-coords-map.js?v=20260803f"></script>
 <script src="/static/js/daxi-routes.js?v=20260726"></script>
 <script src="/static/js/admin-maps.js?v=20260803e"></script>
-<script src="/static/js/lieux_admin.js?v=20260823w"></script>
+<script src="/static/js/lieux_admin.js?v=20260827a"></script>
 <script>
 function ensureAdminMapsReady() {
   return window.AdminMaps ? AdminMaps.ensureReady() : Promise.reject(new Error('AdminMaps not loaded'));
