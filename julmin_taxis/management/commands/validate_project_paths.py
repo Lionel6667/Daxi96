@@ -144,6 +144,14 @@ class Command(BaseCommand):
                 g = _json.loads(gs.read_text(encoding='utf-8'))
                 android_num = str((g.get('project_info') or {}).get('project_number') or '')
                 web_num = str((getattr(settings, 'FIREBASE_WEB_CONFIG', {}) or {}).get('messagingSenderId') or '')
+                pkg = ''
+                clients = (g.get('client') or [])
+                if clients:
+                    pkg = str(((clients[0].get('client_info') or {}).get('android_client_info') or {}).get('package_name') or '')
+                if pkg and pkg != 'com.daxipro.daxi':
+                    warnings.append(f'google-services package_name={pkg} (attendu com.daxipro.daxi)')
+                elif pkg:
+                    self.stdout.write(self.style.SUCCESS(f'  [OK] FCM   google-services package={pkg}'))
                 if android_num and web_num and android_num != web_num:
                     warnings.append(
                         f'Firebase project_number mismatch: Android={android_num} '
@@ -156,6 +164,23 @@ class Command(BaseCommand):
                     ))
             except Exception as exc:
                 warnings.append(f'google-services.json illisible: {exc}')
+        else:
+            warnings.append('google-services.json absent (clients/daxi-capacitor/android/app/)')
+
+        try:
+            from julmin_taxis.wellknown_views import android_fingerprints, assetlinks_body
+            fps = android_fingerprints()
+            self.stdout.write(self.style.SUCCESS(
+                f'  [OK] App Links assetlinks fingerprints ({len(fps)}): ' + ', '.join(fps[:3]) + ('…' if len(fps) > 3 else '')
+            ))
+            if len(fps) < 2:
+                warnings.append('assetlinks: une seule empreinte SHA — ajoute release + debug pour dev et store')
+            body = assetlinks_body()
+            pkg = str(((body[0] or {}).get('target') or {}).get('package_name') or '')
+            if pkg != 'com.daxipro.daxi':
+                warnings.append(f'assetlinks package_name={pkg} (attendu com.daxipro.daxi)')
+        except Exception as exc:
+            warnings.append(f'assetlinks check failed: {exc}')
 
                                          
         villes = base / 'villes'

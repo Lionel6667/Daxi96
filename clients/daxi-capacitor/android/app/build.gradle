@@ -1,5 +1,28 @@
 apply plugin: 'com.android.application'
 
+def keystorePropsFile = file('../../daxi-android/keystore.properties')
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
+def signingProp(String envName, String propName) {
+    def fromEnv = System.getenv(envName)?.trim()
+    if (fromEnv) return fromEnv
+    return keystoreProps.getProperty(propName)?.trim()
+}
+
+def releaseStoreFilePath = signingProp('DAXI_STORE_FILE', 'storeFile')
+def releaseKeyAlias = signingProp('DAXI_KEY_ALIAS', 'keyAlias')
+def releaseStorePassword = signingProp('DAXI_STORE_PASSWORD', 'storePassword')
+def releaseKeyPassword = signingProp('DAXI_KEY_PASSWORD', 'keyPassword')
+def releaseStoreFile = releaseStoreFilePath ? file(releaseStoreFilePath) : null
+def hasReleaseSigning = releaseStoreFile != null &&
+    releaseStoreFile.exists() &&
+    releaseKeyAlias &&
+    releaseStorePassword &&
+    releaseKeyPassword
+
 android {
     namespace "com.daxipro.daxi"
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,10 +39,23 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    if (hasReleaseSigning) {
+        signingConfigs {
+            release {
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                storeFile releaseStoreFile
+                storePassword releaseStorePassword
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
