@@ -84,17 +84,15 @@
           console.warn = _noop;
         } catch (e) {}
       }
-      /* STRICT: block navigator.geolocation until DAXI consent / prior grant */
+      /* STRICT: geolocation ONLY after explicit DAXI toast accept this session
+         (or native bridge). localStorage alone must NEVER open the browser prompt. */
       try {
         if (navigator.geolocation && !navigator.geolocation._daxiGated) {
           var _geo = navigator.geolocation;
           var _rawGet = _geo.getCurrentPosition.bind(_geo);
           var _rawWatch = _geo.watchPosition.bind(_geo);
           function _daxiGeoAllowed() {
-            if (window._daxiGpsUserConsent) return true;
-            if (window._daxiGpsPerm) return true;
-            try { if (localStorage.getItem('daxi_geo_granted') === '1') return true; } catch (e2) {}
-            return false;
+            return !!(window._daxiGpsUserConsent || window._daxiGpsPerm);
           }
           function _deny(err) {
             if (typeof err === 'function') {
@@ -32583,10 +32581,9 @@ function _daxiGrantGpsUserConsent() {
 }
 
 function _daxiHasGpsUserConsent() {
+    /* Session consent only — never localStorage alone (that reopened the OS prompt). */
     if (window._daxiGpsUserConsent) return true;
-    if (typeof _wasGeoPreviouslyGranted === 'function' && _wasGeoPreviouslyGranted()) return true;
     if (window._daxiGpsPerm) return true;
-    if (typeof _daxiNativeGpsGranted === 'function' && _daxiNativeGpsGranted()) return true;
     return false;
 }
 
@@ -32603,13 +32600,6 @@ function _daxiMaybeAskLocation() {
         try {
             if (typeof _ensureClientGpsLiveRunning === 'function') _ensureClientGpsLiveRunning();
         } catch (e) {}
-        return;
-    }
-    if (_daxiHasGpsUserConsent() && _wasGeoPreviouslyGranted()) {
-        if (window.DaxiWebGps && !window.DaxiAndroid) {
-            DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
-        }
-        _bootClientGps();
         return;
     }
     if (navigator.permissions && navigator.permissions.query) {
@@ -32630,15 +32620,11 @@ function _daxiMaybeAskLocation() {
             /* prompt — explain first, never getCurrentPosition */
             _showLocationSharePrompt(false);
         }).catch(function() {
-            if (!_wasGeoPreviouslyGranted()) _showLocationSharePrompt(false);
-            else _bootClientGps();
+            _showLocationSharePrompt(false);
         });
         return;
     }
-    if (_wasGeoPreviouslyGranted()) {
-        _bootClientGps();
-        return;
-    }
+    /* No Permissions API — always explain first */
     _showLocationSharePrompt(false);
 }
 window._daxiMaybeAskLocation = _daxiMaybeAskLocation;

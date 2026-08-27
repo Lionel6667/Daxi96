@@ -573,10 +573,11 @@ if not DEBUG:
                                                                            
 _CSP_BASE = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-    "https://maps.googleapis.com https://unpkg.com https://cdn.jsdelivr.net "
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' "
+    "https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com "
+    "https://unpkg.com https://cdn.jsdelivr.net "
     "https://cdnjs.cloudflare.com https://www.gstatic.com https://www.google.com "
-    "https://carimagesapi.com; "
+    "https://static.cloudflareinsights.com https://carimagesapi.com; "
     "style-src 'self' 'unsafe-inline' "
     "https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
     "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; "
@@ -585,14 +586,16 @@ _CSP_BASE = (
     "https://*.gstatic.com https://www.gstatic.com "
     "https://api.cloudinary.com https://fcmregistrations.googleapis.com "
     "https://firebaseinstallations.googleapis.com https://firebase.googleapis.com "
-    "https://www.googleapis.com https://cdn.jsdelivr.net wss: ws:; "
-    "worker-src 'self' blob:; "
-    "frame-src 'self' https://maps.google.com; "
+    "https://www.googleapis.com https://cdn.jsdelivr.net "
+    "https://static.cloudflareinsights.com https://cloudflareinsights.com wss: ws:; "
+    "worker-src 'self' blob: https://maps.googleapis.com https://*.googleapis.com; "
+    "child-src 'self' blob:; "
+    "frame-src 'self' https://maps.google.com https://www.google.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
     "form-action 'self'; "
     "frame-ancestors 'self';"
 )
-CONTENT_SECURITY_POLICY = _CSP_BASE if DEBUG else (
-    _CSP_BASE.replace("'unsafe-eval'", '').replace("  ", " ")
-)
+# Keep unsafe-eval / wasm-unsafe-eval in production: Google Maps WebGL label workers need them.
+CONTENT_SECURITY_POLICY = _CSP_BASE
+
