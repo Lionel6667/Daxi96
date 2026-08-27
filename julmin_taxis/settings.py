@@ -511,6 +511,8 @@ ANDROID_APP_SHA256_PLAY = os.environ.get('ANDROID_APP_SHA256_PLAY', '')
 ANDROID_APP_SHA256_FINGERPRINTS = os.environ.get('ANDROID_APP_SHA256_FINGERPRINTS', '')
 IOS_APP_TEAM_ID = os.environ.get('IOS_APP_TEAM_ID', 'YOUR_APPLE_TEAM_ID')
 IOS_APP_BUNDLE_ID = os.environ.get('IOS_APP_BUNDLE_ID', 'com.daxipro.daxi')
+# Meta Sharing Debugger — optionnel (966242223397117 = ID par défaut Facebook, supprime l’avertissement)
+FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', '966242223397117')
 
                                                
 FCM_SERVER_KEY = os.environ.get('FCM_SERVER_KEY', '')
@@ -598,4 +600,5 @@ _CSP_BASE = (
 )
 # Keep unsafe-eval / wasm-unsafe-eval in production: Google Maps WebGL label workers need them.
 CONTENT_SECURITY_POLICY = _CSP_BASE
+
 
