@@ -1,0 +1,11 @@
+<div id="rating-wrap-{{ order.id }}" class="daxi-client-rating" data-order-id="{{ order.id }}">
+  <div class="daxi-client-rating__icon">⭐</div>
+  <div class="daxi-client-rating__title">Comment était votre course ?</div>
+  <div class="daxi-client-rating__stars">
+    {% for i in "12345" %}
+    <button type="button" class="daxi-client-rating__star" data-star="{{ i }}" onclick="window.daxiRateDriver && daxiRateDriver({{ order.id }}, {{ i }}, this)" aria-label="{{ i }} étoiles">⭐</button>
+    {% endfor %}
+  </div>
+  <textarea id="rating-comment-{{ order.id }}" class="daxi-client-rating__comment" placeholder="Un commentaire ? (facultatif)" rows="2"></textarea>
+  <button type="button" class="daxi-client-rating__submit" onclick="window.daxiSubmitDriverRating && daxiSubmitDriverRating({{ order.id }})">Envoyer</button>
+</div>

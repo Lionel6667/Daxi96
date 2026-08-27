@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centre d'Assistance - DAXI</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(160deg, #070b14 0%, #0a1628 50%, #0f2447 100%);
+            min-height: 100vh;
+            padding: 0;
+            color: rgba(255,255,255,0.92);
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(8,14,35,0.97);
+            border-bottom: 1px solid rgba(148,163,184,0.18);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(12px);
+        }
+        .top-bar a {
+            color: #f8fafc;
+            text-decoration: none;
+            font-size: 22px;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .top-bar h1 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #f8fafc;
+            flex: 1;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .search-box {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(148,163,184,0.2);
+            border-radius: 50px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            padding: 5px;
+            background: transparent;
+            color: #f8fafc;
+        }
+
+        .search-box input::placeholder { color: rgba(255,255,255,0.4); }
+
+        .search-box i {
+            font-size: 24px;
+            color: #a5b4fc;
+        }
+
+        .faq-section {
+            background: rgba(15,23,42,0.75);
+            border: 1px solid rgba(148,163,184,0.18);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .faq-section h2 {
+            color: #c4b5fd;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid rgba(148,163,184,0.15);
+            padding: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-item:hover {
+            background: rgba(255,255,255,0.04);
+            padding-left: 10px;
+            margin-left: -10px;
+            margin-right: -10px;
+            padding-right: 10px;
+        }
+
+        .faq-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 1.1rem;
+        }
+
+        .faq-question i {
+            color: #a5b4fc;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.6;
+            padding-left: 10px;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            margin-top: 15px;
+        }
+
+        .faq-answer ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .faq-answer li {
+            margin: 8px 0;
+        }
+
+        .faq-answer strong {
+            color: #e2e8f0;
+        }
+
+        .chatbot-cta {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .chatbot-cta h3 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .chatbot-cta p {
+            margin-bottom: 25px;
+            opacity: 0.95;
+            font-size: 1.1rem;
+        }
+
+        .btn-chat {
+            background: rgba(255,255,255,0.12);
+            color: #f8fafc;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-chat:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.18);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .back-btn { display: none; }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .faq-section {
+                padding: 20px;
+            }
+
+            .chatbot-cta {
+                padding: 30px 20px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <a href="vubez2.html" aria-label="Retour"><i class="ri-arrow-left-line"></i></a>
+        <h1>Assistance</h1>
+    </header>
+
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="ri-customer-service-2-fill"></i>
+                Centre d'Assistance DAXI
+            </h1>
+            <p>Trouvez rapidement des réponses à vos questions</p>
+        </div>
+
+        <div class="search-box">
+            <i class="ri-search-line"></i>
+            <input type="text" id="searchInput" placeholder="Rechercher une question...">
+        </div>
+
+        <!-- Section: Commander un taxi -->
+        <div class="faq-section">
+            <h2><i class="ri-taxi-line"></i> Commander un Taxi</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Comment passer une commande ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Pour commander un taxi sur DAXI, suivez ces étapes simples :</p>
+                    <ul>
+                        <li><strong>1. Connectez-vous</strong> à votre compte ou créez-en un nouveau</li>
+                        <li><strong>2. Remplissez le formulaire</strong> avec :
+                            <ul>
+                                <li>Point de départ (localisation actuelle)</li>
+                                <li>Nombre de passagers</li>
+                                <li>Destination finale</li>
+                                <li>Date et heure souhaitées</li>
+                            </ul>
+                        </li>
+                        <li><strong>3. Ajoutez une description</strong> (optionnel mais recommandé)</li>
+                        <li><strong>4. Cliquez sur "Commander"</strong> et attendez la confirmation</li>
+                    </ul>
+                    <p>Vous recevrez une notification dès qu'un Prix a été proposé à votre course.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Quel est le rôle de la description dans ma commande ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>La <strong>description</strong> est très importante ! Elle permet de :</p>
+                    <ul>
+                        <li><strong>Faciliter votre identification</strong> : "Je porte un t-shirt rouge", "Je suis devant la pharmacie"</li>
+                        <li><strong>Préciser des détails</strong> : "Grand bâtiment bleu", "3ème maison après le carrefour"</li>
+                        <li><strong>Indiquer des besoins spéciaux</strong> : "J'ai beaucoup de bagages", "Je voyage avec un enfant"</li>
+                        <li><strong>Ajouter des instructions</strong> : "Sonnez en arrivant", "Appelez-moi 5 min avant"</li>
+                    </ul>
+                    <p><em>Plus votre description est précise, plus le chauffeur vous trouvera facilement !</em></p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Puis-je annuler ma commande ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p><strong>Oui !</strong> Vous pouvez gérer vos commandes :</p>
+                    <ul>
+                        <li><strong>Avant acceptation</strong> : Annulation gratuite en cliquant sur le bouton "Annuler"</li>
+                        <li><strong>Après acceptation</strong> : Contactez le chauffeur ou le adm via le chat box present ou dans les informations de votre commande pour modification</li>
+                        <li><strong>Annulation tardive</strong> : Des frais peuvent s'appliquer si le chauffeur est déjà en route</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Compte et Profil -->
+        <div class="faq-section">
+            <h2><i class="ri-user-line"></i> Mon Compte</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    À quoi sert l'ID de mon compte ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Votre <strong>ID de compte</strong> (exemple: #7687) est un numéro unique qui permet de :</p>
+                    <ul>
+                        <li><strong>Vous identifier rapidement</strong> auprès du support client</li>
+                        <li><strong>Suivre vos commandes</strong> dans notre système</li>
+                        <li><strong>Résoudre des problèmes</strong> : communiquez votre ID pour une assistance plus rapide</li>
+                        <li><strong>Faciliter la connexion</strong>vous connecter sur le site plus rapidement</li>
+                    </ul>
+                    <p>Vous pouvez trouver votre ID en haut à droite de la page, à côté de votre nom.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    J'ai oublié mon mot de passe, que faire ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Pas de panique ! Suivez ces étapes :</p>
+                    <ul>
+                        <li>Cliquez sur <strong>"Connexion"</strong></li>
+                        <li>Sélectionnez <strong>"Mot de passe oublié ?"</strong></li>
+                        <li>Entrez votre <strong>email ou numéro de téléphone</strong></li>
+                        <li>Vous recevrez un <strong>code de réinitialisation</strong></li>
+                        <li>Créez votre <strong>nouveau mot de passe</strong></li>
+                    </ul>
+                    <p>Si vous ne recevez pas le code, vérifiez vos spams ou contactez notre assistance.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Paiements et Tarifs -->
+        <div class="faq-section">
+            <h2><i class="ri-money-dollar-circle-line"></i> Paiements & Tarifs</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Quels sont les modes de paiement acceptés ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>DAXI accepte paiement :</p>
+                    <ul>
+                        <li><strong>En Espèces</strong> : Payez directement au chauffeur</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Comment sont calculés les tarifs ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Nos tarifs sont basés sur :</p>
+                    <ul>
+                        <li><strong>Distance</strong> : Kilométrage entre le point A et B</li>
+                        <li><strong>Durée</strong> : Temps estimé du trajet</li>
+                        <li><strong>Horaire</strong> : Tarifs majorés la nuit (22h-6h) et jours fériés</li>
+                        <li><strong>Type de véhicule</strong> : Standard, Confort, VIP</li>
+                        <li><strong>Demandes spéciales</strong> : Bagages encombrants, arrêts multiples</li>
+                    </ul>
+                    <p>Un devis est affiché AVANT validation de votre commande.</p>
+                </div>
+            </div>
+
+
+        <!-- Section: Sécurité et Confiance -->
+        <div class="faq-section">
+            <h2><i class="ri-shield-check-line"></i> Sécurité</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    Comment vérifier l'identité de mon chauffeur ?
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Votre sécurité est notre priorité ! Vérifiez toujours :</p>
+                    <ul>
+                        <li><strong>Photo du chauffeur</strong> : Visible dans l'app après acceptation</li>
+                        <li><strong>Nom complet</strong> : Doit correspondre à la notification</li>
+                        <li><strong>Note et avis</strong> : Consultez les évaluations d'autres clients</li>
+                        <li><strong>Badge de vérification</strong> : Tous nos chauffeurs sont certifiés</li>
+                    </ul>
+                    <p><em>En cas de doute, contactez immédiatement notre support !</em></p>
+                </div>
+            </div>
+
+        <!-- Section: Support Technique -->
+        <div class="faq-section">
+            <h2><i class="ri-tools-line"></i> Support Technique</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    L'application ne fonctionne pas correctement
+                    <i class="ri-arrow-down-s-line"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Essayez ces solutions rapides :</p>
+                    <ul>
+                        <li><strong>Fermez et rouvrez l'app</strong></li>
+                        <li><strong>Vérifiez votre connexion internet</strong></li>
+                        <li><strong>Attendez un petit moment</strong> : Il se peut qu'une mise à jour soit en train d'être déployée</li>
+                        <li><strong>Redémarrez votre téléphone</strong></li>
+                    </ul>
+                    <p>Si le problème persiste, contactez notre chatbot ou le support technique.</p>
+                </div>
+            </div>
+
+    
+
+        <!-- Call to Action vers le Chatbot -->
+        <div class="chatbot-cta">
+            <h3>Vous n'avez pas trouvé votre réponse ?</h3>
+            <p>Notre système d'assistance est disponible 24/7 pour vous aider en temps réel !</p>
+            <button class="btn-chat" onclick="openChatbot()">
+                <i class="ri-message-3-line"></i>
+                Contacter l'Assistance
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Toggle FAQ Items
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const wasActive = this.classList.contains('active');
+                
+                // Close all items
+                document.querySelectorAll('.faq-item').forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                });
+                
+                // Open clicked item if it wasn't active
+                if (!wasActive) {
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+            const faqSections = document.querySelectorAll('.faq-section');
+            
+            if (searchTerm === '') {
+                // Show all
+                faqSections.forEach(section => section.classList.remove('hidden'));
+                faqItems.forEach(item => item.classList.remove('hidden'));
+                return;
+            }
+            
+            let hasVisibleItems = {};
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                const section = item.closest('.faq-section');
+                const sectionId = section.querySelector('h2').textContent;
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.classList.remove('hidden');
+                    item.classList.add('active'); // Auto-expand matching items
+                    hasVisibleItems[sectionId] = true;
+                } else {
+                    item.classList.add('hidden');
+                    item.classList.remove('active');
+                }
+            });
+            
+            // Hide sections with no visible items
+            faqSections.forEach(section => {
+                const sectionId = section.querySelector('h2').textContent;
+                if (hasVisibleItems[sectionId]) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        });
+
+        // Open Chatbot
+        function openChatbot() {
+            window.location.href = 'chat.html';
+        }
+    </script>
+</body>
+</html>

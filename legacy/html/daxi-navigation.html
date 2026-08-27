@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d0d1a">
+  <title>DAXI — Navigation</title>
+
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
+  <style>
+    /* =========================================================
+       BASE & RESET
+    ========================================================= */
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+
+    :root {
+      --c-purple:       #7b3fe4;
+      --c-purple-lite:  #a97bf5;
+      --c-purple-glow:  rgba(123, 63, 228, 0.35);
+      --c-purple-dim:   rgba(123, 63, 228, 0.15);
+      --c-white:        #ffffff;
+      --c-dark:         #0d0d1a;
+      --c-panel:        rgba(13, 13, 30, 0.88);
+      --c-panel-border: rgba(255, 255, 255, 0.07);
+      --c-text:         rgba(255, 255, 255, 0.95);
+      --c-text-dim:     rgba(255, 255, 255, 0.48);
+      --shadow-lg:      0 12px 40px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2);
+      --shadow-sm:      0 4px 16px rgba(0,0,0,0.22);
+      --r-card:         22px;
+      --r-btn:          14px;
+      --blur:           blur(24px) saturate(1.8);
+      --safe-top:       env(safe-area-inset-top, 0px);
+      --safe-bot:       env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--c-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                   "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* =========================================================
+       MAP CONTAINER
+    ========================================================= */
+    #map {
+      position: fixed;
+      inset: 0;
+      width: 100%; height: 100%;
+    }
+
+    .mapboxgl-ctrl-logo,
+    .mapboxgl-ctrl-attrib { display: none !important; }
+
+    /* =========================================================
+       CAR MARKER — fixed at visual center, map moves
+    ========================================================= */
+    #car-wrap {
+      position: fixed;
+      left: 50%;
+      top: 57%;       /* shifted down → 3-D feel puts horizon above */
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .car-ring {
+      position: absolute;
+      inset: 50%; /* collapsed to center */
+      width: 72px; height: 72px;
+      margin: -36px 0 0 -36px;
+      border-radius: 50%;
+      background: var(--c-purple-glow);
+      animation: carPulse 2.4s ease-out infinite;
+    }
+
+    .car-svg {
+      position: relative;
+      display: block;
+      width: 52px; height: 52px;
+      filter: drop-shadow(0 5px 14px rgba(0,0,0,0.5))
+              drop-shadow(0 0 10px var(--c-purple-glow));
+    }
+
+    @keyframes carPulse {
+      0%   { transform: scale(0.7); opacity: 0.8; }
+      100% { transform: scale(2.6); opacity: 0;   }
+    }
+
+    /* =========================================================
+       TOP INSTRUCTION BAR
+    ========================================================= */
+    #top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: calc(12px + var(--safe-top)) 14px 0;
+    }
+
+    .top-card {
+      background: var(--c-panel);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--c-panel-border);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .turn-icon-box {
+      width: 54px; height: 54px;
+      background: var(--c-purple);
+      border-radius: 16px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 18px var(--c-purple-glow);
+      transition: background 0.3s;
+    }
+
+    .turn-icon-box svg { width: 30px; height: 30px; }
+
+    .turn-text { flex: 1; min-width: 0; }
+
+    .turn-dist {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--c-text);
+      line-height: 1;
+      letter-spacing: -0.8px;
+    }
+
+    .turn-dist-unit {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--c-text-dim);
+      margin-left: 4px;
+      letter-spacing: 0;
+    }
+
+    .turn-street {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--c-text-dim);
+      margin-top: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Speed limit pill inside top bar */
+    .speed-limit-pill {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 3px solid #e11d48;
+      background: white;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .speed-limit-val {
+      font-size: 14px;
+      font-weight: 900;
+      color: #111;
+      line-height: 1;
+    }
+
+    .speed-limit-lbl {
+      font-size: 7px;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.3px;
+    }
+
+    /* =========================================================
+       FLOATING LEFT — speed orb
+    ========================================================= */
+    #float-left {
+      position: fixed;
+      left: 14px;
+      bottom: calc(190px + var(--safe-bot));
+      z-index: 99;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    /* =========================================================
+       FLOATING RIGHT — alert, mute, recenter
+    ========================================================= */
+    #float-right {
+      position: fixed;
+      right: 14px;
+      bottom: calc(190px + var(--safe-bot));
+      z-index: 99;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .orb {
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: var(--c-panel);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--c-panel-border);
+      box-shadow: var(--shadow-sm);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      color: var(--c-text);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .orb:active { transform: scale(0.9); }
+
+    #speed-orb {
+      cursor: default;
+      gap: 1px;
+    }
+
+    .orb-speed-num {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .orb-speed-unit {
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    #speed-orb.speeding {
+      background: #ef4444;
+      border-color: #dc2626;
+      box-shadow: 0 4px 20px rgba(239,68,68,0.45);
+      animation: speedWarn 0.5s ease infinite alternate;
+    }
+
+    @keyframes speedWarn {
+      from { box-shadow: 0 4px 20px rgba(239,68,68,0.4); }
+      to   { box-shadow: 0 4px 28px rgba(239,68,68,0.8); }
+    }
+
+    .orb-icon { font-size: 22px; line-height: 1; }
+
+    #alert-orb {
+      background: rgba(220, 38, 38, 0.18);
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+
+    #alert-orb:active { background: rgba(220, 38, 38, 0.4); }
+
+    .orb-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--c-purple);
+      border: 1.5px solid rgba(13,13,30,0.8);
+      display: none;
+    }
+
+    #mute-orb.muted .orb-badge { display: block; }
+
+    /* =========================================================
+       BOTTOM PANEL
+    ========================================================= */
+    #bottom-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 0 14px calc(14px + var(--safe-bot));
+    }
+
+    .bottom-card {
+      background: var(--c-panel);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--c-panel-border);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-lg);
+      padding: 18px 20px 16px;
+    }
+
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      margin-bottom: 15px;
+    }
+
+    .stat {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--c-text);
+      line-height: 1;
+      letter-spacing: -0.4px;
+    }
+
+    .stat-val.accent { color: var(--c-purple-lite); }
+
+    .stat-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+    }
+
+    .stat-sep {
+      width: 1px; height: 34px;
+      background: var(--c-panel-border);
+    }
+
+    .end-nav-btn {
+      width: 100%; height: 46px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--r-btn);
+      color: rgba(255,255,255,0.75);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: -0.1px;
+    }
+
+    .end-nav-btn:active {
+      background: rgba(255,255,255,0.12);
+      transform: scale(0.98);
+    }
+
+    /* Progress bar */
+    .route-progress {
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .route-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--c-purple), var(--c-purple-lite));
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.8s ease;
+    }
+
+    /* =========================================================
+       GPS STATUS DOT (top-right)
+    ========================================================= */
+    #gps-dot {
+      position: fixed;
+      top: calc(18px + var(--safe-top));
+      right: 18px;
+      z-index: 200;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.28);
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+
+    #gps-dot.searching {
+      background: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.28);
+      animation: blink 1.2s ease infinite;
+    }
+
+    #gps-dot.error {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.28);
+    }
+
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.25; }
+    }
+
+    /* DEMO badge */
+    #demo-badge {
+      position: fixed;
+      top: calc(34px + var(--safe-top));
+      right: 14px;
+      z-index: 200;
+      background: var(--c-purple);
+      color: white;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    /* =========================================================
+       iOS PERMISSION SCREEN
+    ========================================================= */
+    #perm-screen {
+      position: fixed;
+      inset: 0; z-index: 2000;
+      background: rgba(8, 8, 22, 0.97);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 32px;
+      text-align: center;
+    }
+
+    #perm-screen.gone { display: none; }
+
+    .perm-emoji {
+      font-size: 68px;
+      margin-bottom: 24px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+
+    .perm-h { font-size: 26px; font-weight: 800; color: white; margin-bottom: 12px; }
+    .perm-p { font-size: 15px; color: var(--c-text-dim); line-height: 1.65; margin-bottom: 40px; }
+
+    .perm-allow-btn {
+      width: 100%;
+      height: 56px;
+      background: var(--c-purple);
+      border: none; border-radius: 18px;
+      color: white; font-size: 17px; font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 28px var(--c-purple-glow);
+      transition: transform 0.15s;
+      letter-spacing: -0.2px;
+    }
+
+    .perm-allow-btn:active { transform: scale(0.97); }
+
+    .perm-skip {
+      margin-top: 18px;
+      color: var(--c-text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 8px 20px;
+      transition: color 0.2s;
+    }
+
+    .perm-skip:hover { color: var(--c-text); }
+
+    /* =========================================================
+       ARRIVAL SCREEN
+    ========================================================= */
+    #arrival {
+      position: fixed;
+      inset: 0; z-index: 2000;
+      background: rgba(8, 8, 22, 0.96);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 36px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.55s cubic-bezier(.4,0,.2,1);
+    }
+
+    #arrival.show { opacity: 1; pointer-events: all; }
+
+    .arrival-ring {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      background: var(--c-purple-dim);
+      border: 2px solid var(--c-purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px;
+      margin-bottom: 28px;
+      box-shadow: 0 0 60px var(--c-purple-glow);
+      animation: arrivalPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes arrivalPulse {
+      0%,100% { box-shadow: 0 0 40px var(--c-purple-glow); }
+      50%      { box-shadow: 0 0 80px rgba(123,63,228,0.5); }
+    }
+
+    .arrival-h  { font-size: 32px; font-weight: 900; color: white; margin-bottom: 10px; letter-spacing: -0.5px; }
+    .arrival-sub { font-size: 16px; color: var(--c-text-dim); margin-bottom: 40px; line-height: 1.5; }
+
+    .arrival-cta {
+      width: 100%; max-width: 320px; height: 56px;
+      background: var(--c-purple); border: none;
+      border-radius: 18px; color: white;
+      font-size: 17px; font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 28px var(--c-purple-glow);
+      transition: transform 0.15s;
+    }
+
+    .arrival-cta:active { transform: scale(0.97); }
+
+    /* =========================================================
+       NOTIFICATION TOAST
+    ========================================================= */
+    #toast {
+      position: fixed;
+      top: calc(96px + var(--safe-top));
+      left: 50%; transform: translateX(-50%) translateY(-16px);
+      z-index: 300;
+      background: var(--c-panel);
+      -webkit-backdrop-filter: var(--blur);
+      backdrop-filter: var(--blur);
+      border: 1px solid var(--c-panel-border);
+      border-radius: 30px;
+      padding: 10px 22px;
+      color: var(--c-text);
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     iOS PERMISSION SCREEN
+============================================================ -->
+<div id="perm-screen" class="gone">
+  <div class="perm-emoji">🧭</div>
+  <h2 class="perm-h">Enable Compass</h2>
+  <p class="perm-p">DAXI needs your device's motion &amp; compass sensors for precise turn-by-turn navigation when driving slowly.</p>
+  <button class="perm-allow-btn" onclick="Nav.requestCompassIOS()">Allow Compass Access</button>
+  <div class="perm-skip" onclick="Nav.skipCompass()">Skip — GPS direction only</div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- GPS status -->
+<div id="gps-dot" class="searching"></div>
+<div id="demo-badge">DEMO</div>
+
+<!-- Car marker (fixed center) -->
+<div id="car-wrap">
+  <div class="car-ring"></div>
+  <svg class="car-svg" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="gCar" cx="50%" cy="30%" r="70%">
+        <stop offset="0%" stop-color="#b07ff8"/>
+        <stop offset="100%" stop-color="#5a1fc8"/>
+      </radialGradient>
+      <filter id="fCar" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      </filter>
+    </defs>
+    <!-- Shadow -->
+    <ellipse cx="26" cy="44" rx="14" ry="5" fill="rgba(0,0,0,0.3)"/>
+    <!-- Car arrow body -->
+    <path d="M26 4 L42 42 L26 34 L10 42 Z"
+          fill="url(#gCar)"
+          stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+    <!-- Center highlight dot -->
+    <circle cx="26" cy="26" r="3.5" fill="white" opacity="0.85"/>
+    <!-- Windshield accent -->
+    <path d="M26 10 L34 32 L26 28 L18 32 Z" fill="rgba(255,255,255,0.12)"/>
+  </svg>
+</div>
+
+<!-- TOP INSTRUCTION BAR -->
+<div id="top-bar">
+  <div class="top-card">
+    <div class="turn-icon-box" id="turn-icon-box">
+      <!-- injected by JS -->
+    </div>
+    <div class="turn-text">
+      <div class="turn-dist">
+        <span id="turn-dist-num">--</span><span class="turn-dist-unit" id="turn-dist-unit">m</span>
+      </div>
+      <div class="turn-street" id="turn-street">Calculating route…</div>
+    </div>
+    <div class="speed-limit-pill">
+      <div class="speed-limit-val" id="speed-limit-val">50</div>
+      <div class="speed-limit-lbl">km/h</div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING LEFT -->
+<div id="float-left">
+  <div class="orb" id="speed-orb">
+    <div class="orb-speed-num" id="speed-num">0</div>
+    <div class="orb-speed-unit">km/h</div>
+  </div>
+</div>
+
+<!-- FLOATING RIGHT -->
+<div id="float-right">
+  <div class="orb" id="alert-orb" onclick="Nav.sendAlert()">
+    <div class="orb-icon">🚨</div>
+  </div>
+  <div class="orb" id="mute-orb" onclick="Nav.toggleMute()">
+    <div class="orb-icon" id="mute-icon">🔊</div>
+    <div class="orb-badge"></div>
+  </div>
+  <div class="orb" id="recenter-orb" onclick="Nav.recenter()" style="display:none;">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="3.5" fill="white"/>
+      <path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<!-- BOTTOM PANEL -->
+<div id="bottom-panel">
+  <div class="bottom-card">
+    <div class="route-progress">
+      <div class="route-progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val accent" id="eta-val">--:--</div>
+        <div class="stat-lbl">Arrival</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-val" id="dur-val">-- min</div>
+        <div class="stat-lbl">Remaining</div>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <div class="stat-val" id="dist-val">-- km</div>
+        <div class="stat-lbl">Distance</div>
+      </div>
+    </div>
+    <button class="end-nav-btn" onclick="Nav.endNav()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)">
+        <rect x="5" y="5" width="14" height="14" rx="3"/>
+      </svg>
+      End Navigation
+    </button>
+  </div>
+</div>
+
+<!-- ARRIVAL SCREEN -->
+<div id="arrival">
+  <div class="arrival-ring">🎯</div>
+  <h2 class="arrival-h">You've Arrived!</h2>
+  <p class="arrival-sub">You have reached your destination.<br>Have a great trip with DAXI.</p>
+  <button class="arrival-cta" onclick="Nav.resetNav()">Start New Navigation</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+
+<!-- ============================================================
+     NAVIGATION ENGINE
+============================================================ -->
+<script>
+'use strict';
+
+/* -----------------------------------------------------------
+   CONFIG
+----------------------------------------------------------- */
+const CFG = {
+  // ⚠️  Replace with your real Mapbox public token
+  token:   'pk.eyJ1IjoiZGF4aS1uYXYiLCJhIjoiY2x5ZHVtbXl0b2tlbjEyMyJ9.REPLACE_ME',
+  style:   'mapbox://styles/mapbox/light-v11',
+  pitch:   60,
+  zoom:    17.5,
+
+  routeColor:  '#7b3fe4',
+  glowColor:   '#7b3fe4',
+
+  speedGPS:    3,    // m/s  → above: trust GPS bearing
+  speedIgnore: 0.5,  // m/s  → below: skip update
+  smooth:      0.9,  // heading EMA factor (higher = smoother / slower)
+  camMs:       300,  // easeTo duration
+
+  demoStep:    0.018,  // demo interpolation step per frame
+  speedLimit:  50,     // km/h display
+  totalDistM:  3200,   // metres (route distance)
+  totalDurS:   720,    // seconds (route ETA)
+};
+
+/* -----------------------------------------------------------
+   DEMO ROUTE  (replace with Mapbox Directions API response)
+   Winding city path in Paris area
+----------------------------------------------------------- */
+const ROUTE_COORDS = [
+  [2.33780, 48.86450],[2.33940, 48.86490],[2.34080, 48.86530],
+  [2.34230, 48.86600],[2.34410, 48.86660],[2.34570, 48.86710],
+  [2.34720, 48.86700],[2.34880, 48.86650],[2.35010, 48.86590],
+  [2.35160, 48.86545],[2.35310, 48.86510],[2.35450, 48.86480],
+  [2.35580, 48.86450],[2.35720, 48.86480],[2.35860, 48.86540],
+  [2.35970, 48.86630],[2.36040, 48.86740],[2.36060, 48.86850],
+  [2.36030, 48.86970],[2.35980, 48.87100],
+];
+
+/* Turn waypoints */
+const TURNS = [
+  { seg:0,  dir:'straight', street:'Rue de Rivoli',         dist:480 },
+  { seg:4,  dir:'right',    street:"Avenue de l'Opéra",     dist:310 },
+  { seg:8,  dir:'left',     street:'Rue Saint-Honoré',      dist:220 },
+  { seg:11, dir:'right',    street:'Boulevard Haussmann',   dist:160 },
+  { seg:15, dir:'left',     street:'Rue de la Chaussée',    dist:90  },
+  { seg:18, dir:'arrive',   street:'Destination',           dist:30  },
+];
+
+/* -----------------------------------------------------------
+   TURN ICON SVG PATHS
+----------------------------------------------------------- */
+const TURN_ICONS = {
+  straight: `<line x1="12" y1="20" x2="12" y2="4" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+             <polyline points="8,8 12,4 16,8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  right:    `<path d="M8 20 L8 12 Q8 6 14 6 L18 6" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+             <polyline points="14,2 18,6 14,10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  left:     `<path d="M16 20 L16 12 Q16 6 10 6 L6 6" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+             <polyline points="10,2 6,6 10,10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  slight_right: `<path d="M10 20 L10 14 Q10 8 16 6" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                 <polyline points="12,2 16,6 12,10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  slight_left: `<path d="M14 20 L14 14 Q14 8 8 6" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                <polyline points="12,2 8,6 12,10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  uturn:    `<path d="M16 20 L16 10 Q16 4 10 4 Q4 4 4 10 L4 14" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+             <polyline points="1,10 4,14 7,10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+  arrive:   `<circle cx="12" cy="12" r="4" fill="white"/>
+             <circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" fill="none"/>`,
+};
+
+/* -----------------------------------------------------------
+   NAV STATE
+----------------------------------------------------------- */
+const S = {
+  map:           null,
+  pos:           [...ROUTE_COORDS[0]],
+  smoothHeading: 0,
+  compassHdg:    null,
+  speed:         0,           // m/s
+
+  gpsActive:     false,
+  compassActive: false,
+  muted:         false,
+  centered:      true,
+
+  watchId:       null,
+  demoRafId:     null,
+  demoSeg:       0,
+  demoT:         0,
+
+  progress:      0,           // 0..1
+  startMs:       Date.now(),
+};
+
+/* -----------------------------------------------------------
+   MAIN NAV OBJECT
+----------------------------------------------------------- */
+const Nav = (() => {
+
+  /* ---- MAP INIT ---- */
+  function init() {
+    mapboxgl.accessToken = CFG.token;
+
+    S.map = new mapboxgl.Map({
+      container:        'map',
+      style:            CFG.style,
+      center:           S.pos,
+      zoom:             CFG.zoom,
+      pitch:            CFG.pitch,
+      bearing:          0,
+      antialias:        true,
+      interactive:      true,
+      attributionControl: false,
+      logoPosition:     'bottom-left',
+    });
+
+    S.map.on('load', _onLoad);
+    S.map.on('dragstart', () => {
+      S.centered = false;
+      document.getElementById('recenter-orb').style.display = '';
+    });
+  }
+
+  function _onLoad() {
+    _remove3D();
+    _drawRoute();
+    _startDemo();
+    _initGPS();
+    _checkCompassPerm();
+    _tickUI();
+    setInterval(_tickUI, 1000);
+  }
+
+  /* ---- REMOVE 3D BUILDINGS ---- */
+  function _remove3D() {
+    const layers = S.map.getStyle().layers;
+    for (const l of layers) {
+      if (l.type === 'fill-extrusion') {
+        S.map.setLayoutProperty(l.id, 'visibility', 'none');
+      }
+    }
+  }
+
+  /* ---- ROUTE DRAWING ---- */
+  function _drawRoute() {
+    const geo = {
+      type: 'Feature',
+      properties: {},
+      geometry: { type: 'LineString', coordinates: ROUTE_COORDS }
+    };
+
+    S.map.addSource('route', { type: 'geojson', data: geo });
+
+    /* Outer glow */
+    S.map.addLayer({
+      id: 'route-glow-outer',
+      type: 'line', source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': CFG.glowColor,
+        'line-width': 32,
+        'line-opacity': 0.10,
+        'line-blur': 10,
+      }
+    });
+
+    /* Inner glow */
+    S.map.addLayer({
+      id: 'route-glow-inner',
+      type: 'line', source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': CFG.glowColor,
+        'line-width': 18,
+        'line-opacity': 0.20,
+        'line-blur': 4,
+      }
+    });
+
+    /* Main route */
+    S.map.addLayer({
+      id: 'route-main',
+      type: 'line', source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': CFG.routeColor,
+        'line-width': 9,
+        'line-opacity': 1.0,
+      }
+    });
+
+    /* Route highlight (lighter centre) */
+    S.map.addLayer({
+      id: 'route-shine',
+      type: 'line', source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#c4a1ff',
+        'line-width': 2.5,
+        'line-opacity': 0.55,
+      }
+    });
+
+    /* Destination marker */
+    const dest = ROUTE_COORDS[ROUTE_COORDS.length - 1];
+    S.map.addSource('dest', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'Point', coordinates: dest } }
+    });
+    S.map.addLayer({
+      id: 'dest-ring',
+      type: 'circle', source: 'dest',
+      paint: { 'circle-radius': 20, 'circle-color': CFG.routeColor, 'circle-opacity': 0.22 }
+    });
+    S.map.addLayer({
+      id: 'dest-dot',
+      type: 'circle', source: 'dest',
+      paint: {
+        'circle-radius': 9,
+        'circle-color': CFG.routeColor,
+        'circle-stroke-width': 3,
+        'circle-stroke-color': 'white'
+      }
+    });
+  }
+
+  /* ---- GPS ---- */
+  function _initGPS() {
+    if (!navigator.geolocation) return;
+    S.watchId = navigator.geolocation.watchPosition(_onGPS, _onGPSErr, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 1000,
+    });
+  }
+
+  function _onGPS(pos) {
+    const { latitude: lat, longitude: lng, speed, heading } = pos.coords;
+    const spd = speed || 0;
+    S.speed = spd;
+    S.gpsActive = true;
+
+    document.getElementById('gps-dot').className = '';   // green
+    _stopDemo();
+    document.getElementById('demo-badge').style.display = 'none';
+
+    if (spd < CFG.speedIgnore) return;
+
+    const gpsBearing = _bearing(S.pos[1], S.pos[0], lat, lng);
+
+    let target;
+    if (spd > CFG.speedGPS) {
+      target = gpsBearing;
+    } else {
+      target = (S.compassActive && S.compassHdg !== null)
+        ? S.compassHdg
+        : gpsBearing;
+    }
+
+    _smoothHeading(target);
+
+    const dist = _haversine(S.pos[1], S.pos[0], lat, lng);
+    S.progress = Math.min(1, S.progress + dist / CFG.totalDistM);
+    S.pos = [lng, lat];
+
+    if (S.centered) _moveCamera(S.pos, S.smoothHeading);
+  }
+
+  function _onGPSErr(e) {
+    console.warn('GPS:', e.message);
+    document.getElementById('gps-dot').className = 'error';
+  }
+
+  /* ---- COMPASS ---- */
+  function _checkCompassPerm() {
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (iOS && typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      document.getElementById('perm-screen').classList.remove('gone');
+      return;
+    }
+    _listenCompass();
+  }
+
+  function requestCompassIOS() {
+    DeviceOrientationEvent.requestPermission()
+      .then(r => {
+        document.getElementById('perm-screen').classList.add('gone');
+        if (r === 'granted') _listenCompass();
+      })
+      .catch(() => document.getElementById('perm-screen').classList.add('gone'));
+  }
+
+  function skipCompass() {
+    document.getElementById('perm-screen').classList.add('gone');
+  }
+
+  function _listenCompass() {
+    window.addEventListener('deviceorientation', e => {
+      let h = null;
+      if (e.webkitCompassHeading != null) {
+        h = e.webkitCompassHeading;
+      } else if (e.alpha != null) {
+        h = (360 - e.alpha + 360) % 360;
+      }
+      if (h !== null) { S.compassHdg = h; S.compassActive = true; }
+    }, true);
+  }
+
+  /* ---- DEMO SIMULATION ---- */
+  function _startDemo() {
+    S.demoSeg = 0; S.demoT = 0;
+    _demoFrame();
+  }
+
+  function _stopDemo() {
+    if (S.demoRafId) { cancelAnimationFrame(S.demoRafId); S.demoRafId = null; }
+  }
+
+  function _demoFrame() {
+    if (S.gpsActive) return;
+
+    const n = ROUTE_COORDS.length;
+    if (S.demoSeg >= n - 1) { _showArrival(); return; }
+
+    const a = ROUTE_COORDS[S.demoSeg];
+    const b = ROUTE_COORDS[S.demoSeg + 1];
+
+    S.demoT += CFG.demoStep;
+    if (S.demoT >= 1) { S.demoT = 0; S.demoSeg++; }
+
+    const lng = a[0] + (b[0] - a[0]) * S.demoT;
+    const lat = a[1] + (b[1] - a[1]) * S.demoT;
+    const newPos = [lng, lat];
+
+    const gpsBearing = _bearing(S.pos[1], S.pos[0], lat, lng);
+    _smoothHeading(gpsBearing);
+
+    S.speed = 8.3;  // ~30 km/h demo
+    S.pos = newPos;
+    S.progress = (S.demoSeg + S.demoT) / (n - 1);
+
+    if (S.centered) _moveCamera(S.pos, S.smoothHeading);
+    _updateTurn(S.demoSeg);
+
+    S.demoRafId = requestAnimationFrame(_demoFrame);
+  }
+
+  /* ---- CAMERA ---- */
+  function _moveCamera(center, bearing) {
+    S.map.easeTo({
+      center,
+      bearing,
+      pitch:    CFG.pitch,
+      zoom:     CFG.zoom,
+      duration: CFG.camMs,
+      easing:   t => t,
+    });
+  }
+
+  function recenter() {
+    S.centered = true;
+    document.getElementById('recenter-orb').style.display = 'none';
+    _moveCamera(S.pos, S.smoothHeading);
+  }
+
+  /* ---- HEADING SMOOTHING ---- */
+  function _smoothHeading(target) {
+    const d = _angleDelta(target, S.smoothHeading);
+    S.smoothHeading = ((S.smoothHeading + d * (1 - CFG.smooth)) + 360) % 360;
+  }
+
+  /* ---- TURN INSTRUCTIONS ---- */
+  function _updateTurn(seg) {
+    let active = TURNS[0];
+    let nextIdx = -1;
+    for (let i = 0; i < TURNS.length; i++) {
+      if (seg >= TURNS[i].seg) { active = TURNS[i]; }
+      else if (nextIdx < 0)    { nextIdx = i; break; }
+    }
+    const display = (nextIdx >= 0) ? TURNS[nextIdx] : TURNS[TURNS.length - 1];
+
+    /* Approximate distance to next turn */
+    const segsLeft = display.seg - seg;
+    const distEst = Math.max(0, Math.round(segsLeft * 180 + display.dist * S.demoT));
+
+    document.getElementById('turn-street').textContent = display.street;
+
+    const numEl  = document.getElementById('turn-dist-num');
+    const unitEl = document.getElementById('turn-dist-unit');
+    if (distEst >= 1000) {
+      numEl.textContent  = (distEst / 1000).toFixed(1);
+      unitEl.textContent = ' km';
+    } else {
+      numEl.textContent  = distEst;
+      unitEl.textContent = ' m';
+    }
+
+    const box = document.getElementById('turn-icon-box');
+    const svg = TURN_ICONS[display.dir] || TURN_ICONS.straight;
+    box.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
+
+    if (display.dir === 'arrive') {
+      box.style.background = '#22c55e';
+    } else {
+      box.style.background = '';
+    }
+  }
+
+  /* ---- UI TICK (1 Hz) ---- */
+  function _tickUI() {
+    /* Speed */
+    const kmh = Math.round(S.speed * 3.6);
+    document.getElementById('speed-num').textContent = kmh;
+    const orb = document.getElementById('speed-orb');
+    orb.classList.toggle('speeding', kmh > CFG.speedLimit && S.speed > 0);
+
+    /* ETA / duration / distance */
+    const elapsed = (Date.now() - S.startMs) / 1000;
+    const remS    = Math.max(0, CFG.totalDurS - elapsed);
+    const remM    = Math.ceil(remS / 60);
+    const remDist = Math.max(0, CFG.totalDistM * (1 - S.progress));
+
+    const eta = new Date(Date.now() + remS * 1000);
+    document.getElementById('eta-val').textContent =
+      String(eta.getHours()).padStart(2,'0') + ':' +
+      String(eta.getMinutes()).padStart(2,'0');
+
+    document.getElementById('dur-val').textContent  = `${remM} min`;
+    document.getElementById('dist-val').textContent =
+      remDist >= 1000 ? `${(remDist/1000).toFixed(1)} km` : `${Math.round(remDist)} m`;
+
+    /* Progress bar */
+    document.getElementById('progress-fill').style.width = `${S.progress * 100}%`;
+  }
+
+  /* ---- ARRIVAL ---- */
+  function _showArrival() {
+    _stopDemo();
+    document.getElementById('arrival').classList.add('show');
+  }
+
+  /* ---- PUBLIC ACTIONS ---- */
+  function sendAlert() {
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    _toast('🚨 Alert sent to dispatch');
+    const o = document.getElementById('alert-orb');
+    o.style.background = 'rgba(220,38,38,0.5)';
+    setTimeout(() => o.style.background = '', 400);
+  }
+
+  function toggleMute() {
+    S.muted = !S.muted;
+    document.getElementById('mute-icon').textContent = S.muted ? '🔇' : '🔊';
+    document.getElementById('mute-orb').classList.toggle('muted', S.muted);
+    _toast(S.muted ? 'Voice guidance muted' : 'Voice guidance on');
+  }
+
+  function endNav() {
+    if (S.watchId) navigator.geolocation.clearWatch(S.watchId);
+    _showArrival();
+  }
+
+  function resetNav() {
+    document.getElementById('arrival').classList.remove('show');
+    S.demoSeg = 0; S.demoT = 0;
+    S.progress = 0;
+    S.pos = [...ROUTE_COORDS[0]];
+    S.smoothHeading = 0;
+    S.startMs = Date.now();
+    S.speed = 0;
+
+    S.map.easeTo({
+      center: ROUTE_COORDS[0],
+      bearing: 0, pitch: CFG.pitch,
+      zoom: CFG.zoom, duration: 1000,
+    });
+
+    _startDemo();
+  }
+
+  /* ---- TOAST ---- */
+  function _toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* ---- MATH ---- */
+  function _bearing(lat1, lon1, lat2, lon2) {
+    const R2D = 180 / Math.PI;
+    const D2R = Math.PI / 180;
+    const dL  = (lon2 - lon1) * D2R;
+    const y   = Math.sin(dL) * Math.cos(lat2 * D2R);
+    const x   = Math.cos(lat1 * D2R) * Math.sin(lat2 * D2R) -
+                Math.sin(lat1 * D2R) * Math.cos(lat2 * D2R) * Math.cos(dL);
+    return (Math.atan2(y, x) * R2D + 360) % 360;
+  }
+
+  function _angleDelta(target, current) {
+    return ((target - current + 540) % 360) - 180;
+  }
+
+  function _haversine(lat1, lon1, lat2, lon2) {
+    const R   = 6371000;
+    const D2R = Math.PI / 180;
+    const dLat = (lat2 - lat1) * D2R;
+    const dLon = (lon2 - lon1) * D2R;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1*D2R)*Math.cos(lat2*D2R)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  /* ---- EXPOSE ---- */
+  return {
+    init,
+    recenter,
+    sendAlert,
+    toggleMute,
+    endNav,
+    resetNav,
+    requestCompassIOS,
+    skipCompass,
+  };
+})();
+
+/* ---- BOOT ---- */
+window.addEventListener('DOMContentLoaded', () => Nav.init());
+</script>
+
+</body>
+</html>

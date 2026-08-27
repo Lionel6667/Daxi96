@@ -1,0 +1,13 @@
+
+
+.suggestions-container[data-daxi-suggest-theme="dark"] .suggestion-item:hover,
+.daxi-suggest--dark .suggestion-item:hover {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #fff !important;
+}
+
+.suggestions-container[data-daxi-suggest-theme="light"] .suggestion-item:hover,
+.daxi-suggest--light .suggestion-item:hover {
+  background: rgba(194, 120, 3, 0.1) !important;
+  color: #0f2447 !important;
+}

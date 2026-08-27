@@ -1,0 +1,52 @@
+{% load static daxi_extras %}
+<div class="adm-cal-day" data-cal-day-url="{{ day_url }}">
+  <div class="adm-cal-day__title">
+    <i class="ri-calendar-line"></i> {{ date_display }}
+  </div>
+  {% if is_today %}
+  <p class="adm-cal-day__hint">Inclut les courses actives du jour (en attente ou en cours).</p>
+  {% endif %}
+
+  {% if not orders %}
+  <div class="adm-cal-day__empty">
+    <i class="ri-inbox-line"></i> Aucune course ce jour
+  </div>
+  {% endif %}
+
+  {% for o in orders %}
+  <div class="adm-cal-day__order adm-cal-day__order--{{ o.status }}">
+    <div class="adm-cal-day__order-main">
+      <div class="adm-cal-day__route">
+        {{ o.pickup_display|default:o.pickup }} → {{ o.destination_display|default:o.destination }}
+      </div>
+      <div class="adm-cal-day__meta">
+        <i class="ri-user-line"></i> {{ o.client_name }}
+        {% if o.time %} · <i class="ri-time-line"></i> {{ o.time|slice:":5" }}{% endif %}
+        {% if o.is_later %} · <i class="ri-calendar-schedule-line"></i> Programmé{% endif %}
+        {% if o.trip_type == 'round_trip' %} · ↔ AR{% elif o.trip_type %} · → Simple{% endif %}
+        {% if o.driver_name %} · <i class="ri-car-line"></i> {{ o.driver_name }}{% endif %}
+      </div>
+    </div>
+    <div class="adm-cal-day__order-side">
+      {% if o.price %}
+      <span class="adm-cal-day__price">{{ o.price|daxi_price }}</span>
+      {% endif %}
+      <span class="adm-cal-day__badge adm-cal-day__badge--{{ o.status }}">
+        {% if o.status == 'completed' %}<i class="ri-check-double-line"></i> Terminé
+        {% elif o.status == 'cancelled' %}<i class="ri-close-circle-line"></i> Annulé
+        {% elif o.status == 'driver_assigned' %}<i class="ri-car-line"></i> Assigné
+        {% elif o.status == 'on_way' %}<i class="ri-route-line"></i> En route
+        {% elif o.status == 'arrived' %}<i class="ri-map-pin-line"></i> Arrivé
+        {% elif o.status == 'in_progress' %}<i class="ri-loader-4-line"></i> En cours
+        {% elif o.status == 'price_confirmed' %}<i class="ri-check-line"></i> Confirmé
+        {% elif o.status == 'price_proposed' %}<i class="ri-price-tag-3-line"></i> Prix proposé
+        {% else %}<i class="ri-add-circle-line"></i> Nouveau{% endif %}
+      </span>
+      <button type="button" class="daxi-cal-detail-btn"
+              onclick="event.stopPropagation(); openAdminCalendarOrderDetail({{ o.id }});">
+        <i class="ri-eye-line"></i> Voir détails
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>

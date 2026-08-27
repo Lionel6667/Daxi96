@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email Sending</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Test Email System</h1>
+    <p>Click buttons below to test email sending</p>
+    
+    <button onclick="testOTPEmail()">Test OTP Email</button>
+    <button onclick="testOrderEmail()">Test Order Email</button>
+    <button onclick="testPriceEmail()">Test Price Email</button>
+    
+    <hr>
+    <div id="output" style="background: #f0f0f0; padding: 20px; margin-top: 20px; white-space: pre-wrap; font-family: monospace;"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg) {
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        async function testOTPEmail() {
+            output.textContent = '';
+            log('[OTP EMAIL TEST]');
+            log('Endpoint: /phpscript/send_otp.php');
+            log('Email: flaymiwanito@gmail.com');
+            log('OTP: 123456');
+            log('');
+            
+            try {
+                const response = await fetch('/phpscript/send_otp.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        email: 'flaymiwanito@gmail.com',
+                        otp: '123456'
+                    })
+                });
+
+                log('Response Status: ' + response.status);
+                const text = await response.text();
+                log('Response: ' + text);
+                
+                try {
+                    const result = JSON.parse(text);
+                    if (result.success) {
+                        log('✅ SUCCESS!');
+                    } else {
+                        log('❌ Failed: ' + result.message);
+                    }
+                } catch (e) {
+                    log('❌ Parse error');
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+            }
+        }
+
+        async function testOrderEmail() {
+            output.textContent = '';
+            log('[ORDER EMAIL TEST]');
+            log('Endpoint: /phpscript/send_order_email.php');
+            log('Email: flaymiwanito@gmail.com');
+            log('Type: price_proposed');
+            log('');
+            
+            try {
+                const response = await fetch('/phpscript/send_order_email.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        type: 'price_proposed',
+                        email: 'flaymiwanito@gmail.com',
+                        customerName: 'Test User',
+                        orderId: 'TEST-001',
+                        pickup: 'Test Pickup',
+                        destination: 'Test Destination',
+                        price: '500 $'
+                    })
+                });
+
+                log('Response Status: ' + response.status);
+                const text = await response.text();
+                log('Response: ' + text);
+                
+                try {
+                    const result = JSON.parse(text);
+                    if (result.success) {
+                        log('✅ SUCCESS!');
+                    } else {
+                        log('❌ Failed: ' + result.message);
+                    }
+                } catch (e) {
+                    log('❌ Parse error');
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+            }
+        }
+
+        async function testPriceEmail() {
+            output.textContent = '';
+            log('[PRICE EMAIL TEST]');
+            log('Endpoint: https://daxipro.com/phpscript/send_order_email.php');
+            log('Email: flaymiwanito@gmail.com');
+            log('Type: price_proposed');
+            log('');
+            
+            try {
+                const response = await fetch('https://daxipro.com/phpscript/send_order_email.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        type: 'price_proposed',
+                        email: 'flaymiwanito@gmail.com',
+                        customerName: 'Test User',
+                        orderId: 'TEST-002',
+                        pickup: 'Test Pickup',
+                        destination: 'Test Destination',
+                        price: '750 $'
+                    })
+                });
+
+                log('Response Status: ' + response.status);
+                const text = await response.text();
+                log('Response: ' + text.substring(0, 500));
+                
+                try {
+                    const result = JSON.parse(text);
+                    if (result.success) {
+                        log('✅ SUCCESS!');
+                    } else {
+                        log('❌ Failed: ' + result.message);
+                    }
+                } catch (e) {
+                    log('❌ Parse error');
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

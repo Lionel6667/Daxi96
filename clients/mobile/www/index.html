@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>DAXI</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .box { text-align: center; padding: 24px; max-width: 320px; }
+    a { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <p>Chargement de DAXI…</p>
+    <p style="font-size:13px;opacity:.7">Configurez <code>server.url</code> dans <code>capacitor.config.ts</code> puis relancez <code>npx cap sync</code>.</p>
+  </div>
+  <script>
+    
+    var PROD = 'https://julmintaxis.com';
+    if (location.protocol === 'capacitor:' || location.protocol === 'ionic:') {
+      location.replace(PROD);
+    }
+  </script>
+</body>
+</html>

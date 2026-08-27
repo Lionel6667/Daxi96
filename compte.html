@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mon Compte — Daxi</title>
+    <script src="/assets/js/tailwindcss-3.4.16.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <style>
+        * { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+        body { background: #f8fafc; color: #1f2937; margin: 0; padding-bottom: 100px; }
+
+        .page-header {
+            background: var(--daxi-surface, linear-gradient(135deg, #1f2937 0%, #111827 100%));
+            padding: 0;
+            position: sticky; top: 0; z-index: 50;
+            border-bottom: 1px solid var(--daxi-border, transparent);
+        }
+        .page-header-inner {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 20px;
+            max-width: 640px; margin: 0 auto;
+        }
+
+        .avatar-wrap {
+            position: relative; width: 96px; height: 96px;
+            border-radius: 50%;
+            
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245,158,11,0.2);
+            cursor: pointer; flex-shrink: 0;
+        }
+        .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .avatar-wrap .avatar-fallback {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 900; color: #000;
+            border-radius: 50%;
+        }
+        .avatar-edit-btn {
+            position: absolute; bottom: -2px; right: -2px;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #f59e0b; border: 2px solid #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; color: #000; z-index: 1;
+        }
+
+        .card {
+            background: #fff; border-radius: 18px;
+            box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+            margin: 0 16px 16px; overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px 8px;
+            font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: #9ca3af;
+        }
+        .info-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .info-row:first-of-type { border-top: none; }
+        .info-row i { font-size: 20px; color: #f59e0b; width: 24px; flex-shrink: 0; }
+        .info-row-label { font-size: 11px; color: #9ca3af; font-weight: 600; margin-bottom: 1px; }
+        .info-row-value { font-size: 14px; font-weight: 700; color: #1f2937; }
+
+        .stat-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; background: #f3f4f6;
+        }
+        .stat-cell {
+            background: #fff; padding: 18px 20px; text-align: center;
+        }
+        .stat-cell .num { font-size: 26px; font-weight: 900; color: #f59e0b; }
+        .stat-cell .lbl { font-size: 11px; color: #9ca3af; font-weight: 600; margin-top: 2px; }
+
+        .order-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 20px; border-top: 1px solid #f3f4f6;
+        }
+        .order-item:first-of-type { border-top: none; }
+        .order-dot {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0; margin-top: 2px;
+        }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #fff; height: 62px;
+            box-shadow: 0 -1px 12px rgba(0,0,0,0.07);
+            display: flex; align-items: stretch; z-index: 50;
+        }
+        .bnav-btn {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 2px;
+            border: none; background: transparent; cursor: pointer; padding: 0;
+            text-decoration: none; color: #9ca3af;
+        }
+        .bnav-btn.active { color: #f59e0b; }
+        .bnav-btn i { font-size: 21px; }
+        .bnav-btn span { font-size: 10px; font-weight: 700; }
+
+        .photo-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 200; align-items: flex-end; justify-content: center;
+        }
+        .photo-modal-overlay.open { display: flex; }
+        .photo-modal {
+            background: #fff; border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 500px;
+            padding: 24px 20px 36px;
+            animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .edit-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            z-index: 200; align-items: flex-end; justify-content: center;
+        }
+        .edit-modal-overlay.open { display: flex; }
+        .edit-modal {
+            background: #fff; border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 500px;
+            padding: 24px 20px 40px;
+            animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .input-field {
+            width: 100%; padding: 13px 16px;
+            border: 1.5px solid #e5e7eb; border-radius: 12px;
+            font-size: 14px; outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .input-field:focus { border-color: #f59e0b; }
+        .edit-phone-wrap {
+            display: flex; align-items: stretch; width: 100%;
+            border: 1.5px solid #e5e7eb; border-radius: 12px; overflow: hidden;
+            background: #fff; transition: border-color 0.2s;
+        }
+        .edit-phone-wrap:focus-within { border-color: #f59e0b; }
+        .edit-phone-prefix {
+            flex-shrink: 0; width: 72px; padding: 13px 20px 13px 10px;
+            font-size: 14px; font-weight: 700; color: #374151;
+            background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 6px center;
+            border: none; border-right: 1px solid #e5e7eb;
+            appearance: none; -webkit-appearance: none; cursor: pointer; outline: none;
+        }
+        .edit-phone-input {
+            flex: 1; min-width: 0; border: none; padding: 13px 14px;
+            font-size: 14px; outline: none; font-family: 'Poppins', sans-serif;
+        }
+        .btn-primary {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff; border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 800; cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+        }
+
+        .not-logged {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 60vh;
+            padding: 40px 24px; text-align: center;
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+    <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+    <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+    <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+    <link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
+    <script src="/static/js/daxi-web-radar.js?v=20260823i" defer></script>
+    <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+</head>
+<body class="compte-page">
+<script>
+if (window.location.pathname.replace(/\/$/, '') === '/compte') {
+    window.location.replace('/#/compte');
+}
+</script>
+
+
+<div class="page-header">
+    <div class="page-header-inner">
+        <a href="/" class="compte-back-btn">
+            <i class="ri-arrow-left-line"></i>
+        </a>
+        <h1 class="compte-title">Mon Compte</h1>
+        <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+    </div>
+</div>
+
+
+<div id="page-content">
+
+    
+    <div id="not-logged-view" class="not-logged" style="display:none;">
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="ri-user-3-line" style="font-size:36px;color:#f59e0b;"></i>
+        </div>
+        <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">Connectez-vous</h2>
+        <p style="color:#6b7280;font-size:14px;margin-bottom:28px;line-height:1.6;">Créez un compte ou connectez-vous pour voir vos courses, gérer votre profil et accéder à tous les services Daxi.</p>
+        <button onclick="window.location.href='/'" style="padding:14px 32px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.3);">
+            <i class="ri-login-box-line"></i> Se connecter
+        </button>
+    </div>
+
+    
+    <div id="logged-view" style="display:none; max-width:640px; margin:0 auto;">
+
+        
+        <div style="background:linear-gradient(135deg,#1f2937,#111827);padding:24px 20px 32px;text-align:center;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-40px;right:-30px;width:180px;height:180px;background:rgba(245,158,11,0.08);border-radius:50%;pointer-events:none;"></div>
+
+            <div class="avatar-wrap" style="margin:0 auto 14px;" onclick="openPhotoModal()">
+                <img id="profile-avatar-img" src="" style="display:none;">
+                <div id="profile-avatar-fb" class="avatar-fallback">
+                    <span id="profile-initials">?</span>
+                </div>
+                <div class="avatar-edit-btn"><i class="ri-camera-line"></i></div>
+            </div>
+
+            <h2 id="profile-name" style="color:#fff;font-size:20px;font-weight:800;margin:0 0 4px;">—</h2>
+            <p id="profile-id-display" style="color:#f59e0b;font-size:12px;font-weight:700;margin:0 0 16px;">ID: —</p>
+
+            <button onclick="openEditModal()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">
+                <i class="ri-edit-line"></i> Modifier le profil
+            </button>
+        </div>
+
+        
+        <div class="card" style="margin-top:20px;">
+            <div class="card-header">Mes statistiques</div>
+            <div class="stat-grid">
+                <div class="stat-cell">
+                    <div class="num" id="stat-total-orders">—</div>
+                    <div class="lbl">Courses totales</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="num" id="stat-this-month">—</div>
+                    <div class="lbl">Ce mois</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="num" id="stat-pending">—</div>
+                    <div class="lbl">En cours</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="num" id="stat-completed">—</div>
+                    <div class="lbl">Terminées</div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="card">
+            <div class="card-header">Informations personnelles</div>
+            <div class="info-row">
+                <i class="ri-user-line"></i>
+                <div><div class="info-row-label">Nom complet</div><div class="info-row-value" id="info-name">—</div></div>
+            </div>
+            <div class="info-row">
+                <i class="ri-mail-line"></i>
+                <div><div class="info-row-label">Email</div><div class="info-row-value" id="info-email">—</div></div>
+            </div>
+            <div class="info-row">
+                <i class="ri-phone-line"></i>
+                <div><div class="info-row-label">Téléphone</div><div class="info-row-value" id="info-phone">—</div></div>
+            </div>
+            <div class="info-row">
+                <i class="ri-fingerprint-line"></i>
+                <div><div class="info-row-label">ID Daxi</div><div class="info-row-value" id="info-id">—</div></div>
+            </div>
+        </div>
+
+        
+        <div class="card">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Historique des courses</span>
+                <span id="orders-total-badge" style="background:#fef3c7;color:#d97706;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:none;letter-spacing:0;">0</span>
+            </div>
+            <div id="orders-list"
+                hx-get="/htmx/client/orders/?tab=history"
+                hx-trigger="load, refresh from:body"
+                hx-swap="innerHTML">
+                <div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">Chargement...</div>
+            </div>
+        </div>
+
+        
+        <div class="card">
+            <div class="card-header">Paramètres</div>
+            <div class="info-row" style="cursor:pointer;" onclick="openEditModal()">
+                <i class="ri-settings-3-line"></i>
+                <div style="flex:1;"><div class="info-row-value" style="font-size:13px;">Modifier mes informations</div></div>
+                <i class="ri-arrow-right-s-line" style="color:#d1d5db;font-size:18px;"></i>
+            </div>
+            <div class="info-row" style="cursor:pointer;" onclick="openPhotoModal()">
+                <i class="ri-image-line"></i>
+                <div style="flex:1;"><div class="info-row-value" style="font-size:13px;">Changer ma photo de profil</div></div>
+                <i class="ri-arrow-right-s-line" style="color:#d1d5db;font-size:18px;"></i>
+            </div>
+            <div class="info-row" style="cursor:pointer;" onclick="doLogout()">
+                <i class="ri-logout-box-r-line" style="color:#ef4444;"></i>
+                <div style="flex:1;"><div class="info-row-value" style="font-size:13px;color:#ef4444;">Se déconnecter</div></div>
+                <i class="ri-arrow-right-s-line" style="color:#d1d5db;font-size:18px;"></i>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="photo-modal-overlay" id="photoModal" onclick="closePhotoModal()">
+    <div class="photo-modal" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;background:#e5e7eb;border-radius:99px;margin:0 auto 20px;"></div>
+        <h3 style="font-size:17px;font-weight:800;margin:0 0 6px;">Photo de profil</h3>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">Choisissez une nouvelle photo</p>
+
+        <div id="photo-preview-area" style="display:none;text-align:center;margin-bottom:16px;">
+            <img id="photo-preview-img" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #f59e0b;">
+        </div>
+
+        <label style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px dashed #e5e7eb;border-radius:14px;cursor:pointer;margin-bottom:16px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#e5e7eb'">
+            <div style="width:44px;height:44px;background:#fef3c7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="ri-upload-cloud-line" style="font-size:22px;color:#f59e0b;"></i>
+            </div>
+            <div>
+                <div style="font-size:14px;font-weight:700;color:#374151;">Sélectionner une image</div>
+                <div style="font-size:11px;color:#9ca3af;">JPG, PNG — max 5 MB</div>
+            </div>
+            <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
+        </label>
+
+        <div id="photo-error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;color:#b91c1c;font-size:12px;font-weight:500;margin-bottom:12px;"></div>
+
+        <button id="photo-upload-btn" onclick="uploadPhoto()" style="display:none;" class="btn-primary">
+            Enregistrer la photo
+        </button>
+        <button onclick="closePhotoModal()" style="width:100%;padding:12px;background:none;border:none;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;">
+            Annuler
+        </button>
+    </div>
+</div>
+
+
+<div class="edit-modal-overlay" id="editModal" onclick="closeEditModal()">
+    <div class="edit-modal" onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;background:#e5e7eb;border-radius:99px;margin:0 auto 20px;"></div>
+        <h3 style="font-size:17px;font-weight:800;margin:0 0 20px;">Modifier le profil</h3>
+
+        <div id="edit-error" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:10px 14px;color:#b91c1c;font-size:12px;font-weight:500;margin-bottom:14px;"></div>
+        <div id="edit-success" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;color:#15803d;font-size:12px;font-weight:500;margin-bottom:14px;"></div>
+
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Prénom</label>
+            <input id="edit-first-name" type="text" class="input-field" placeholder="Votre prénom">
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Nom de famille</label>
+            <input id="edit-last-name" type="text" class="input-field" placeholder="Votre nom">
+        </div>
+        <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Téléphone WhatsApp</label>
+            <div class="edit-phone-wrap">
+                <select id="edit-phone-prefix" class="edit-phone-prefix" aria-label="Indicatif pays">
+                    <option value="+509">+509</option>
+                    <option value="+1">+1</option>
+                    <option value="+33">+33</option>
+                    <option value="+34">+34</option>
+                    <option value="+44">+44</option>
+                    <option value="+49">+49</option>
+                    <option value="+39">+39</option>
+                    <option value="+41">+41</option>
+                    <option value="+32">+32</option>
+                    <option value="+52">+52</option>
+                    <option value="+57">+57</option>
+                    <option value="+1809">+1809</option>
+                    <option value="+1829">+1829</option>
+                    <option value="+1849">+1849</option>
+                </select>
+                <input id="edit-phone" type="tel" class="edit-phone-input" placeholder="40123456" inputmode="numeric" autocomplete="tel-national">
+            </div>
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Nouveau mot de passe <span style="color:#9ca3af;font-weight:500;">(laisser vide pour ne pas changer)</span></label>
+            <input id="edit-password" type="password" class="input-field" placeholder="Nouveau mot de passe">
+        </div>
+
+        <button id="edit-save-btn" onclick="saveProfile()" class="btn-primary">Enregistrer</button>
+        <button onclick="closeEditModal()" style="width:100%;padding:12px;background:none;border:none;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;">Annuler</button>
+    </div>
+</div>
+
+
+<nav class="bottom-nav">
+    <a href="/" class="bnav-btn">
+        <i class="ri-taxi-line"></i>
+        <span>Commander</span>
+    </a>
+    <a href="/?tab=orders" class="bnav-btn">
+        <i class="ri-route-line"></i>
+        <span>Mes courses</span>
+    </a>
+    <a href="/?tab=explorer" class="bnav-btn">
+        <i class="ri-compass-discover-line"></i>
+        <span>Explorer</span>
+    </a>
+    <a href="/?tab=account" class="bnav-btn active">
+        <i class="ri-user-3-line"></i>
+        <span>Mon compte</span>
+    </a>
+</nav>
+
+<script src="/static/js/daxi-phone.js?v=20260702"></script>
+<script src="/static/js/daxi-app-api.js?v=20260813"></script>
+<script src="/static/js/daxi-realtime.js?v=20260738"></script>
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const s = window.DJANGO_SESSION;
+    if (!s || !s.is_authenticated) {
+        document.getElementById('not-logged-view').style.display = 'flex';
+        return;
+    }
+    document.getElementById('logged-view').style.display = 'block';
+    loadProfile();
+    loadStats();
+    if (window.DaxiRealtime) {
+        DaxiRealtime.connect('client-account', DaxiRealtime.wsUrl('/ws/user/'), {
+            onEvent: function(ev) {
+                if (!DaxiRealtime.isOrderEvent(ev)) return;
+                loadStats();
+                var ol = document.getElementById('orders-list');
+                if (ol && typeof htmx !== 'undefined') htmx.trigger(ol, 'refresh');
+            }
+        });
+    }
+});
+
+function loadProfile() {
+    const s = window.DJANGO_SESSION;
+    if (!s) return;
+
+    const name = s.user_name || s.first_name || 'Utilisateur';
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+
+    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-initials').textContent = initials;
+    document.getElementById('info-name').textContent = name;
+    document.getElementById('info-email').textContent = s.user_email || '—';
+    document.getElementById('info-phone').textContent = s.user_phone || '—';
+
+    const uid = s.user_id || s.firebase_user_id || '—';
+    document.getElementById('info-id').textContent = uid;
+    document.getElementById('profile-id-display').textContent = 'ID: ' + uid;
+
+    if (s.user_photo) {
+        document.getElementById('profile-avatar-img').src = s.user_photo;
+        document.getElementById('profile-avatar-img').style.display = 'block';
+        document.getElementById('profile-avatar-fb').style.display = 'none';
+    }
+
+
+    const parts = name.split(' ');
+    document.getElementById('edit-first-name').value = parts[0] || '';
+    document.getElementById('edit-last-name').value = parts.slice(1).join(' ') || '';
+    if (typeof daxiInitPhoneFields === 'function') {
+        daxiInitPhoneFields(
+            document.getElementById('edit-phone-prefix'),
+            document.getElementById('edit-phone'),
+            s.user_phone || ''
+        );
+    } else {
+        document.getElementById('edit-phone').value = s.user_phone || '';
+    }
+}
+
+function loadStats() {
+    fetch('/htmx/client/orders/stats/', { credentials: 'include' })
+        .then(r => r.json()).then(d => {
+            document.getElementById('stat-total-orders').textContent = d.total ?? '0';
+            document.getElementById('stat-this-month').textContent = d.this_month ?? '0';
+            document.getElementById('stat-pending').textContent = d.pending ?? '0';
+            document.getElementById('stat-completed').textContent = d.completed ?? '0';
+            if (document.getElementById('orders-total-badge')) {
+                document.getElementById('orders-total-badge').textContent = d.total ?? '0';
+            }
+        }).catch(() => {
+            ['stat-total-orders','stat-this-month','stat-pending','stat-completed'].forEach(id => {
+                document.getElementById(id).textContent = '—';
+            });
+        });
+}
+
+
+function openPhotoModal() {
+    document.getElementById('photoModal').classList.add('open');
+}
+function closePhotoModal() {
+    document.getElementById('photoModal').classList.remove('open');
+    document.getElementById('photo-preview-area').style.display = 'none';
+    document.getElementById('photo-upload-btn').style.display = 'none';
+    document.getElementById('photo-error').style.display = 'none';
+    document.getElementById('photo-file-input').value = '';
+}
+function previewPhoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        document.getElementById('photo-error').textContent = 'Fichier trop grand (max 5 MB)';
+        document.getElementById('photo-error').style.display = 'block';
+        return;
+    }
+    document.getElementById('photo-error').style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('photo-preview-img').src = e.target.result;
+        document.getElementById('photo-preview-area').style.display = 'block';
+        document.getElementById('photo-upload-btn').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+function uploadPhoto() {
+    const input = document.getElementById('photo-file-input');
+    const file = input.files[0];
+    if (!file) return;
+    const btn = document.getElementById('photo-upload-btn');
+    btn.textContent = 'Envoi...'; btn.disabled = true;
+    const form = new FormData();
+    form.append('photo', file);
+    fetch('/htmx/client/profile/photo/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrf() },
+        body: form
+    }).then(r => r.json()).then(d => {
+        if (d.success || d.photo_url) {
+            const url = d.photo_url || URL.createObjectURL(file);
+            document.getElementById('profile-avatar-img').src = url;
+            document.getElementById('profile-avatar-img').style.display = 'block';
+            document.getElementById('profile-avatar-fb').style.display = 'none';
+            closePhotoModal();
+        } else {
+            document.getElementById('photo-error').textContent = d.error || 'Erreur lors de l\'envoi';
+            document.getElementById('photo-error').style.display = 'block';
+            btn.textContent = 'Enregistrer'; btn.disabled = false;
+        }
+    }).catch(() => {
+
+        const url = URL.createObjectURL(file);
+        document.getElementById('profile-avatar-img').src = url;
+        document.getElementById('profile-avatar-img').style.display = 'block';
+        document.getElementById('profile-avatar-fb').style.display = 'none';
+        closePhotoModal();
+    });
+}
+
+
+function openEditModal() {
+    document.getElementById('editModal').classList.add('open');
+}
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+    document.getElementById('edit-error').style.display = 'none';
+    document.getElementById('edit-success').style.display = 'none';
+}
+function saveProfile() {
+    const btn = document.getElementById('edit-save-btn');
+    const errEl = document.getElementById('edit-error');
+    const okEl  = document.getElementById('edit-success');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    btn.textContent = 'Enregistrement...'; btn.disabled = true;
+
+    const form = new FormData();
+    form.append('first_name', document.getElementById('edit-first-name').value.trim());
+    form.append('last_name',  document.getElementById('edit-last-name').value.trim());
+    const prefix = document.getElementById('edit-phone-prefix').value || '+509';
+    const national = document.getElementById('edit-phone').value.trim();
+    const normalized = (typeof daxiNormalizePhone === 'function')
+        ? daxiNormalizePhone(prefix, national)
+        : (prefix + national.replace(/\D/g, ''));
+    form.append('phone_prefix', prefix);
+    form.append('phone_national', national.replace(/\D/g, ''));
+    form.append('phone', normalized);
+    const pw = document.getElementById('edit-password').value;
+    if (pw) form.append('password', pw);
+
+    fetch('/htmx/client/profile/update/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrf() },
+        body: form
+    }).then(r => r.json()).then(d => {
+        btn.textContent = 'Enregistrer'; btn.disabled = false;
+        if (d.success) {
+            const newName = (form.get('first_name') + ' ' + form.get('last_name')).trim();
+            document.getElementById('profile-name').textContent = newName || '—';
+            document.getElementById('info-name').textContent = newName || '—';
+            if (d.user_phone) document.getElementById('info-phone').textContent = d.user_phone;
+            else if (normalized) document.getElementById('info-phone').textContent = normalized;
+            okEl.textContent = 'Profil mis à jour avec succès !';
+            okEl.style.display = 'block';
+            setTimeout(closeEditModal, 1800);
+        } else {
+            errEl.textContent = d.error || 'Erreur lors de la mise à jour.';
+            errEl.style.display = 'block';
+        }
+    }).catch(() => {
+        btn.textContent = 'Enregistrer'; btn.disabled = false;
+        errEl.textContent = 'Erreur réseau. Réessayez.';
+        errEl.style.display = 'block';
+    });
+}
+
+
+function doLogout() {
+    if (!confirm('Se déconnecter ?')) return;
+    fetch('/htmx/client/logout/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrf() }
+    }).finally(() => { window.location.href = '/'; });
+}
+
+function getCsrf() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+</script>
+</body>
+</html>

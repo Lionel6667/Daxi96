@@ -1,0 +1,22 @@
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Daxi utilise votre position pour trouver un chauffeur plus vite et afficher votre point de prise en charge. Vous pouvez aussi saisir l'adresse manuellement.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>Daxi utilise votre position pendant la course pour le suivi en temps réel.</string>
+<key>NSUserNotificationsUsageDescription</key>
+<string>Recevez une alerte quand un prix est proposé, quand un chauffeur est assigné, et quand il arrive.</string>
+<key>UIBackgroundModes</key>
+<array>
+  <string>remote-notification</string>
+</array>
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLName</key>
+    <string>com.daxipro.daxi</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>daxi</string>
+    </array>
+  </dict>
+</array>

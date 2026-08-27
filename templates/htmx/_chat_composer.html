@@ -1,0 +1,35 @@
+
+<div class="daxi-chat-shell{% if light %} daxi-chat-shell--light{% endif %}" id="daxi-chat-shell-{{ order_id }}">
+  <div class="daxi-chat-shell__head">
+    <span class="daxi-chat-shell__head-title"><i class="ri-chat-3-line"></i> {{ title|default:"Discussion" }}</span>
+    {% if closable %}
+    <button type="button"
+      {% if scope == 'user' %}onclick="clientToggleChat('{{ order_id }}'{% if guest_id %}, '{{ guest_id }}'{% endif %})"{% elif scope == 'enterprise' %}onclick="entToggleOrderChat('{{ order_id }}')"{% else %}onclick="document.getElementById('daxi-chat-shell-{{ order_id }}').style.display='none'"{% endif %}
+      style="background:none;border:none;color:#8696a0;font-size:18px;cursor:pointer;"><i class="ri-close-line"></i></button>
+    {% endif %}
+  </div>
+  <div id="chat-reply-bar-{{ order_id }}" class="daxi-chat-reply-bar">
+    <div class="daxi-chat-reply-bar__body">
+      <span class="daxi-chat-reply-bar__label">Répondre à</span>
+      <span id="chat-reply-preview-{{ order_id }}" class="daxi-chat-reply-bar__preview"></span>
+    </div>
+    <img id="chat-reply-thumb-{{ order_id }}" class="daxi-chat-reply-bar__thumb" alt="" style="display:none">
+    <button type="button" onclick="window._daxiChatCancelReply && window._daxiChatCancelReply('{{ order_id }}')"><i class="ri-close-line"></i></button>
+  </div>
+  <div class="daxi-chat-shell__msgs" id="chat-messages-{{ order_id }}"
+       hx-get="{% if scope == 'admin' %}/htmx/admin/chat/{{ order_id }}/{% elif scope == 'enterprise' %}/htmx/enterprise/orders/{{ order_id }}/chat/{% else %}/htmx/client/chat/{{ order_id }}/{% if guest_id %}?guest_id={{ guest_id }}{% endif %}{% endif %}"
+       hx-trigger="revealed, load"
+       hx-swap="innerHTML">
+  </div>
+  <div class="daxi-chat-form" id="daxi-chat-form-{{ order_id }}"
+       data-order-id="{{ order_id }}"
+       data-scope="{{ scope }}"
+       data-send-url="{% if scope == 'admin' %}/htmx/admin/chat/{{ order_id }}/send/{% elif scope == 'enterprise' %}/htmx/enterprise/orders/{{ order_id }}/chat/send/{% else %}/htmx/client/chat/{{ order_id }}/send/{% endif %}"
+       {% if guest_id %}data-guest-id="{{ guest_id }}"{% endif %}
+       data-csrf="{{ csrf_token }}">
+    <button type="button" class="daxi-chat-icon-btn daxi-chat-img-btn" title="Image"><i class="ri-image-add-line"></i></button>
+    <button type="button" class="daxi-chat-icon-btn daxi-chat-voice-btn" title="Message vocal"><i class="ri-mic-line"></i></button>
+    <input type="text" class="daxi-chat-text-input" placeholder="Message…" autocomplete="off">
+    <button type="button" class="daxi-chat-send-btn daxi-chat-send-trigger" title="Envoyer"><i class="ri-send-plane-fill"></i></button>
+  </div>
+</div>

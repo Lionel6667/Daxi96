@@ -1,0 +1,20 @@
+{% load daxi_extras %}
+{% if o.is_round_trip or o.trip_type == 'round_trip' or o.trip_type == 'aller-retour' %}
+{% if o.status == 'waiting_return' or o.round_trip_phase == 'return' or o.round_trip_phase == 'outbound' or o.status == 'in_progress' %}
+<div class="daxi-rt-phase-banner daxi-rt-phase-banner--{{ o.round_trip_phase|default:o.status }}">
+  {% if o.status == 'waiting_return' %}
+  <div class="daxi-rt-phase-banner__title"><i class="ri-hourglass-line"></i> Attente avant le retour</div>
+  <div class="daxi-rt-phase-banner__detail">
+    Arrivé à destination — retour prévu vers <strong>{{ o.pickup_display|default:o.pickup }}</strong>
+    {% if o.round_trip_wait_minutes %} · attente {{ o.round_trip_wait_minutes|daxi_wait_duration }}{% endif %}
+  </div>
+  {% elif o.round_trip_phase == 'return' or o.status == 'in_progress' and o.round_trip_phase == 'return' %}
+  <div class="daxi-rt-phase-banner__title"><i class="ri-arrow-go-back-line"></i> Retour en cours</div>
+  <div class="daxi-rt-phase-banner__detail">Direction : <strong>{{ o.pickup_display|default:o.pickup }}</strong> (point de départ initial)</div>
+  {% elif o.status == 'in_progress' %}
+  <div class="daxi-rt-phase-banner__title"><i class="ri-steering-2-line"></i> Aller en cours</div>
+  <div class="daxi-rt-phase-banner__detail">Direction : <strong>{{ o.destination_display|default:o.destination }}</strong> — le retour suivra après votre arrivée.</div>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}

@@ -1,0 +1,29 @@
+
+{% if o.client_name and o.status != 'pending' and o.status != 'price_proposed' and o.status != 'price_confirmed' and o.status != 'cancelled' %}
+<div class="daxi-oc-party daxi-oc-party--client" id="daxi-client-block-{{ o.id }}">
+  <div class="daxi-oc-party-avatar">
+    <span class="daxi-oc-party-initial">{{ o.client_name|first|upper }}</span>
+  </div>
+  <div class="daxi-oc-party-info">
+    <span class="daxi-oc-party-role">Client</span>
+    <span class="daxi-oc-party-name">{{ o.client_name }}</span>
+    {% if o.client_phone_display or o.client_phone %}
+    <span class="daxi-oc-party-meta">{{ o.client_phone_display|default:o.client_phone }}</span>
+    {% else %}
+    <span class="daxi-oc-party-meta daxi-oc-party-meta--muted">Numéro masqué</span>
+    {% endif %}
+    {% if o.client_email %}<span class="daxi-oc-party-meta">{{ o.client_email }}</span>{% endif %}
+  </div>
+  <div class="daxi-oc-party-actions">
+    {% if o.contact_unlocked and o.client_phone %}
+    <a href="tel:{{ o.client_phone }}" class="daxi-oc-party-btn daxi-oc-party-btn--call" title="Appeler le client"><i class="ri-phone-fill"></i></a>
+    {% endif %}
+    {% if o.status == 'driver_assigned' or o.status == 'on_way' or o.status == 'arrived' or o.status == 'in_progress' %}
+    <button type="button" class="daxi-oc-party-btn daxi-oc-party-btn--chat" onclick="openDriverChat('{{ o.id }}')" title="Discuter">
+      <i class="ri-chat-3-fill"></i>
+      <span id="chat-badge-{{ o.id }}" class="daxi-oc-party-chat-badge" style="display:none;"></span>
+    </button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

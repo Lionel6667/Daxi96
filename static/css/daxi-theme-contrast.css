@@ -1,0 +1,544 @@
+
+
+[data-theme="light"] {
+  --daxi-text-muted: #3E4C59;
+  --daxi-text-dim: #3E4C59;
+  --daxi-text-mute: #3E4C59;
+  --ent-text-mute: #3E4C59;
+  --ent-text-dim: #3E4C59;
+  --ent-daxi-placeholder: #486581;
+  --client-page-overlay-text: #102A43;
+}
+
+[data-theme="dark"] {
+  --daxi-text-mute: rgba(255, 255, 255, .68);
+}
+
+
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-gray-100,
+[data-theme="light"] .text-slate-100 { color: var(--daxi-text) !important; }
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-500,
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-slate-500 { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .text-gray-600,
+[data-theme="light"] .text-gray-700,
+[data-theme="light"] .text-gray-800,
+[data-theme="light"] .text-gray-900,
+[data-theme="light"] .text-slate-700,
+[data-theme="light"] .text-slate-800,
+[data-theme="light"] .text-slate-900 { color: var(--daxi-text) !important; }
+
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-black { color: var(--daxi-text) !important; }
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-slate-600 { color: var(--daxi-text-secondary) !important; }
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-gray-500 { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] .daxi-page-overlay {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay .text-gray-800,
+[data-theme="light"] .daxi-page-overlay .text-gray-900,
+[data-theme="light"] .daxi-page-overlay h1,
+[data-theme="light"] .daxi-page-overlay h2,
+[data-theme="light"] .daxi-page-overlay h3,
+[data-theme="light"] .daxi-page-overlay h4,
+[data-theme="light"] .daxi-page-overlay p,
+[data-theme="light"] .daxi-page-overlay label,
+[data-theme="light"] .daxi-page-overlay small,
+[data-theme="light"] .daxi-page-overlay li,
+[data-theme="light"] .daxi-page-overlay strong {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay .text-gray-500,
+[data-theme="light"] .daxi-page-overlay .text-gray-600 {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-page-overlay .bg-white,
+[data-theme="light"] .daxi-page-overlay .glass-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay input,
+[data-theme="light"] .daxi-page-overlay textarea,
+[data-theme="light"] .daxi-page-overlay select {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+  color-scheme: light !important;
+}
+[data-theme="light"] .daxi-page-overlay input::placeholder,
+[data-theme="light"] .daxi-page-overlay textarea::placeholder {
+  color: var(--daxi-text-muted) !important;
+  opacity: 1 !important;
+}
+[data-theme="light"] .daxi-page-hdr {
+  background: var(--client-page-hdr-bg) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-back,
+[data-theme="light"] .daxi-page-title { color: var(--daxi-text) !important; }
+
+
+[data-theme="light"] .daxi-acc,
+[data-theme="light"] .daxi-acc-hero-name,
+[data-theme="light"] .daxi-acc-guest__title,
+[data-theme="light"] .daxi-acc-guest__sub,
+[data-theme="light"] .daxi-acc-guest__perks span,
+[data-theme="light"] .daxi-acc-guest-enterprise-promo__body strong,
+[data-theme="light"] .daxi-acc-enterprise-promo__body strong,
+[data-theme="light"] .daxi-acc-enterprise-promo__body span,
+[data-theme="light"] .daxi-acc-row,
+[data-theme="light"] .daxi-acc-row small,
+[data-theme="light"] .daxi-acc-card-h,
+[data-theme="light"] .daxi-acc-stat .l {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-acc-guest__sub,
+[data-theme="light"] .daxi-acc-row small,
+[data-theme="light"] .daxi-acc-card-h,
+[data-theme="light"] .daxi-acc-stat .l,
+[data-theme="light"] .daxi-acc-enterprise-promo__body span {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-acc-guest__card,
+[data-theme="light"] .daxi-acc-card,
+[data-theme="light"] .daxi-acc-stat {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-acc-guest__btn--ghost,
+[data-theme="light"] button.daxi-acc-guest__btn--ghost,
+[data-theme="light"] .daxi-signup-btn--ghost,
+[data-theme="light"] #daxiSignupModal .daxi-signup-btn--ghost {
+  background: #e8eef5 !important;
+  color: #102A43 !important;
+  -webkit-text-fill-color: #102A43 !important;
+  border: 1.5px solid #9fb3c8 !important;
+  opacity: 1 !important;
+}
+[data-theme="light"] .daxi-acc-guest__btn--primary,
+[data-theme="light"] button.daxi-acc-guest__btn--primary {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+[data-theme="dark"] .daxi-acc-guest__btn--ghost,
+[data-theme="dark"] .daxi-signup-btn--ghost {
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  color-scheme: light;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--daxi-text-muted) !important;
+  opacity: 1 !important;
+}
+[data-theme="light"] option {
+  background: #fff;
+  color: #102A43;
+}
+
+
+[data-theme="light"] .daxi-sheet-tab {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-sheet-tab.active {
+  color: #92400e !important;
+}
+[data-theme="light"] .daxi-row-label,
+[data-theme="light"] .daxi-routes-card-hint,
+[data-theme="light"] .sidebar-section-title,
+[data-theme="light"] .sidebar-menu-item small {
+  color: var(--daxi-text-muted) !important;
+}
+
+
+[data-theme="light"] #drv-sidebar,
+[data-theme="light"] body.drv-auth-page,
+[data-theme="light"] .drv-oc-card,
+[data-theme="light"] .pm-body,
+[data-theme="light"] .pm-sheet {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] body.drv-auth-page p,
+[data-theme="light"] .drv-oc-chip,
+[data-theme="light"] .dsb-item-sub,
+[data-theme="light"] .dsb-item-meta {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="dark"] body.drv-auth-page,
+[data-theme="dark"] body.drv-auth-page p {
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="dark"] .drv-oc-card [style*="color:#1f2937"],
+[data-theme="dark"] .drv-oc-card [style*="color:#111827"] {
+  color: var(--daxi-text) !important;
+}
+
+
+[data-theme="light"] .ent-topbar,
+[data-theme="light"] .ent-dash-header,
+[data-theme="light"] .ent-section-title,
+[data-theme="light"] .ent-daxi-label,
+[data-theme="light"] .daxi-form-label {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .ent-dash-greeting,
+[data-theme="light"] .ent-daxi-muted,
+[data-theme="light"] .ent-loc-sub {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .ent-form-input,
+[data-theme="light"] .ent-daxi-input {
+  color: var(--daxi-text) !important;
+  background: var(--daxi-input-bg) !important;
+}
+[data-theme="dark"] .ent-dash-header-text,
+[data-theme="dark"] .ent-section-title,
+[data-theme="dark"] .ent-affiliate-text {
+  color: var(--ent-text) !important;
+}
+
+
+[data-theme="light"] #admin-app,
+[data-theme="light"] #admin-login,
+[data-theme="light"] #admin-app .nav-link,
+[data-theme="light"] #admin-app .admin-table th,
+[data-theme="light"] #admin-app .text-gray-400,
+[data-theme="light"] #admin-app .text-gray-500 {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #admin-app h1,
+[data-theme="light"] #admin-app h2,
+[data-theme="light"] #admin-app h3,
+[data-theme="light"] #admin-login .admin-login-title {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #admin-app .nav-link.active,
+[data-theme="light"] #admin-app .nav-link:hover {
+  color: #0e7490 !important;
+}
+[data-theme="dark"] #admin-app .text-gray-800,
+[data-theme="dark"] #admin-app .text-gray-900 {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .sidebar {
+  color: #e2e8f0;
+}
+[data-theme="light"] .sidebar .nav-link {
+  color: #cbd5e1 !important;
+}
+
+
+[data-theme="light"] button.ghost,
+[data-theme="light"] .btn-ghost,
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] [class*="btn--ghost"],
+[data-theme="light"] [class*="btn-outline"] {
+  color: var(--daxi-text) !important;
+}
+
+
+[data-theme="light"] .gold-button:not(.modern-download-btn),
+[data-theme="light"] .daxi-acc-guest__btn--primary,
+[data-theme="light"] .daxi-signup-btn--primary,
+[data-theme="light"] [class*="btn--primary"] {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+
+[data-theme="light"] .daxi-acc-guest__badge,
+[data-theme="light"] .daxi-acc-hero-id,
+[data-theme="light"] .ri-star-fill,
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-yellow-400 {
+  color: #b45309 !important;
+}
+
+[data-theme="dark"] .daxi-acc-guest__badge,
+[data-theme="dark"] .daxi-acc-hero-id {
+  color: #fbbf24 !important;
+}
+
+
+html[data-theme="light"] .daxi-acc-guest__btn--primary,
+html[data-theme="light"] button.daxi-acc-guest__btn--primary,
+html[data-theme="light"] .daxi-signup-btn--primary,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-btn--primary,
+html[data-theme="light"] #loginModal .daxi-signup-btn--primary,
+html[data-theme="light"] #loginModal .tab.active,
+html[data-theme="light"] .gold-button:not(.modern-download-btn),
+html[data-theme="light"] #verifyOtpBtn,
+html[data-theme="light"] #sendResetCodeBtn,
+html[data-theme="light"] #verifyResetCodeBtn {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+html[data-theme="light"] .daxi-acc-guest button[style*="background:transparent"],
+html[data-theme="light"] .daxi-acc-guest button[style*="color:#e2e8f0"],
+html[data-theme="light"] .daxi-acc-guest__btn--ghost {
+  background: #102A43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 0 !important;
+}
+
+html[data-theme="light"] #daxiSignupModal .daxi-signup-foot,
+html[data-theme="light"] #loginModal .daxi-signup-foot {
+  border-top-color: #D9E2EC !important;
+}
+html[data-theme="light"] #daxiSignupModal .daxi-signup-foot button,
+html[data-theme="light"] #loginModal .daxi-signup-foot button {
+  color: #102A43 !important;
+  -webkit-text-fill-color: #102A43 !important;
+}
+html[data-theme="light"] #daxiSignupModal .daxi-signup-foot__link,
+html[data-theme="light"] #loginModal .daxi-signup-foot__link {
+  color: #b45309 !important;
+  -webkit-text-fill-color: #b45309 !important;
+}
+html[data-theme="light"] #daxiSignupModal .daxi-signup-foot button:hover .daxi-signup-foot__link,
+html[data-theme="light"] #loginModal .daxi-signup-foot button:hover .daxi-signup-foot__link {
+  color: #78350f !important;
+  -webkit-text-fill-color: #78350f !important;
+}
+html[data-theme="light"] .daxi-gate { background: #ffffff !important; border-color: #D9E2EC !important; }
+html[data-theme="light"] .daxi-gate-title { color: #102A43 !important; }
+html[data-theme="light"] .daxi-gate-sub { color: #3E4C59 !important; }
+html[data-theme="light"] .daxi-gate-in,
+html[data-theme="light"] button.daxi-gate-in {
+  background: #c27803 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="light"] .daxi-gate-up,
+html[data-theme="light"] button.daxi-gate-up {
+  background: #102A43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] .daxi-gate { background: #111c30 !important; }
+html[data-theme="dark"] .daxi-gate-title { color: #f8fafc !important; }
+html[data-theme="dark"] .daxi-gate-in,
+html[data-theme="dark"] button.daxi-gate-in {
+  background: #f59e0b !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+html[data-theme="dark"] .daxi-gate-up,
+html[data-theme="dark"] button.daxi-gate-up {
+  background: #f8fafc !important;
+  color: #0b1220 !important;
+  -webkit-text-fill-color: #0b1220 !important;
+}
+html[data-theme="light"] .daxi-gate-in span,
+html[data-theme="light"] .daxi-gate-up span,
+html[data-theme="dark"] .daxi-gate-in span,
+html[data-theme="dark"] .daxi-gate-up span {
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+html[data-theme="light"] #daxiSignupModal .daxi-signup-field label,
+html[data-theme="light"] #loginModal .daxi-signup-field label,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-hint,
+html[data-theme="light"] #loginModal .daxi-login-hint,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-id-card p,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-id-info,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-id-save,
+html[data-theme="light"] #daxiSignupModal .toggle-password,
+html[data-theme="light"] #loginModal .toggle-password,
+html[data-theme="light"] #loginModal .tab {
+  color: #243B53 !important;
+}
+
+html[data-theme="light"] #daxiSignupModal .daxi-signup-field input,
+html[data-theme="light"] #daxiSignupModal .daxi-signup-field select,
+html[data-theme="light"] #daxiSignupModal .daxi-phone-prefix-select,
+html[data-theme="light"] #daxiSignupModal .daxi-phone-input,
+html[data-theme="light"] #loginModal .daxi-signup-field input {
+  color: #102A43 !important;
+  background: #F8FAFC !important;
+  border-color: #D9E2EC !important;
+  color-scheme: light !important;
+}
+html[data-theme="light"] #daxiSignupModal .daxi-signup-field input::placeholder,
+html[data-theme="light"] #loginModal .daxi-signup-field input::placeholder {
+  color: #486581 !important;
+  opacity: 1 !important;
+}
+html[data-theme="light"] #daxiSignupModal .daxi-phone-prefix-select option,
+html[data-theme="light"] #forgotPasswordModal .daxi-phone-prefix-select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+html[data-theme="light"] #forgotPasswordModal .daxi-phone-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] #forgotPasswordModal .daxi-phone-prefix-select,
+html[data-theme="light"] #forgotPasswordModal .daxi-phone-input {
+  color: #102A43 !important;
+  background: #F8FAFC !important;
+  border-color: #D9E2EC !important;
+  color-scheme: light !important;
+}
+
+html[data-theme="light"] .email-verification-content,
+html[data-theme="light"] #forgotPasswordModal .modal-content {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] .email-verification-content h3,
+html[data-theme="light"] .email-verification-content p,
+html[data-theme="light"] #otpModalTitle,
+html[data-theme="light"] #otpModalDesc,
+html[data-theme="light"] #otpModalStatus {
+  color: #102A43 !important;
+}
+html[data-theme="light"] .otp-box,
+html[data-theme="dark"] .otp-box {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+}
+html[data-theme="light"] .resend-otp,
+html[data-theme="light"] .daxi-login-forgot,
+html[data-theme="light"] #resendResetCodeBtn {
+  color: #b45309 !important;
+  background: transparent !important;
+  border: none !important;
+}
+html[data-theme="light"] #forgotPasswordModal input {
+  color: #102A43 !important;
+  background: #F8FAFC !important;
+}
+
+html[data-theme="light"] .daxi-acc-guest__btn--ghost,
+html[data-theme="light"] button.daxi-acc-guest__btn--ghost {
+  background: #fff7ed !important;
+  color: #102A43 !important;
+  -webkit-text-fill-color: #102A43 !important;
+  border: 2px solid #c27803 !important;
+}
+
+html[data-theme="light"] .daxi-orders-empty,
+html[data-theme="light"] .daxi-orders-empty-mini {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html[data-theme="light"] .daxi-orders-empty-title { color: #102A43 !important; }
+html[data-theme="light"] .daxi-orders-empty-sub,
+html[data-theme="light"] .daxi-orders-empty-mini { color: #3E4C59 !important; }
+
+html[data-theme="light"] .daxi-routes-card,
+html[data-theme="light"] .daxi-routes-card--active {
+  background: #ffffff !important;
+  color: #102A43 !important;
+  border-color: #D9E2EC !important;
+}
+html[data-theme="light"] .daxi-routes-card--active {
+  background: #fff7ed !important;
+  border-color: #f59e0b !important;
+}
+html[data-theme="light"] .daxi-routes-card-route,
+html[data-theme="light"] .daxi-routes-hud-title { color: #102A43 !important; }
+html[data-theme="light"] .daxi-routes-card-meta { color: #3E4C59 !important; }
+
+html[data-theme="light"] .daxi-explorer-hud-close,
+html[data-theme="light"] .daxi-explorer-nav-btn,
+html[data-theme="light"] .daxi-explorer-travel,
+html[data-theme="light"] .daxi-explorer-place-bar {
+  background: rgba(255,255,255,0.94) !important;
+  color: #102A43 !important;
+  border-color: #D9E2EC !important;
+}
+html[data-theme="light"] .daxi-explorer-hud-title,
+html[data-theme="light"] .daxi-explorer-active-name { color: #102A43 !important; }
+html[data-theme="light"] #daxi-explorer-travel-lbl { color: #b45309 !important; }
+
+html[data-theme="light"] .frequent-route-card {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] .attraction-overlay { color: #fff !important; }
+html[data-theme="light"] #daxiSheetExpandFab {
+  background: #ffffff !important;
+  color: #047857 !important;
+  border-color: #86efac !important;
+}
+
+html[data-theme="light"] .daxi-orders-empty,
+html[data-theme="light"] .daxi-orders-empty-title,
+html[data-theme="light"] .daxi-orders-empty-sub {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+html[data-theme="light"] .daxi-oc-plan-itinerary,
+html[data-theme="light"] .daxi-plan-stops,
+html[data-theme="light"] .daxi-routes-card,
+html[data-theme="light"] .frequent-route-card {
+  background: #ffffff !important;
+  border-color: #D9E2EC !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] .daxi-oc-plan-itinerary-lbl,
+html[data-theme="light"] .daxi-oc-plan-itinerary-val,
+html[data-theme="light"] .daxi-oc-plan-name,
+html[data-theme="light"] .daxi-plan-stops__head,
+html[data-theme="light"] .daxi-routes-card-route,
+html[data-theme="light"] .daxi-explorer-pin-label,
+html[data-theme="light"] .daxi-explorer-detail,
+html[data-theme="light"] .daxi-explorer-detail h3,
+html[data-theme="light"] .daxi-explorer-detail p {
+  color: #102A43 !important;
+}
+html[data-theme="light"] .daxi-oc-plan-hint,
+html[data-theme="light"] .daxi-routes-card-meta,
+html[data-theme="light"] .daxi-routes-card-hint {
+  color: #3E4C59 !important;
+}
+html[data-theme="light"] .daxi-explorer-detail {
+  background: rgba(240,244,249,0.55) !important;
+}
+html[data-theme="light"] .daxi-explorer-detail-panel {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] .daxi-explorer-pin-label {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+
+html[data-theme="light"] #forgotPasswordModal .modal-content {
+  background: #ffffff !important;
+  color: #102A43 !important;
+}
+html[data-theme="light"] #forgotPasswordModal .modal-header h3 {
+  color: #111827 !important;
+}

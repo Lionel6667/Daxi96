@@ -1,0 +1,128 @@
+{% if success_msg %}
+<div class="adm-ent-alert adm-ent-alert--success"><i class="ri-check-line"></i> {{ success_msg }}</div>
+{% endif %}
+
+<div class="adm-ent-pro">
+  <div class="adm-kpi-bar">
+    <div class="adm-kpi-item adm-kpi-item--amber"><div class="adm-kpi-val">{{ stats.pending|default:0 }}</div><div class="adm-kpi-lbl">En attente</div></div>
+    <div class="adm-kpi-item adm-kpi-item--green"><div class="adm-kpi-val">{{ stats.approved|default:0 }}</div><div class="adm-kpi-lbl">Approuvées</div></div>
+    <div class="adm-kpi-item adm-kpi-item--red"><div class="adm-kpi-val">{{ stats.rejected|default:0 }}</div><div class="adm-kpi-lbl">Refusées</div></div>
+    <div class="adm-kpi-item adm-kpi-item--pink"><div class="adm-kpi-val">{{ stats.locations|default:0 }}</div><div class="adm-kpi-lbl">Emplacements</div></div>
+    <div class="adm-kpi-item adm-kpi-item--blue"><div class="adm-kpi-val">{{ stats.total_orders|default:0 }}</div><div class="adm-kpi-lbl">Commandes</div></div>
+    <div class="adm-kpi-item adm-kpi-item--green"><div class="adm-kpi-val">{{ stats.total_completed|default:0 }}</div><div class="adm-kpi-lbl">Terminées</div></div>
+  </div>
+
+  <div class="adm-seg-nav">
+    <div class="adm-seg-group">
+      <button type="button" class="adm-seg-btn adm-seg-btn--pending{% if tab == 'pending' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('pending'); return false;"><i class="ri-time-line"></i> En attente</button>
+      <button type="button" class="adm-seg-btn adm-seg-btn--approved{% if tab == 'approved' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('approved'); return false;"><i class="ri-check-line"></i> Approuvées</button>
+      <button type="button" class="adm-seg-btn adm-seg-btn--rejected{% if tab == 'rejected' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('rejected'); return false;"><i class="ri-close-circle-line"></i> Refusées</button>
+      <button type="button" class="adm-seg-btn adm-seg-btn--loc{% if tab == 'locations' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('locations'); if(typeof markAdminSectionSeen==='function') markAdminSectionSeen('enterprise_locations'); return false;"><i class="ri-map-pin-line"></i> Emplacements{% if stats.locations %}<span class="adm-seg-badge">{{ stats.locations }}</span>{% endif %}</button>
+    </div>
+  </div>
+
+  {% if enterprises %}
+    {% for ent in enterprises %}
+    <article class="adm-ent-card">
+      <div class="adm-ent-card-head">
+        <div>
+          <div class="adm-ent-card-name">{{ ent.name }}</div>
+          <div class="adm-ent-card-contact">{{ ent.email }} · {{ ent.phone }}</div>
+          {% if ent.mode == 'shared_code' %}
+          <span class="adm-ent-badge adm-ent-badge--shared"><i class="ri-links-line"></i> Mode partagé (lien affilié)</span>
+          {% else %}
+          <span class="adm-ent-badge adm-ent-badge--direct"><i class="ri-shopping-bag-line"></i> Mode commande directe</span>
+          {% endif %}
+        </div>
+        <div class="adm-ent-card-date">
+          <div>{{ ent.created_at|date:"d/m/Y" }}</div>
+          {% if ent.completed_order_count %}<div style="color:#34d399;font-weight:700;margin-top:4px;">{{ ent.completed_order_count }} terminée{{ ent.completed_order_count|pluralize }}</div>{% endif %}
+          {% if ent.link_clicks %}<div style="color:#a78bfa;margin-top:2px;">{{ ent.link_clicks }} clic{{ ent.link_clicks|pluralize }}</div>{% endif %}
+          {% if ent.order_count and not ent.completed_order_count %}<div style="color:#60a5fa;margin-top:4px;">{{ ent.order_count }} cmd</div>{% endif %}
+        </div>
+      </div>
+
+      {% if ent.presentation %}
+      <div class="adm-ent-presentation">{{ ent.presentation }}</div>
+      {% endif %}
+
+      {% if tab == 'locations' %}
+      <div class="adm-ent-presentation" style="border-left-color:#ec4899;">
+        <i class="ri-map-pin-line"></i> <strong>Demande d'aide emplacement</strong>
+        {% if ent.location_help_requested_at %}<span style="opacity:.7;"> — {{ ent.location_help_requested_at|date:"d/m/Y H:i" }}</span>{% endif %}
+        <div style="margin-top:8px;">{{ ent.location_help_message }}</div>
+      </div>
+      <form hx-post="/htmx/admin/enterprises/{{ ent.pk }}/location/" hx-target="#admin-enterprises-content" hx-swap="innerHTML" class="adm-ent-loc-block" data-ent-id="{{ ent.pk }}" data-lat="{{ ent.address_lat|default:'19.7607' }}" data-lng="{{ ent.address_lng|default:'-72.2039' }}">
+        {% csrf_token %}
+        <p class="adm-ent-loc-hint"><i class="ri-drag-move-line"></i> Glissez la carte sous le repère doré pour placer l'entreprise.</p>
+        <div class="adm-ent-loc-map-wrap">
+          <div class="adm-ent-loc-map" id="adm-ent-loc-map-{{ ent.pk }}"></div>
+          <div class="adm-ent-loc-pin" aria-hidden="true"><i class="ri-map-pin-fill"></i></div>
+          <div class="adm-ent-loc-pin-shadow" aria-hidden="true"></div>
+          <div class="adm-ent-loc-map-hint"><i class="ri-drag-move-line"></i> Glissez la carte</div>
+        </div>
+        <p class="adm-ent-loc-coords" id="adm-ent-coords-{{ ent.pk }}">{% if ent.address_lat %}{{ ent.address_lat }}, {{ ent.address_lng }}{% else %}Position non définie{% endif %}</p>
+        <input type="hidden" name="lat" id="adm-ent-lat-{{ ent.pk }}" value="{{ ent.address_lat|default_if_none:'' }}">
+        <input type="hidden" name="lng" id="adm-ent-lng-{{ ent.pk }}" value="{{ ent.address_lng|default_if_none:'' }}">
+        <label class="adm-ent-input-label">Libellé affiché aux clients</label>
+        <input name="label" class="adm-ent-input adm-ent-loc-label-input" value="{{ ent.address_label|default:ent.name }}" placeholder="Nom ou adresse de l'entreprise">
+        <button type="submit" class="adm-ent-btn adm-ent-btn--approve" style="margin-top:10px;width:100%;justify-content:center;">
+          <i class="ri-map-pin-2-line"></i> Enregistrer l'emplacement
+        </button>
+      </form>
+
+      {% elif ent.status == 'pending' %}
+      <form hx-post="/htmx/admin/enterprises/{{ ent.pk }}/approve/" hx-target="#admin-enterprises-content" hx-swap="innerHTML" class="adm-ent-form-row">
+        {% csrf_token %}
+        <div style="flex:1;min-width:140px;">
+          <label class="adm-ent-input-label">Commission (%)</label>
+          <input name="commission_percent" type="number" min="0" max="100" step="0.5" value="10" class="adm-ent-input">
+        </div>
+        <div style="flex:2;min-width:180px;">
+          <label class="adm-ent-input-label">Notes admin</label>
+          <input name="admin_notes" placeholder="Notes internes..." class="adm-ent-input">
+        </div>
+        <button type="submit" class="adm-ent-btn adm-ent-btn--approve"><i class="ri-check-line"></i> Approuver</button>
+      </form>
+      <form hx-post="/htmx/admin/enterprises/{{ ent.pk }}/reject/" hx-target="#admin-enterprises-content" hx-swap="innerHTML" class="adm-ent-form-row">
+        {% csrf_token %}
+        <input name="reason" placeholder="Raison du refus (optionnel)" class="adm-ent-input" style="flex:1;">
+        <button type="submit" class="adm-ent-btn adm-ent-btn--reject"><i class="ri-close-circle-line"></i> Refuser</button>
+      </form>
+
+      {% elif ent.status == 'approved' %}
+      <div class="adm-ent-chips">
+        <span class="adm-ent-chip">Commission: {{ ent.commission_percent }}%</span>
+        <span class="adm-ent-chip adm-ent-chip--code">{{ ent.affiliate_code }}</span>
+        {% if ent.revenue_total %}<span class="adm-ent-chip">Revenu: ${{ ent.revenue_total|floatformat:0 }}</span>{% endif %}
+        {% if ent.completed_order_count %}<span class="adm-ent-chip">{{ ent.completed_order_count }} terminée{{ ent.completed_order_count|pluralize }}</span>{% endif %}
+        {% if ent.link_clicks %}<span class="adm-ent-chip">{{ ent.link_clicks }} clic{{ ent.link_clicks|pluralize }} lien</span>{% endif %}
+      </div>
+      <div class="adm-ent-actions">
+        <button type="button" class="adm-ent-btn adm-ent-btn--chat" hx-get="/htmx/admin/enterprises/{{ ent.pk }}/chat/" hx-target="#admin-enterprise-chat-{{ ent.pk }}" hx-swap="innerHTML">
+          <i class="ri-chat-3-line"></i> Chat
+        </button>
+        <a href="/?ref={{ ent.affiliate_code }}" target="_blank" rel="noopener" class="adm-ent-btn adm-ent-btn--link">
+          <i class="ri-link"></i> Lien affilié
+        </a>
+      </div>
+      <div id="admin-enterprise-chat-{{ ent.pk }}" style="margin-top:12px;"></div>
+
+      {% elif ent.status == 'rejected' %}
+      <div class="adm-ent-presentation" style="border-left-color:#ef4444;color:#fca5a5;">
+        <i class="ri-close-circle-line"></i> Refusé{% if ent.admin_notes %} — {{ ent.admin_notes }}{% endif %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  {% else %}
+    <div class="adm-ent-empty">
+      <i class="ri-building-line"></i>
+      <div>Aucune entreprise dans cette catégorie</div>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+.adm-ent-alert--success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;font-weight:600;}
+</style>

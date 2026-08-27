@@ -1,0 +1,1139 @@
+{
+  "analyzed": 690,
+  "modified": 204,
+  "comments_removed": 1238,
+  "skipped_risky": [
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\ai_config.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\api.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\api_queue.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\api_simple.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\assistance.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\config_smtp.example.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\config_smtp.php",
+      "encoding",
+      "decode failed"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\db_config.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\dedup_orders.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\driver_security.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\email_dashboard.html",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\failed_orders_handler.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\fcm_v1.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\firebase-listener.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\firebase_config.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\firebase_order_watcher.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\generate_faq.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\notification-cron.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\notification_scheduler.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\order_create.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\post_trip_notification.php",
+      "binary",
+      "null bytes"
+    ],
+    [
+      "C:\\Users\\User\\Desktop\\Coding project\\Julmin Taxis (vrai)\\julmin_taxis_django\\legacy\\phpscript\\queue_worker.php",
+      "binary",
+      "null bytes"
+    ]
+  ],
+  "files": [
+    {
+      "file": "daxi-frequent-routes-data.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "daxi-frequent-routes-map.js",
+      "lang": "js",
+      "comments": 2
+    },
+    {
+      "file": "daxi-haiti-explorer-data.js",
+      "lang": "js",
+      "comments": 7
+    },
+    {
+      "file": "daxi-haiti-explorer-map.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "daxi-push-register.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "driver_home.html",
+      "lang": "html",
+      "comments": 2
+    },
+    {
+      "file": "driver_login.html",
+      "lang": "html",
+      "comments": 2
+    },
+    {
+      "file": "firebase-messaging-sw.js",
+      "lang": "js",
+      "comments": 12
+    },
+    {
+      "file": "gps-precision-engine.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "run.bat",
+      "lang": "bat",
+      "comments": 1
+    },
+    {
+      "file": "setup.bat",
+      "lang": "bat",
+      "comments": 1
+    },
+    {
+      "file": "setup.sh",
+      "lang": "sh",
+      "comments": 1
+    },
+    {
+      "file": "sw.js",
+      "lang": "js",
+      "comments": 3
+    },
+    {
+      "file": "vubez2.html",
+      "lang": "html",
+      "comments": 31
+    },
+    {
+      "file": "accounts/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "accounts/migrations/0002_customuser_firebase_uid_customuser_firebase_user_id.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "accounts/migrations/0003_alter_customuser_email.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "admin_panel/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "assets/css/daxi-notifications.css",
+      "lang": "css",
+      "comments": 1
+    },
+    {
+      "file": "assets/css/drv-auth.css",
+      "lang": "css",
+      "comments": 4
+    },
+    {
+      "file": "assets/js/daxi-notifications.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "assets/js/tailwindcss-3.4.16.js",
+      "lang": "js",
+      "comments": 4
+    },
+    {
+      "file": "blog/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "chat/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "chatbot/migrations/0002_rename_chatbot_sit_languag_idx_chatbot_sit_languag_fdc087_idx.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "clients/daxi-capacitor/android/gradlew.bat",
+      "lang": "bat",
+      "comments": 2
+    },
+    {
+      "file": "clients/daxi-capacitor/android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java",
+      "lang": "java",
+      "comments": 2
+    },
+    {
+      "file": "clients/daxi-capacitor/android/app/src/main/AndroidManifest.xml",
+      "lang": "xml",
+      "comments": 1
+    },
+    {
+      "file": "clients/daxi-capacitor/android/app/src/main/java/com/daxipro/daxi/MainActivity.java",
+      "lang": "java",
+      "comments": 2
+    },
+    {
+      "file": "clients/daxi-capacitor/android/app/src/main/res/xml/network_security_config.xml",
+      "lang": "xml",
+      "comments": 1
+    },
+    {
+      "file": "clients/daxi-capacitor/android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java",
+      "lang": "java",
+      "comments": 1
+    },
+    {
+      "file": "clients/daxi-capacitor/capacitor-src/main.js",
+      "lang": "js",
+      "comments": 8
+    },
+    {
+      "file": "clients/daxi-capacitor/ios-config/Info.plist.additions.xml",
+      "lang": "xml",
+      "comments": 1
+    },
+    {
+      "file": "clients/daxi-capacitor/scripts/generate-icons.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "clients/mobile/capacitor.config.ts",
+      "lang": "js",
+      "comments": 2
+    },
+    {
+      "file": "clients/mobile/www/index.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0002_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0003_driver_city_driver_firebase_uid_driver_full_name_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0004_driver_car_brand_driver_car_image_url_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0005_driver_dgi_card_driver_oavct_insurance_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0006_add_commission_wallet_payment.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "drivers/migrations/0007_alter_driverwallettransaction_transaction_type.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "firebase_db/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "forum/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "forum/migrations/0002_forumpost_color_forumpost_is_published_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/dept_cities.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/migrations/0002_geozone_city_slug.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/services/import_progress.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/services/osm_importer.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/services/search.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "geo/services/zone_admin.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/admin_permissions.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "julmin_taxis/app_api.py",
+      "lang": "py",
+      "comments": 10
+    },
+    {
+      "file": "julmin_taxis/driver_display_utils.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "julmin_taxis/gps_antispoof.py",
+      "lang": "py",
+      "comments": 3
+    },
+    {
+      "file": "julmin_taxis/htmx_views_tracking.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "julmin_taxis/legal_views.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/mobile_outbox.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/native_shell.py",
+      "lang": "py",
+      "comments": 9
+    },
+    {
+      "file": "julmin_taxis/plan_pipeline_utils.py",
+      "lang": "py",
+      "comments": 4
+    },
+    {
+      "file": "julmin_taxis/push_policy.py",
+      "lang": "py",
+      "comments": 6
+    },
+    {
+      "file": "julmin_taxis/security_middleware.py",
+      "lang": "py",
+      "comments": 3
+    },
+    {
+      "file": "julmin_taxis/settings.py",
+      "lang": "py",
+      "comments": 7
+    },
+    {
+      "file": "julmin_taxis/wellknown_views.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/whatsapp_delivery.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "julmin_taxis/whatsapp_webhook_views.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/management/commands/build_daxi_mbtiles.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "julmin_taxis/payments/hatexcard.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "legacy/audit_email_system.php",
+      "lang": "php",
+      "comments": 27
+    },
+    {
+      "file": "legacy/final_neon_patch.py",
+      "lang": "py",
+      "comments": 6
+    },
+    {
+      "file": "legacy/find_opacity.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "legacy/fix_corrupted_views.py",
+      "lang": "py",
+      "comments": 3
+    },
+    {
+      "file": "legacy/patch_camera.py",
+      "lang": "py",
+      "comments": 17
+    },
+    {
+      "file": "legacy/patch_camera2.py",
+      "lang": "py",
+      "comments": 14
+    },
+    {
+      "file": "legacy/patch_features.py",
+      "lang": "py",
+      "comments": 19
+    },
+    {
+      "file": "legacy/patch_features2.py",
+      "lang": "py",
+      "comments": 14
+    },
+    {
+      "file": "legacy/patch_fs_portal.py",
+      "lang": "py",
+      "comments": 4
+    },
+    {
+      "file": "legacy/patch_hud_final.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "legacy/patch_hud_show.py",
+      "lang": "py",
+      "comments": 4
+    },
+    {
+      "file": "legacy/patch_nav.py",
+      "lang": "py",
+      "comments": 7
+    },
+    {
+      "file": "legacy/patch_nav_v2.py",
+      "lang": "py",
+      "comments": 20
+    },
+    {
+      "file": "legacy/patch_neon_route.py",
+      "lang": "py",
+      "comments": 3
+    },
+    {
+      "file": "legacy/patch_photo_markers.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "legacy/patch_premium_markers.py",
+      "lang": "py",
+      "comments": 9
+    },
+    {
+      "file": "legacy/patch_vubez2_states.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "legacy/send_arrived_email.php",
+      "lang": "php",
+      "comments": 5
+    },
+    {
+      "file": "legacy/send_on_the_way_email.php",
+      "lang": "php",
+      "comments": 3
+    },
+    {
+      "file": "legacy/test_all_emails.php",
+      "lang": "php",
+      "comments": 33
+    },
+    {
+      "file": "legacy/test_email_send.php",
+      "lang": "php",
+      "comments": 5
+    },
+    {
+      "file": "legacy/transform_adm.py",
+      "lang": "py",
+      "comments": 6
+    },
+    {
+      "file": "legacy/transform_driver.py",
+      "lang": "py",
+      "comments": 13
+    },
+    {
+      "file": "legacy/transform_vubez2.py",
+      "lang": "py",
+      "comments": 18
+    },
+    {
+      "file": "legacy/vivid_neon_route_patch.py",
+      "lang": "py",
+      "comments": 5
+    },
+    {
+      "file": "legacy/Daxi/index.html",
+      "lang": "html",
+      "comments": 279
+    },
+    {
+      "file": "legacy/js/admin-consolidated.js",
+      "lang": "js",
+      "comments": 31
+    },
+    {
+      "file": "legacy/js/admin-enhancements.js",
+      "lang": "js",
+      "comments": 25
+    },
+    {
+      "file": "legacy/js/chat-system.js",
+      "lang": "js",
+      "comments": 43
+    },
+    {
+      "file": "legacy/js/NOTIFICATION_INTEGRATION_CODE.js",
+      "lang": "js",
+      "comments": 50
+    },
+    {
+      "file": "legacy/js/script.js",
+      "lang": "js",
+      "comments": 4
+    },
+    {
+      "file": "legacy/phpscript/reset_password.php",
+      "lang": "php",
+      "comments": 13
+    },
+    {
+      "file": "legacy/phpscript/save_chat.php",
+      "lang": "php",
+      "comments": 6
+    },
+    {
+      "file": "legacy/phpscript/script.js",
+      "lang": "js",
+      "comments": 42
+    },
+    {
+      "file": "legacy/phpscript/send-notification.php",
+      "lang": "php",
+      "comments": 14
+    },
+    {
+      "file": "legacy/phpscript/send_order_email.php",
+      "lang": "php",
+      "comments": 9
+    },
+    {
+      "file": "legacy/phpscript/send_otp.php",
+      "lang": "php",
+      "comments": 4
+    },
+    {
+      "file": "legacy/phpscript/send_reset_code.php",
+      "lang": "php",
+      "comments": 18
+    },
+    {
+      "file": "legacy/phpscript/setup_watcher.bat",
+      "lang": "bat",
+      "comments": 8
+    },
+    {
+      "file": "legacy/phpscript/setup_watcher.sh",
+      "lang": "sh",
+      "comments": 13
+    },
+    {
+      "file": "legacy/phpscript/site_context.php",
+      "lang": "php",
+      "comments": 5
+    },
+    {
+      "file": "legacy/phpscript/site_knowledge.php",
+      "lang": "php",
+      "comments": 23
+    },
+    {
+      "file": "legacy/phpscript/style.css",
+      "lang": "css",
+      "comments": 12
+    },
+    {
+      "file": "legacy/phpscript/test.php",
+      "lang": "php",
+      "comments": 1
+    },
+    {
+      "file": "legacy/phpscript/test_otp.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "legacy/phpscript/test_queue.php",
+      "lang": "php",
+      "comments": 2
+    },
+    {
+      "file": "legacy/phpscript/test_queue_debug.php",
+      "lang": "php",
+      "comments": 1
+    },
+    {
+      "file": "legacy/phpscript/update_password.php",
+      "lang": "php",
+      "comments": 14
+    },
+    {
+      "file": "legacy/phpscript/update_reset_password.php",
+      "lang": "php",
+      "comments": 13
+    },
+    {
+      "file": "legacy/phpscript/upload_forum_image.php",
+      "lang": "php",
+      "comments": 7
+    },
+    {
+      "file": "legacy/phpscript/verify_reset_code.php",
+      "lang": "php",
+      "comments": 13
+    },
+    {
+      "file": "notifications/push_devices.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "notifications/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0001_initial.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0002_order_description_order_driver_name_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0002_order_scheduling_fields.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0004_add_price_commission_validators.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0005_order_passengers.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0006_lostobject.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0007_merge_0002_order_scheduling_fields_0006_lostobject.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0008_add_commission_wallet_payment.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0009_systemconfig_order_extension_start_lat_and_more.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0013_blocked_contact.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0021_client_payment_debt_contract.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0024_security_log.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0027_rename_orders_knownplace_lat_lng_idx_orders_know_lat_51a020_idx.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0028_order_round_trip_flow.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/migrations/0029_order_round_trip_pickup_request.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "orders/tests/test_admin_permissions.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "pricing/geo_utils.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "pricing/migrations/0005_pause_price_and_dedupe_danger.py",
+      "lang": "py",
+      "comments": 1
+    },
+    {
+      "file": "scripts/audit_all_paths.py",
+      "lang": "py",
+      "comments": 4
+    },
+    {
+      "file": "scripts/organize_legacy.py",
+      "lang": "py",
+      "comments": 2
+    },
+    {
+      "file": "scripts/verify_paths.py",
+      "lang": "py",
+      "comments": 3
+    },
+    {
+      "file": "services/whatsapp-webhook/server.js",
+      "lang": "js",
+      "comments": 5
+    },
+    {
+      "file": "static/css/daxi-boot-radar.css",
+      "lang": "css",
+      "comments": 1
+    },
+    {
+      "file": "static/css/daxi-theme-contrast.css",
+      "lang": "css",
+      "comments": 13
+    },
+    {
+      "file": "static/css/daxi-theme.css",
+      "lang": "css",
+      "comments": 1
+    },
+    {
+      "file": "static/css/entreprise-dashboard.css",
+      "lang": "css",
+      "comments": 4
+    },
+    {
+      "file": "static/css/trip-share.css",
+      "lang": "css",
+      "comments": 2
+    },
+    {
+      "file": "static/js/admin-maps.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/api.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/blog_admin.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-app-api.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-client-gps-core.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-deeplink-router.js",
+      "lang": "js",
+      "comments": 2
+    },
+    {
+      "file": "static/js/daxi-guest-id.js",
+      "lang": "js",
+      "comments": 2
+    },
+    {
+      "file": "static/js/daxi-htmx-csrf.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-intro.js",
+      "lang": "js",
+      "comments": 8
+    },
+    {
+      "file": "static/js/daxi-map-placeholder.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-network-state.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-offline.js",
+      "lang": "js",
+      "comments": 12
+    },
+    {
+      "file": "static/js/daxi-realtime.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-session-store.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "static/js/daxi-shell-role.js",
+      "lang": "js",
+      "comments": 2
+    },
+    {
+      "file": "static/js/daxi-web-radar.js",
+      "lang": "js",
+      "comments": 1
+    },
+    {
+      "file": "templates/driver_dashboard.html",
+      "lang": "html",
+      "comments": 18
+    },
+    {
+      "file": "templates/index.html",
+      "lang": "html",
+      "comments": 9
+    },
+    {
+      "file": "templates/pricing_admin.html",
+      "lang": "html",
+      "comments": 6
+    },
+    {
+      "file": "templates/htmx/client_account.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/client_account_settings.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_chat_composer.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_client_order_actions.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_client_order_compact.html",
+      "lang": "html",
+      "comments": 7
+    },
+    {
+      "file": "templates/htmx/_client_order_driver_block.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_client_order_map.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_client_order_plan.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_daxi_car_image_thumb.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_coords_map_placer.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_map_snippet.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_party_admin.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_party_client.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline_plan.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline_plan_duration.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline_plan_premium.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline_plan_transport.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_order_status_pipeline_roundtrip.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/_plan_stops_timeline.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_airport.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_business_vip.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_demi_journee.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_elegance_night.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_fixed.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_journee_complete.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_one_way.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_round_trip.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_standard_shell.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/_ville.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/ent/_one_way.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/ent/_order_meta.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/htmx/plan_cards/ent/_round_trip.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "templates/partials/admin_dashboard_tail.html",
+      "lang": "html",
+      "comments": 1
+    },
+    {
+      "file": "tools/measure.mjs",
+      "lang": "js",
+      "comments": 1
+    }
+  ]
+}

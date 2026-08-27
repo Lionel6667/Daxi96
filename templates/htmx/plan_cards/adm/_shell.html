@@ -1,0 +1,64 @@
+{% load static daxi_extras %}
+<div class="order-card order-card--plan adm-plan-card adm-plan-card--{{ plan_class }}" id="order-card-{{ o.id }}"
+     style="margin-bottom:20px;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+  <div class="adm-plan-hero adm-plan-hero--{{ plan_class }}">
+    <div>
+      <div class="adm-plan-kicker"><i class="{{ plan_icon }}"></i> {{ plan_badge }}</div>
+      <div class="adm-plan-title">{{ plan_title }}</div>
+      <div class="adm-plan-sub">{% if plan_class == 'roundtrip' and o.round_trip_wait_minutes %}Retour inclus · attente {{ o.round_trip_wait_minutes|daxi_wait_duration }}{% else %}{{ plan_sub }}{% endif %}</div>
+    </div>
+    {% if o.price %}
+    <div class="adm-plan-price-wrap">
+      <div class="adm-plan-price">{{ o.price|daxi_price }}</div>
+      <div class="adm-plan-price-lbl">{% if price_label %}{{ price_label }}{% else %}Prix fixe{% endif %}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span class="adm-plan-status">{{ o.status_display }}</span>
+    <div style="text-align:right;">
+      <div style="font-size:11px; color:#6b7280;">{{ o.created_display }}</div>
+      {% if o.date_display or o.time %}
+      <div style="font-size:10px; font-weight:600;"><i class="ri-calendar-line"></i> {% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if o.plan_sign_name %}
+  <div class="adm-plan-field"><span>Panneau</span><strong>{{ o.plan_sign_name }}</strong></div>
+  {% endif %}
+
+  {% if o.plan_itinerary %}
+  <div class="adm-plan-itinerary">
+    <div class="adm-plan-itinerary-lbl">Itinéraire planifié</div>
+    <div>{{ o.plan_itinerary }}</div>
+  </div>
+  {% else %}
+  <div class="adm-plan-route">
+    <div><span>Prise en charge</span><strong>{{ o.pickup_display|default:o.pickup }}</strong></div>
+    <div><span>{% if dest_label %}{{ dest_label }}{% else %}Fin prévue{% endif %}</span><strong>{{ o.destination_display|default:o.destination }}</strong></div>
+  </div>
+  {% endif %}
+
+  {% if o.plan_occasion %}
+  <div class="adm-plan-occasion"><i class="ri-moon-line"></i> {{ o.plan_occasion }}</div>
+  {% endif %}
+
+  <div class="adm-plan-chips">
+    {% if o.passengers > 1 %}<span><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>{% endif %}
+    {% if plan_chip %}<span><i class="ri-price-tag-3-line"></i> {{ plan_chip }}</span>{% endif %}
+  </div>
+
+  {% include "htmx/_round_trip_wait_info.html" %}
+
+  {% if o.notes and '[ITINÉRAIRE]' not in o.notes %}
+  <div class="adm-plan-notes">{{ o.notes }}</div>
+  {% endif %}
+
+  {% include "htmx/_order_party_admin.html" %}
+  {% include "htmx/_admin_order_details.html" %}
+</div>

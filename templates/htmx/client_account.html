@@ -1,0 +1,214 @@
+
+<style>
+.daxi-acc { color: #e2e8f0; padding: 0 0 24px; }
+.daxi-acc-hero {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-radius: 16px; padding: 20px; text-align: center;
+  border: 1px solid rgba(148,163,184,0.15); margin-bottom: 12px;
+}
+.daxi-acc-avatar {
+  width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 10px;
+  background: linear-gradient(135deg,#f59e0b,#d97706);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 900; color: #000; border: 3px solid rgba(245,158,11,0.5);
+  overflow: hidden;
+}
+.daxi-acc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.daxi-acc-card {
+  background: rgba(8,14,35,0.85); border: 1px solid rgba(148,163,184,0.12);
+  border-radius: 14px; margin-bottom: 10px; overflow: hidden;
+}
+.daxi-acc-card-h {
+  padding: 10px 14px 6px; font-size: 10px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .8px; color: #64748b;
+}
+.daxi-acc-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+  border-top: 1px solid rgba(148,163,184,0.08); font-size: 13px;
+}
+.daxi-acc-row i { color: #f59e0b; font-size: 18px; width: 22px; text-align: center; }
+.daxi-acc-row small { display: block; font-size: 10px; color: #64748b; font-weight: 600; }
+.daxi-acc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(148,163,184,0.08); }
+.daxi-acc-stat { background: rgba(8,14,35,0.95); padding: 14px; text-align: center; }
+.daxi-acc-stat .n { font-size: 22px; font-weight: 900; color: #f59e0b; }
+.daxi-acc-stat .l { font-size: 10px; color: #64748b; font-weight: 600; margin-top: 2px; }
+.daxi-acc-btn {
+  width: 100%; padding: 11px; border-radius: 11px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 800; margin-top: 8px;
+}
+
+
+.daxi-gate {
+  padding: 22px 18px 20px;
+  border-radius: 20px;
+  text-align: center;
+  background: #111c30;
+  border: 1px solid rgba(245,158,11,0.22);
+}
+.daxi-gate-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f59e0b;
+}
+.daxi-gate-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+.daxi-gate-sub {
+  margin: 0 auto 18px;
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(248,250,252,0.62);
+}
+.daxi-gate-btns { display: grid; gap: 10px; }
+.daxi-gate-in,
+.daxi-gate-up {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 0;
+}
+.daxi-gate-in span,
+.daxi-gate-up span {
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+.daxi-gate-in {
+  background: #f59e0b !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+.daxi-gate-up {
+  background: #f8fafc !important;
+  color: #0b1220 !important;
+  -webkit-text-fill-color: #0b1220 !important;
+}
+html[data-theme="light"] .daxi-gate { background: #ffffff; border-color: #D9E2EC; }
+html[data-theme="light"] .daxi-gate-kicker { color: #c27803; }
+html[data-theme="light"] .daxi-gate-title { color: #102A43; }
+html[data-theme="light"] .daxi-gate-sub { color: #3E4C59; }
+html[data-theme="light"] .daxi-gate-in {
+  background: #c27803 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="light"] .daxi-gate-up {
+  background: #102A43 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.daxi-acc-enterprise-promo {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 14px; padding: 14px 16px;
+  border-radius: 14px; text-decoration: none; color: inherit;
+  background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(16,185,129,0.06));
+  border: 1px solid rgba(245,158,11,0.22);
+  transition: border-color 0.2s, transform 0.15s;
+}
+.daxi-acc-enterprise-promo:hover { border-color: rgba(245,158,11,0.4); transform: translateY(-1px); }
+.daxi-acc-enterprise-promo__icon {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(245,158,11,0.14); color: #fbbf24; font-size: 22px;
+}
+.daxi-acc-enterprise-promo__body { flex: 1; min-width: 0; }
+.daxi-acc-enterprise-promo__body strong {
+  display: block; font-size: 13px; font-weight: 800; color: #fff;
+}
+.daxi-acc-enterprise-promo__body span {
+  display: block; font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 3px; line-height: 1.4;
+}
+.daxi-acc-enterprise-promo > i:last-child { color: #64748b; font-size: 20px; flex-shrink: 0; }
+
+[data-theme="light"] .daxi-acc { color: #243B53; }
+[data-theme="light"] .daxi-acc-hero { background: linear-gradient(135deg, #ffffff, #eef2f6); border-color: #D9E2EC; }
+[data-theme="light"] .daxi-acc-card { background: #fff; border-color: #D9E2EC; }
+[data-theme="light"] .daxi-acc-card-h { color: #3E4C59; }
+[data-theme="light"] .daxi-acc-row { color: #243B53; border-top-color: #EEF2F6; }
+[data-theme="light"] .daxi-acc-row small,
+[data-theme="light"] .daxi-acc-stat .l { color: #3E4C59; }
+[data-theme="light"] .daxi-acc-stat { background: #fff; }
+[data-theme="light"] .daxi-acc-enterprise-promo__body strong { color: #102A43 !important; }
+[data-theme="light"] .daxi-acc-enterprise-promo__body span { color: #3E4C59 !important; }
+[data-theme="light"] .daxi-acc [style*="color:#fff"]:not(.daxi-gate-in):not(.daxi-gate-up) { color: #102A43 !important; }
+</style>
+
+<div class="daxi-acc" id="daxi-account-root">
+{% if not is_authenticated %}
+  <div class="daxi-gate">
+    <p class="daxi-gate-kicker">Espace client</p>
+    <h3 class="daxi-gate-title" data-translate="account_guest_title">Connectez-vous</h3>
+    <p class="daxi-gate-sub" data-translate="account_guest_sub">Accédez à vos courses, statistiques et paramètres.</p>
+    <div class="daxi-gate-btns">
+      <button type="button" class="daxi-gate-in" onclick="if(window.openLoginModal)openLoginModal();">
+        <span data-translate="account_sign_in">Se connecter</span>
+      </button>
+      <button type="button" class="daxi-gate-up" onclick="if(window.openSignupModal)openSignupModal();">
+        <span data-translate="account_sign_up">Créer un compte</span>
+      </button>
+    </div>
+  </div>
+{% else %}
+  <div class="daxi-acc-hero">
+    <div class="daxi-acc-avatar" id="daxi-acc-avatar">
+      {% if user_photo %}<img src="{{ user_photo }}" alt="">{% else %}<span id="daxi-acc-initials">{{ initials }}</span>{% endif %}
+    </div>
+    <div style="font-size:17px;font-weight:800;color:#fff;">{{ user_name }}</div>
+    <div style="font-size:11px;color:#ffffff;font-weight:700;margin-top:4px;">ID: {{ user_id }}</div>
+  </div>
+
+  <div class="daxi-acc-card">
+    <div class="daxi-acc-card-h" data-translate="account_stats">Statistiques</div>
+    <div class="daxi-acc-stats">
+      <div class="daxi-acc-stat"><div class="n" id="daxi-stat-total">{{ stats.total }}</div><div class="l" data-translate="account_perk_rides">Courses</div></div>
+      <div class="daxi-acc-stat"><div class="n" id="daxi-stat-month">{{ stats.this_month }}</div><div class="l">Ce mois</div></div>
+      <div class="daxi-acc-stat"><div class="n" id="daxi-stat-pending">{{ stats.pending }}</div><div class="l">En cours</div></div>
+      <div class="daxi-acc-stat"><div class="n" id="daxi-stat-done">{{ stats.completed }}</div><div class="l">Terminées</div></div>
+    </div>
+  </div>
+
+  <div class="daxi-acc-card">
+    <div class="daxi-acc-card-h" data-translate="account_info">Informations</div>
+    <div class="daxi-acc-row"><i class="ri-mail-line"></i><div><small>Email</small>{{ user_email|default:"—" }}</div></div>
+    <div class="daxi-acc-row"><i class="ri-phone-line"></i><div><small data-translate="phone">Téléphone</small>{{ user_phone|default:"—" }}</div></div>
+    <div class="daxi-acc-row"><i class="ri-shield-check-line"></i><div><small>Compte</small>{% if is_verified %}✅ Vérifié{% else %}⏳ Non vérifié{% endif %}</div></div>
+  </div>
+
+  <div class="daxi-acc-card">
+    <div class="daxi-acc-card-h" data-translate="account_actions">Actions</div>
+    <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.openDaxiPageFromAccount)openDaxiPageFromAccount('all-pending-requests','Mes commandes');else if(window.tabGoOrders)tabGoOrders(true);">
+      <i class="ri-route-line"></i><div><small data-translate="tab_orders">Mes courses</small>Voir mes commandes</div>
+      <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
+    </div>
+    <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.openDaxiAccountSettings)openDaxiAccountSettings();">
+      <i class="ri-settings-3-line"></i><div><small data-translate="account_perk_settings">Paramètres</small>Modifier profil &amp; photo</div>
+      <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
+    </div>
+    {% if has_enterprise %}
+    <div class="daxi-acc-row" style="cursor:pointer;" onclick="window.location.href='{{ enterprise_url }}';">
+      <i class="ri-building-4-line"></i><div><small data-translate="nav_my_enterprise">Mon entreprise</small>{% if enterprise_name %}{{ enterprise_name }}{% else %}<span data-translate="account_enterprise_title">Espace partenaire</span>{% endif %}</div>
+      <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
+    </div>
+    {% endif %}
+    <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.daxiClientLogout)window.daxiClientLogout();">
+      <i class="ri-logout-box-r-line"></i><div><small>Session</small><span data-translate="logout">Se déconnecter</span></div>
+    </div>
+  </div>
+{% endif %}
+</div>
+<script>
+(function() {
+  if (window.DaxiAutoI18n && window.DaxiAutoI18n.apply) window.DaxiAutoI18n.apply();
+  else if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+})();
+</script>

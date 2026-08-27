@@ -1,0 +1,43 @@
+
+<div class="daxi-oc-card daxi-oc-card--std daxi-oc-card--oneway" data-order-id="{{ o.id }}" data-status="{{ o.status }}">
+  <div class="daxi-oc-accent daxi-oc-accent--{{ o.status }}{% if o.is_later and o.status != 'in_progress' %} daxi-oc-accent--scheduled{% endif %}"></div>
+  <div class="daxi-oc-inner">
+    <div class="daxi-oc-plan-hero daxi-oc-plan-hero--oneway">
+      <div class="daxi-oc-plan-hero-left">
+        <i class="ri-car-line"></i>
+        <div>
+          <div class="daxi-oc-plan-name">Course aller simple</div>
+          <div class="daxi-oc-plan-hint">{% firstof o.code o.ref_code o.public_code %} · {{ o.status_display }}</div>
+        </div>
+      </div>
+      <div class="daxi-oc-plan-price">{% if o.price %}${{ o.price|floatformat:2 }}{% else %}—{% endif %}</div>
+    </div>
+    {% include "htmx/_order_status_pipeline.html" %}
+    {% include "htmx/_order_map_snippet.html" with map_scope="enterprise" show_map_actions=False %}
+    <div class="daxi-oc-head">
+      <div class="daxi-oc-head-left">
+        {% include "htmx/_order_client_status_badge.html" %}
+        {% if enterprise.name %}<span class="daxi-oc-chip daxi-oc-chip--ent"><i class="ri-building-4-line"></i> {{ enterprise.name }}</span>{% endif %}
+        {% if o.is_later %}
+        <span class="daxi-oc-timing daxi-oc-timing--later"><i class="ri-calendar-schedule-line"></i> <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong></span>
+        {% else %}
+        <span class="daxi-oc-timing daxi-oc-timing--now"><i class="ri-flashlight-fill"></i> <strong>Maintenant</strong></span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line"><span class="daxi-oc-dot daxi-oc-dot--pickup"></span><div class="daxi-oc-route-text"><span class="daxi-oc-route-label">Départ</span><span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup|default:"Non défini" }}</span></div></div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line"><span class="daxi-oc-dot daxi-oc-dot--dest"></span><div class="daxi-oc-route-text"><span class="daxi-oc-route-label">Arrivée</span><span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination|default:"Non définie" }}</span></div></div>
+    </div>
+    <div class="daxi-oc-meta">
+      <span class="daxi-oc-chip"><i class="ri-user-line"></i> {{ o.client_name }}</span>
+      {% if o.client_phone %}<span class="daxi-oc-chip"><i class="ri-phone-line"></i> {{ o.client_phone }}</span>{% endif %}
+      {% if o.passengers %}<span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>{% endif %}
+      {% if o.driver_name %}<span class="daxi-oc-chip daxi-oc-chip--ok"><i class="ri-steering-2-line"></i> {{ o.driver_name }}</span>{% endif %}
+    </div>
+    {% include "htmx/_client_order_driver_block.html" %}
+    {% include "htmx/enterprise_order_actions.html" %}
+    {% include "htmx/_enterprise_order_chat.html" %}
+  </div>
+</div>

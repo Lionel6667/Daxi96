@@ -1,0 +1,20 @@
+{% load static %}
+
+<div id="orders-container" class="admin-orders-card-grid">
+
+{% if not orders %}
+<div class="text-center py-12 text-gray-500">
+  <div class="text-5xl mb-4">📭</div>
+  <p class="text-lg font-medium">Aucune commande dans cet onglet</p>
+</div>
+{% endif %}
+
+{% for o in orders %}
+{% if o.is_plan_order %}
+{% include "htmx/plan_cards/adm/_router.html" %}
+{% else %}
+{% include "htmx/plan_cards/adm/_standard_router.html" %}
+{% endif %}
+{% endfor %}
+
+</div>

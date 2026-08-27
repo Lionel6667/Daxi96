@@ -1,0 +1,45 @@
+{% load static %}
+
+<div id="calendar-container" class="adm-cal">
+
+  <div class="adm-cal__head">
+    <button type="button" class="adm-cal__nav"
+            hx-get="/htmx/admin/calendar/?year={{ prev_year }}&month={{ prev_month }}"
+            hx-target="#calendar-container"
+            hx-swap="outerHTML">‹</button>
+    <div class="adm-cal__title">{{ month_name }} {{ year }}</div>
+    <button type="button" class="adm-cal__nav"
+            hx-get="/htmx/admin/calendar/?year={{ next_year }}&month={{ next_month }}"
+            hx-target="#calendar-container"
+            hx-swap="outerHTML">›</button>
+  </div>
+
+  <div class="adm-cal__dow">
+    <div>LUN</div><div>MAR</div><div>MER</div><div>JEU</div><div>VEN</div><div>SAM</div><div>DIM</div>
+  </div>
+
+  <div class="adm-cal__grid">
+    {% for week in weeks_data %}
+      {% for cell in week %}
+      <div class="adm-cal__cell{% if cell.day == 0 %} adm-cal__cell--empty{% elif cell.is_today %} adm-cal__cell--today{% endif %}">
+        {% if cell.day != 0 %}
+        <button type="button" class="adm-cal__day-btn"
+                data-cal-day-url="/htmx/admin/calendar/day/?date={{ cell.date_str }}">
+          <div class="adm-cal__day">{{ cell.day }}</div>
+          {% if cell.info and cell.info.completed > 0 %}
+          <div class="adm-cal__count">{{ cell.info.completed }} terminée{{ cell.info.completed|pluralize }}</div>
+          {% endif %}
+          {% if cell.info %}
+          {% if cell.info.pending > 0 %}<div class="adm-cal__bar adm-cal__bar--pending"></div>{% endif %}
+          {% if cell.info.ongoing > 0 %}<div class="adm-cal__bar adm-cal__bar--ongoing"></div>{% endif %}
+          {% if cell.info.completed > 0 %}<div class="adm-cal__bar adm-cal__bar--done"></div>{% endif %}
+          {% if cell.info.cancelled > 0 %}<div class="adm-cal__bar adm-cal__bar--cancelled"></div>{% endif %}
+          {% endif %}
+        </button>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+</div>

@@ -1,0 +1,50 @@
+{% load daxi_extras %}
+
+<div id="daximap-wrap-{{ o.id }}" class="daximap-wrap daximap-wrap--{{ map_scope|default:'card' }}" style="position:relative;height:220px;border-radius:{% if map_scope == 'admin' %}12px{% else %}14px 14px 0 0{% endif %};overflow:hidden;background:#0a1628;margin:{% if map_scope == 'admin' %}12px 0{% else %}0{% endif %};">
+  <div id="daximap-skel-{{ o.id }}" class="daxi-map-ph-skel" style="position:absolute;inset:0;z-index:3;transition:opacity 0.5s;"></div>
+  <div id="daximap-{{ o.id }}"
+       data-daximap="1"
+       data-rdv-lat="{{ o.rdv_lat|default:o.meeting_lat|default:o.pickup_lat|daxi_coord }}"
+       data-rdv-lng="{{ o.rdv_lng|default:o.meeting_lng|default:o.pickup_lng|daxi_coord }}"
+       data-meeting-lat="{{ o.meeting_lat|daxi_coord }}"
+       data-meeting-lng="{{ o.meeting_lng|daxi_coord }}"
+       data-pickup-lat="{{ o.pickup_lat|daxi_coord }}"
+       data-pickup-lng="{{ o.pickup_lng|daxi_coord }}"
+       {% if o.client_gps_lat %}data-client-gps-lat="{{ o.client_gps_lat|daxi_coord }}"{% endif %}
+       {% if o.client_gps_lng %}data-client-gps-lng="{{ o.client_gps_lng|daxi_coord }}"{% endif %}
+       {% if o.destination_lat %}data-dest-lat="{{ o.destination_lat|daxi_coord }}"{% endif %}
+       {% if o.destination_lng %}data-dest-lng="{{ o.destination_lng|daxi_coord }}"{% endif %}
+       {% if o.driver_lat %}data-driver-lat="{{ o.driver_lat|daxi_coord }}"{% endif %}
+       {% if o.driver_lng %}data-driver-lng="{{ o.driver_lng|daxi_coord }}"{% endif %}
+       {% if o.plan_stops_json %}data-plan-stops='{{ o.plan_stops_json|escape }}'{% endif %}
+       data-order-status="{{ o.status }}"
+       data-map-scope="{{ map_scope|default:'card' }}"
+       data-is-later="{% if o.is_later %}1{% else %}0{% endif %}"
+       style="width:100%;height:220px;position:relative;z-index:1;opacity:0;transition:opacity 0.6s ease;">
+  </div>
+  {% if show_map_actions %}
+  <button type="button" id="daximap-recenter-{{ o.id }}"
+          onclick="if(window.daxiMapRecenter)daxiMapRecenter('{{ o.id }}')"
+          style="display:none;position:absolute;bottom:10px;right:10px;z-index:5;padding:7px 12px;border-radius:99px;border:1px solid rgba(255,255,255,0.2);background:rgba(8,14,35,0.92);color:#e2e8f0;font-size:10px;font-weight:800;cursor:pointer;align-items:center;gap:4px;">
+    <i class="ri-focus-3-line"></i> Recentrer
+  </button>
+  <button type="button" id="daximap-fs-{{ o.id }}"
+          onclick="if(window.daxiMapOpenOnMainMap)daxiMapOpenOnMainMap('{{ o.id }}')"
+          class="daximap-fs-btn"
+          style="position:absolute;top:10px;right:10px;z-index:5;padding:7px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(8,14,35,0.88);color:#e2e8f0;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-size:11px;font-weight:700;">
+    <i class="ri-fullscreen-line"></i> Agrandir
+  </button>
+  <button type="button" id="daximap-reduce-{{ o.id }}"
+          onclick="if(window.daxiMapExitFs)daxiMapExitFs('{{ o.id }}')"
+          class="daximap-fs-btn"
+          style="display:none;position:fixed;top:14px;right:14px;z-index:100002;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(8,14,35,0.95);color:#fff;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-size:12px;font-weight:700;">
+    <i class="ri-fullscreen-exit-line"></i> Réduire
+  </button>
+  {% endif %}
+  <div class="daximap-legend" aria-label="Légende carte">
+    <span class="daximap-leg daximap-leg--pickup"><span class="daximap-leg__dot">A</span> Départ</span>
+    <span class="daximap-leg daximap-leg--dest"><span class="daximap-leg__dot">B</span> Arrivée</span>
+    <span class="daximap-leg daximap-leg--driver{% if not o.driver_id and not o.driver_lat %} is-missing{% endif %}"><span class="daximap-leg__dot"><i class="ri-taxi-fill"></i></span> Chauffeur</span>
+    {% if o.is_later %}<span class="daximap-leg daximap-leg--sched"><i class="ri-calendar-schedule-line"></i> {% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}</span>{% endif %}
+  </div>
+</div>

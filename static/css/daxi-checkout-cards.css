@@ -1,0 +1,322 @@
+
+
+
+.daxi-price-proposal {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(8, 14, 35, 0.98);
+  font-family: system-ui, sans-serif;
+}
+.daxi-pp-head {
+  padding: 16px 16px 12px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #f8fafc;
+}
+.daxi-pp-head-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+  font-size: 20px;
+}
+.daxi-pp-head-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; color: #f8fafc; }
+.daxi-pp-head-sub { font-size: 11px; color: rgba(255, 255, 255, 0.62); line-height: 1.35; }
+.daxi-pp-route { padding: 12px 14px; border-bottom: 1px solid rgba(148, 163, 184, 0.1); }
+.daxi-pp-route-row { display: flex; align-items: flex-start; gap: 10px; }
+.daxi-pp-route-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.daxi-pp-route-dot--pickup { background: #22c55e; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25); }
+.daxi-pp-route-dot--dest { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25); }
+.daxi-pp-route-line {
+  width: 2px;
+  height: 10px;
+  margin: 4px 0 4px 4px;
+  background: linear-gradient(180deg, #22c55e, #f59e0b);
+  opacity: 0.35;
+}
+.daxi-pp-route-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+.daxi-pp-route-addr { font-size: 13px; font-weight: 700; color: #e2e8f0; line-height: 1.35; }
+.daxi-pp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+.daxi-pp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 99px;
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+}
+.daxi-pp-chip i { font-size: 12px; opacity: 0.85; }
+.daxi-pp-price { padding: 16px 14px; text-align: center; border-bottom: 1px solid rgba(148, 163, 184, 0.1); }
+.daxi-pp-price-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+.daxi-pp-price-val { font-size: 34px; font-weight: 900; color: #fcd34d; line-height: 1; }
+.daxi-pp-price-cur { font-size: 16px; font-weight: 700; color: #f59e0b; margin-left: 2px; }
+.daxi-pp-actions { padding: 12px 14px; display: flex; gap: 8px; }
+.daxi-pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 12px 14px;
+}
+.daxi-pp-btn--accept { flex: 1; background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.daxi-pp-btn--refuse {
+  flex: 0 0 auto;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.daxi-pp-wait {
+  padding: 16px 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fcd34d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+[data-theme="light"] .daxi-price-proposal {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-pp-head {
+  background: linear-gradient(135deg, #fff7ed, #fffbeb) !important;
+  color: var(--daxi-text) !important;
+  border-bottom: 1px solid var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-pp-head-title { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-pp-head-sub { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-pp-head-icon { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+[data-theme="light"] .daxi-pp-route { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-pp-route-label { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-pp-route-addr { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-pp-meta { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-pp-chip {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text-secondary) !important;
+  border: 1px solid var(--daxi-border);
+}
+[data-theme="light"] .daxi-pp-price { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-pp-price-label { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-pp-price-val { color: #b45309 !important; }
+[data-theme="light"] .daxi-pp-price-cur { color: #d97706 !important; }
+[data-theme="light"] .daxi-pp-btn--refuse {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #b91c1c !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+[data-theme="light"] .daxi-pp-wait { color: #b45309 !important; }
+
+
+.daxi-guest-phone-card {
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0;
+  background: rgba(8, 14, 35, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+.daxi-guest-phone-hero {
+  background: linear-gradient(135deg, #059669, #10b981);
+  padding: 18px;
+  text-align: center;
+  color: #fff;
+}
+.daxi-guest-phone-hero i { font-size: 28px; margin-bottom: 8px; display: block; }
+.daxi-guest-phone-title { font-size: 15px; font-weight: 800; }
+.daxi-guest-phone-sub {
+  font-size: 11px;
+  opacity: 0.92;
+  margin-top: 4px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.95);
+}
+.daxi-guest-phone-sub span { opacity: 0.88; }
+.daxi-guest-phone-form { padding: 16px; }
+.daxi-guest-phone-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+.daxi-guest-phone-input-wrap {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 12px;
+  border: 1.5px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.daxi-guest-phone-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  white-space: nowrap;
+}
+.daxi-guest-phone-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  font-size: 16px;
+  box-sizing: border-box;
+  background: transparent;
+  color: #f8fafc;
+  letter-spacing: 0.04em;
+}
+.daxi-guest-phone-input::placeholder { color: #64748b; }
+.daxi-guest-phone-submit {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+[data-theme="light"] .daxi-guest-phone-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-guest-phone-form { background: var(--daxi-surface) !important; }
+[data-theme="light"] .daxi-guest-phone-label { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-guest-phone-input-wrap {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-guest-phone-prefix {
+  color: #b45309 !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-right-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-guest-phone-input {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-guest-phone-input::placeholder { color: #9fb3c8 !important; }
+
+
+[data-theme="light"] .daxi-pay-wrap {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-pay-head {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), var(--daxi-surface-2)) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-pay-head-title { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-pay-head-sub { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-pay-head-sub strong { color: #b45309 !important; }
+[data-theme="light"] .daxi-pay-opt {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-pay-label { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-pay-desc { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-pay-radio { border-color: var(--daxi-border-strong, #94a3b8) !important; }
+[data-theme="light"] .daxi-pay-contract {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-pay-contract label { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-pay-contract a,
+[data-theme="light"] .daxi-pay-contract button.daxi-link { color: #b45309 !important; }
+
+
+.daxi-contract-modal .daxi-contract-hero h2 {
+  color: #f8fafc !important;
+}
+.daxi-contract-modal .daxi-contract-hero .daxi-contract-lead {
+  color: rgba(248, 250, 252, 0.88) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-hero {
+  background: linear-gradient(135deg, #1e3a5f, #0f2744) !important;
+  border-color: rgba(30, 58, 95, 0.5) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-kicker { color: #fbbf24 !important; }
+[data-theme="light"] .daxi-contract-modal .daxi-contract-hero h2 { color: #fff !important; }
+[data-theme="light"] .daxi-contract-modal .daxi-contract-hero .daxi-contract-lead,
+[data-theme="light"] .daxi-contract-modal .daxi-contract-hero p {
+  color: rgba(248, 250, 252, 0.88) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-hero-sub {
+  color: rgba(248, 250, 252, 0.82) !important;
+}
+[data-theme="light"] .daxi-contract-modal p,
+[data-theme="light"] .daxi-contract-modal li {
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-lead {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-refund-box {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-refund-note,
+[data-theme="light"] .daxi-contract-modal .daxi-contract-refund-bullets {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-contract-modal .daxi-contract-footer { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-contract-modal-close-icon {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-contract-close {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text) !important;
+  border-color: var(--daxi-border) !important;
+}

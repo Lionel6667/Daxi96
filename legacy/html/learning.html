@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>course</title>
+    <style>
+        .nav{
+            background-color: grey;
+            width: 100%;
+            position: relative;
+            height: 80px;
+
+        }
+        .name{
+            color: white;
+            position: relative;
+            top: 25%;
+            left: 3%;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            text-transform: uppercase;
+        }
+        .btn1{
+            background-color: yellow;
+            font-size: 20px;
+            border-radius: 15%;
+            border: 1px solid black;
+            position: relative;
+            top: -35%;
+            left: 85%;
+
+        }
+        .form{
+            background-color: aliceblue;
+            border: 2px solid rgb(239, 239, 239);
+            width: 40%;
+            height: 300px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            position: relative;
+            left: 20%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <h1 class="name">my site</h1>
+        <button class="btn1">connexion</button>
+    </div>
+    <div class="form">
+        <h1 class="name2">formulaire d'inscription</h1>
+        <button id="look">changer</button>
+        <input placeholder="Entrez votre nom..."><br>        
+        <input type="password" placeholder="Entrez votre mot de passe..."><br>
+        <button>Enregistrer</button>
+    </div>
+    
+
+</body>
+<script>
+    let btn= document.getElementsByClassName("btn1")[0];
+    let fm = document.getElementsByClassName("form")[0];
+    let see = document.getElementById("look");
+    let formTitle = document.getElementsByClassName("name2")[0];
+    btn.addEventListener("click", function() {
+        fm.style.display="block";
+        });
+    
+    see.addEventListener("click", function() {       
+        if(formTitle.innerHTML === "formulaire de connexion"){
+            formTitle.innerHTML="formulaire d'inscription";
+        } else {
+            formTitle.innerHTML="formulaire de connexion";
+        }
+    });
+        
+
+        
+</script>
+</html>

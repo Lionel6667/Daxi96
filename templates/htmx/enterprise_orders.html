@@ -1,0 +1,55 @@
+{% if success_msg %}
+<div class="ent-oc-alert ent-oc-alert--success"><i class="ri-checkbox-circle-line"></i> {{ success_msg }}</div>
+{% endif %}
+
+{% if orders %}
+  {% for o in orders %}
+  {% if mode == 'shared_code' %}
+  <div class="daxi-oc-card daxi-oc-card--ent-shared" data-order-id="{{ o.id }}" data-status="{{ o.status }}">
+    <div class="daxi-oc-accent daxi-oc-accent--{{ o.status }}{% if o.is_later and o.status != 'in_progress' %} daxi-oc-accent--scheduled{% endif %}"></div>
+    <div class="daxi-oc-inner">
+      <div class="daxi-oc-plan-hero daxi-oc-plan-hero--ent-shared">
+        <div class="daxi-oc-plan-hero-left">
+          <i class="ri-qr-code-line"></i>
+          <div>
+            <div class="daxi-oc-plan-name">Code partagé · {% firstof o.code o.ref_code o.public_code %}</div>
+            <div class="daxi-oc-plan-hint">{{ o.status_display }} · {{ o.created_display }}</div>
+          </div>
+        </div>
+        <div class="daxi-oc-plan-price">{% if o.price %}${{ o.price|floatformat:2 }}{% else %}—{% endif %}</div>
+      </div>
+      {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+      <div class="daxi-oc-head" style="margin:8px 0 0;">
+        {% include "htmx/_order_client_status_badge.html" %}
+      </div>
+      {% include "htmx/_order_map_snippet.html" with map_scope="enterprise" show_map_actions=False %}
+      <div class="daxi-oc-route">
+        <div class="daxi-oc-route-line"><span class="daxi-oc-dot daxi-oc-dot--pickup"></span><div class="daxi-oc-route-text"><span class="daxi-oc-route-label">Départ</span><span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup|default:"—" }}</span></div></div>
+        <div class="daxi-oc-route-connector"></div>
+        <div class="daxi-oc-route-line"><span class="daxi-oc-dot daxi-oc-dot--dest"></span><div class="daxi-oc-route-text"><span class="daxi-oc-route-label">Arrivée</span><span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination|default:"—" }}</span></div></div>
+      </div>
+      <div class="daxi-oc-meta">
+        <span class="daxi-oc-chip"><i class="ri-user-line"></i> {{ o.client_name }}</span>
+        {% if o.client_phone %}<span class="daxi-oc-chip"><i class="ri-phone-line"></i> {{ o.client_phone }}</span>{% endif %}
+        {% if o.driver_name %}<span class="daxi-oc-chip daxi-oc-chip--ok"><i class="ri-steering-2-line"></i> {{ o.driver_name }}</span>{% endif %}
+        {% if o.enterprise_commission_pct %}<span class="daxi-oc-chip"><i class="ri-percent-line"></i> {{ o.enterprise_commission_pct }}% comm.</span>{% endif %}
+      </div>
+      {% include "htmx/_client_order_driver_block.html" %}
+      {% include "htmx/_enterprise_order_chat.html" %}
+    </div>
+  </div>
+  {% elif o.is_plan_order %}
+  <div class="ent-oc-plan-stack">
+    {% include "htmx/plan_cards/ent/_order_meta.html" %}
+    {% include "htmx/plan_cards/_router.html" %}
+  </div>
+  {% else %}
+  {% include "htmx/plan_cards/ent/_standard_router.html" %}
+  {% endif %}
+  {% endfor %}
+{% else %}
+  <div class="ent-oc-empty">
+    <i class="ri-inbox-line"></i>
+    <div>{% if tab == 'history' %}Aucune commande dans l'historique{% else %}Aucune commande en cours{% endif %}</div>
+  </div>
+{% endif %}

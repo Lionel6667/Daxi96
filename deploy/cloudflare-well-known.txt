@@ -1,0 +1,6 @@
+# Cloudflare : ne pas réécrire /.well-known/* vers index.html.
+# Page Rules / Transform Rules : Bypass cache + origin pass-through pour
+#   /.well-known/assetlinks.json
+#   /.well-known/apple-app-site-association
+# Configuration → SSL : Full (strict). Pas de "Always Online" HTML snapshot.
+# Rocket Loader : désactiver sur ces chemins (sinon HTML autour du JSON).

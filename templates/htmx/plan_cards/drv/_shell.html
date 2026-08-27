@@ -1,0 +1,144 @@
+{% load static daxi_extras %}
+<div class="drv-oc drv-oc--plan drv-oc--plan-{{ plan_class }} order-card"
+     id="driver-order-{{ o.id }}"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-price="{{ o.price|default:0|floatformat:0 }}"
+     data-extra-km-price="{{ o.extra_km_price|default:0|floatformat:0 }}"
+     data-pause-price="{{ o.pause_price|default:0|floatformat:0 }}"
+     data-trip-type="{{ o.trip_type|default:'one_way' }}"
+     data-is-round-trip="{% if o.is_round_trip or o.trip_type == 'round_trip' %}1{% else %}0{% endif %}"
+     data-round-trip-phase="{{ o.round_trip_phase|default:'' }}"
+     data-pickup-lat="{{ o.pickup_lat|default:'' }}"
+     data-pickup-lng="{{ o.pickup_lng|default:'' }}"
+     data-meeting-lat="{{ o.meeting_lat|default:'' }}"
+     data-meeting-lng="{{ o.meeting_lng|default:'' }}"
+     data-rdv-lat="{{ o.rdv_lat|default:o.meeting_lat|default:o.pickup_lat|default:'' }}"
+     data-rdv-lng="{{ o.rdv_lng|default:o.meeting_lng|default:o.pickup_lng|default:'' }}"
+     data-dest-lat="{{ o.destination_lat|default:'' }}"
+     data-dest-lng="{{ o.destination_lng|default:'' }}"
+     data-client-name="{{ o.client_name|default:'' }}"
+     data-client-phone="{{ o.client_phone|default:'' }}"
+     {% if o.client_gps_lat %}data-client-gps-lat="{{ o.client_gps_lat|daxi_coord }}"{% endif %}
+     {% if o.client_gps_lng %}data-client-gps-lng="{{ o.client_gps_lng|daxi_coord }}"{% endif %}
+     data-is-paused="{{ o.is_paused|yesno:'true,false' }}"
+     data-is-extended="{{ o.is_extended|yesno:'true,false' }}"
+     data-pause-accum-secs="{{ o.pause_accumulated_seconds|default:0 }}"
+     data-pause-rate="{{ o.pause_rate_snapshot|default:0|floatformat:2 }}"
+     data-created-at="{{ o.created_at.isoformat }}"
+     {% if o.plan_stops_json %}data-plan-stops='{{ o.plan_stops_json|escape }}'{% endif %}
+     {% if o.is_later and o.scheduled_at %}data-scheduled-at="{{ o.scheduled_at }}"{% endif %}>
+
+  <div class="drv-oc-plan-banner drv-oc-plan-banner--{{ plan_class }}">
+    <div class="drv-oc-plan-banner-left">
+      <i class="{{ plan_icon }}"></i>
+      <div>
+        <div class="drv-oc-plan-title">{{ plan_title }}</div>
+        <div class="drv-oc-plan-sub">{% if plan_class == 'roundtrip' and o.round_trip_wait_minutes %}Retour inclus · attente {{ o.round_trip_wait_minutes|daxi_wait_duration }}{% else %}{{ plan_sub }}{% endif %}</div>
+      </div>
+    </div>
+    {% if o.price %}
+    <div class="drv-oc-plan-price">${{ o.price|stringformat:".0f" }} <span>{% if price_label %}{{ price_label }}{% else %}fixe{% endif %}</span></div>
+    {% elif price_label == 'devis' %}
+    <div class="drv-oc-plan-price drv-oc-plan-price--quote">Sur devis</div>
+    {% endif %}
+  </div>
+
+  {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+
+  {% include "htmx/_order_map_snippet.html" with map_scope="driver" show_map_actions=False %}
+
+  <div class="drv-oc-head">
+    <div class="drv-oc-badges">
+      <span class="drv-oc-status drv-oc-status--plan">{{ plan_badge }}</span>
+      {% if o.is_later %}
+      <span class="drv-oc-timing drv-oc-timing--later">
+        <i class="ri-calendar-schedule-line"></i>
+        {% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}
+      </span>
+      {% else %}
+      <span class="drv-oc-timing drv-oc-timing--now"><i class="ri-flashlight-fill"></i> Dès que possible</span>
+      {% endif %}
+    </div>
+    {% if tab == 'available' and o.pickup_lat %}
+    <button type="button" class="drv-oc-mapbtn"
+            onclick="driverPreviewOrder('{{ o.id }}', '{{ o.pickup_lat }}', '{{ o.pickup_lng }}', '{{ o.destination_lat|default:'0' }}', '{{ o.destination_lng|default:'0' }}')"
+            title="Voir sur la carte"><i class="ri-map-2-line"></i></button>
+    {% endif %}
+  </div>
+
+  {% if o.plan_sign_name %}
+  <div class="drv-oc-plan-field"><span class="drv-oc-plan-field-lbl">Panneau</span><span class="drv-oc-plan-field-val">{{ o.plan_sign_name }}</span></div>
+  {% endif %}
+
+  {% include "htmx/_plan_stops_timeline.html" %}
+  {% if not o.plan_stops and not o.plan_itinerary %}
+  <div class="drv-oc-route">
+    <div class="drv-oc-route-rail">
+      <div class="drv-oc-dot drv-oc-dot--a"></div>
+      <div class="drv-oc-line"></div>
+      <div class="drv-oc-dot drv-oc-dot--b"></div>
+    </div>
+    <div class="drv-oc-route-body">
+      <div class="drv-oc-lbl">Prise en charge</div>
+      <div class="drv-oc-addr">{{ o.pickup_display|default:o.pickup }}</div>
+      <div class="drv-oc-lbl">{% if dest_label %}{{ dest_label }}{% else %}Fin prévue{% endif %}</div>
+      <div class="drv-oc-addr">{{ o.destination_display|default:o.destination }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="drv-oc-meta">
+    {% if o.passengers %}<span class="drv-oc-chip"><i class="ri-user-3-line"></i> {{ o.passengers }} passager{{ o.passengers|pluralize }}</span>{% endif %}
+    {% if o.vehicle_type and o.vehicle_type != 'economy' %}
+    <span class="drv-oc-chip"><i class="ri-car-line"></i>
+      {% if o.vehicle_type == 'economy' %}Économique{% elif o.vehicle_type == 'comfort' %}Confort{% elif o.vehicle_type == 'suv' %}SUV{% elif o.vehicle_type == 'van' %}Fourgon{% elif o.vehicle_type == 'luxury' %}Luxe{% else %}{{ o.vehicle_type }}{% endif %}
+    </span>
+    {% endif %}
+    {% if o.payment_method %}
+    <span class="drv-oc-chip"><i class="ri-wallet-3-line"></i>
+      {% if o.payment_method == 'in_person' %}Sur place{% elif o.payment_method == 'moncash' %}MonCash{% elif o.payment_method == 'card' %}Carte{% else %}{{ o.payment_method }}{% endif %}
+    </span>
+    {% endif %}
+    {% if plan_chip %}<span class="drv-oc-chip drv-oc-chip--plan"><i class="ri-price-tag-3-line"></i> {{ plan_chip }}</span>{% endif %}
+  </div>
+
+  {% include "htmx/_round_trip_wait_info.html" %}
+
+  {% if o.plan_occasion %}
+  <div class="drv-oc-note drv-oc-note--occasion"><i class="ri-moon-line"></i> {{ o.plan_occasion }}</div>
+  {% endif %}
+
+  {% if o.notes and '[ITINÉRAIRE]' not in o.notes and 'Plan:' not in o.notes %}
+  <div class="drv-oc-note"><i class="ri-chat-3-line"></i> {{ o.notes }}</div>
+  {% endif %}
+
+  {% if tab == 'available' %}
+  <div class="drv-oc-details" id="order-details-{{ o.id }}" style="display:none;">
+    <div class="drv-oc-contact">
+      {% if o.client_email %}
+      <div class="drv-oc-contact-item">
+        <div class="drv-oc-contact-lbl">Email</div>
+        <div class="drv-oc-contact-val">{{ o.client_email }}</div>
+      </div>
+      {% endif %}
+      {% if o.client_phone %}
+      <div class="drv-oc-contact-item">
+        <div class="drv-oc-contact-lbl">Téléphone</div>
+        <div class="drv-oc-contact-val">{{ o.client_phone_display|default:o.client_phone }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="drv-oc-sched-hint" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:#fcd34d;">
+      Forfait {{ plan_title }} — tarif fixe. Consultez les arrêts et l'itinéraire sur la carte ci-dessus.
+    </div>
+  </div>
+  <button type="button" class="drv-oc-expand daxi-oc-expand-btn" onclick="toggleOrderDetails({{ o.id }})" id="voir-plus-btn-{{ o.id }}">
+    <i class="ri-arrow-down-s-line"></i> <span class="daxi-oc-expand-label">Voir plus</span>
+  </button>
+  {% endif %}
+
+  {% include "htmx/_order_party_client.html" %}
+
+  {% include "htmx/_driver_order_row_actions.html" %}
+</div>

@@ -1,0 +1,1242 @@
+
+
+
+[data-theme="light"] body:has(.ent-wrap) {
+  background: var(--ent-bg) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .ent-topbar {
+  background: var(--ent-topbar-bg) !important;
+  box-shadow: var(--ent-topbar-shadow) !important;
+  border-bottom: 1px solid var(--ent-border) !important;
+}
+[data-theme="light"] .ent-logo-name { color: var(--ent-text) !important; }
+[data-theme="light"] .dash-header {
+  background: var(--ent-dash-header-bg) !important;
+  color: var(--ent-dash-header-text) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+  border: 1px solid var(--ent-border) !important;
+}
+[data-theme="light"] .dash-greeting { color: var(--ent-dash-greeting) !important; }
+[data-theme="light"] .dash-name { color: var(--ent-dash-header-text) !important; }
+[data-theme="light"] .ent-section-title { color: var(--ent-section-title) !important; }
+[data-theme="light"] .ent-section-title i { color: var(--ent-gold) !important; }
+
+[data-theme="light"] .affiliate-card {
+  background: var(--ent-affiliate-bg) !important;
+  color: var(--ent-affiliate-text) !important;
+  border: 1px solid var(--ent-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .aff-title { color: var(--ent-affiliate-text) !important; }
+[data-theme="light"] .aff-url {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-secondary, var(--ent-text-dim)) !important;
+}
+[data-theme="light"] .aff-qr-wrap,
+[data-theme="light"] .aff-code-wrap {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+}
+[data-theme="light"] .aff-code-label { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .aff-code { color: var(--ent-text) !important; }
+[data-theme="light"] .aff-inst-text { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .chart-label { color: var(--ent-text-mute) !important; }
+
+[data-theme="light"] .ent-daxi-panel {
+  background: var(--ent-daxi-panel-bg) !important;
+  border-color: var(--ent-daxi-panel-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .ent-daxi-row { border-bottom-color: var(--ent-daxi-row-border) !important; }
+[data-theme="light"] .ent-daxi-label { color: var(--ent-daxi-label) !important; }
+[data-theme="light"] .ent-daxi-input,
+[data-theme="light"] .ent-daxi-step-val { color: var(--ent-daxi-input) !important; }
+[data-theme="light"] .ent-daxi-input::placeholder { color: var(--ent-daxi-placeholder) !important; }
+[data-theme="light"] .ent-daxi-icon--muted { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-daxi-notes textarea,
+[data-theme="light"] .ent-daxi-rt-wait select {
+  background: var(--ent-daxi-surface) !important;
+  border-color: var(--ent-daxi-surface-border) !important;
+  color: var(--ent-daxi-input) !important;
+}
+[data-theme="light"] .ent-daxi-stepper {
+  border-color: var(--ent-daxi-surface-border) !important;
+  background: var(--ent-daxi-surface) !important;
+}
+[data-theme="light"] .ent-daxi-step {
+  background: var(--daxi-surface-2) !important;
+  color: #16a34a !important;
+}
+[data-theme="light"] .ent-daxi-trip-btn,
+[data-theme="light"] .ent-daxi-time-btn {
+  background: var(--ent-daxi-surface) !important;
+  border-color: var(--ent-daxi-surface-border) !important;
+  color: var(--ent-daxi-muted) !important;
+}
+[data-theme="light"] .ent-daxi-trip-btn.active,
+[data-theme="light"] .ent-daxi-time-btn.active {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+  color: var(--ent-gold) !important;
+}
+[data-theme="light"] .ent-daxi-rt-label,
+[data-theme="light"] .ent-daxi-rt-allow { color: var(--ent-daxi-muted) !important; }
+[data-theme="light"] .ent-daxi-trip { border-bottom-color: var(--ent-daxi-row-border) !important; }
+
+[data-theme="light"] .ent-loc-sheet {
+  background: var(--ent-loc-sheet-bg) !important;
+  border-color: var(--ent-border) !important;
+}
+[data-theme="light"] .ent-loc-title { color: var(--ent-loc-title) !important; }
+[data-theme="light"] .ent-loc-sub,
+[data-theme="light"] .ent-loc-panel-text { color: var(--ent-loc-sub) !important; }
+[data-theme="light"] .ent-loc-mode {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+}
+[data-theme="light"] .ent-loc-mode span { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-loc-mode small { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-loc-mode.active {
+  border-color: rgba(194, 120, 3, .4) !important;
+  background: rgba(194, 120, 3, .06) !important;
+}
+[data-theme="light"] .ent-loc-textarea,
+[data-theme="light"] #ent-loc-help-msg,
+[data-theme="light"] .ent-loc-field {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .ent-loc-textarea::placeholder,
+[data-theme="light"] #ent-loc-help-msg::placeholder,
+[data-theme="light"] .ent-loc-field::placeholder { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-loc-btn--ghost {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-dim) !important;
+}
+[data-theme="light"] .ent-loc-map-hint { color: var(--ent-text-mute) !important; }
+
+[data-theme="light"] .form-group label { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .form-input {
+  background: var(--ent-form-input-bg) !important;
+  border-color: var(--ent-form-input-border) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .form-input:focus { background: var(--daxi-surface) !important; border-color: var(--ent-gold) !important; }
+[data-theme="light"] .trip-btn,
+[data-theme="light"] .time-btn {
+  background: var(--ent-trip-btn-bg) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-dim) !important;
+}
+[data-theme="light"] .trip-btn.active,
+[data-theme="light"] .time-btn.active {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+  color: var(--ent-gold) !important;
+}
+[data-theme="light"] .route-box { background: var(--ent-route-box-bg) !important; }
+[data-theme="light"] .route-input { color: var(--ent-text) !important; }
+[data-theme="light"] .sw-label { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .orders-tabs { background: var(--ent-orders-tabs-bg) !important; }
+
+
+[data-theme="light"] body:has(.ent-page) {
+  background: var(--ent-bg) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .ent-panel {
+  background: var(--ent-panel-a) !important;
+  border-color: var(--ent-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .ent-hero-title,
+[data-theme="light"] .ent-panel h2,
+[data-theme="light"] .ent-form-label { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-hero-line,
+[data-theme="light"] .ent-form-hint,
+[data-theme="light"] .ent-earn p { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .auth-tab {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-dim) !important;
+}
+[data-theme="light"] .auth-tab.active {
+  background: rgba(194, 120, 3, .08) !important;
+  border-color: rgba(194, 120, 3, .35) !important;
+  color: var(--ent-gold) !important;
+}
+[data-theme="light"] .ent-input,
+[data-theme="light"] .ent-select,
+[data-theme="light"] .form-input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .otp-box {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text) !important;
+}
+
+
+[data-theme="light"] .daxi-page-overlay {
+  background: var(--client-page-overlay-bg) !important;
+  color: var(--client-page-overlay-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay .text-gray-800,
+[data-theme="light"] .daxi-page-overlay .text-gray-900,
+[data-theme="light"] .daxi-page-overlay h2,
+[data-theme="light"] .daxi-page-overlay h3 {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay .text-gray-600,
+[data-theme="light"] .daxi-page-overlay .text-gray-500 {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-page-overlay .bg-white,
+[data-theme="light"] .daxi-page-overlay .glass-card {
+  background: var(--daxi-surface) !important;
+  border: 1px solid var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-page-overlay input,
+[data-theme="light"] .daxi-page-overlay textarea,
+[data-theme="light"] .daxi-page-overlay select {
+  background: var(--daxi-input-bg) !important;
+  border: 1.5px solid var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-page-overlay .suggestions-container {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-page-overlay .plan-card,
+[data-theme="light"] .daxi-page-overlay .route-map-card,
+[data-theme="light"] .daxi-page-overlay .frequent-route-card,
+[data-theme="light"] .daxi-page-overlay .plan-card-header,
+[data-theme="light"] .daxi-page-overlay .forum-card {
+  background: var(--daxi-surface) !important;
+  border: 1px solid var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-page-hdr {
+  background: var(--client-page-hdr-bg) !important;
+  border-bottom: 1px solid var(--daxi-border) !important;
+  box-shadow: 0 2px 12px rgba(16, 42, 67, .06) !important;
+}
+[data-theme="light"] .daxi-page-back {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-page-title { color: var(--daxi-text) !important; }
+
+
+[data-theme="light"] .daxi-booking-panel {
+  background: var(--client-booking-panel-bg) !important;
+  border-color: var(--client-booking-panel-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-booking-row { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-row-label { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-row-input,
+[data-theme="light"] #pickupInputBlock .daxi-row-input,
+[data-theme="light"] #destInputBlock .daxi-row-input {
+  color: var(--daxi-text) !important;
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-row-input::placeholder,
+[data-theme="light"] #pickupInputBlock .daxi-row-input::placeholder,
+[data-theme="light"] #destInputBlock .daxi-row-input::placeholder {
+  color: var(--daxi-text-mute) !important;
+}
+[data-theme="light"] .daxi-row-icon--muted,
+[data-theme="light"] .daxi-row-chevron { color: var(--daxi-text-mute) !important; }
+[data-theme="light"] .daxi-notes-expand textarea {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-booking-help-overlay { background: var(--daxi-overlay) !important; }
+[data-theme="light"] .daxi-booking-help-modal {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-booking-help-modal h2,
+[data-theme="light"] .daxi-bh-section h3 { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-booking-help-modal .daxi-bh-lead,
+[data-theme="light"] .daxi-bh-section p,
+[data-theme="light"] .daxi-bh-section ul { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-booking-help-close {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-bh-section { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-bh-section h3 i { color: #c27803 !important; }
+[data-theme="light"] .daxi-bh-warn {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+  color: #9a3412 !important;
+}
+[data-theme="light"] .daxi-bh-warn i { color: #c2410c !important; }
+[data-theme="light"] .daxi-bh-done {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  color: #fff !important;
+}
+
+[data-theme="light"] .daxi-acc-guest__btn--ghost {
+  background: #e8eef5 !important;
+  border: 1.5px solid #9fb3c8 !important;
+  color: #102A43 !important;
+  -webkit-text-fill-color: #102A43 !important;
+}
+[data-theme="light"] .daxi-acc-guest__btn--primary {
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+[data-theme="light"] #daxiSignupModal {
+  background: rgba(240, 244, 249, 0.72) !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-card {
+  background: linear-gradient(165deg, #ffffff, #f8fafc) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-head h3,
+[data-theme="light"] #daxiSignupModal .daxi-signup-step-label.is-active,
+[data-theme="light"] #daxiSignupModal .daxi-reg-step-title { color: var(--daxi-text) !important; }
+[data-theme="light"] #daxiSignupModal .daxi-signup-head p,
+[data-theme="light"] #daxiSignupModal .daxi-signup-hint,
+[data-theme="light"] #daxiSignupModal .daxi-signup-step-label { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #daxiSignupModal .daxi-signup-close {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-field input,
+[data-theme="light"] #daxiSignupModal .daxi-signup-field select,
+[data-theme="light"] #daxiSignupModal .daxi-phone-prefix-select,
+[data-theme="light"] #daxiSignupModal .daxi-phone-input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+  color-scheme: light !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-phone-prefix-select option,
+[data-theme="light"] #daxiSignupModal .daxi-signup-field select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-phone-wrap {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-btn--ghost {
+  background: #e8eef5 !important;
+  border: 1.5px solid #9fb3c8 !important;
+  color: #102A43 !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-foot button,
+[data-theme="light"] #loginModal .daxi-signup-foot button {
+  color: #102A43 !important;
+}
+[data-theme="light"] #daxiSignupModal .daxi-signup-foot__link,
+[data-theme="light"] #loginModal .daxi-signup-foot__link {
+  color: #b45309 !important;
+}
+[data-theme="light"] #loginModal .daxi-login-head h3,
+[data-theme="light"] #loginModal .daxi-signup-field label { color: var(--daxi-text) !important; }
+[data-theme="light"] #loginModal .daxi-login-head p,
+[data-theme="light"] #loginModal .daxi-login-hint,
+[data-theme="light"] #loginModal .tab { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #loginModal .tab.active {
+  color: #000 !important;
+}
+[data-theme="light"] #loginModal .daxi-signup-field input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #loginModal .daxi-login-card {
+  background: linear-gradient(165deg, #ffffff, #f8fafc) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+
+
+[data-theme="light"] .daxi-trip-types button,
+[data-theme="light"] .daxi-time-btns button,
+[data-theme="light"] .daxi-passenger-stepper,
+[data-theme="light"] .daxi-booking-trip-btn {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-trip-types button.active,
+[data-theme="light"] .daxi-time-btns button.active,
+[data-theme="light"] .daxi-booking-trip-btn.active {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+  color: var(--daxi-accent) !important;
+}
+
+
+[data-theme="light"] .daxi-oc-card {
+  background: var(--client-oc-card-bg) !important;
+  border-color: var(--client-oc-card-border) !important;
+  color: var(--client-oc-card-text) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-oc-inner,
+[data-theme="light"] .daxi-oc-route,
+[data-theme="light"] .daxi-oc-meta,
+[data-theme="light"] .daxi-oc-addr { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-oc-lbl,
+[data-theme="light"] .daxi-orders-section-count,
+[data-theme="light"] .daxi-orders-empty-mini,
+[data-theme="light"] .daxi-orders-empty { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-orders-empty-title { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-orders-empty-sub { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-orders-empty-mini,
+[data-theme="light"] .daxi-orders-empty {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] #client-orders-htmx [id^="co-"] [style*="color:#1f2937"],
+[data-theme="light"] #client-orders-htmx [id^="co-"] [style*="color:#374151"] {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #client-orders-htmx [id^="co-"] [style*="color:#6b7280"],
+[data-theme="light"] #client-orders-htmx [id^="co-"] [style*="color:#9ca3af"] {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #client-orders-htmx [id^="client-order-"] {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #client-orders-htmx [id^="client-order-"] div { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] #client-orders-container .text-gray,
+[data-theme="light"] #client-orders-container p { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #client-orders-container h3,
+[data-theme="light"] #client-orders-container .font-bold { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-routes-card-hint { color: var(--daxi-text-mute) !important; }
+
+
+[data-theme="light"] .daxi-acc { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-acc-hero {
+  background: linear-gradient(135deg, var(--daxi-surface), var(--daxi-surface-2)) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-acc-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-acc-card-h { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-acc-row { border-top-color: var(--daxi-border) !important; color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-acc-stat { background: var(--daxi-surface) !important; }
+[data-theme="light"] .daxi-acc-guest__card {
+  background: var(--daxi-surface) !important;
+  border-color: rgba(194, 120, 3, .25) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-acc-guest__avatar {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-surface) !important;
+}
+[data-theme="light"] .daxi-acc-guest__title { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-acc-guest__sub { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-acc-guest__perks span {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+
+
+[data-theme="light"] #drv-sidebar {
+  background: var(--daxi-surface) !important;
+  border-right-color: var(--daxi-border) !important;
+  box-shadow: 4px 0 24px rgba(16, 42, 67, .08) !important;
+}
+[data-theme="light"] #drv-chat-panel,
+[data-theme="light"] #drv-profile-modal .pm-body,
+[data-theme="light"] #drv-profile-modal .pm-sheet {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .chat-msg--them {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text-secondary) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .chat-input-wrap,
+[data-theme="light"] #chat-input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #focus-mode-btn,
+[data-theme="light"] #recenter-btn,
+[data-theme="light"] #extra-price-banner {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] #pause-fab {
+  background: var(--daxi-surface) !important;
+  border-color: rgba(239, 68, 68, .35) !important;
+}
+[data-theme="light"] .veh-premium-hero {
+  background: linear-gradient(160deg, rgba(29, 111, 212, .08) 0%, rgba(194, 120, 3, .06) 45%, var(--daxi-surface-2) 100%) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+
+
+[data-theme="light"] .drv-oc {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .drv-oc-addr,
+[data-theme="light"] .drv-oc-plan-title,
+[data-theme="light"] .drv-oc-proximity-val,
+[data-theme="light"] .drv-oc-contact-val,
+[data-theme="light"] .drv-oc-plan-route-val { color: var(--daxi-text) !important; }
+[data-theme="light"] .drv-oc-lbl,
+[data-theme="light"] .drv-oc-chip,
+[data-theme="light"] .drv-oc-expand,
+[data-theme="light"] .drv-oc-contact-lbl {
+  color: var(--daxi-text-muted) !important;
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-oc-details,
+[data-theme="light"] .drv-oc-plan-route,
+[data-theme="light"] .drv-oc-contact-item {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-oc-chip i { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] #initialLoader { background: var(--daxi-bg) !important; }
+[data-theme="light"] #daxiMapLoaderLabel { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-map-loader-bar { background: var(--daxi-border) !important; }
+
+
+[data-theme="light"] .daxi-bottom-tabbar {
+  background: var(--daxi-surface) !important;
+  border-top: 1px solid var(--daxi-border) !important;
+}
+
+
+[data-theme="light"] #daxiCardPaymentOverlay,
+[data-theme="light"] #daxiCardPaymentFrame { background: var(--daxi-bg) !important; }
+[data-theme="light"] #daxiCardPaymentClose {
+  background: #fff !important;
+  color: var(--daxi-text) !important;
+  border-color: var(--daxi-border) !important;
+}
+
+
+[data-theme="light"] .daxi-explorer-detail-panel {
+  background: var(--daxi-surface) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-blog-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-blog-card-body h3 { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-blog-card-body p,
+[data-theme="light"] .daxi-blog-meta { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] .daxi-menu-overlay { background: var(--daxi-overlay) !important; }
+[data-theme="light"] .daxi-menu-sheet,
+[data-theme="light"] #daxiMenuDrawer {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+
+
+[data-theme="light"] .daxi-passenger-label,
+[data-theme="light"] .daxi-passenger-hint { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-passenger-stepper {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-passenger-icon {
+  background: rgba(29, 111, 212, .08) !important;
+  border-right-color: var(--daxi-border) !important;
+  color: var(--daxi-accent-blue) !important;
+}
+[data-theme="light"] .daxi-step-btn {
+  background: var(--daxi-surface-2) !important;
+  color: #16a34a !important;
+}
+[data-theme="light"] .daxi-step-val { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-trip-row { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .daxi-trip-row .trip-type-option {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-trip-row .trip-type-option.active,
+[data-theme="light"] .daxi-trip-row .trip-type-option:has(input:checked) {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+  color: var(--daxi-accent) !important;
+}
+[data-theme="light"] .daxi-time-row .time-selection-btn {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-time-row .time-selection-btn.active {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+  color: var(--daxi-accent) !important;
+}
+[data-theme="light"] #destConfirmBar {
+  background: rgba(194, 120, 3, .08) !important;
+  border-color: rgba(194, 120, 3, .3) !important;
+  color: var(--daxi-accent) !important;
+}
+
+
+[data-theme="light"] .daxi-sheet-order-mini,
+[data-theme="light"] .daxi-order-status-bar {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+
+
+[data-theme="light"] .ent-panel {
+  background: var(--ent-panel-a) !important;
+  border: 1px solid var(--ent-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .auth-tabs {
+  background: var(--daxi-surface-2) !important;
+  border-bottom-color: var(--ent-border) !important;
+}
+
+
+[data-theme="light"] .ent-checkout-overlay { background: var(--daxi-overlay) !important; }
+[data-theme="light"] .ent-checkout-head,
+[data-theme="light"] .ent-checkout-body { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-checkout-label { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .ent-checkout-contract-box {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-dim) !important;
+}
+
+
+[data-theme="light"] .ent-loc-order-banner--pending {
+  background: rgba(29, 111, 212, .08) !important;
+  border-color: rgba(29, 111, 212, .25) !important;
+  color: #1D6FD4 !important;
+}
+[data-theme="light"] .ent-loc-order-banner--pending strong { color: #102A43 !important; }
+[data-theme="light"] .ent-loc-order-banner--pending p { color: #627D98 !important; }
+
+
+[data-theme="light"] .ent-hero-kicker { color: var(--ent-gold) !important; }
+[data-theme="light"] .ent-hero-title { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-hero-line { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .ent-earn {
+  background: var(--daxi-surface) !important;
+  border-color: var(--ent-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .ent-earn-item strong { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-earn-item span { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .form-group label { color: var(--ent-text-dim) !important; }
+[data-theme="light"] .ent-phone-prefix {
+  background: rgba(194, 120, 3, .08) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-gold) !important;
+}
+[data-theme="light"] .mode-pill {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+}
+[data-theme="light"] .mode-pill span { color: var(--ent-text) !important; }
+[data-theme="light"] .mode-pill.active {
+  border-color: rgba(194, 120, 3, .45) !important;
+  background: rgba(194, 120, 3, .08) !important;
+}
+[data-theme="light"] .mode-hint {
+  background: rgba(194, 120, 3, .06) !important;
+  border-color: rgba(194, 120, 3, .2) !important;
+  color: var(--ent-text-dim) !important;
+}
+[data-theme="light"] .ent-switch { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-otp-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--ent-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .ent-otp-card h3 { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-otp-card p,
+[data-theme="light"] .ent-otp-status { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-otp-box {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text) !important;
+}
+[data-theme="light"] .status-panel { color: var(--ent-text-secondary, var(--ent-text-dim)) !important; }
+[data-theme="light"] .status-title { color: var(--ent-text) !important; }
+[data-theme="light"] .status-desc { color: var(--ent-text-mute) !important; }
+
+
+[data-theme="light"] .ent-checkout-head h3 { color: var(--ent-text) !important; }
+[data-theme="light"] .ent-checkout-head p { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-checkout-price {
+  background: rgba(194, 120, 3, .08) !important;
+  border-color: rgba(194, 120, 3, .25) !important;
+}
+[data-theme="light"] .ent-checkout-price-label,
+[data-theme="light"] .ent-checkout-section-title { color: var(--ent-text-mute) !important; }
+[data-theme="light"] .ent-checkout-price-val { color: var(--ent-gold) !important; }
+[data-theme="light"] .ent-checkout-route,
+[data-theme="light"] .ent-checkout-opt,
+[data-theme="light"] .ent-checkout-contract {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--ent-border) !important;
+  color: var(--ent-text-dim) !important;
+}
+[data-theme="light"] .ent-checkout-btn--ghost {
+  background: var(--daxi-surface-2) !important;
+  color: var(--ent-text-dim) !important;
+  border-color: var(--ent-border) !important;
+}
+
+
+[data-theme="light"] .sidebar-menu {
+  background: var(--daxi-surface) !important;
+  box-shadow: -4px 0 24px rgba(16, 42, 67, .1) !important;
+}
+[data-theme="light"] .sidebar-overlay.active {
+  background: var(--daxi-overlay) !important;
+}
+[data-theme="light"] .sidebar-header {
+  background: var(--daxi-surface) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .sidebar-close {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .sidebar-close i {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .sidebar-close:hover {
+  background: rgba(194, 120, 3, 0.08) !important;
+}
+[data-theme="light"] .sidebar-close:hover i {
+  color: var(--daxi-accent) !important;
+}
+
+
+[data-theme="light"] .notification-permission-modal {
+  background: rgba(16, 42, 67, 0.45) !important;
+}
+[data-theme="light"] .notification-permission-content {
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-color: rgba(194, 120, 3, 0.25) !important;
+  color: var(--daxi-text-secondary) !important;
+  box-shadow: 0 24px 64px rgba(16, 42, 67, 0.18) !important;
+}
+[data-theme="light"] .notification-permission-content h3 {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .notification-permission-content .daxi-notif-modal-desc {
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .notification-permission-content .notify-modal-android-hint {
+  color: #92400e !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+}
+[data-theme="light"] .notification-permission-content .daxi-notif-modal-note {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .notification-permission-content #declineNotificationBtn {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .sidebar-user-section,
+[data-theme="light"] .sidebar-nav-group,
+[data-theme="light"] .sidebar-menu-item {
+  background: transparent !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .sidebar-user-name,
+[data-theme="light"] .sidebar-nav-group summary,
+[data-theme="light"] .sidebar-menu-item span { color: var(--daxi-text) !important; }
+[data-theme="light"] .sidebar-user-id,
+[data-theme="light"] .sidebar-menu-item small { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .sidebar-menu-item:hover,
+[data-theme="light"] .sidebar-nav-group summary:hover {
+  background: rgba(194, 120, 3, .06) !important;
+  color: var(--daxi-accent) !important;
+}
+[data-theme="light"] .sidebar-logout-btn {
+  background: rgba(239, 68, 68, .08) !important;
+  border-color: rgba(239, 68, 68, .2) !important;
+  color: #dc2626 !important;
+}
+
+
+[data-theme="light"] nav.nav-gradient #loginBtn,
+[data-theme="dark"] nav.nav-gradient #loginBtn,
+nav.nav-gradient #loginBtn.gold-button {
+  border-radius: 20px !important;
+}
+
+
+[data-theme="light"] body > .suggestions-container:not(.hidden),
+[data-theme="light"] .app-sheet #bookingSection .suggestions-container,
+[data-theme="light"] .daxi-page-overlay .suggestions-container {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] body > .suggestions-container .suggestion-item,
+[data-theme="light"] .app-sheet #bookingSection .suggestion-item {
+  color: var(--daxi-text-secondary) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] body > .suggestions-container .suggestion-item:hover,
+[data-theme="light"] .app-sheet #bookingSection .suggestion-item:hover {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] gmp-place-autocomplete.daxi-place-ac {
+  color-scheme: light !important;
+  --gmpx-color-surface: var(--daxi-input-bg) !important;
+  --gmpx-color-on-surface: var(--daxi-text) !important;
+  --gmpx-color-outline: var(--daxi-border) !important;
+  --gmpx-color-primary: var(--daxi-accent) !important;
+}
+[data-theme="light"] .pac-container {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .pac-item,
+[data-theme="light"] .pac-item-query { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .pac-item:hover,
+[data-theme="light"] .pac-item-selected,
+[data-theme="light"] .pac-item.pac-item-selected {
+  background: var(--daxi-surface-2) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .pac-matched { color: var(--daxi-accent) !important; }
+[data-theme="light"] .pac-icon { filter: none !important; opacity: .55 !important; }
+
+
+[data-theme="light"] #daxiPageOverlay #all-pending-requests,
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx,
+[data-theme="light"] #daxiPageOverlay #client-orders-container,
+[data-theme="light"] #daxi-sheet-order-slot,
+[data-theme="light"] #daxiSheetOrder {
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="co-"],
+[data-theme="light"] #daxi-sheet-order-slot [id^="co-"],
+[data-theme="light"] #daxiPageOverlay .daxi-oc-card,
+[data-theme="light"] #daxi-sheet-order-slot .daxi-oc-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="co-"] [style*="color:#1f2937"],
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="co-"] [style*="color:#374151"],
+[data-theme="light"] #daxiPageOverlay .daxi-oc-route-addr,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-driver-name,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-price-val,
+[data-theme="light"] #daxi-sheet-order-slot .daxi-oc-route-addr,
+[data-theme="light"] #daxi-sheet-order-slot .daxi-oc-driver-name {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="co-"] [style*="color:#6b7280"],
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="co-"] [style*="color:#9ca3af"],
+[data-theme="light"] #daxiPageOverlay .daxi-oc-route-label,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-price-sub,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-chip,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-driver-car,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-section-count,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty-sub {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-htmx [id^="client-order-"] {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-container .text-gray {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-container p,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty-title,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty-sub {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+[data-theme="light"] #daxiPageOverlay #client-orders-container h3,
+[data-theme="light"] #daxiPageOverlay #client-orders-container .font-bold,
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty-title {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #daxiPageOverlay .daxi-orders-empty-mini {
+  background: transparent !important;
+  border: none !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #daxiPageOverlay .daxi-oc-driver {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] #daxiPageOverlay .daxi-oc-chip {
+  background: var(--daxi-surface-3) !important;
+  border: 1px solid var(--daxi-border) !important;
+}
+[data-theme="light"] #orders-tab-active {
+  background: linear-gradient(135deg, var(--daxi-accent), var(--daxi-accent-light)) !important;
+  color: #fff !important;
+  border: none !important;
+}
+[data-theme="light"] #orders-tab-history {
+  background: var(--daxi-surface) !important;
+  color: var(--daxi-text-secondary) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #ordersCountBadge {
+  background: rgba(194, 120, 3, .12) !important;
+  color: var(--daxi-accent) !important;
+}
+[data-theme="light"] .daxi-sheet-order-mini {
+  background: var(--daxi-surface) !important;
+  border-bottom: 1px solid var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-mini-status { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-mini-price { color: var(--daxi-accent) !important; }
+[data-theme="light"] .daxi-sheet-order-mini i { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] .daxi-prof,
+[data-theme="light"] .daxi-acc-settings-inline .daxi-prof { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-prof-card,
+[data-theme="light"] .daxi-acc-settings-inline .daxi-prof-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-prof-card-h,
+[data-theme="light"] .daxi-prof-row small { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-prof-row { border-top-color: var(--daxi-border) !important; color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .daxi-prof-field label { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-prof-field input,
+[data-theme="light"] .daxi-prof-phone-wrap,
+[data-theme="light"] .daxi-prof-phone-prefix,
+[data-theme="light"] .daxi-prof-phone-input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-prof-sheet-panel { background: var(--daxi-surface) !important; color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-acc-settings-inline {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--daxi-border);
+}
+
+
+
+
+[data-theme="light"] #daxiSheetExpandFab {
+  background: var(--daxi-surface) !important;
+  border: 1.5px solid rgba(194, 120, 3, .45) !important;
+  color: var(--daxi-accent) !important;
+  box-shadow: 0 8px 24px rgba(16, 42, 67, .12) !important;
+}
+[data-theme="light"] #daxiSheetExpandFab i { color: var(--daxi-accent) !important; }
+
+
+[data-theme="light"] .booking-input:focus:not(.daxi-place-ac-hidden),
+[data-theme="light"] .app-sheet #bookingSection input:focus:not(.daxi-place-ac-hidden),
+[data-theme="light"] .app-sheet #bookingSection textarea:focus {
+  border-color: var(--daxi-accent) !important;
+  background: var(--daxi-surface) !important;
+  box-shadow: 0 0 0 3px rgba(194, 120, 3, .12) !important;
+}
+[data-theme="light"] .trip-type-option,
+[data-theme="light"] .time-selection-btn {
+  border-color: var(--daxi-border-strong) !important;
+  color: var(--daxi-text-secondary) !important;
+  background: var(--daxi-surface) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .trip-type-option.active,
+[data-theme="light"] .time-selection-btn.active {
+  background: rgba(194, 120, 3, .12) !important;
+  border-color: rgba(194, 120, 3, .45) !important;
+  color: var(--daxi-accent) !important;
+  box-shadow: 0 2px 8px rgba(194, 120, 3, .1) !important;
+}
+[data-theme="light"] .trip-type-option:hover:not(.active),
+[data-theme="light"] .time-selection-btn:hover:not(.active) {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border-strong) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .btn-glow:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(194, 120, 3, .2) !important;
+}
+
+
+[data-theme="light"] .sidebar-section-title { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .sidebar-driver-chip {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .sidebar-driver-chip .sdrv-name { color: var(--daxi-text) !important; }
+[data-theme="light"] .sidebar-driver-chip .sdrv-meta { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .sidebar-language-btn {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .sidebar-language-btn:hover {
+  background: var(--daxi-surface-3) !important;
+  border-color: var(--daxi-border-strong) !important;
+}
+[data-theme="light"] .sidebar-language-btn.active {
+  background: linear-gradient(135deg, var(--daxi-accent), var(--daxi-accent-light)) !important;
+  border-color: var(--daxi-accent) !important;
+  color: #fff !important;
+}
+[data-theme="light"] .sidebar-nav-group {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .sidebar-nav-group summary { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .sidebar-nav-group summary i { color: var(--daxi-accent) !important; }
+[data-theme="light"] .sidebar-menu-item i { color: var(--daxi-accent) !important; }
+[data-theme="light"] #sidebarLoginBtn {
+  background: linear-gradient(135deg, var(--daxi-accent), var(--daxi-accent-light)) !important;
+  border: none !important;
+  color: #fff !important;
+}
+[data-theme="light"] #sidebarLoginBtn i { color: #fff !important; }
+[data-theme="light"] .sidebar-enterprise-promo {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .sidebar-enterprise-promo strong { color: var(--daxi-text) !important; }
+[data-theme="light"] .sidebar-enterprise-promo__icon i { color: var(--daxi-accent) !important; }
+
+
+[data-theme="light"] #client-orders-htmx [id^="co-"],
+[data-theme="light"] #daxi-sheet-order-slot [id^="co-"],
+[data-theme="light"] #daxiPageOverlay [id^="co-"],
+[data-theme="light"] #daxiPageBody [id^="co-"] {
+  background: var(--client-oc-card-bg) !important;
+  border: 1px solid var(--client-oc-card-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+  color: var(--client-oc-card-text) !important;
+}
+[data-theme="light"] #client-orders-htmx .daxi-oc-card,
+[data-theme="light"] #daxi-sheet-order-slot .daxi-oc-card,
+[data-theme="light"] #daxiPageOverlay .daxi-oc-card {
+  background: var(--client-oc-card-bg) !important;
+  border-color: var(--client-oc-card-border) !important;
+  color: var(--client-oc-card-text) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] .daxi-oc-plan-hero {
+  background: var(--daxi-surface-2) !important;
+  border: 1px solid var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-oc-plan-name,
+[data-theme="light"] .daxi-oc-plan-hint,
+[data-theme="light"] .daxi-oc-plan-price,
+[data-theme="light"] .daxi-oc-route-addr,
+[data-theme="light"] .daxi-oc-driver-name,
+[data-theme="light"] .daxi-oc-plan-field-val,
+[data-theme="light"] .daxi-plan-stop__addr {
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .daxi-oc-plan-hint,
+[data-theme="light"] .daxi-oc-route-label,
+[data-theme="light"] .daxi-oc-price-sub,
+[data-theme="light"] .daxi-oc-price-pending,
+[data-theme="light"] .daxi-oc-driver-car,
+[data-theme="light"] .daxi-plan-stop__lbl,
+[data-theme="light"] .daxi-oc-plan-field-lbl {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-oc-plan-hero-left i { color: var(--daxi-accent) !important; }
+[data-theme="light"] .daxi-oc-price-val { color: #059669 !important; }
+[data-theme="light"] .daxi-oc-chip {
+  background: var(--daxi-surface-3) !important;
+  border: 1px solid var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-oc-driver {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .daxi-oc-wait-banner {
+  background: rgba(99, 102, 241, .08) !important;
+  border-color: rgba(99, 102, 241, .22) !important;
+}
+[data-theme="light"] .daxi-oc-wait-banner div[style*="color:#c4b5fd"] {
+  color: #4338ca !important;
+}
+[data-theme="light"] .daxi-oc-wait-banner div[style*="color:#94a3b8"] {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] .daxi-oc-btn--cancel {
+  background: rgba(220, 38, 38, .08) !important;
+  border: 1px solid rgba(220, 38, 38, .22) !important;
+  color: #b91c1c !important;
+}
+[data-theme="light"] .daxi-oc-btn--track {
+  background: rgba(99, 102, 241, .08) !important;
+  border-color: rgba(99, 102, 241, .22) !important;
+  color: #4338ca !important;
+}
+[data-theme="light"] .daxi-oc-btn--refuse {
+  background: rgba(220, 38, 38, .06) !important;
+  border-color: rgba(220, 38, 38, .2) !important;
+  color: #b91c1c !important;
+}
+[data-theme="light"] .daxi-oc-card--plan {
+  background: var(--client-oc-card-bg) !important;
+  border-color: rgba(194, 120, 3, .3) !important;
+}
+[data-theme="light"] .daxi-oc-plan-itinerary,
+[data-theme="light"] .daxi-plan-stops {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .daxi-oc-plan-itinerary-lbl,
+[data-theme="light"] .daxi-plan-stops__head,
+[data-theme="light"] .daxi-oc-plan-itinerary-val {
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .daxi-orders-section-badge--now {
+  color: #b45309 !important;
+  background: rgba(245, 158, 11, .1) !important;
+  border-color: rgba(245, 158, 11, .28) !important;
+}
+[data-theme="light"] .daxi-orders-section-badge--later {
+  color: #4338ca !important;
+  background: rgba(99, 102, 241, .08) !important;
+  border-color: rgba(99, 102, 241, .22) !important;
+}
+[data-theme="light"] .daxi-orders-section-count { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-orders-empty-title { color: var(--daxi-text) !important; }
+[data-theme="light"] .daxi-orders-empty-sub,
+[data-theme="light"] .daxi-orders-empty,
+[data-theme="light"] .daxi-orders-empty-mini { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .daxi-orders-empty-mini {
+  background: transparent !important;
+  border: none !important;
+}
+[data-theme="light"] #client-orders-container .text-gray,
+[data-theme="light"] #client-orders-container p { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #client-orders-container h3,
+[data-theme="light"] #client-orders-container .font-bold { color: var(--daxi-text) !important; }
+
+
+[data-theme="light"] .app-sheet .daxi-sheet-tab { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .app-sheet .daxi-sheet-tab.active {
+  color: var(--daxi-text) !important;
+  background: var(--daxi-surface) !important;
+  border: 1px solid var(--daxi-border) !important;
+  box-shadow: 0 1px 4px rgba(16, 42, 67, .08) !important;
+}
+[data-theme="light"] .app-sheet .daxi-sheet-switcher {
+  background: var(--daxi-surface-3) !important;
+  border-color: var(--daxi-border) !important;
+}
+
+
+[data-theme="light"] body.drv-page,
+[data-theme="light"] body:has(#map) {
+  background: var(--daxi-bg) !important;
+}
+[data-theme="light"] #top-bar-inner {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.96) 0%, transparent 100%) !important;
+}
+[data-theme="light"] #menu-btn.glass,
+[data-theme="light"] #profile-pill.glass {
+  background: var(--daxi-surface) !important;
+  border: 1px solid var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+  box-shadow: 0 2px 10px rgba(16, 42, 67, 0.08) !important;
+}
+[data-theme="light"] #orders-pill {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .stat-glass.glass {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .mission-card.glass {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #mission-panel .mission-card {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #mission-client {
+  color: #0f172a !important;
+}
+[data-theme="light"] #mission-status {
+  color: #d97706 !important;
+}
+[data-theme="light"] #mission-action-btn {
+  background: var(--amber) !important;
+  color: #000 !important;
+}
+[data-theme="light"] #map {
+  background: #F0F4F9;
+}
+[data-theme="dark"] #map {
+  background: #070b14;
+}

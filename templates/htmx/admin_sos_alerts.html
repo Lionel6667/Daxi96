@@ -1,0 +1,147 @@
+<div id="admin-sos-container" data-active-count="{{ active_count|default:0 }}">
+
+{% if not orders %}
+<div class="sos-empty">
+  <div style="font-size:40px;margin-bottom:8px;"><i class="ri-shield-check-line"></i></div>
+  <p>Aucune alerte SOS.</p>
+</div>
+{% endif %}
+
+{% for o in orders %}
+<article class="sos-card {% if o.is_sos_active %}sos-card-active{% endif %}" id="sos-card-{{ o.id }}">
+  <header class="sos-card-header">
+    <div>
+      <h3 class="sos-card-title">🆘 Course #{{ o.id }}</h3>
+      <p class="sos-card-meta">
+        Signalé par <strong>{% if o.sos_triggered_by == 'driver' %}CHAUFFEUR{% else %}CLIENT{% endif %}</strong>
+        · {{ o.sos_triggered_at_display }}
+        · Statut : <strong>{{ o.status_display }}</strong>
+      </p>
+    </div>
+    <div class="sos-card-actions">
+      <button type="button" class="sos-btn sos-btn-map" onclick="toggleSosOrderMap({{ o.id }})">
+        <i class="ri-map-2-line"></i> Carte
+      </button>
+      <button type="button" class="sos-btn sos-btn-detail" onclick="openOrderModal({{ o.id }})">
+        <i class="ri-eye-line"></i> Fiche
+      </button>
+    </div>
+  </header>
+
+  <div class="sos-tracking-row">
+    <div class="sos-tracking-box {% if o.client_tracking.online %}online{% else %}offline{% endif %}">
+      <div class="sos-tracking-label"><i class="ri-user-line"></i> Client</div>
+      <div class="sos-tracking-status">{{ o.client_tracking.label }}</div>
+      {% if o.client_tracking.offline_duration and not o.client_tracking.online %}
+      <div class="sos-tracking-mins">{{ o.client_tracking.offline_duration }} sans mise à jour GPS</div>
+      {% endif %}
+    </div>
+    <div class="sos-tracking-box {% if o.driver_tracking.online %}online{% else %}offline{% endif %}">
+      <div class="sos-tracking-label"><i class="ri-steering-2-line"></i> Chauffeur</div>
+      <div class="sos-tracking-status">{{ o.driver_tracking.label }}</div>
+      {% if o.driver_tracking.offline_duration and not o.driver_tracking.online %}
+      <div class="sos-tracking-mins">{{ o.driver_tracking.offline_duration }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="sos-map-panel-{{ o.id }}" class="sos-map-panel hidden">
+    <div id="sos-map-{{ o.id }}" class="sos-map-canvas"
+         data-order-id="{{ o.id }}"
+         data-order-status="{{ o.status }}"
+         data-pickup-lat="{{ o.pickup_lat|default:'' }}"
+         data-pickup-lng="{{ o.pickup_lng|default:'' }}"
+         data-dest-lat="{{ o.destination_lat|default:'' }}"
+         data-dest-lng="{{ o.destination_lng|default:'' }}"
+         data-client-lat="{{ o.client_tracking.lat|default:'' }}"
+         data-client-lng="{{ o.client_tracking.lng|default:'' }}"
+         data-driver-lat="{{ o.driver_tracking.lat|default:'' }}"
+         data-driver-lng="{{ o.driver_tracking.lng|default:'' }}"
+         data-client-label="{{ o.client_tracking.label|escape }}"
+         data-driver-label="{{ o.driver_tracking.label|escape }}"></div>
+  </div>
+
+  <div class="sos-details-grid">
+    <section class="sos-detail-section">
+      <h4>Client</h4>
+      <dl>
+        <dt>Nom</dt><dd>{{ o.client_name|default:"—" }}</dd>
+        <dt>Email</dt><dd>{{ o.client_email|default:"—" }}</dd>
+        <dt>Téléphone</dt><dd>{{ o.client_phone|default:"—" }}</dd>
+        {% if o.guest_id %}<dt>ID invité</dt><dd>{{ o.guest_id }}</dd>{% endif %}
+        <dt>Passagers</dt><dd>{{ o.passengers|default:1 }}</dd>
+      </dl>
+    </section>
+
+    <section class="sos-detail-section">
+      <h4>Trajet</h4>
+      <dl>
+        <dt>Départ</dt><dd>{{ o.pickup|default:"—" }}</dd>
+        <dt>Destination</dt><dd>{{ o.destination|default:"—" }}</dd>
+        <dt>Type</dt><dd>{% if o.trip_type == 'round_trip' %}Aller-retour{% else %}Aller simple{% endif %}</dd>
+        <dt>Quand</dt><dd>{% if o.is_later %}Programmé · {{ o.date_display|default:"" }} {{ o.time|slice:":5"|default:"" }}{% else %}Maintenant{% endif %}</dd>
+        {% if o.trip_type == 'round_trip' and o.round_trip_wait_minutes %}
+        <dt>Attente AR</dt><dd>{{ o.round_trip_wait_minutes }} min{% if o.round_trip_allow_driver_other_rides %} · chauffeur peut prendre d'autres courses{% endif %}</dd>
+        {% endif %}
+        <dt>Véhicule</dt><dd>{{ o.vehicle_type_display|default:o.vehicle_type|default:"—" }}</dd>
+        {% if o.service_plan %}<dt>Plan / forfait</dt><dd>{{ o.service_plan_display|default:o.service_plan }}</dd>{% endif %}
+        {% if o.distance_km %}<dt>Distance est.</dt><dd>{{ o.distance_km }} km</dd>{% endif %}
+        {% if o.duration_min %}<dt>Durée est.</dt><dd>~{{ o.duration_min }} min</dd>{% endif %}
+      </dl>
+    </section>
+
+    <section class="sos-detail-section">
+      <h4>Tarif & paiement</h4>
+      <dl>
+        <dt>Prix course</dt><dd>{{ o.price_display }}</dd>
+        <dt>Total (pause + extra)</dt><dd>{{ o.total_price_display }}</dd>
+        {% if o.pause_price %}<dt>Pause / attente</dt><dd>{{ o.pause_price_display }}{% if o.pause_accumulated_seconds %} · {{ o.pause_accumulated_seconds }} s{% endif %}{% if o.is_paused %} · <strong>en pause</strong>{% endif %}</dd>{% endif %}
+        {% if o.extra_km_price %}<dt>Prolongation</dt><dd>{{ o.extra_km_price_display }}{% if o.is_extended %} · prolongée{% endif %}</dd>{% endif %}
+        <dt>Paiement</dt><dd>{{ o.payment_method_display|default:"—" }} · {{ o.payment_status_display }}</dd>
+        <dt>Prix confirmé</dt><dd>{% if o.price_confirmed %}Oui{% else %}Non{% endif %}</dd>
+      </dl>
+    </section>
+
+    <section class="sos-detail-section">
+      <h4>Chauffeur</h4>
+      <dl>
+        <dt>Nom</dt><dd>{{ o.driver_name|default:"—" }}</dd>
+        <dt>Téléphone</dt><dd>{{ o.driver_phone|default:"—" }}</dd>
+        <dt>Véhicule</dt><dd>{{ o.driver_vehicle|default:"—" }}{% if o.driver_plate %} · {{ o.driver_plate }}{% endif %}</dd>
+        {% if o.driver_car_brand or o.driver_car_model %}<dt>Modèle</dt><dd>{{ o.driver_car_brand }} {{ o.driver_car_model }}{% if o.driver_car_year %} ({{ o.driver_car_year }}){% endif %}</dd>{% endif %}
+        {% if o.driver_rating %}<dt>Note</dt><dd>{{ o.driver_rating }}/5</dd>{% endif %}
+        <dt>Statut chauffeur</dt><dd>{{ o.driver_status_display|default:"—" }}</dd>
+      </dl>
+    </section>
+
+    {% if o.enterprise_name %}
+    <section class="sos-detail-section">
+      <h4>Entreprise affiliée</h4>
+      <dl>
+        <dt>Nom</dt><dd>{{ o.enterprise_name }}</dd>
+        {% if o.enterprise_commission_pct %}<dt>Commission</dt><dd>{{ o.enterprise_commission_pct }}%</dd>{% endif %}
+      </dl>
+    </section>
+    {% endif %}
+
+    <section class="sos-detail-section sos-detail-section-wide">
+      <h4>Coordonnées & suivi</h4>
+      <dl class="sos-dl-cols">
+        <dt>Départ GPS</dt><dd>{% if o.pickup_lat %}{{ o.pickup_lat }}, {{ o.pickup_lng }}{% if o.pickup_coords_set_by_driver %} (saisi chauffeur){% endif %}{% else %}—{% endif %}</dd>
+        <dt>Destination GPS</dt><dd>{% if o.destination_lat %}{{ o.destination_lat }}, {{ o.destination_lng }}{% if o.dest_coords_set_by_driver %} (saisi chauffeur){% endif %}{% else %}—{% endif %}</dd>
+        <dt>GPS client live</dt><dd>{% if o.client_gps_lat %}{{ o.client_gps_lat }}, {{ o.client_gps_lng }}{% else %}—{% endif %}</dd>
+        <dt>Créée le</dt><dd>{{ o.created_display }}</dd>
+      </dl>
+    </section>
+
+    {% if o.notes or o.description %}
+    <section class="sos-detail-section sos-detail-section-wide">
+      <h4>Notes & description</h4>
+      {% if o.notes %}<p class="sos-note-block"><strong>Notes :</strong> {{ o.notes }}</p>{% endif %}
+      {% if o.description %}<p class="sos-note-block"><strong>Description :</strong> {{ o.description }}</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+</article>
+{% endfor %}
+</div>

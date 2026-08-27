@@ -1,0 +1,92 @@
+# Environment & secrets — NEVER commit
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.p8
+*.p12
+google-services.json
+GoogleService-Info.plist
+**/firebase-service-account*.json
+**/*.CORRUPT.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+db.sqlite3-shm
+db.sqlite3-wal
+staticfiles/
+media/
+backups/
+*.log
+
+# Local binaries / scratch (not needed on Railway)
+*.apk
+*.aab
+*.code-workspace
+_tmp_*
+_test_*.py
+yo.csv
+cerveau.json
+models.json
+MonCash.png
+natcash.webp
+logo_app.png
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Android / Capacitor build artifacts (heavy, regenerated locally)
+clients/**/node_modules/
+clients/**/build/
+clients/**/.gradle/
+clients/**/local.properties
+clients/**/Pods/
+clients/**/DerivedData/
+clients/daxi-capacitor/node_modules/
+clients/daxi-android/app/src/main/assets/webcache/
+clients/daxi-capacitor/android/app/build/
+clients/daxi-capacitor/android/app/src/main/assets/public/
+clients/daxi-capacitor/ios/App/App/public/
+
+# Node
+services/whatsapp-webhook/node_modules/
+node_modules/
+
+# Legacy backups
+*.bak
+legacy/*.bak
+_comment_backup/
+
+# Firebase export (large, sensitive)
+data/julmin-taxis-default-rtdb-export.json
+
+# Geo downloads / caches (regenerated via management commands; too large for GitHub)
+geo_data/**/*.osm.pbf
+geo_data/**/*.pbf
+geo_data/cache/
+geo_data/zone_*.geojson
+
+# Heavy legacy / offline map blobs (not needed on Railway)
+legacy/**/*.zip
+**/*.mbtiles
+
+# Local tooling scratch
+_fix_*.py
+moncash-original-black.png
+static/payments/moncash-original-black.png

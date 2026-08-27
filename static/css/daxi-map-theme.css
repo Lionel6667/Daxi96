@@ -1,0 +1,68 @@
+
+
+.daxi-map-theme-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
+}
+
+.daxi-map-theme-veil--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+}
+
+.daxi-map-theme-veil--in {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.daxi-map-theme-veil--out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#daxi-map-stage {
+  isolation: isolate;
+}
+
+#daxi-main-map.daxi-map-swapping {
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+
+
+#daxiMenuFab {
+  background: var(--daxi-chrome-menu-bg) !important;
+  border-color: var(--daxi-chrome-menu-border) !important;
+  color: var(--daxi-chrome-menu-color) !important;
+  box-shadow: var(--daxi-chrome-menu-shadow) !important;
+}
+#client-map-whatsapp {
+  background: var(--daxi-chrome-float-bg) !important;
+  border-color: var(--daxi-chrome-float-border) !important;
+  color: #25D366 !important;
+}
+#client-map-whatsapp:hover {
+  background: var(--daxi-chrome-float-hover-bg) !important;
+  border-color: #25D366 !important;
+}
+html[data-theme] nav.nav-gradient .menu-toggle,
+html[data-theme] .menu-toggle {
+  background: var(--daxi-chrome-nav-bg) !important;
+  border-color: var(--daxi-chrome-nav-border) !important;
+  color: var(--daxi-chrome-nav-color) !important;
+}
+html[data-theme] .menu-toggle i,
+html[data-theme] nav.nav-gradient .menu-toggle i {
+  color: var(--daxi-chrome-nav-color) !important;
+}
+html[data-theme] #menu-btn.glass {
+  background: var(--daxi-chrome-nav-bg) !important;
+  border-color: var(--daxi-chrome-nav-border) !important;
+  color: var(--daxi-chrome-nav-color) !important;
+}

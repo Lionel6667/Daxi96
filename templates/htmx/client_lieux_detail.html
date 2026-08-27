@@ -1,0 +1,30 @@
+{% load static %}
+<article class="daxi-lieu-detail" id="daxi-lieu-detail">
+  <div class="daxi-lieu-detail__hero" style="{% if place.cover_url %}background-image:url('{{ place.cover_url }}'){% endif %}">
+    <button type="button" class="daxi-lieu-detail__back" onclick="window._daxiLoadLieux && _daxiLoadLieux(window._daxiLieuxQ||'', window._daxiLieuxCat||'')"><i class="ri-arrow-left-line"></i></button>
+    {% if place.category %}
+    <span class="daxi-lieux-card__tag" style="background:{{ place.category.color }}"><i class="{{ place.category.icon }}"></i> {{ place.category.name }}</span>
+    {% endif %}
+  </div>
+  <div class="daxi-lieu-detail__body">
+    <h2>{{ place.name }}</h2>
+    {% if place.enterprise %}<p class="daxi-lieu-detail__partner"><i class="ri-building-2-line"></i> Partenaire DAXI · {{ place.enterprise.name }}</p>{% endif %}
+    {% if place.address %}<p class="daxi-lieu-detail__meta"><i class="ri-map-pin-2-fill"></i> {{ place.address }}</p>{% endif %}
+    {% if place.hours %}<p class="daxi-lieu-detail__meta"><i class="ri-time-fill"></i> {{ place.hours }}</p>{% endif %}
+    {% if place.description %}<p class="daxi-lieu-detail__desc">{{ place.description|linebreaksbr }}</p>{% endif %}
+
+    {% if place.photos.all %}
+    <div class="daxi-lieu-gallery">
+      {% for photo in place.photos.all %}
+      <button type="button" class="daxi-lieu-gallery__item" onclick="window._daxiLieuxLightbox && _daxiLieuxLightbox('{{ photo.image.url }}')">
+        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:place.name }}">
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <button type="button" class="daxi-lieu-book" onclick="window._daxiBookLieu && _daxiBookLieu('{% if place.address %}{{ place.name|escapejs }} — {{ place.address|escapejs }}{% else %}{{ place.name|escapejs }}{% endif %}', {% if place.latitude %}{{ place.latitude }}{% else %}null{% endif %}, {% if place.longitude %}{{ place.longitude }}{% else %}null{% endif %})">
+      <i class="ri-taxi-fill"></i> Y aller en taxi
+    </button>
+  </div>
+</article>

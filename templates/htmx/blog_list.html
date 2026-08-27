@@ -1,0 +1,43 @@
+<div class="daxi-blog-htmx">
+  <div class="daxi-blog-search-bar">
+    <input type="search" name="q" placeholder="Rechercher un article…" value="{{ search_q }}"
+      data-translate="blog_search_placeholder"
+      hx-get="/htmx/blog/" hx-trigger="keyup changed delay:400ms" hx-target="#blogFullscreenContainer" hx-include="[name='category'],[name='tag']">
+    <select name="category" hx-get="/htmx/blog/" hx-trigger="change" hx-target="#blogFullscreenContainer" hx-include="[name='q'],[name='tag']">
+      <option value="" data-translate="blog_all_categories">Toutes catégories</option>
+      {% for cat in categories %}
+      <option value="{{ cat.slug }}" {% if active_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="daxi-blog-grid">
+    {% for article in articles %}
+    <article class="daxi-blog-card" onclick="openBlogArticle('{{ article.slug }}')" role="button" tabindex="0">
+      {% if article.cover_image %}
+      <div class="daxi-blog-card-cover" style="background-image:url('{{ article.cover_image.url }}')"></div>
+      {% else %}
+      <div class="daxi-blog-card-cover daxi-blog-card-cover--empty"></div>
+      {% endif %}
+      <div class="daxi-blog-card-body">
+        {% if article.category %}
+        <span class="daxi-blog-cat" style="--cat-color:{{ article.category.color }}">{{ article.category.name }}</span>
+        {% endif %}
+        <h3>{{ article.title }}</h3>
+        <p>{{ article.excerpt|default:article.meta_description|truncatechars:120 }}</p>
+        <div class="daxi-blog-meta">
+          <span>{{ article.reading_time_min }} min</span>
+          {% if article.published_at %}<span>{{ article.published_at|date:"d M Y" }}</span>{% endif %}
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <p class="daxi-blog-empty" data-translate="blog_no_articles">Aucun article pour le moment.</p>
+    {% endfor %}
+  </div>
+</div>
+<script>
+(function() {
+  if (window.DaxiAutoI18n && window.DaxiAutoI18n.apply) window.DaxiAutoI18n.apply();
+  else if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+})();
+</script>

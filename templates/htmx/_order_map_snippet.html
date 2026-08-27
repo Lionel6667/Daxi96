@@ -1,0 +1,10 @@
+
+{% if o.status != 'cancelled' %}
+  {% if map_scope == 'client' %}
+    {% if o.has_coords %}
+    {% include "htmx/_client_order_map.html" with map_scope=map_scope|default:"card" show_map_actions=show_map_actions|default:False %}
+    {% endif %}
+  {% elif o.has_map_coords or map_scope == 'driver' %}
+  {% include "htmx/_client_order_map.html" with map_scope=map_scope|default:"card" show_map_actions=show_map_actions|default:False %}
+  {% endif %}
+{% endif %}

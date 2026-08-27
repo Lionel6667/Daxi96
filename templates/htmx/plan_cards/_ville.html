@@ -1,0 +1,83 @@
+
+{% include "htmx/_order_map_snippet.html" with map_scope="client" show_map_actions=True %}
+<div id="co-{{ o.id }}"
+     class="daxi-oc-card daxi-oc-card--plan daxi-oc-card--plan-ville"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-payment-status="{{ o.payment_status|default:'pending' }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0 }}"
+     data-timing="{% if o.is_later %}later{% else %}now{% endif %}">
+
+  <div class="daxi-oc-accent daxi-oc-accent--plan"></div>
+  <div class="daxi-oc-inner">
+    <div class="daxi-oc-plan-hero">
+      <div class="daxi-oc-plan-hero-left">
+        <i class="ri-road-map-line"></i>
+        <div>
+          <div class="daxi-oc-plan-name" data-translate="plan1_title">Course Ville à Ville</div>
+          <div class="daxi-oc-plan-hint" data-translate="dpw_plan_ville_hint">Trajet inter-villes · devis personnalisé</div>
+        </div>
+      </div>
+      {% if o.total_price or o.price %}
+      <div class="daxi-oc-plan-price">${{ o.total_price|default:o.price|floatformat:2 }}</div>
+      {% else %}
+      <div class="daxi-oc-plan-price daxi-oc-plan-price--quote" data-translate="plan1_sub">Sur devis</div>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_order_status_pipeline.html" %}
+
+    <div class="daxi-oc-head">
+      <div class="daxi-oc-head-left">
+        <span class="daxi-oc-badge daxi-oc-badge--plan" data-translate="dpw_plan_badge">Forfait</span>
+        {% if o.is_later %}
+        <span class="daxi-oc-timing daxi-oc-timing--later">
+          <i class="ri-calendar-schedule-line"></i>
+          <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong>
+        </span>
+        {% endif %}
+      </div>
+      {% include "htmx/_order_client_status_badge.html" %}
+    </div>
+
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--pickup"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="label_departure">Départ</span>
+          <span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup }}</span>
+        </div>
+      </div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--dest"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="label_arrival">Arrivée</span>
+          <span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="daxi-oc-meta">
+      {% if o.passengers %}<span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers }} <span data-translate="label_passengers_short">pers.</span></span>{% endif %}
+      {% if o.distance_km %}<span class="daxi-oc-chip"><i class="ri-route-line"></i> {{ o.distance_km }} km</span>{% endif %}
+      {% if o.payment_method %}
+      <span class="daxi-oc-chip"><i class="ri-bank-card-line"></i>
+        {% if o.payment_method == 'in_person' %}<span data-translate="payment_in_person">Sur place</span>
+        {% elif o.payment_method == 'moncash' %}<span data-translate="payment_moncash">MonCash</span>
+        {% elif o.payment_method == 'card' %}<span data-translate="payment_card">Carte</span>{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if o.status == 'price_confirmed' and not o.driver_name %}
+    <div class="daxi-oc-wait-banner" style="margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(99,102,241,0.12);border:1px solid rgba(129,140,248,0.28);">
+      <div style="font-size:12px;font-weight:800;color:#c4b5fd;" data-translate="wait_driver_title">Recherche d'un chauffeur</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:3px;" data-translate="wait_driver_msg">Nous contactons les chauffeurs disponibles.</div>
+    </div>
+    {% endif %}
+
+    {% include "htmx/_client_order_driver_block.html" %}
+    {% include "htmx/_client_order_actions.html" %}
+  </div>
+</div>

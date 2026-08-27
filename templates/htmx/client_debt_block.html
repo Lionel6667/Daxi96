@@ -1,0 +1,38 @@
+<style>
+#daxi-debt-block {
+  position: fixed; inset: 0; z-index: 500000;
+  background: linear-gradient(165deg, #0f172a 0%, #020617 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; font-family: system-ui, sans-serif;
+}
+.daxi-debt-card {
+  max-width: 420px; width: 100%;
+  background: rgba(15,23,42,0.95);
+  border: 1px solid rgba(239,68,68,0.35);
+  border-radius: 20px;
+  padding: 22px 20px;
+  color: #e2e8f0;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+}
+.daxi-debt-card h2 { font-size: 18px; font-weight: 900; color: #fecaca; margin: 0 0 8px; }
+.daxi-debt-card p { font-size: 13px; line-height: 1.5; color: #94a3b8; margin: 0 0 14px; }
+.daxi-debt-amount { font-size: 28px; font-weight: 900; color: #fbbf24; margin: 8px 0 16px; }
+.daxi-debt-pay {
+  width: 100%; padding: 14px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+}
+</style>
+<div id="daxi-debt-block">
+  <div class="daxi-debt-card">
+    <h2>Paiement requis</h2>
+    <p>{{ debt.reason|default:"Vous avez un solde dû suite à une annulation ou pénalité. Réglez-le en ligne pour retrouver l'accès à DAXI." }}</p>
+    <div class="daxi-debt-amount">{{ debt.amount_usd }} $ USD</div>
+    <form method="post" action="/htmx/client/debt/pay/" hx-post="/htmx/client/debt/pay/" hx-target="#daxi-debt-block" hx-swap="outerHTML">
+      <input type="hidden" name="debt_id" value="{{ debt.id }}">
+      <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      {% if guest_id %}<input type="hidden" name="guest_id" value="{{ guest_id }}">{% endif %}
+      <button type="submit" class="daxi-debt-pay">Payer en ligne (MonCash / Carte)</button>
+    </form>
+  </div>
+</div>

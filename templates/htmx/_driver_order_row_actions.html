@@ -1,0 +1,102 @@
+{% load daxi_extras %}
+{% if not o.has_coords and o.status != 'cancelled' and o.status != 'completed' %}
+{% if o.coords_placed_by_id and driver.id != o.coords_placed_by_id %}
+<div style="background:rgba(100,116,139,.12);border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:12px;margin-bottom:12px;">
+  <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px;">Coordonnées déjà placées</div>
+  <p style="font-size:10px;color:#9ca3af;margin:0;line-height:1.45;">
+    {{ o.coords_placed_by_name|default:"Un autre chauffeur" }} a déjà localisé cette course sur la carte.
+    Seul l'admin peut modifier les emplacements.
+  </p>
+</div>
+{% else %}
+<div id="coords-section-{{ o.id }}"
+     style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:12px;margin-bottom:12px;">
+  <div style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:10px;">Coordonnées manquantes — placez les lieux sur la carte</div>
+  <p style="font-size:10px;color:#9ca3af;margin:0 0 10px;line-height:1.4;">
+    {% if o.is_service_plan or o.price_confirmed %}
+  1. Touchez <strong style="color:#fcd34d;">Départ</strong> ou <strong style="color:#fcd34d;">Arrivée</strong> ci-dessous<br>
+  2. <strong style="color:#fcd34d;">Cliquez sur la carte</strong> pour placer le point à cet endroit<br>
+    Le tarif forfait reste inchangé — la carte sert au suivi et à la navigation.
+    {% elif o.ready_for_accept %}
+  1. Touchez <strong style="color:#fcd34d;">Départ</strong> ou <strong style="color:#fcd34d;">Arrivée</strong><br>
+  2. <strong style="color:#fcd34d;">Cliquez sur la carte</strong> pour placer le point, puis confirmez avant de démarrer.
+    {% else %}
+  1. Touchez <strong style="color:#fcd34d;">Départ</strong> ou <strong style="color:#fcd34d;">Arrivée</strong><br>
+  2. <strong style="color:#fcd34d;">Cliquez sur la carte</strong> pour placer le point<br>
+    Le <strong style="color:#fcd34d;">tarif DAXI</strong> sera calculé automatiquement et proposé au client.
+    {% endif %}
+  </p>
+  {% include "htmx/_order_coords_map_placer.html" with prefix="" o=o csrf_token=csrf_token %}
+</div>
+{% endif %}
+{% endif %}
+
+<div class="drv-oc-actions">
+  {% if tab == 'available' %}
+  {% if o.can_accept == False %}
+  <div class="drv-oc-block">
+    <div class="drv-oc-block-title">Acceptation impossible</div>
+    <div class="drv-oc-block-msg">{{ o.accept_block_reason|default:"Vous ne pouvez pas accepter cette course pour le moment." }}</div>
+  </div>
+  <button type="button" disabled class="drv-oc-btn drv-oc-btn--disabled">
+    {% if o.is_later %}Course programmée{% else %}Accepter la course{% endif %}
+  </button>
+  {% elif not o.has_coords and not o.ready_for_accept %}
+  <div class="drv-oc-block">
+    <div class="drv-oc-block-title">Coordonnées requises</div>
+    <div class="drv-oc-block-msg">1. Touchez Départ ou Arrivée · 2. Cliquez sur la carte pour placer le point · 3. Confirmez — DAXI calculera le prix.</div>
+  </div>
+  <button type="button" disabled class="drv-oc-btn drv-oc-btn--disabled">Accepter après localisation</button>
+  {% elif not o.has_coords and o.ready_for_accept %}
+  <div class="drv-oc-block">
+    <div class="drv-oc-block-title">GPS à placer après acceptation</div>
+    <div class="drv-oc-block-msg">Vous pouvez accepter maintenant — placez ensuite départ et destination sur la carte dans « Mes courses ».</div>
+  </div>
+  <button type="button" data-accept-btn="1" class="drv-oc-btn drv-oc-btn--accept daxi-btn-press"
+          onclick="driverTryAccept('{{ o.id }}', '{{ o.pickup_lat|daxi_coord|default:'0' }}', '{{ o.pickup_lng|daxi_coord|default:'0' }}', '{{ o.destination_lat|daxi_coord|default:'0' }}', '{{ o.destination_lng|daxi_coord|default:'0' }}', '{{ o.client_name|default:''|escapejs }}', '{{ o.client_phone|default:''|escapejs }}', {{ o.is_later|yesno:'true,false' }}, '{{ o.scheduled_at|default:'' }}')">
+    {% if o.is_later %}Accepter cette course programmée{% else %}Accepter maintenant{% endif %}
+  </button>
+  {% else %}
+  <button type="button" data-accept-btn="1" class="drv-oc-btn drv-oc-btn--accept daxi-btn-press"
+          onclick="driverTryAccept('{{ o.id }}', '{{ o.pickup_lat|daxi_coord|default:'0' }}', '{{ o.pickup_lng|daxi_coord|default:'0' }}', '{{ o.destination_lat|daxi_coord|default:'0' }}', '{{ o.destination_lng|daxi_coord|default:'0' }}', '{{ o.client_name|default:''|escapejs }}', '{{ o.client_phone|default:''|escapejs }}', {{ o.is_later|yesno:'true,false' }}, '{{ o.scheduled_at|default:'' }}')">
+    {% if o.is_service_plan %}
+    <i class="ri-vip-crown-line"></i> Accepter le forfait
+    {% elif o.is_later %}
+    Accepter cette course programmée
+    {% else %}
+    Accepter maintenant
+    {% endif %}
+  </button>
+  {% endif %}
+  {% endif %}
+
+  {% if o.status == 'driver_assigned' or o.status == 'on_way' %}
+  <button hx-post="/htmx/driver/orders/{{ o.id }}/cancel/"
+          hx-target="#driver-orders-container"
+          hx-swap="innerHTML"
+          hx-confirm="Annuler cette course ?"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          style="width:100%;padding:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#f87171;border-radius:12px;font-size:11px;font-weight:700;cursor:pointer;">
+    Annuler la course
+  </button>
+  {% endif %}
+
+  {% if tab == 'accepted' %}
+  {% if o.status == 'driver_assigned' or o.status == 'on_way' or o.status == 'arrived' or o.status == 'in_progress' or o.status == 'waiting_return' %}
+  {% if not o.sos_triggered %}
+  <button type="button"
+          hx-post="/htmx/driver/orders/{{ o.id }}/sos/"
+          hx-target="#driver-order-{{ o.id }}" hx-swap="outerHTML"
+          hx-confirm="URGENCE : alerter l'équipe DAXI ? Le client ne sera PAS notifié."
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          style="width:100%;padding:12px;margin-top:8px;background:rgba(239,68,68,.15);border:2px solid #ef4444;color:#fca5a5;border-radius:12px;font-size:12px;font-weight:900;cursor:pointer;">
+    SOS — Danger extrême
+  </button>
+  {% else %}
+  <div style="width:100%;padding:12px;margin-top:8px;background:rgba(239,68,68,.2);border:2px solid #ef4444;color:#fca5a5;border-radius:12px;font-size:12px;font-weight:900;text-align:center;">
+    SOS signalé — équipe alertée
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endif %}
+</div>

@@ -1,0 +1,26 @@
+{% load daxi_extras %}
+{% if o.status == 'waiting_return' and o.round_trip_allow_driver_other_rides %}
+<div class="daxi-rt-recall" id="rt-recall-{{ o.id }}">
+  {% if o.round_trip_pickup_requested %}
+  <div class="daxi-rt-recall__sent">
+    <i class="ri-notification-3-line"></i>
+    <div>
+      <strong>Chauffeur alerté</strong>
+      <span>Votre demande a été envoyée — il reviendra dès que possible au point de départ.</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="daxi-rt-recall__prompt">
+    <div class="daxi-rt-recall__title"><i class="ri-user-voice-line"></i> Prêt pour le retour ?</div>
+    <p class="daxi-rt-recall__detail">
+      Votre chauffeur peut être en course. Confirmez que vous avez <strong>terminé votre activité</strong>
+      et que vous êtes prêt(e) à être repris(e) au point de départ.
+    </p>
+    <button type="button" class="daxi-oc-btn daxi-rt-recall__btn daxi-btn-click-anim"
+            onclick="window._daxiRequestReturnPickup && window._daxiRequestReturnPickup('{{ o.id }}'{% if o.guest_id %}, '{{ o.guest_id }}'{% endif %}, this)">
+      <i class="ri-car-line"></i> Demander le retour maintenant
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

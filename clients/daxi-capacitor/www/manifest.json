@@ -1,0 +1,22 @@
+{
+  "name": "Daxi",
+  "short_name": "Daxi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070B14",
+  "theme_color": "#ef4444",
+  "icons": [
+    {
+      "src": "assets/images/daxi-logo-gold.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/images/daxi-logo-gold.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

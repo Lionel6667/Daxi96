@@ -1,0 +1,195 @@
+          <input id="blog-editor-seo-title" type="text" placeholder="Titre SEO" class="w-full px-4 py-2 bg-gray-800 rounded-xl text-white text-sm">
+          <input id="blog-editor-meta-desc" type="text" placeholder="Meta description" class="w-full px-4 py-2 bg-gray-800 rounded-xl text-white text-sm">
+          <div id="blog-quill-editor" class="bg-white text-gray-900 rounded-xl min-h-[220px]"></div>
+          <div class="flex gap-2">
+            <button type="button" onclick="blogSaveArticle(false)" class="px-4 py-2 bg-gray-700 rounded-xl font-bold text-sm">Enregistrer</button>
+            <button type="button" onclick="blogSaveArticle(true)" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Publier</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-section-calendar" class="adm-pro-page hidden p-6">
+        <div id="admin-calendar-container"></div>
+      </section>
+
+      <section id="admin-section-pricing" class="adm-pro-page hidden p-6 space-y-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div class="bg-gray-800 rounded-2xl p-6 space-y-4">
+            <h3 class="font-bold text-lg">Paramètres tarifaires</h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <label class="col-span-2">Prix / km ($)<input id="cfg-base-price-per-km" type="number" step="0.01" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label>Prix minimum ($)<input id="cfg-minimum-price" type="number" step="0.01" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label>Aller-retour (×)<input id="cfg-round-trip-multiplier" type="number" step="0.01" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label>Attente / 30 min ($)<input id="cfg-wait-price" type="number" step="0.01" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label>Pause / 5 min ($)<input id="cfg-pause-price" type="number" step="0.01" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label class="col-span-2">Supplément passager (%)<input id="cfg-passenger-percent" type="number" step="0.1" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"></label>
+              <label class="col-span-2">Commission chauffeur (%)<input id="cfg-driver-commission" type="number" step="0.01" min="0" max="100" class="w-full mt-1 px-3 py-2 bg-gray-700 rounded-xl"><span class="text-xs text-gray-500 block mt-1">Part chauffeur — le reste va à l'admin. Appliqué à tous les chauffeurs.</span></label>
+            </div>
+            <button type="button" id="pricing-save-btn" onclick="savePricingConfig()" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Enregistrer</button>
+            <div id="pricing-config-status" class="hidden text-sm"></div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-6 space-y-4">
+            <h3 class="font-bold text-lg">Taux de change USD → HTG</h3>
+            <input id="cfg-usd-htg-rate" type="number" step="0.01" class="w-full px-3 py-2 bg-gray-700 rounded-xl">
+            <button type="button" id="exchange-save-btn" onclick="saveExchangeConfig(event)" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Enregistrer le taux</button>
+          </div>
+        </div>
+        <div class="pricing-map-iframe-wrap bg-gray-800 rounded-2xl overflow-hidden">
+          <iframe id="pricing-map-iframe" data-src="/api/pricing/admin/" title="Carte tarification" class="w-full min-h-[520px] border-0"></iframe>
+        </div>
+      </section>
+
+      <section id="admin-section-enterprises" class="adm-pro-page hidden p-6">
+        <div id="admin-enterprises-content"></div>
+      </section>
+
+      <section id="admin-section-withdrawals" class="adm-pro-page hidden p-6">
+        <div id="admin-withdrawals-content"></div>
+      </section>
+
+      <section id="admin-section-lost-objects" class="adm-pro-page hidden p-6">
+        <div id="admin-lost-objects-content"></div>
+      </section>
+
+      <section id="admin-section-sos" class="adm-pro-page hidden p-6">
+        <div id="admin-sos-content"></div>
+      </section>
+
+      <section id="admin-section-geo-zones" class="adm-pro-page hidden p-4 sm:p-6 space-y-4">
+        <div id="geo-htmx-loader"></div>
+      </section>
+
+      <section id="admin-section-live-map" class="adm-pro-page admin-live-map-section hidden p-0">
+        <div id="admin-live-map-wrap" class="admin-live-map-wrap admin-live-map-fullscreen">
+          <div id="live-map-toolbar" class="live-map-toolbar" hidden>
+            <button type="button" id="live-map-back-btn" class="live-map-back-btn" onclick="adminLiveMapGoBack()">
+              <i class="ri-arrow-left-line"></i> Retour
+            </button>
+          </div>
+          <div id="admin-live-map" class="admin-live-map-canvas"></div>
+          <div class="live-map-footer">
+            <div id="live-map-order-chips" class="live-map-order-chips"></div>
+            <div class="live-map-legend-bottom">
+              <span><span class="dot" style="background:#22c55e"></span> Dispo</span>
+              <span><span class="dot" style="background:#f97316"></span> Occupé</span>
+              <span><span class="dot" style="background:#94a3b8"></span> Hors ligne</span>
+              <span><span class="dot" style="background:#3b82f6"></span> Course active</span>
+            </div>
+            <div id="live-map-status" class="live-map-status"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-section-analytics" class="adm-pro-page hidden p-6 space-y-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-gray-800 rounded-2xl p-4"><div class="text-xs text-gray-400">Revenus totaux</div><div id="an-total-revenue" class="text-2xl font-bold text-green-400">-</div></div>
+          <div class="bg-gray-800 rounded-2xl p-4"><div class="text-xs text-gray-400">Revenus semaine</div><div id="an-week-revenue" class="text-2xl font-bold text-daxi-cyan">-</div></div>
+          <div class="bg-gray-800 rounded-2xl p-4"><div class="text-xs text-gray-400">Nouveaux utilisateurs</div><div id="an-month-users" class="text-2xl font-bold text-pink-400">-</div></div>
+          <div class="bg-gray-800 rounded-2xl p-4"><div class="text-xs text-gray-400">Commandes semaine</div><div id="an-week-orders" class="text-2xl font-bold text-blue-400">-</div></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-gray-800 rounded-2xl p-5"><canvas id="analytics-chart" height="220"></canvas></div>
+          <div class="bg-gray-800 rounded-2xl p-5"><canvas id="analytics-status-chart" height="220"></canvas></div>
+        </div>
+        <div class="bg-gray-800 rounded-2xl p-5"><canvas id="analytics-orders-bar" height="180"></canvas></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div id="price-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-md border border-white/10">
+    <h3 class="font-bold text-lg mb-2">Proposer un prix — #<span id="price-modal-order-id"></span></h3>
+    <p id="price-modal-route" class="text-sm text-gray-400 mb-4"></p>
+    <input id="price-input" type="number" step="0.01" min="0" placeholder="Prix en $" class="w-full px-4 py-3 bg-gray-700 rounded-xl mb-4">
+    <div class="flex gap-2 justify-end">
+      <button type="button" onclick="closeModal('price-modal')" class="px-4 py-2 bg-gray-700 rounded-xl">Annuler</button>
+      <button type="button" onclick="submitPriceProposal()" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<div id="assign-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-lg border border-white/10 max-h-[85vh] overflow-y-auto">
+    <h3 class="font-bold text-lg mb-4">Assigner chauffeur — #<span id="assign-modal-order-id"></span></h3>
+    <div id="available-drivers-list" class="space-y-2"></div>
+    <button type="button" onclick="closeModal('assign-modal')" class="mt-4 w-full py-2 bg-gray-700 rounded-xl">Fermer</button>
+  </div>
+</div>
+
+<div id="geo-job-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-lg border border-white/10 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-lg">Téléchargement cartographique</h3>
+      <button type="button" onclick="closeModal('geo-job-modal')" class="text-gray-400 hover:text-white"><i class="ri-close-line text-xl"></i></button>
+    </div>
+    <div id="geo-job-modal-body"></div>
+  </div>
+</div>
+
+<div id="order-modal" class="modal-overlay hidden fixed inset-0 z-[13050] flex items-center justify-center p-4">
+  <div class="admin-modal-panel admin-order-modal-panel rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+    <h3 class="admin-order-modal-panel__title font-bold text-lg mb-4">Commande #<span id="modal-order-id"></span></h3>
+    <div id="modal-order-content" class="admin-order-modal-panel__content"></div>
+    <button type="button" onclick="closeModal('order-modal')" class="adm-modal-btn-close mt-4 w-full py-2 rounded-xl font-semibold">Fermer</button>
+  </div>
+</div>
+
+<div id="driver-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-lg border border-white/10">
+    <h3 class="font-bold text-lg mb-4" id="driver-modal-title">Chauffeur</h3>
+    <div class="space-y-3 text-sm">
+      <input id="drv-firstname" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Prénom">
+      <input id="drv-lastname" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Nom">
+      <input id="drv-email" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Email">
+      <input id="drv-phone" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Téléphone">
+      <input id="drv-vehicle" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Véhicule">
+      <input id="drv-plate" class="w-full px-3 py-2 bg-gray-700 rounded-xl" placeholder="Plaque">
+      <div class="flex items-center gap-3">
+        <img id="drv-photo-preview" src="" alt="" class="w-16 h-16 rounded-full object-cover bg-gray-600 hidden">
+        <div class="flex-1">
+          <label class="block text-xs text-gray-400 mb-1">Photo de profil</label>
+          <input id="drv-photo" type="file" accept="image/jpeg,image/png,image/webp" class="w-full text-sm" onchange="previewDriverPhoto(this)">
+        </div>
+      </div>
+      <label class="flex items-center gap-2"><input id="drv-verified" type="checkbox"> Vérifié</label>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button type="button" onclick="closeModal('driver-modal')" class="flex-1 py-2 bg-gray-700 rounded-xl">Annuler</button>
+      <button type="button" id="drv-save-btn" onclick="saveDriver()" class="flex-1 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="client-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-lg border border-white/10">
+    <h3 class="font-bold text-lg mb-4" id="client-modal-title">Client</h3>
+    <div id="client-modal-content"></div>
+    <button type="button" onclick="closeModal('client-modal')" class="mt-4 w-full py-2 bg-gray-700 rounded-xl">Fermer</button>
+  </div>
+</div>
+
+{% csrf_token %}
+<script src="/static/js/chart.umd.min.js?v=20260725"></script>
+<link href="/static/vendor/quill/quill.snow.css" rel="stylesheet">
+<script src="/static/vendor/quill/quill.js"></script>
+<script src="/static/js/blog_admin.js?v=20260803f"></script>
+<link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
+<script src="/static/js/lieux_admin.js?v=20260823w"></script>
+<script>
+const ADMIN = { charts: {}, currentSection: 'dashboard', allDrivers: [], pendingCount: 0 };
+
+function adminAvatarUrl(photo, name, size) {
+  if (photo) {
+    var p = String(photo).trim();
+    if (p.indexOf('data:') === 0 && p.length < 200) {
+      
+    } else if (p.indexOf('data:') === 0 || p.indexOf('http') === 0 || p.charAt(0) === '/') {
+      return p;
+    }
+  }
+  var q = 'name=' + encodeURIComponent(name || 'U') + '&background=0a84ff&color=fff';
+  if (size) q += '&size=' + size;
+  return 'https://ui-avatars.com/api/?' + q;
+}

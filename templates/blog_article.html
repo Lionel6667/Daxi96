@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ article.seo_title|default:article.title }} — Daxi Blog</title>
+  {% include "partials/daxi_favicon.html" %}
+  <meta name="description" content="{{ article.meta_description }}">
+  {% if article.meta_keywords %}<meta name="keywords" content="{{ article.meta_keywords }}">{% endif %}
+  <link rel="canonical" href="{{ article.canonical_url|default:request.build_absolute_uri }}">
+  <meta property="og:title" content="{{ article.seo_title|default:article.title }}">
+  <meta property="og:description" content="{{ article.meta_description }}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  {% if article.og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.og_image.url }}">
+  {% elif article.cover_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ article.cover_image.url }}">{% endif %}
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    :root { --bg:#070b14; --card:#0f172a; --text:#e2e8f0; --muted:#94a3b8; --accent:#f59e0b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background:var(--bg); color:var(--text); line-height:1.7; }
+    a { color: var(--accent); }
+    .blog-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 80px; }
+    .blog-back { display:inline-flex; align-items:center; gap:6px; color:var(--muted); text-decoration:none; padding:20px 0; font-size:14px; font-weight:600; }
+    .blog-hero { width:100%; height:min(52vh,420px); border-radius:20px; background-size:cover; background-position:center; margin-bottom:28px; }
+    .blog-cat { display:inline-block; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:800; background:color-mix(in srgb, var(--cat-color,#6366f1) 22%, transparent); color:var(--cat-color,#a5b4fc); margin-bottom:12px; }
+    h1 { font-size: clamp(28px, 5vw, 42px); line-height:1.15; margin:0 0 16px; letter-spacing:-0.02em; }
+    .blog-meta { display:flex; flex-wrap:wrap; gap:16px; color:var(--muted); font-size:13px; margin-bottom:20px; }
+    .blog-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; }
+    .blog-tag { font-size:12px; padding:4px 10px; border-radius:8px; background:rgba(148,163,184,0.12); color:var(--muted); }
+    .blog-content { font-size:17px; }
+    .blog-content img { max-width:100%; border-radius:12px; margin:20px 0; }
+    .blog-content h2 { margin-top:2em; font-size:1.4em; }
+    .blog-content blockquote { border-left:3px solid var(--accent); margin:24px 0; padding:8px 20px; color:var(--muted); font-style:italic; }
+    .blog-share { display:flex; align-items:center; gap:14px; margin:40px 0; padding-top:24px; border-top:1px solid rgba(148,163,184,0.15); }
+    .blog-share a { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(148,163,184,0.12); color:var(--text); text-decoration:none; font-size:20px; }
+    .blog-similar h2 { font-size:18px; margin:0 0 16px; }
+    .blog-similar-grid { display:grid; gap:12px; }
+    .blog-similar-card { display:block; padding:16px; border-radius:14px; background:var(--card); text-decoration:none; color:var(--text); border:1px solid rgba(148,163,184,0.12); }
+    .blog-similar-card strong { display:block; margin-bottom:4px; }
+    .blog-similar-card span { font-size:12px; color:var(--muted); }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+</head>
+<body class="blog-page">
+  <header class="daxi-mini-nav daxi-mini-nav--article">
+    <a href="/blog/" class="daxi-mini-nav__brand"><i class="ri-arrow-left-line"></i> Blog</a>
+    <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+  </header>
+  <div class="blog-wrap">
+    <a href="/blog/" class="blog-back"><i class="ri-arrow-left-line"></i> Retour au blog</a>
+    {% if article.cover_image %}
+    <div class="blog-hero" style="background-image:url('{{ article.cover_image.url }}')"></div>
+    {% endif %}
+    {% if article.category %}
+    <span class="blog-cat" style="--cat-color:{{ article.category.color }}">{{ article.category.name }}</span>
+    {% endif %}
+    <h1>{{ article.title }}</h1>
+    <div class="blog-meta">
+      {% if article.published_at %}<span>{{ article.published_at|date:"d F Y" }}</span>{% endif %}
+      <span>{{ article.reading_time_min }} min de lecture</span>
+    </div>
+    {% if article.tags.all %}
+    <div class="blog-tags">
+      {% for tag in article.tags.all %}<span class="blog-tag">#{{ tag.name }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    <div class="blog-content">{{ article.content|safe }}</div>
+    <div class="blog-share">
+      <span>Partager</span>
+      <a href="https://wa.me/?text={{ article.title|urlencode }}" target="_blank" rel="noopener"><i class="ri-whatsapp-line"></i></a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener"><i class="ri-facebook-circle-line"></i></a>
+    </div>
+    {% if similar %}
+    <section class="blog-similar">
+      <h2>Articles similaires</h2>
+      <div class="blog-similar-grid">
+        {% for s in similar %}
+        <a class="blog-similar-card" href="/blog/{{ s.slug }}/">
+          <strong>{{ s.title }}</strong>
+          <span>{{ s.reading_time_min }} min de lecture</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</body>
+</html>

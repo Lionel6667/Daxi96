@@ -1,0 +1,33 @@
+
+{% with idx=o.status_pipeline_index|default_if_none:-1 %}
+<div class="daxi-oc-pipeline daxi-oc-pipeline--plan daxi-oc-pipeline--plan-premium daxi-oc-pipeline--{{ o.status }}{% if pipeline_compact %} daxi-oc-pipeline--compact{% endif %}" role="list" aria-label="Progression forfait premium" data-pipeline-index="{{ idx }}">
+  <div class="daxi-oc-pipe-step {% if idx == 0 %}is-current{% elif idx|add:0 > 0 %}is-done{% endif %}" title="Réservation VIP">
+    <span class="daxi-oc-pipe-dot"><i class="ri-vip-crown-line"></i></span>
+    <span class="daxi-oc-pipe-label">Réservation</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 1 %}is-current{% elif idx|add:0 > 1 %}is-done{% endif %}" title="Forfait confirmé">
+    <span class="daxi-oc-pipe-dot"><i class="ri-check-line"></i></span>
+    <span class="daxi-oc-pipe-label">Confirmé</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 2 %}is-current{% elif idx|add:0 > 2 %}is-done{% endif %}" title="Chauffeur VIP assigné">
+    <span class="daxi-oc-pipe-dot"><i class="ri-user-star-line"></i></span>
+    <span class="daxi-oc-pipe-label">Chauffeur</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 3 %}is-current{% elif idx|add:0 > 3 %}is-done{% endif %}" title="En route vers vous">
+    <span class="daxi-oc-pipe-dot"><i class="ri-route-line"></i></span>
+    <span class="daxi-oc-pipe-label">En route</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 4 %}is-current{% elif idx|add:0 > 4 %}is-done{% endif %}" title="Accueil client">
+    <span class="daxi-oc-pipe-dot"><i class="ri-map-pin-user-line"></i></span>
+    <span class="daxi-oc-pipe-label">Accueil</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 5 %}is-current{% elif idx|add:0 > 5 %}is-done{% endif %}" title="Mise à disposition">
+    <span class="daxi-oc-pipe-dot"><i class="ri-steering-2-line"></i></span>
+    <span class="daxi-oc-pipe-label">En service</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 6 %}is-current{% elif idx|add:0 > 6 %}is-done{% endif %}" title="Prestation terminée">
+    <span class="daxi-oc-pipe-dot"><i class="ri-check-double-line"></i></span>
+    <span class="daxi-oc-pipe-label">Terminé</span>
+  </div>
+</div>
+{% endwith %}

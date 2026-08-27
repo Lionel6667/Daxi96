@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAXI — Dashboard Partenaire</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/daxi-logo-gold.png">
+  <link rel="shortcut icon" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" href="/assets/images/daxi-logo-gold.png">
+  <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260820f">
+  <link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
+  <script src="/static/js/daxi-web-radar.js?v=20260823i" defer></script>
+  <script src="https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #0b1220; color: #e2e8f0; min-height: 100vh; padding-top: 56px; padding-bottom: 30px; }
+
+    
+    .ent-topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 0 16px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 16px rgba(0,0,0,.4);
+    }
+    .ent-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .ent-logo img { height: 32px; width: auto; }
+    .ent-logo .daxi-brand-logo--dark { display: none !important; }
+    [data-theme="light"] .ent-logo .daxi-brand-logo--gold { display: none !important; }
+    [data-theme="light"] .ent-logo .daxi-brand-logo--dark { display: block !important; }
+    .ent-logo-badge {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 17px; color: #0f172a;
+    }
+    .ent-logo-name { font-size: 16px; font-weight: 800; color: white; }
+    .ent-topbar-right { display: flex; align-items: center; gap: 8px; }
+    .ent-topbar-link {
+      color: var(--ent-text-dim, rgba(255,255,255,.6));
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px; padding: 8px 10px; border-radius: 10px;
+    }
+    .ent-topbar-link:hover { color: var(--ent-gold, #fbbf24); }
+    .ent-logout-btn {
+      background: rgba(239,68,68,.15); color: #fca5a5;
+      border: 1px solid rgba(239,68,68,.3); border-radius: 8px;
+      padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .ent-logout-btn:hover { background: rgba(239,68,68,.3); }
+
+    
+    .ent-wrap { max-width: 540px; margin: 0 auto; padding: 0 14px; }
+    @media (min-width: 1024px) {
+      .ent-wrap { max-width: 1120px; padding: 0 28px; }
+      .ent-dash-desktop-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 18px;
+        align-items: start;
+      }
+      .ent-dash-col-left, .ent-dash-col-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .ent-dash-span-full { grid-column: 1 / -1; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      .chart-section { margin-bottom: 0 !important; }
+      .ent-panel .panel-body.chart-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .ent-modal-overlay { align-items: center; }
+      .ent-modal-sheet { max-width: 520px; border-radius: 20px; margin-bottom: 0; animation: none; }
+      .ent-location-sheet { max-width: 640px; }
+    }
+
+    
+    .switcher-bar {
+      background: white; border-radius: 14px; padding: 12px 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid #e5e7eb;
+      margin-bottom: 14px;
+    }
+    .switcher-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .switcher-list { display: flex; flex-direction: column; gap: 6px; }
+    .switcher-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border-radius: 10px; background: #f9fafb; border: 1.5px solid #e5e7eb; cursor: pointer;
+    }
+    .switcher-item.current { background: #fffbeb; border-color: #f59e0b; }
+    .switcher-item-name { font-size: 13px; font-weight: 700; color: #111827; }
+    .switcher-item-status { font-size: 11px; margin-top: 1px; }
+    .switcher-add-btn {
+      width: 100%; margin-top: 8px; padding: 8px;
+      background: #f9fafb; color: #6b7280; border: 1.5px dashed #d1d5db;
+      border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .switcher-add-btn:hover { border-color: #f59e0b; color: #d97706; }
+
+    
+    .dash-header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-radius: 20px; padding: 20px; color: white; margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    }
+    .dash-greeting { font-size: 12px; color: rgba(255,255,255,.55); margin-bottom: 3px; }
+    .dash-name { font-size: 22px; font-weight: 800; }
+    .dash-mode-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-top: 6px;
+    }
+    .dash-mode-shared { background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3); color: #93c5fd; }
+    .dash-mode-direct { background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+    .dash-partner-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3);
+      color: #34d399; font-size: 10px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px; margin-top: 4px;
+    }
+
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .stat-card {
+      background: white; border-radius: 14px; padding: 12px 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05); border: 1px solid #f1f5f9;
+      text-align: center;
+    }
+    .stat-icon { font-size: 18px; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 800; color: #111827; }
+    .stat-label { font-size: 10px; color: #9ca3af; font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
+
+    
+    .ent-section-title {
+      font-size: 15px; font-weight: 800; color: #f8fafc;
+      display: flex; align-items: center; gap: 8px;
+      margin: 4px 0 12px;
+    }
+    .ent-section-title i { color: #f59e0b; }
+
+    
+    .ent-panel {
+      background: white; border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05); border: 1px solid #f1f5f9;
+      overflow: hidden; margin-bottom: 14px;
+    }
+    .panel-header {
+      padding: 14px 16px 10px; font-size: 15px; font-weight: 800; color: #111827;
+      display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9;
+    }
+    .panel-body { padding: 14px 16px; }
+
+    
+    .affiliate-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-radius: 16px; padding: 16px; color: white; margin-bottom: 14px;
+    }
+    .aff-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .aff-url {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px; padding: 10px 12px;
+      font-size: 12px; color: rgba(255,255,255,.8); word-break: break-all; margin: 10px 0;
+      font-family: monospace;
+    }
+    .aff-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .aff-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; font-size: 12px; font-weight: 700;
+      border-radius: 10px; cursor: pointer; border: 1px solid;
+    }
+    .aff-btn-copy { background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.4); color: #fbbf24; }
+    .aff-btn-share { background: rgba(16,185,129,.2); border-color: rgba(16,185,129,.4); color: #34d399; }
+    .aff-btn-dl { background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); color: #93c5fd; }
+    .aff-qr-wrap {
+      text-align: center; background: rgba(255,255,255,.05); border-radius: 12px;
+      padding: 12px; border: 1px solid rgba(255,255,255,.08); margin-bottom: 10px;
+    }
+    #ent-qr-code, #ent-qr-code-bottom { display: inline-block; background: white; padding: 10px; border-radius: 10px; }
+    .aff-code-wrap {
+      text-align: center; background: rgba(255,255,255,.05); border-radius: 10px;
+      padding: 8px; border: 1px solid rgba(255,255,255,.08); margin-bottom: 10px;
+    }
+    .aff-code-label { font-size: 10px; color: rgba(255,255,255,.5); margin-bottom: 3px; }
+    .aff-code { font-size: 18px; font-weight: 800; letter-spacing: 3px; }
+    .aff-instructions {
+      background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25);
+      border-radius: 10px; padding: 12px;
+    }
+    .aff-inst-title { font-size: 11px; color: #fbbf24; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+    .aff-inst-text { font-size: 12px; color: rgba(255,255,255,.75); line-height: 1.6; }
+    .aff-inst-cta {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 8px; background: rgba(245,158,11,.25);
+      border: 1px solid rgba(245,158,11,.4); border-radius: 8px;
+      padding: 8px 12px; color: #fbbf24; font-size: 12px; font-weight: 700;
+      text-align: center; letter-spacing: .3px;
+    }
+
+    
+    .chart-section { margin-bottom: 14px; }
+    .chart-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+    .form-input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      padding: 10px 12px; font-size: 14px; color: #111827; outline: none;
+      font-family: inherit; transition: border-color .2s; background: #fafafa;
+    }
+    .form-input:focus { border-color: #f59e0b; background: white; }
+    textarea.form-input { resize: vertical; min-height: 72px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .trip-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+    .trip-btn {
+      flex: 1; padding: 9px 6px; font-size: 12px; font-weight: 700;
+      border: 2px solid #e5e7eb; border-radius: 10px;
+      background: white; cursor: pointer; color: #6b7280; transition: all .2s;
+    }
+    .trip-btn.active { border-color: #f59e0b; background: #fffbeb; color: #d97706; }
+    .route-box { background: #f9fafb; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+    .route-row { display: flex; gap: 8px; align-items: flex-start; }
+    .route-icon { font-size: 18px; flex-shrink: 0; margin-top: 11px; line-height: 1; }
+    .route-dashed { width: 2px; height: 12px; border-left: 2px dashed #d1d5db; margin: 3px 0 3px 9px; }
+    .route-input {
+      flex: 1; border: none; background: transparent; font-size: 13px;
+      font-family: inherit; color: #111827; outline: none; padding: 10px 0; font-weight: 500;
+    }
+    .route-input::placeholder { color: #9ca3af; font-weight: 400; }
+    .switch-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .sw-label { font-size: 12px; color: #6b7280; flex: 1; }
+    .ent-switch input { display: none; }
+    .ent-switch-track {
+      width: 40px; height: 22px; background: #e5e7eb; border-radius: 11px;
+      position: relative; cursor: pointer; transition: background .2s;
+    }
+    .ent-switch-track::after {
+      content: ''; position: absolute; width: 18px; height: 18px; background: white;
+      border-radius: 50%; top: 2px; left: 2px;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .ent-switch input:checked + .ent-switch-track { background: #f59e0b; }
+    .ent-switch input:checked + .ent-switch-track::after { transform: translateX(18px); }
+    .time-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+    .time-btn {
+      flex: 1; padding: 8px; font-size: 12px; font-weight: 600;
+      border: 2px solid #e5e7eb; border-radius: 10px;
+      background: white; cursor: pointer; color: #6b7280; transition: all .2s;
+    }
+    .time-btn.active { border-color: #f59e0b; background: #fffbeb; color: #d97706; }
+    .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .ent-submit-btn {
+      width: 100%; padding: 13px; font-size: 14px; font-weight: 700;
+      border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a; box-shadow: 0 4px 12px rgba(245,158,11,.35);
+      transition: all .2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .ent-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(245,158,11,.45); }
+    .ent-submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    
+    .ent-daxi-panel {
+      background: linear-gradient(145deg, #0f172a, #111827);
+      border: 1px solid rgba(148,163,184,.18);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .ent-daxi-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(148,163,184,.12);
+      min-height: 44px;
+    }
+    .ent-daxi-row:last-child { border-bottom: none; }
+    .ent-daxi-row--pickup { align-items: flex-end; padding-bottom: 10px; }
+    .ent-daxi-icon { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+    .ent-daxi-icon--green { color: #22c55e; }
+    .ent-daxi-icon--gold { color: #f59e0b; }
+    .ent-daxi-icon--muted { color: rgba(255,255,255,.45); }
+    .ent-daxi-body { flex: 1; min-width: 0; }
+    .ent-daxi-label {
+      display: block; font-size: 10px; font-weight: 700;
+      color: rgba(255,255,255,.45); text-transform: uppercase;
+      letter-spacing: .04em; margin-bottom: 3px;
+    }
+    .ent-daxi-input {
+      width: 100%; background: transparent; border: none; outline: none;
+      font-size: 13px; font-weight: 600; color: #f8fafc; font-family: inherit;
+    }
+    .ent-daxi-input::placeholder { color: rgba(255,255,255,.35); font-weight: 500; }
+    .ent-daxi-gps {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px;
+      border: 1.5px solid rgba(34,197,94,.4); background: rgba(34,197,94,.12);
+      color: #22c55e; display: flex; align-items: center; justify-content: center;
+      font-size: 17px; cursor: pointer;
+    }
+    .ent-daxi-notes-toggle { cursor: pointer; }
+    .ent-daxi-notes { display: none; padding: 0 12px 12px 44px; }
+    .ent-daxi-notes.open { display: block; }
+    .ent-daxi-notes textarea {
+      width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.18);
+      border-radius: 10px; color: #f8fafc; font-size: 12px; padding: 10px; resize: none;
+      min-height: 64px; font-family: inherit;
+    }
+    .ent-daxi-trip {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+    .ent-daxi-stepper {
+      display: flex; align-items: center; border-radius: 12px;
+      border: 1px solid rgba(148,163,184,.22); background: rgba(255,255,255,.06); overflow: hidden;
+    }
+    .ent-daxi-stepper > i { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center;
+      background: rgba(99,102,241,.15); color: #a5b4fc; border-right: 1px solid rgba(148,163,184,.15); }
+    .ent-daxi-step {
+      width: 34px; height: 34px; border: none; background: rgba(255,255,255,.06);
+      color: #22c55e; font-size: 18px; font-weight: 800; cursor: pointer;
+    }
+    .ent-daxi-step-val { min-width: 28px; text-align: center; font-size: 14px; font-weight: 800; color: #f8fafc; }
+    .ent-daxi-trip-types { flex: 1; display: flex; gap: 6px; min-width: 140px; }
+    .ent-daxi-trip-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+      padding: 8px 6px; border-radius: 10px; border: 1px solid rgba(148,163,184,.2);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.55);
+      font-size: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .ent-daxi-trip-btn.active {
+      border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.12); color: #fcd34d;
+    }
+    .ent-daxi-rt-wait {
+      padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,.12);
+    }
+    .ent-daxi-rt-wait.hidden { display: none; }
+    .ent-daxi-rt-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .ent-daxi-rt-wait select {
+      width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.2);
+      border-radius: 10px; color: #f8fafc; padding: 10px; font-size: 12px; font-family: inherit;
+    }
+    .ent-daxi-rt-allow { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 11px; color: rgba(255,255,255,.6); cursor: pointer; }
+    .ent-daxi-rt-allow.hidden { display: none; }
+    .ent-daxi-time {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px;
+    }
+    .ent-daxi-time-btn {
+      padding: 10px 8px; border-radius: 10px; border: 1px solid rgba(148,163,184,.2);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.55);
+      font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .ent-daxi-time-btn.active {
+      border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.12); color: #fcd34d;
+    }
+    .ent-daxi-datetime {
+      display: none; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 10px 10px;
+    }
+    .ent-daxi-datetime.show { display: grid; }
+    .ent-daxi-datetime input {
+      width: 100%; background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.2);
+      border-radius: 10px; color: #f8fafc; padding: 10px; font-size: 12px; font-family: inherit;
+    }
+    .ent-client-mini {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 4px;
+    }
+    @media (max-width: 520px) {
+      .ent-daxi-trip { flex-direction: column; align-items: stretch; }
+      .ent-daxi-trip-types { width: 100%; }
+      .ent-client-mini { grid-template-columns: 1fr; }
+    }
+
+    
+    .plan-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.6); align-items: flex-end; justify-content: center;
+    }
+    .plan-modal-overlay.show { display: flex; }
+    .plan-modal-sheet {
+      background: white; border-radius: 24px 24px 0 0;
+      width: 100%; max-width: 520px; max-height: 90vh;
+      overflow-y: auto; padding: 20px;
+      animation: slideUp .3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .plan-modal-handle { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 0 auto 16px; }
+    .plan-modal-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .plan-modal-sub { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
+
+    
+    .orders-tabs { display: flex; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
+    .orders-tab {
+      flex: 1; padding: 10px; font-size: 12px; font-weight: 600;
+      background: none; border: none; cursor: pointer; color: #9ca3af;
+      border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .orders-tab.active { color: #1f2937; border-bottom-color: #f59e0b; background: white; }
+    .orders-list { padding: 10px 14px; min-height: 60px; }
+    .empty-state { padding: 30px; text-align: center; color: #9ca3af; font-size: 13px; }
+    .empty-state i { display: block; font-size: 24px; margin-bottom: 8px; }
+
+    
+    .ent-alert { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; }
+    .ent-alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+    .ent-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+    .ent-alert-info { background: rgba(59,130,246,.12); border: 1px solid rgba(96,165,250,.28); color: #93c5fd; flex-wrap: wrap; }
+    .ent-alert-wa-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 7px 12px;
+      border: none; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 11px;
+      background: #25D366; color: #fff; text-decoration: none; white-space: nowrap;
+    }
+    .ent-alert-wa-btn:hover { filter: brightness(1.05); }
+
+    
+    .dash-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: #111827; color: white; padding: 10px 20px;
+      border-radius: 24px; font-size: 13px; font-weight: 600;
+      z-index: 9999; animation: fadeUp .3s ease; white-space: nowrap;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+    @keyframes entSpin { to { transform: rotate(360deg); } }
+    .ent-spin { display: inline-block; animation: entSpin 1s linear infinite; }
+
+    
+    .ent-loc-overlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(2, 6, 16, .9); align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    .ent-loc-overlay.show { display: flex; }
+    .ent-loc-sheet {
+      width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto;
+      background: linear-gradient(165deg, #131f36, #0b1220);
+      border: 1px solid rgba(245,158,11,.28); border-radius: 20px 20px 0 0;
+      padding: 20px 18px 24px; color: #f8fafc;
+      box-shadow: 0 -8px 48px rgba(0,0,0,.5);
+    }
+    @media (min-width: 1024px) {
+      .ent-loc-overlay { align-items: center; padding: 24px; }
+      .ent-loc-sheet { border-radius: 20px; max-height: 88vh; }
+    }
+    .ent-loc-kicker {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: #fbbf24; margin-bottom: 8px;
+    }
+    .ent-loc-title { font-size: 20px; font-weight: 900; margin-bottom: 6px; color: #fff; line-height: 1.2; }
+    .ent-loc-sub { font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.55; margin-bottom: 16px; }
+    .ent-loc-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .ent-loc-mode {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      padding: 12px; border-radius: 14px; border: 1.5px solid rgba(148,163,184,.18);
+      background: rgba(255,255,255,.03); cursor: pointer; text-align: left;
+      color: rgba(255,255,255,.7); font-family: inherit; transition: all .15s;
+    }
+    .ent-loc-mode i { font-size: 18px; color: #fbbf24; margin-bottom: 2px; }
+    .ent-loc-mode span { font-size: 12px; font-weight: 800; color: #f8fafc; }
+    .ent-loc-mode small { font-size: 10px; color: rgba(255,255,255,.45); line-height: 1.3; }
+    .ent-loc-mode.active {
+      border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.1);
+      box-shadow: 0 0 0 1px rgba(245,158,11,.15);
+    }
+    .ent-loc-panel { display: none; }
+    .ent-loc-panel.show { display: block; }
+    .ent-loc-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+      color: #fcd34d; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.25);
+      border-radius: 99px; padding: 4px 10px; margin-bottom: 10px;
+    }
+    .ent-loc-panel-text { font-size: 12px; color: rgba(255,255,255,.62); line-height: 1.55; margin-bottom: 10px; }
+    .ent-loc-textarea,
+    #ent-loc-help-msg,
+    .ent-loc-field {
+      width: 100%; box-sizing: border-box;
+      border-radius: 12px; border: 1.5px solid rgba(148,163,184,.22);
+      background: rgba(0,0,0,.32); color: #f8fafc;
+      padding: 12px 13px; font-family: inherit; font-size: 13px; line-height: 1.5;
+      outline: none; -webkit-appearance: none; appearance: none;
+    }
+    .ent-loc-textarea,
+    #ent-loc-help-msg {
+      min-height: 110px; resize: vertical;
+    }
+    .ent-loc-field { min-height: auto; height: 44px; resize: none; margin-bottom: 10px; }
+    .ent-loc-textarea::placeholder,
+    #ent-loc-help-msg::placeholder,
+    .ent-loc-field::placeholder { color: rgba(255,255,255,.32); }
+    .ent-loc-textarea:focus,
+    #ent-loc-help-msg:focus,
+    .ent-loc-field:focus {
+      border-color: rgba(245,158,11,.5);
+      box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+    }
+    .ent-loc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .ent-loc-btn {
+      width: 100%; padding: 13px; border-radius: 12px; border: none; font-weight: 800; font-size: 13px; cursor: pointer;
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-family: inherit;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .ent-loc-btn--ghost {
+      background: rgba(255,255,255,.05); color: rgba(255,255,255,.72);
+      border: 1px solid rgba(148,163,184,.2);
+    }
+    .ent-loc-map-wrap {
+      position: relative; border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(245,158,11,.22);
+      box-shadow: 0 16px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.04);
+      margin-bottom: 12px; background: #070b14;
+    }
+    .ent-loc-map {
+      width: 100%; height: 300px; background: #070b14;
+    }
+    .ent-loc-map-wrap::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(7,11,20,.35) 100%);
+    }
+    .ent-loc-pin {
+      position: absolute; left: 50%; top: 50%; z-index: 2;
+      transform: translate(-50%, -100%); pointer-events: none;
+      font-size: 40px; color: #f59e0b;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+      line-height: 1;
+    }
+    .ent-loc-pin-shadow {
+      position: absolute; left: 50%; top: 50%; z-index: 2;
+      width: 14px; height: 6px; margin-left: -7px; margin-top: 2px;
+      background: rgba(0,0,0,.35); border-radius: 50%; pointer-events: none;
+      filter: blur(2px);
+    }
+    .ent-loc-map-hint {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+      background: rgba(15,23,42,.9); border: 1px solid rgba(245,158,11,.28);
+      padding: 7px 14px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,.85); white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,.35);
+    }
+
+    
+    .ent-suggestions-box {
+      z-index: 100500;
+      max-height: 220px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: linear-gradient(165deg, rgba(15, 23, 42, 0.98), rgba(8, 14, 35, 0.99));
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      box-sizing: border-box;
+      padding: 4px;
+      backdrop-filter: blur(10px);
+    }
+    .ent-suggestions-box.hidden { display: none !important; }
+    .ent-suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #e2e8f0;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .ent-suggestion-item::before {
+      content: '\ec0b';
+      font-family: 'remixicon';
+      font-size: 14px;
+      color: #fbbf24;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .ent-suggestion-item:hover,
+    .ent-suggestion-item:focus {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.28);
+      color: #fef3c7;
+    }
+    .ent-suggestion-item + .ent-suggestion-item {
+      margin-top: 2px;
+    }
+    .ent-uncovered-block {
+      display: flex; align-items: flex-start; gap: 6px; margin-top: 6px;
+      padding: 8px 12px; border-radius: 10px; font-size: 12px; line-height: 1.35;
+      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5;
+    }
+    .ent-uncovered-block i { flex-shrink: 0; margin-top: 1px; }
+    .ent-admin-pending-sheet { max-width: 420px; }
+    .ent-admin-pending-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .ent-admin-pending-wa {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 13px 16px; border-radius: 14px; border: none;
+      background: #25D366; color: #fff; font-size: 14px; font-weight: 700;
+      text-decoration: none; cursor: pointer; font-family: inherit;
+    }
+    .ent-admin-pending-wa:hover { filter: brightness(1.05); }
+    .ent-admin-pending-close {
+      width: 100%; padding: 11px 16px; border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.25); background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.7); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .ent-checkout-sheet { max-width: 440px; }
+    .ent-checkout-head { text-align: center; margin-bottom: 16px; }
+    .ent-checkout-head i { font-size: 28px; color: #fbbf24; margin-bottom: 8px; display: block; }
+    .ent-checkout-head--ok i { color: #4ade80; }
+    .ent-checkout-head h3 { font-size: 17px; font-weight: 800; color: #fff; margin: 0 0 6px; }
+    .ent-checkout-head p { font-size: 12px; color: rgba(255,255,255,.55); margin: 0; line-height: 1.4; }
+    .ent-checkout-price { text-align: center; padding: 14px; margin-bottom: 12px; border-radius: 14px; background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); }
+    .ent-checkout-price-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
+    .ent-checkout-price-val { font-size: 32px; font-weight: 900; color: #fcd34d; }
+    .ent-checkout-route { font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.5; margin-bottom: 14px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); }
+    .ent-checkout-section { margin-bottom: 14px; }
+    .ent-checkout-section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin-bottom: 8px; }
+    .ent-checkout-opt { display: flex; align-items: center; gap: 8px; padding: 10px 12px; margin-bottom: 6px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(148,163,184,.15); font-size: 13px; color: #e2e8f0; cursor: pointer; }
+    .ent-checkout-contract { margin: 14px 0; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.04); font-size: 12px; color: #cbd5e1; }
+    .ent-checkout-contract label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+    .ent-checkout-link { background: none; border: none; color: #fbbf24; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 8px; padding: 0; text-decoration: underline; }
+    .ent-checkout-btn { width: 100%; padding: 13px 16px; border-radius: 14px; border: none; font-size: 14px; font-weight: 800; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
+    .ent-checkout-btn--gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; }
+    .ent-checkout-btn--ghost { background: rgba(255,255,255,.06); color: rgba(255,255,255,.75); border: 1px solid rgba(148,163,184,.2); }
+    .ent-checkout-btn--danger { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
+    .ent-checkout-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .ent-checkout-actions { display: flex; flex-direction: column; gap: 8px; }
+    .ent-checkout-qr-wrap { display: flex; justify-content: center; padding: 12px; margin-bottom: 12px; background: #fff; border-radius: 14px; }
+    .ent-checkout-link-field { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(148,163,184,.25); background: rgba(255,255,255,.06); color: #e2e8f0; font-size: 11px; margin-bottom: 10px; box-sizing: border-box; }
+    .ent-checkout-error { text-align: center; padding: 14px; margin-bottom: 12px; border-radius: 12px; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; font-size: 12px; }
+    .ent-oc-actions { padding: 10px 12px 12px; border-top: 1px solid rgba(148,163,184,.12); display: flex; flex-direction: column; gap: 8px; }
+    .ent-oc-action-btn { width: 100%; padding: 11px 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a; font-size: 13px; font-weight: 800; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .ent-oc-action-btn--blue { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+    .ent-oc-action-btn--danger { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
+    .ent-oc-action-hint { display: block; text-align: center; font-size: 12px; color: #93c5fd; font-weight: 600; }
+    .daxi-contract-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200100;
+      background: rgba(2, 6, 23, 0.94);
+      backdrop-filter: blur(22px) saturate(0.45);
+      -webkit-backdrop-filter: blur(22px) saturate(0.45);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .daxi-contract-overlay.open { display: flex; }
+    body.daxi-contract-open { overflow: hidden; }
+    .daxi-contract-modal {
+      position: relative;
+      max-width: 520px; max-height: 85vh; overflow: auto;
+      background: #0a0f1a; border-radius: 18px;
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      padding: 18px 18px 14px;
+      color: #cbd5e1; font-size: 12px; line-height: 1.5;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.75);
+    }
+    .daxi-contract-modal-close-icon {
+      position: sticky; top: 0; float: right; z-index: 2;
+      width: 36px; height: 36px; margin: -4px -4px 8px 8px;
+      border-radius: 10px; border: 1px solid rgba(148,163,184,0.35);
+      background: rgba(15,23,42,0.95); color: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 20px;
+    }
+    .daxi-contract-modal .daxi-contract-doc { padding: 0 2px; clear: both; }
+    .daxi-contract-modal .daxi-contract-hero {
+      padding: 14px 14px 12px; margin: 0 0 12px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+    }
+    .daxi-contract-modal .daxi-contract-kicker {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #fbbf24; margin: 0 0 6px;
+    }
+    .daxi-contract-modal h2 { font-size: 15px; font-weight: 900; color: #f1f5f9; margin: 0 0 8px; }
+    .daxi-contract-modal h3 { font-size: 13px; font-weight: 800; color: #e2e8f0; margin: 14px 0 6px; }
+    .daxi-contract-modal p,
+    .daxi-contract-modal li { color: #cbd5e1; }
+    .daxi-contract-modal ul { margin: 0 0 8px 18px; padding: 0; }
+    .daxi-contract-modal .daxi-contract-lead { color: #94a3b8; margin: 0; font-size: 11px; line-height: 1.45; }
+    .daxi-contract-modal .daxi-contract-refund-box {
+      padding: 12px 12px 10px; border-radius: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(71, 85, 105, 0.4);
+    }
+    .daxi-contract-modal .daxi-contract-refund-note {
+      font-size: 11px; color: #94a3b8; margin: 0 0 10px; line-height: 1.45;
+    }
+    .daxi-contract-modal .daxi-contract-refund-bullets { margin-top: 10px !important; font-size: 11px; color: #94a3b8; }
+    .daxi-contract-modal .daxi-contract-footer { font-size: 10px; color: #64748b; margin-top: 12px; }
+    .daxi-contract-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 11px; }
+    .daxi-contract-table th, .daxi-contract-table td {
+      border: 1px solid rgba(71, 85, 105, 0.45); padding: 7px 8px; text-align: left; vertical-align: top;
+      background: rgba(15, 23, 42, 0.75); color: #e2e8f0;
+    }
+    .daxi-contract-table th { background: rgba(30, 41, 59, 0.95); color: #f8fafc; font-weight: 800; }
+    .daxi-contract-table tbody tr:nth-child(even) td { background: rgba(11, 18, 32, 0.9); }
+    .daxi-contract-table .daxi-contract-fee { color: #fca5a5; white-space: nowrap; }
+    .daxi-contract-table .daxi-contract-refund { color: #86efac; white-space: nowrap; }
+    .daxi-contract-table--refund th:nth-child(2), .daxi-contract-table--refund th:nth-child(3) { text-align: center; }
+    .daxi-contract-table--refund .daxi-contract-fee, .daxi-contract-table--refund .daxi-contract-refund { text-align: center; }
+    .daxi-contract-close {
+      width: 100%; margin-top: 12px; padding: 10px;
+      border-radius: 12px; border: 1px solid rgba(148,163,184,0.3);
+      background: rgba(255,255,255,.06); color: #e2e8f0; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-enterprise-plans.css">
+  <link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260736">
+  <script src="/static/js/daxi-enterprise-plans.js"></script>
+  <script src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+  <script src="/static/js/daxi-shell-role.js?v=20260820f"></script>
+  <script src="/static/js/daxi-offline.js?v=20260816c"></script>
+  <script src="/static/js/daxi-places-catalog.js"></script>
+  <script src="/static/js/daxi-places-enterprise.js?v=20260824b"></script>
+  <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760">
+  <script src="/static/js/daxi-chat-media.js?v=20260760"></script>
+  <script src="/static/js/daxi-chat-ui.js?v=20260760"></script>
+  <script src="/static/js/daxi-chat-composer.js?v=20260760"></script>
+  <script src="/static/js/daxi-realtime.js?v=20260738"></script>
+  <script src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
+  <script src="/static/js/daxi-notifications.js?v=20260823n"></script>
+  <script src="/static/js/daxi-realtime-sync.js?v=20260823o"></script>
+  <script src="/static/js/daxi-push-register.js?v=20260823o"></script>
+  <script src="/static/js/daxi-action-buttons.js?v=20260816a"></script>
+  <script src="/static/js/daxi-modal.js?v=20260820b"></script>
+  <script src="/static/js/daxi-map-theme.js?v=20260735"></script>
+  <script src="/static/js/daxi-map-markers.js?v=20260749"></script>
+  <script src="/static/js/daxi-map-snap.js?v=20260728"></script>
+  <script src="/static/js/daxi-order-card-map.js?v=20260806"></script>
+  <script src="/static/js/daxi-order-expand.js?v=20260757"></script>
+  <link rel="stylesheet" href="/static/css/entreprise-dashboard.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-notifications.css">
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260732">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260732">
+  <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <script src="/static/js/daxi-theme.js?v=20260725" defer></script>
+</head>
+<body data-page="enterprise">
+
+  
+  <header class="ent-topbar">
+    <a href="/" class="ent-logo daxi-header-brand" onclick="return daxiBackToApp(event)">
+      <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="navbar-logo daxi-brand-logo daxi-brand-logo--gold">
+      <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="navbar-logo daxi-brand-logo daxi-brand-logo--dark">
+    </a>
+    <div class="ent-topbar-right">
+      <div id="daxi-theme-slot"></div>
+      <a href="/" class="ent-topbar-link" onclick="return daxiBackToApp(event)"><i class="ri-arrow-left-line"></i> Site</a>
+      <button class="ent-logout-btn" onclick="logoutEnterprise()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="ent-wrap" style="padding-top:16px;">
+
+    
+    <div id="ent-switcher-bar" style="display:none;" class="switcher-bar">
+      <div class="switcher-label">Mes Entreprises</div>
+      <div id="ent-switcher-list" class="switcher-list"></div>
+      <button class="switcher-add-btn" onclick="goCreateEnterprise()"><i class="ri-add-line"></i> Créer une autre entreprise</button>
+    </div>
+
+    
+    <div class="dash-header ent-dash-span-full">
+      <div class="dash-greeting">Bienvenue,</div>
+      <div class="dash-name" id="ent-company-name">Chargement...</div>
+      <div id="ent-mode-badge" style="margin-top:6px;"></div>
+      <div class="dash-partner-badge"><span style="width:7px;height:7px;background:#34d399;border-radius:50%;display:inline-block;"></span>&nbsp;Partenaire actif</div>
+    </div>
+
+    
+    <div class="stats-grid ent-dash-span-full">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-taxi-line"></i></div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Commandes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-money-dollar-circle-line"></i></div>
+        <div class="stat-value" id="stat-earnings">—</div>
+        <div class="stat-label">Gains ($)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ri-percent-line"></i></div>
+        <div class="stat-value" id="stat-commission">—</div>
+        <div class="stat-label">Commission</div>
+      </div>
+    </div>
+
+    <div class="ent-dash-desktop-grid">
+    <div class="ent-dash-col-left">
+
+    
+    <button type="button" class="ent-wallet-trigger" onclick="openWalletModal()">
+      <span class="ent-wallet-trigger-icon"><i class="ri-wallet-3-line"></i></span>
+      <span class="ent-wallet-trigger-text">
+        <span class="ent-wallet-trigger-title">Portefeuille &amp; Retraits</span>
+        <span class="ent-wallet-trigger-sub">Consultez votre solde et demandez un retrait</span>
+      </span>
+      <i class="ri-arrow-right-s-line"></i>
+    </button>
+
+    
+    <div id="ent-booking-section" style="display:none;">
+      <div class="ent-panel">
+        <div class="panel-header"><i class="ri-taxi-line"></i> Commander un taxi</div>
+        <div class="panel-body">
+          <div id="order-result"></div>
+
+          <div id="ent-location-banner" class="ent-loc-order-banner" style="display:none;">
+            <i class="ri-map-pin-warning-line"></i>
+            <div class="ent-loc-order-banner-text">
+              <strong id="ent-location-banner-title">Emplacement entreprise requis</strong>
+              <p id="ent-location-banner-desc">Configurez le point GPS de votre entreprise pour que le départ soit automatiquement rempli.</p>
+            </div>
+            <button type="button" id="ent-location-banner-btn" class="ent-loc-order-banner-btn" onclick="openEntLocationModal()">Configurer</button>
+          </div>
+
+          <div class="ent-daxi-panel">
+            <div class="ent-daxi-row ent-daxi-row--pickup">
+              <i class="ent-daxi-icon ent-daxi-icon--green ri-map-pin-line"></i>
+              <div class="ent-daxi-body">
+                <span class="ent-daxi-label">Départ</span>
+                <input type="text" id="ent-pickup-input" class="ent-daxi-input" placeholder="Nom de l'entreprise" value="">
+                <input type="hidden" id="ent-pickup-lat"><input type="hidden" id="ent-pickup-lng"><input type="hidden" id="ent-pickup-text">
+              </div>
+              <button type="button" class="ent-daxi-gps" onclick="entMyPosition()" title="Utiliser l'emplacement de l'entreprise" aria-label="Emplacement entreprise">
+                <i class="ri-focus-3-line"></i>
+              </button>
+            </div>
+
+            <div class="ent-daxi-row">
+              <i class="ent-daxi-icon ent-daxi-icon--gold ri-flag-line"></i>
+              <div class="ent-daxi-body">
+                <span class="ent-daxi-label">Destination</span>
+                <input type="text" id="ent-dest-input" class="ent-daxi-input" placeholder="Où allez-vous ?">
+                <input type="hidden" id="ent-dest-lat"><input type="hidden" id="ent-dest-lng"><input type="hidden" id="ent-dest-text">
+              </div>
+              <i class="ent-daxi-icon ent-daxi-icon--muted ri-search-line"></i>
+            </div>
+
+            <div class="ent-daxi-row ent-daxi-notes-toggle" id="ent-notes-toggle" role="button" tabindex="0">
+              <i class="ent-daxi-icon ent-daxi-icon--muted ri-chat-3-line"></i>
+              <div class="ent-daxi-body">
+                <span class="ent-daxi-label" style="margin:0;text-transform:none;font-size:12px;color:rgba(255,255,255,.55);">Ajouter un repère pour le chauffeur (optionnel)</span>
+              </div>
+              <i class="ri-arrow-right-s-line ent-daxi-icon ent-daxi-icon--muted" id="ent-notes-chevron"></i>
+            </div>
+            <div class="ent-daxi-notes" id="ent-notes-expand">
+              <textarea id="ent-notes" rows="2" placeholder="Ex: devant la porte bleue, près du marché..."></textarea>
+            </div>
+
+            <div class="ent-daxi-trip">
+              <div class="ent-daxi-stepper" aria-label="Nombre de passagers">
+                <i class="ri-user-3-fill"></i>
+                <button type="button" class="ent-daxi-step" id="ent-pass-minus" aria-label="Retirer une personne">−</button>
+                <span class="ent-daxi-step-val" id="ent-pass-display">1</span>
+                <input type="hidden" id="ent-passengers" value="1">
+                <button type="button" class="ent-daxi-step" id="ent-pass-plus" aria-label="Ajouter une personne">+</button>
+              </div>
+              <div class="ent-daxi-trip-types">
+                <button type="button" class="ent-daxi-trip-btn active" id="ent-trip-one" onclick="setTripType('one')">
+                  <i class="ri-car-line"></i> Aller simple
+                </button>
+                <button type="button" class="ent-daxi-trip-btn" id="ent-trip-round" onclick="setTripType('round')">
+                  <i class="ri-arrow-left-right-line"></i> Aller retour
+                </button>
+              </div>
+            </div>
+
+            <div id="ent-rt-wait-block" class="ent-daxi-rt-wait hidden">
+              <div class="ent-daxi-rt-label"><i class="ri-time-line"></i> Attente au retour (aller-retour)</div>
+              <select id="ent-rt-wait-min" onchange="entSyncRtAllow()">
+                <option value="0">Pas d'attente prévue</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">1 heure</option>
+                <option value="90">1h30</option>
+                <option value="120">2 heures</option>
+              </select>
+              <label id="ent-rt-allow-wrap" class="ent-daxi-rt-allow hidden">
+                <input type="checkbox" id="ent-rt-allow-other">
+                <span>Autoriser le chauffeur à prendre d'autres courses durant l'attente</span>
+              </label>
+            </div>
+
+            <div class="ent-daxi-time">
+              <button type="button" class="ent-daxi-time-btn active" id="ent-time-now" onclick="setTimeMode('now')">
+                <i class="ri-flashlight-line"></i> Maintenant
+              </button>
+              <button type="button" class="ent-daxi-time-btn" id="ent-time-later" onclick="setTimeMode('later')">
+                <i class="ri-calendar-line"></i> Plus tard
+              </button>
+            </div>
+            <div id="ent-schedule-fields" class="ent-daxi-datetime">
+              <input type="time" id="ent-order-time" class="ent-daxi-datetime-input">
+              <input type="date" id="ent-order-date" class="ent-daxi-datetime-input">
+            </div>
+          </div>
+
+          <div class="ent-client-mini">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Nom du client</label>
+              <input type="text" id="ent-client-name" class="form-input" placeholder="Nom complet">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Téléphone</label>
+              <div class="ent-phone-group">
+                <div class="ent-phone-prefix">+509</div>
+                <input type="tel" id="ent-client-phone" class="form-input" placeholder="44334454" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+
+          <button class="ent-submit-btn" onclick="submitEntOrder()" id="ent-order-submit-btn" style="margin-top:12px;text-transform:uppercase;letter-spacing:.5px;">
+            <i class="ri-taxi-line"></i> Commander un taxi
+          </button>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="ent-panel">
+      <div class="panel-header"><i class="ri-list-check-2"></i> Mes Commandes</div>
+      <div class="orders-tabs">
+        <button class="orders-tab active" id="etab-active" onclick="switchOrdersTab('active')"><i class="ri-radar-line"></i> En cours</button>
+        <button class="orders-tab" id="etab-history" onclick="switchOrdersTab('history')"><i class="ri-history-line"></i> Historique</button>
+      </div>
+      <div id="ent-orders-container" class="orders-list">
+        <div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement des commandes...</div>
+      </div>
+    </div>
+
+    
+    <div id="ent-plans-section" style="display:none;">
+      <div class="ent-section-title"><i class="ri-star-smile-line"></i> Nos Plans de Services</div>
+      <div id="ent-plans-slot">
+        <div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement des plans...</div>
+      </div>
+    </div>
+
+    </div>
+    <div class="ent-dash-col-right">
+
+    
+    <div class="ent-panel">
+      <div class="panel-header"><i class="ri-bar-chart-2-line"></i> Statistiques — 7 derniers jours</div>
+      <div class="panel-body chart-split">
+        <div class="chart-section">
+          <div class="chart-label">Commandes / jour</div>
+          <div class="chart-canvas-wrap"><canvas id="ordersChartCanvas"></canvas></div>
+        </div>
+        <div class="chart-section" style="margin-bottom:0;">
+          <div class="chart-label">Gains ($) / jour</div>
+          <div class="chart-canvas-wrap"><canvas id="earningsChartCanvas"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="affiliate-card" id="ent-affiliate-section">
+      <div class="aff-title"><i class="ri-links-line"></i> Votre lien d'affiliation</div>
+      <div id="ent-mode-info" style="margin-bottom:8px;"></div>
+      <div class="aff-url" id="affiliate-url-text">Chargement...</div>
+      <div style="margin-top:8px;background:rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;font-size:12px;color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.25);text-align:center;">
+        <i class="ri-share-forward-line"></i> <strong>C'est ce lien que vous devez partager avec vos clients.</strong><br>
+        Ils pourront commander un taxi directement via ce lien et vos gains seront comptabilisés automatiquement.
+      </div>
+      <div class="aff-btns">
+        <button class="aff-btn aff-btn-copy" onclick="copyAffiliateLink()"><i class="ri-file-copy-line"></i> Copier le lien</button>
+        <button class="aff-btn aff-btn-share" onclick="shareAffiliateLink()"><i class="ri-share-line"></i> Partager</button>
+        <button class="aff-btn aff-btn-dl" onclick="downloadQR()"><i class="ri-download-2-line"></i> QR Code</button>
+      </div>
+      <div class="aff-qr-wrap">
+        <div id="ent-qr-code"></div>
+        <div style="margin-top:6px;font-size:11px;color:rgba(255,255,255,.5);">Scannez pour commander via votre lien</div>
+      </div>
+      <div class="aff-code-wrap">
+        <div class="aff-code-label">Code d'affiliation</div>
+        <div class="aff-code" id="ent-aff-code">—</div>
+      </div>
+      <div class="aff-instructions">
+        <div class="aff-inst-title"><i class="ri-megaphone-line"></i> Comment utiliser votre lien ?</div>
+        <div class="aff-inst-text">
+          Partagez ce lien avec vos clients <strong>ou faites-leur scanner votre QR code</strong> pour qu'ils commandent un taxi via votre compte.<br>
+          Chaque course réalisée via votre lien vous rapporte <strong id="ent-comm-pct" style="color:#fbbf24;">—%</strong> de commission.
+        </div>
+        <div class="aff-inst-cta"><i class="ri-arrow-right-up-line"></i> Partagez ce lien ou ce QR code avec vos clients</div>
+      </div>
+    </div>
+
+    
+    <div id="ent-qr-bottom-section" class="ent-panel" style="display:none;margin-top:14px;">
+      <div class="panel-header"><i class="ri-qr-code-line"></i> Votre QR code partenaire</div>
+      <div class="panel-body" style="text-align:center;">
+        <p style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:12px;">Au cas où vous auriez besoin de partager votre lien avec un client.</p>
+        <div class="aff-qr-wrap" style="justify-content:center;background:rgba(255,255,255,.04);border-color:rgba(148,163,184,.18);">
+          <div id="ent-qr-code-bottom"></div>
+        </div>
+        <div class="aff-url" id="affiliate-url-bottom" style="margin-top:10px;font-size:11px;background:rgba(255,255,255,.05);border-color:rgba(148,163,184,.18);color:rgba(255,255,255,.6);">Chargement...</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <button class="aff-btn aff-btn-copy" type="button" onclick="copyAffiliateLink()"><i class="ri-file-copy-line"></i> Copier le lien</button>
+          <button class="aff-btn aff-btn-dl" type="button" onclick="downloadQR()"><i class="ri-download-2-line"></i> QR Code</button>
+        </div>
+      </div>
+    </div>
+
+    </div>
+    </div>
+
+  </div>
+
+  
+  <div id="ent-location-modal" class="ent-loc-overlay" role="dialog" aria-modal="true" aria-labelledby="ent-loc-title">
+    <div class="ent-loc-sheet ent-location-sheet">
+      <div class="ent-loc-kicker"><i class="ri-flag-line"></i> Configuration</div>
+      <div class="ent-loc-title" id="ent-loc-title">Où se trouve votre entreprise ?</div>
+      <p class="ent-loc-sub">
+        Ce point servira de départ par défaut pour vos commandes taxi.
+        La plupart des partenaires demandent simplement à l'équipe DAXI de le configurer.
+      </p>
+
+      <div class="ent-loc-modes" role="tablist">
+        <button type="button" class="ent-loc-mode active" id="ent-loc-mode-admin" onclick="setEntLocMode('admin')">
+          <i class="ri-customer-service-2-line"></i>
+          <span>L'équipe DAXI le fait</span>
+          <small>Recommandé — décrivez votre adresse</small>
+        </button>
+        <button type="button" class="ent-loc-mode" id="ent-loc-mode-map" onclick="setEntLocMode('map')">
+          <i class="ri-map-pin-line"></i>
+          <span>Je le place moi-même</span>
+          <small>Sur la carte interactive</small>
+        </button>
+      </div>
+
+      <div id="ent-loc-admin-panel" class="ent-loc-panel show">
+        <div class="ent-loc-badge"><i class="ri-star-fill"></i> Option la plus simple</div>
+        <p class="ent-loc-panel-text">
+          Décrivez où se trouve votre entreprise (quartier, rue, repères visibles, couleur du bâtiment…).
+          Un administrateur DAXI configurera l'emplacement pour vous, généralement sous 24 h.
+        </p>
+        <textarea id="ent-loc-help-msg" class="ent-loc-textarea" placeholder="Ex : Route de Labadie, à côté de la station Total, bâtiment bleu avec enseigne « Hotel Plaza »…"></textarea>
+        <div class="ent-loc-actions">
+          <button type="button" class="ent-loc-btn" onclick="sendEntLocationHelp()">
+            <i class="ri-send-plane-line"></i> Envoyer à l'équipe DAXI
+          </button>
+        </div>
+      </div>
+
+      <div id="ent-loc-map-panel" class="ent-loc-panel">
+        <p class="ent-loc-panel-text">Déplacez la carte pour placer le repère doré sur votre entreprise, puis confirmez.</p>
+        <div class="ent-loc-map-wrap">
+          <div id="ent-loc-map" class="ent-loc-map"></div>
+          <div class="ent-loc-pin" aria-hidden="true"><i class="ri-map-pin-fill"></i></div>
+          <div class="ent-loc-pin-shadow" aria-hidden="true"></div>
+          <div class="ent-loc-map-hint"><i class="ri-drag-move-line"></i> Glissez la carte sous le repère</div>
+        </div>
+        <input type="hidden" id="ent-loc-lat"><input type="hidden" id="ent-loc-lng">
+        <input type="text" id="ent-loc-label" class="ent-loc-field" placeholder="Nom affiché (ex : nom de l'entreprise)">
+        <div class="ent-loc-actions">
+          <button type="button" class="ent-loc-btn" onclick="saveEntLocation()">
+            <i class="ri-check-line"></i> Confirmer cet emplacement
+          </button>
+        </div>
+      </div>
+
+      <div id="ent-loc-result"></div>
+    </div>
+  </div>
+
+  
+  <div id="ent-admin-pending-modal" class="ent-loc-overlay" role="dialog" aria-modal="true" aria-labelledby="ent-admin-pending-title" onclick="if(event.target===this) closeEntAdminPendingModal()">
+    <div class="ent-loc-sheet ent-admin-pending-sheet">
+      <div class="ent-loc-kicker"><i class="ri-time-line"></i> Emplacement en attente</div>
+      <div class="ent-loc-title" id="ent-admin-pending-title">Configuration en cours</div>
+      <p class="ent-loc-sub">
+        Votre demande d'emplacement a été envoyée à l'administrateur DAXI. Il n'a pas encore configuré votre point GPS — vous pourrez commander dès que ce sera fait.
+      </p>
+      <div class="ent-admin-pending-actions">
+        <a id="ent-admin-pending-wa" class="ent-admin-pending-wa" href="#" target="_blank" rel="noopener" onclick="entContactAdminWhatsApp('J\'ai déjà fait la demande pour mon emplacement entreprise. Pouvez-vous le configurer rapidement ? Je souhaite passer une commande.'); return true;">
+          <i class="ri-whatsapp-line"></i> Écrire à l'admin
+        </a>
+        <button type="button" class="ent-admin-pending-close" onclick="closeEntAdminPendingModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="ent-checkout-modal" class="ent-loc-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this) closeEntCheckoutModal()">
+    <div class="ent-loc-sheet ent-checkout-sheet">
+      <div class="ent-loc-kicker"><i class="ri-shopping-bag-3-line"></i> Finaliser</div>
+      <div id="ent-checkout-body">
+        <div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="daxi-contract-overlay" id="ent-contract-overlay" role="dialog" aria-modal="true" onclick="if(event.target===this) entCloseContractModal()">
+    <div class="daxi-contract-modal">
+      <button type="button" class="daxi-contract-modal-close-icon" onclick="entCloseContractModal()" aria-label="Fermer"><i class="ri-close-line"></i></button>
+      <div id="ent-contract-content"><div class="empty-state"><i class="ri-loader-4-line ent-spin"></i></div></div>
+      <button type="button" class="daxi-contract-close" onclick="entCloseContractModal()">Fermer</button>
+    </div>
+  </div>
+
+  
+  <div id="ent-wallet-modal" class="ent-modal-overlay" onclick="if(event.target===this) closeWalletModal()">
+    <div class="ent-modal-sheet">
+      <div class="ent-modal-handle"></div>
+      <div class="ent-modal-head">
+        <div class="ent-modal-title"><i class="ri-wallet-3-line"></i> Portefeuille &amp; Retraits</div>
+        <button class="ent-modal-close" onclick="closeWalletModal()"><i class="ri-close-line"></i></button>
+      </div>
+      <div id="ent-wallet-modal-body">
+        <div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="ent-plan-detail-modal" class="ent-plan-detail-modal" role="dialog" aria-modal="true">
+    <button type="button" class="ent-pd-close" id="entPlanDetailClose" aria-label="Fermer">&times;</button>
+    <div class="ent-pd-hero" id="entPlanDetailHero">
+      <div class="ent-pd-hero-content">
+        <div class="ent-pd-hero-icon" id="entPlanDetailIcon"><i class="ri-star-line"></i></div>
+        <h1 id="entPlanDetailTitle">Plan</h1>
+        <p id="entPlanDetailSub"></p>
+        <span class="ent-pd-price" id="entPlanDetailPrice"></span>
+      </div>
+    </div>
+    <div class="ent-pd-body">
+      <p class="ent-pd-desc" id="entPlanDetailDesc"></p>
+      <div class="ent-pd-section-title">Ce qui est inclus</div>
+      <div class="ent-pd-features" id="entPlanDetailFeatures"></div>
+      <div class="ent-pd-section-title">Galerie</div>
+      <div class="ent-pd-gallery" id="entPlanDetailGallery"></div>
+      <div class="ent-pd-cta">
+        <h3>Intéressé par ce plan ?</h3>
+        <p id="entPlanDetailCtaDesc"></p>
+        <button type="button" class="ent-pd-book-btn" id="entPlanDetailBookBtn"><i class="ri-calendar-check-line"></i> Réserver</button>
+      </div>
+    </div>
+  </div>
+  <div id="entPlanImageViewer" class="ent-plan-image-viewer">
+    <button type="button" id="entPlanViewerClose" aria-label="Fermer">&times;</button>
+    <img id="entPlanViewerImg" src="" alt="">
+  </div>
+
+  
+  <div id="ent-plan-modal-1" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Trajet</div><div class="ent-plan-step">2. Date</div><div class="ent-plan-step">3. Commander</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-road-map-line"></i> Course Ville à Ville</div><div class="plan-modal-sub">Prix selon distance</div></div>
+        <button onclick="closeEntPlanModal(1)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-1-result"></div>
+      <div class="form-group"><label>Point de départ *</label><input type="text" id="ep1-departure" class="form-input" placeholder="Ex: Cap-Haïtien"><input type="hidden" id="ep1-departure-lat"><input type="hidden" id="ep1-departure-lng"></div>
+      <div class="form-group"><label>Ville de destination *</label><input type="text" id="ep1-destination" class="form-input" placeholder="Ex: Port-au-Prince"><input type="hidden" id="ep1-destination-lat"><input type="hidden" id="ep1-destination-lng"></div>
+      <div class="form-row"><div class="form-group"><label>Date</label><input type="date" id="ep1-date" class="form-input"></div><div class="form-group"><label>Heure</label><input type="time" id="ep1-time" class="form-input"></div></div>
+      <div class="form-group"><label>Passagers</label><input type="number" id="ep1-passengers" class="form-input" value="1" min="1" max="20"></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(1)"><i class="ri-send-plane-fill"></i> Commander ce service</button>
+    </div>
+  </div>
+  <div id="ent-plan-modal-2" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Départ</div><div class="ent-plan-step">2. Horaire</div><div class="ent-plan-step">3. Réserver</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-time-line"></i> Demi-Journée (4h)</div><div class="plan-modal-sub">70$ — Chauffeur privé 4h</div></div>
+        <button onclick="closeEntPlanModal(2)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-2-result"></div>
+      <div class="form-group"><label>Point de départ *</label><input type="text" id="ep2-departure" class="form-input" placeholder="Ex: Rue 10, Cap-Haïtien"><input type="hidden" id="ep2-departure-lat"><input type="hidden" id="ep2-departure-lng"></div>
+      <div class="form-row"><div class="form-group"><label>Date *</label><input type="date" id="ep2-date" class="form-input" required></div><div class="form-group"><label>Heure de début *</label><input type="time" id="ep2-time" class="form-input" required></div></div>
+      <div class="form-group"><label>Destinations à visiter</label><input type="text" id="ep2-destination" class="form-input" placeholder="Ex: Hôtel Montana, Centre-ville..."></div>
+      <div class="form-group"><label>Passagers</label><input type="number" id="ep2-passengers" class="form-input" value="1" min="1" max="20"></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(2)"><i class="ri-send-plane-fill"></i> Réserver — 70$</button>
+    </div>
+  </div>
+  <div id="ent-plan-modal-3" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Départ</div><div class="ent-plan-step">2. Horaire</div><div class="ent-plan-step">3. Réserver</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-sun-line"></i> Journée Complète (8h)</div><div class="plan-modal-sub">140$ — Chauffeur privé 8h</div></div>
+        <button onclick="closeEntPlanModal(3)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-3-result"></div>
+      <div class="form-group"><label>Point de départ *</label><input type="text" id="ep3-departure" class="form-input" placeholder="Ex: Rue 10, Cap-Haïtien"><input type="hidden" id="ep3-departure-lat"><input type="hidden" id="ep3-departure-lng"></div>
+      <div class="form-row"><div class="form-group"><label>Date *</label><input type="date" id="ep3-date" class="form-input" required></div><div class="form-group"><label>Heure de début *</label><input type="time" id="ep3-time" class="form-input" required></div></div>
+      <div class="form-group"><label>Destinations à visiter</label><input type="text" id="ep3-destination" class="form-input" placeholder="Ex: Plusieurs arrêts..."></div>
+      <div class="form-group"><label>Passagers</label><input type="number" id="ep3-passengers" class="form-input" value="1" min="1" max="20"></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(3)"><i class="ri-send-plane-fill"></i> Réserver — 140$</button>
+    </div>
+  </div>
+  <div id="ent-plan-modal-4" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Soirée</div><div class="ent-plan-step">2. Détails</div><div class="ent-plan-step">3. Réserver</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-moon-line"></i> Élégance Night (3h)</div><div class="plan-modal-sub">150$ — Service VIP nocturne</div></div>
+        <button onclick="closeEntPlanModal(4)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-4-result"></div>
+      <div class="form-group"><label>Localisation de départ *</label><input type="text" id="ep4-departure" class="form-input" placeholder="Ex: Rue 10, Cap-Haïtien" required><input type="hidden" id="ep4-departure-lat"><input type="hidden" id="ep4-departure-lng"></div>
+      <div class="form-row"><div class="form-group"><label>Date *</label><input type="date" id="ep4-date" class="form-input" required></div><div class="form-group"><label>Heure *</label><input type="time" id="ep4-time" class="form-input" required></div></div>
+      <div class="form-group"><label>Occasion (optionnel)</label><input type="text" id="ep4-occasion" class="form-input" placeholder="Ex: Anniversaire, Soirée..."></div>
+      <div class="form-group"><label>Destinations de la soirée</label><input type="text" id="ep4-destination" class="form-input" placeholder="Ex: Restaurant, Club..."></div>
+      <div class="form-group"><label>Passagers</label><input type="number" id="ep4-passengers" class="form-input" value="1" min="1" max="20"></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(4)"><i class="ri-send-plane-fill"></i> Réserver — 150$</button>
+    </div>
+  </div>
+  <div id="ent-plan-modal-5" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Vol</div><div class="ent-plan-step">2. Destination</div><div class="ent-plan-step">3. Réserver</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-flight-land-line"></i> Accueil Aéroport</div><div class="plan-modal-sub">Cap-Haïtien · prix calculé</div></div>
+        <button onclick="closeEntPlanModal(5)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-5-result"></div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><i class="ri-map-pin-line"></i> Départ verrouillé : Aéroport International Hugo Chávez, Cap-Haïtien</div>
+      <div class="form-group"><label>Nom sur le panneau d'accueil *</label><input type="text" id="ep5-sign-name" class="form-input" placeholder="Ex: Jean Pierre" required></div>
+      <div class="form-row"><div class="form-group"><label>Date d'atterrissage *</label><input type="date" id="ep5-arrival-date" class="form-input" required></div><div class="form-group"><label>Heure d'atterrissage *</label><input type="time" id="ep5-arrival-time" class="form-input" required></div></div>
+      <div class="form-group"><label>Destination finale *</label><input type="text" id="ep5-destination" class="form-input" placeholder="Hôtel, adresse, quartier…" required><input type="hidden" id="ep5-destination-lat"><input type="hidden" id="ep5-destination-lng"></div>
+      <div class="form-group"><label>Passagers</label><input type="number" id="ep5-passengers" class="form-input" value="1" min="1" max="20"></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(5)"><i class="ri-send-plane-fill"></i> Réserver l'accueil aéroport</button>
+    </div>
+  </div>
+  <div id="ent-plan-modal-6" class="plan-modal-overlay">
+    <div class="plan-modal-sheet">
+      <div class="plan-modal-handle"></div>
+      <div class="ent-plan-steps"><div class="ent-plan-step active">1. Besoins</div><div class="ent-plan-step">2. Contact</div><div class="ent-plan-step">3. Envoyer</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div><div class="plan-modal-title"><i class="ri-briefcase-4-line"></i> Business / VIP</div><div class="plan-modal-sub">Abonnement personnalisé</div></div>
+        <button onclick="closeEntPlanModal(6)" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;">×</button>
+      </div>
+      <div id="ent-plan-6-result"></div>
+      <div class="form-group"><label>Point de départ habituel *</label><input type="text" id="ep6-departure" class="form-input" placeholder="Ex: Cap-Haïtien" required></div>
+      <div class="form-group"><label>Fréquence d'utilisation</label><select id="ep6-frequency" class="form-input"><option value="">Sélectionnez</option><option value="quotidien">Quotidien</option><option value="hebdomadaire">Plusieurs fois/semaine</option><option value="mensuel">Quelques fois/mois</option></select></div>
+      <div class="form-group"><label>Destinations habituelles</label><input type="text" id="ep6-destination" class="form-input" placeholder="Ex: Bureau, Aéroport..."></div>
+      <div class="form-group"><label>Notes supplémentaires</label><textarea id="ep6-notes" class="form-input" rows="2" placeholder="Décrivez vos besoins spécifiques..."></textarea></div>
+      <button class="ent-submit-btn" onclick="submitEntPlan(6)"><i class="ri-whatsapp-line"></i> Soumettre ma demande</button>
+    </div>
+  </div>
+
+  <script>
+  window.daxiBackToApp = function(e) {
+    if (e) e.preventDefault();
+    try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (_) {}
+    try {
+      if (sessionStorage.getItem('daxi_from_app') === '1' && window.history.length > 1) {
+        sessionStorage.removeItem('daxi_from_app');
+        history.back();
+        return false;
+      }
+    } catch (_) {}
+    window.location.href = '/';
+    return false;
+  };
+  (function() {
+    if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
+    var session = window.DJANGO_SESSION || {};
+    var _ordersChart = null;
+    var _earningsChart = null;
+    var _currentTab = 'active';
+    var _dashData = null;
+    var _ordersLoaded = false;
+    var _entLocation = {
+      lat: session.enterprise_address_lat || null,
+      lng: session.enterprise_address_lng || null,
+      label: session.enterprise_address_label || session.enterprise_name || '',
+      status: session.enterprise_location_status || 'unset'
+    };
+    var _entLocMap = null;
+
+    function entPickupLabel() {
+      return _entLocation.label || session.enterprise_name || 'Mon entreprise';
+    }
+    var ENT_ADMIN_WA = '50944969696';
+    function entWhatsAppAdminUrl(extra) {
+      var name = session.enterprise_name || entPickupLabel();
+      var msg = 'Bonjour DAXI,\n\nJe suis l\'entreprise « ' + name + ' ».';
+      if (extra) msg += '\n\n' + extra;
+      return 'https://wa.me/' + ENT_ADMIN_WA + '?text=' + encodeURIComponent(msg);
+    }
+    window.entContactAdminWhatsApp = function(context) {
+      var extra = context || 'J\'ai déjà demandé la configuration de mon emplacement GPS mais je ne peux pas encore commander. Pouvez-vous finaliser mon point de départ ?';
+      window.open(entWhatsAppAdminUrl(extra), '_blank');
+    };
+    window.openEntAdminPendingModal = function() {
+      var modal = el('ent-admin-pending-modal');
+      var wa = el('ent-admin-pending-wa');
+      if (wa) {
+        wa.href = entWhatsAppAdminUrl('J\'ai déjà fait la demande pour mon emplacement entreprise. Pouvez-vous le configurer rapidement ? Je souhaite passer une commande.');
+      }
+      if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      }
+    };
+    window.closeEntAdminPendingModal = function() {
+      var modal = el('ent-admin-pending-modal');
+      if (modal) modal.classList.remove('show');
+      document.body.style.overflow = '';
+    };
+    function entHasPickupCoords() {
+      return !!(
+        (_entLocation.lat && _entLocation.lng)
+        || (el('ent-pickup-lat') && el('ent-pickup-lat').value && el('ent-pickup-lng') && el('ent-pickup-lng').value)
+      );
+    }
+    function entIsAdminLocationPending() {
+      return _entLocation.status === 'admin_help' && !entHasPickupCoords();
+    }
+    function entApplyPickupFromEnterprise() {
+      var label = entPickupLabel();
+      if (el('ent-pickup-input')) el('ent-pickup-input').value = label;
+      if (el('ent-pickup-text')) el('ent-pickup-text').value = label;
+      if (_entLocation.lat && _entLocation.lng) {
+        if (el('ent-pickup-lat')) el('ent-pickup-lat').value = _entLocation.lat;
+        if (el('ent-pickup-lng')) el('ent-pickup-lng').value = _entLocation.lng;
+      }
+      entSyncLocationBanner();
+    }
+    function entSyncLocationBanner() {
+      var banner = el('ent-location-banner');
+      var pickupRow = document.querySelector('.ent-daxi-row--pickup');
+      var title = el('ent-location-banner-title');
+      var desc = el('ent-location-banner-desc');
+      var btn = el('ent-location-banner-btn');
+      if (!banner) return;
+      var hasCoords = entHasPickupCoords();
+      if (hasCoords) {
+        banner.style.display = 'none';
+        if (pickupRow) pickupRow.classList.remove('ent-daxi-row--needs-loc');
+        return;
+      }
+      if (entIsAdminLocationPending()) {
+        banner.style.display = 'none';
+        if (pickupRow) pickupRow.classList.remove('ent-daxi-row--needs-loc');
+        return;
+      } else {
+        banner.className = 'ent-loc-order-banner';
+        banner.style.display = 'flex';
+        if (title) title.textContent = 'Emplacement entreprise requis';
+        if (desc) desc.textContent = 'Configurez le point GPS de votre entreprise pour que le départ soit automatiquement rempli.';
+        if (btn) {
+          btn.innerHTML = 'Configurer';
+          btn.onclick = function() { openEntLocationModal(); };
+        }
+        var icon2 = banner.querySelector('i.ri-time-line, i.ri-map-pin-warning-line');
+        if (icon2) icon2.className = 'ri-map-pin-warning-line';
+        if (pickupRow) pickupRow.classList.add('ent-daxi-row--needs-loc');
+      }
+    }
+    function entEnsurePickupCoords() {
+      if (entHasPickupCoords()) {
+        if (!el('ent-pickup-lat').value && _entLocation.lat && _entLocation.lng) {
+          entApplyPickupFromEnterprise();
+        }
+        return true;
+      }
+      return false;
+    }
+    function loadEntPlans() {
+      var slot = el('ent-plans-slot');
+      if (!slot) return;
+      fetch('/htmx/enterprise/plans/', { credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() } })
+        .then(function(r) {
+          if (!r.ok) throw new Error('plans ' + r.status);
+          return r.text();
+        })
+        .then(function(html) {
+          slot.innerHTML = html;
+          if (window.EntPlaces && typeof EntPlaces.refresh === 'function') EntPlaces.refresh();
+          if (typeof window.initEntPlansCarousel === 'function') {
+            setTimeout(function() { window.initEntPlansCarousel(); }, 150);
+          }
+        })
+        .catch(function() {
+          slot.innerHTML = '<div class="empty-state">Impossible de charger les plans.</div>';
+        });
+    }
+
+
+    if (!session.enterprise_id) {
+      window.location.replace('/entreprise/');
+    }
+
+
+    function getCsrf() {
+      if (window.DaxiHtmxCsrf && DaxiHtmxCsrf.read) {
+        var t = DaxiHtmxCsrf.read();
+        if (t) return t;
+      }
+      var m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : (session.csrf_token || '');
+    }
+    document.body.addEventListener('htmx:configRequest', function(e) {
+      var csrf = getCsrf();
+      if (!csrf) return;
+      e.detail.headers = e.detail.headers || {};
+      e.detail.headers['X-CSRFToken'] = csrf;
+      var verb = String(e.detail.verb || 'get').toLowerCase();
+      if (verb !== 'get' && verb !== 'head') {
+        e.detail.parameters = e.detail.parameters || {};
+        if (!e.detail.parameters.csrfmiddlewaretoken) e.detail.parameters.csrfmiddlewaretoken = csrf;
+      }
+    });
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+      if (e.detail && e.detail.target && e.detail.target.id === 'ent-checkout-body') {
+        entInitCheckoutBody(e.detail.target);
+      }
+    });
+
+    function el(id) { return document.getElementById(id); }
+    function show(id) { var e = el(id); if (e) e.style.display = ''; }
+    function hide(id) { var e = el(id); if (e) e.style.display = 'none'; }
+
+
+    function entFullPhone(raw) {
+      raw = (raw || '').trim();
+      if (!raw) return '';
+      if (raw.indexOf('+509') === 0) return raw;
+      if (raw.indexOf('509') === 0) return '+' + raw;
+      return '+509' + raw.replace(/^0+/, '');
+    }
+    function plCoord(id) { var e = el(id); return e ? e.value : ''; }
+
+
+    window.openWalletModal = function() {
+      var modal = el('ent-wallet-modal');
+      if (!modal) return;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      if (window.htmx) {
+        htmx.ajax('GET', '/htmx/enterprise/dashboard/?wallet=1', { target: '#ent-wallet-modal-body', swap: 'innerHTML' });
+      }
+    };
+    window.closeWalletModal = function() {
+      var modal = el('ent-wallet-modal');
+      if (modal) modal.classList.remove('show');
+      document.body.style.overflow = '';
+    };
+
+
+    function loadDashboardData() {
+      fetch('/htmx/enterprise/dashboard/', { credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() } })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(html, 'text/html');
+          function read(sel) { var n = doc.querySelector(sel); return n ? n.textContent.trim() : ''; }
+
+          var name     = read('[data-ent-name]');
+          var total    = read('[data-ent-total]');
+          var earnings = read('[data-ent-earnings]');
+          var affUrl   = read('[data-ent-url]');
+          var affCode  = read('[data-ent-code]');
+          var comm     = read('[data-ent-commission]');
+          var wLabels  = read('[data-ent-weekly-labels]');
+          var wOrders  = read('[data-ent-weekly-orders]');
+          var wEarn    = read('[data-ent-weekly-earn]');
+          var entList  = read('[data-ent-list]');
+          var mode     = read('[data-ent-mode]') || session.enterprise_mode;
+          var entLat   = read('[data-ent-lat]');
+          var entLng   = read('[data-ent-lng]');
+          var entLabel = read('[data-ent-address-label]');
+          var entLocSt = read('[data-ent-location-status]');
+
+          if (entLat && entLng) {
+            _entLocation.lat = parseFloat(entLat);
+            _entLocation.lng = parseFloat(entLng);
+          }
+          if (entLabel) _entLocation.label = entLabel;
+          if (entLocSt) _entLocation.status = entLocSt;
+          entApplyPickupFromEnterprise();
+          entSyncLocationBanner();
+
+          if (name)     el('ent-company-name').textContent = name;
+          if (total)    el('stat-total').textContent = total;
+          if (earnings) el('stat-earnings').textContent = earnings;
+          if (comm) {
+            el('stat-commission').textContent = comm + '%';
+            el('ent-comm-pct').textContent = comm + '%';
+          }
+
+
+          if (affUrl) {
+            el('affiliate-url-text').textContent = affUrl;
+            generateQR(affUrl);
+          }
+          if (affCode) el('ent-aff-code').textContent = affCode;
+
+
+          if (mode === 'shared_code') {
+            el('ent-mode-badge').innerHTML = '<span class="dash-mode-badge dash-mode-shared"><i class="ri-links-line"></i> Mode : Lien partagé</span>';
+            el('ent-mode-info').innerHTML = '<span style="font-size:11px;background:rgba(59,130,246,.15);color:#93c5fd;border-radius:8px;padding:3px 9px;">Vos clients commandent via votre lien</span>';
+            show('ent-affiliate-section');
+            hide('ent-booking-section');
+            hide('ent-plans-section');
+            hide('ent-qr-bottom-section');
+          } else if (mode === 'self_order') {
+            el('ent-mode-badge').innerHTML = '<span class="dash-mode-badge dash-mode-direct"><i class="ri-file-list-3-line"></i> Mode : Commande directe</span>';
+            el('ent-mode-info').innerHTML = '<span style="font-size:11px;background:rgba(16,185,129,.15);color:#6ee7b7;border-radius:8px;padding:3px 9px;">Vous commandez pour vos clients</span>';
+            hide('ent-affiliate-section');
+            show('ent-booking-section');
+            show('ent-plans-section');
+            show('ent-qr-bottom-section');
+            loadEntPlans();
+            if (affUrl) {
+              var urlBottom = el('affiliate-url-bottom');
+              if (urlBottom) urlBottom.textContent = affUrl;
+              generateQRIn('ent-qr-code-bottom', affUrl);
+            }
+          }
+
+
+          try {
+            var labels = JSON.parse(wLabels || '[]');
+            var ordersData = JSON.parse(wOrders || '[]');
+            var earnData   = JSON.parse(wEarn   || '[]');
+            window._entChartData = { labels: labels, orders: ordersData, earn: earnData };
+            renderOrdersChart(labels, ordersData);
+            renderEarningsChart(labels, earnData);
+          } catch(e) {}
+
+
+          try {
+            var ents = JSON.parse(entList || '[]');
+            buildSwitcher(ents);
+          } catch(e) {}
+
+          if (_entLocation.status === 'unset' || (session.enterprise_needs_location && _entLocation.status !== 'admin_help')) {
+            setTimeout(function() { openEntLocationModal(); }, 400);
+          }
+
+        })
+        .catch(function() { showToast('Erreur de chargement'); });
+    }
+
+
+    function _entChartTickColor() {
+      var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      return isLight ? 'rgba(16,42,67,.55)' : 'rgba(255,255,255,.5)';
+    }
+    function _entChartGridColor() {
+      var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      return isLight ? 'rgba(16,42,67,.08)' : 'rgba(255,255,255,.08)';
+    }
+
+    function renderOrdersChart(labels, data) {
+      var canvas = el('ordersChartCanvas');
+      if (!canvas) return;
+      if (_ordersChart) { _ordersChart.destroy(); _ordersChart = null; }
+      _ordersChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{ data: data, backgroundColor: 'rgba(245,158,11,.28)', borderColor: '#f59e0b', borderWidth: 2, borderRadius: 6, hoverBackgroundColor: 'rgba(245,158,11,.45)' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 }, color: _entChartTickColor(), maxTicksLimit: 5 }, grid: { color: _entChartGridColor() } },
+            x: { ticks: { font: { size: 10 }, color: _entChartTickColor(), maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderEarningsChart(labels, data) {
+      var canvas = el('earningsChartCanvas');
+      if (!canvas) return;
+      if (_earningsChart) { _earningsChart.destroy(); _earningsChart = null; }
+      _earningsChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{ data: data, borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,.12)', borderWidth: 2.5, fill: true, tension: 0.4, pointBackgroundColor: '#34d399', pointRadius: 3 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { font: { size: 10 }, color: _entChartTickColor(), callback: function(v){ return '$' + v; }, maxTicksLimit: 5 }, grid: { color: _entChartGridColor() } },
+            x: { ticks: { font: { size: 10 }, color: _entChartTickColor(), maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+
+    function buildSwitcher(ents) {
+      var bar = el('ent-switcher-bar');
+      var list = el('ent-switcher-list');
+      if (!bar || !list) return;
+      if (ents.length < 2) { bar.style.display = 'none'; return; }
+      bar.style.display = 'block';
+      var currentId = session.current_enterprise_id || session.enterprise_id;
+      list.innerHTML = '';
+      ents.forEach(function(e) {
+        var statusColor = e.status === 'approved' ? '#10b981' : e.status === 'pending' ? '#f59e0b' : '#ef4444';
+        var statusLabel = e.status === 'approved' ? 'Actif' : e.status === 'pending' ? 'En attente' : 'Refusé';
+        var isCurrent = (e.pk === currentId);
+        var item = document.createElement('div');
+        item.className = 'switcher-item' + (isCurrent ? ' current' : '');
+        item.innerHTML = '<div><div class="switcher-item-name">' + e.name + '</div>' +
+          '<div class="switcher-item-status" style="color:' + statusColor + ';">' + statusLabel + '</div></div>' +
+          (isCurrent ? '<span style="font-size:11px;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 8px;border-radius:8px;">Actuel</span>' :
+           '<button style="padding:5px 12px;background:#f59e0b;color:#0f172a;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Changer</button>');
+        if (!isCurrent) {
+          item.querySelector('button').addEventListener('click', function() { switchEnterprise(e.pk); });
+        }
+        list.appendChild(item);
+      });
+    }
+
+    function switchEnterprise(eid) {
+      var fd = new FormData();
+      fd.append('enterprise_id', eid);
+      fetch('/htmx/enterprise/switch/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function() { window.location.reload(); }).catch(function() {});
+    }
+
+    window.goCreateEnterprise = function() {
+      window.location.href = '/entreprise/';
+    };
+
+
+    function generateQR(url) {
+      generateQRIn('ent-qr-code', url);
+    }
+    function generateQRIn(containerId, url) {
+      var container = el(containerId);
+      if (!container || !url) return;
+      container.innerHTML = '';
+      function tryQR() {
+        if (typeof QRCode !== 'undefined') {
+          try { new QRCode(container, { text: url, width: 110, height: 110, colorDark: '#0f172a', colorLight: '#ffffff' }); } catch(e) {}
+        } else { setTimeout(tryQR, 300); }
+      }
+      tryQR();
+    }
+
+    window.copyAffiliateLink = function() {
+      var url = el('affiliate-url-text').textContent.trim();
+      if (!url || url === 'Chargement...') return;
+      if (navigator.clipboard) { navigator.clipboard.writeText(url).then(function() { showToast('Lien copié !'); }); }
+      else {
+        var t = document.createElement('textarea');
+        t.value = url; document.body.appendChild(t); t.select();
+        document.execCommand('copy'); document.body.removeChild(t);
+        showToast('Lien copié !');
+      }
+    };
+
+    window.shareAffiliateLink = function() {
+      var url = el('affiliate-url-text').textContent.trim();
+      var name = el('ent-company-name').textContent;
+      if (!url || url === 'Chargement...') return;
+      if (navigator.share) {
+        navigator.share({ title: 'Réservez votre taxi DAXI', text: 'Réservez un taxi via ' + name + ' :', url: url });
+      } else { window.copyAffiliateLink(); }
+    };
+
+    window.downloadQR = function() {
+      var canvas = el('ent-qr-code') ? el('ent-qr-code').querySelector('canvas') : null;
+      if (!canvas) { showToast('QR code non disponible'); return; }
+      var link = document.createElement('a');
+      link.download = 'qr-daxi.png'; link.href = canvas.toDataURL('image/png'); link.click();
+    };
+
+
+    function loadOrders(tab) {
+      _currentTab = tab;
+      var container = el('ent-orders-container');
+      if (!container) return;
+
+      if (_ordersLoaded) {
+        container.innerHTML = '<div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement...</div>';
+      }
+      _ordersLoaded = true;
+      fetch('/htmx/enterprise/orders/?tab=' + tab, { credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() } })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          container.innerHTML = html;
+          if (window.DaxiChatComposer) DaxiChatComposer.init();
+          if (window.DaxiOrderCardMap) DaxiOrderCardMap.init(container);
+        })
+        .catch(function() { container.innerHTML = '<div class="empty-state">Erreur de chargement</div>'; });
+    }
+
+    window.entToggleOrderChat = function(orderId) {
+      var wrap = document.getElementById('ent-chat-wrap-' + orderId);
+      if (!wrap) return;
+      var open = wrap.style.display === 'none' || !wrap.style.display;
+      wrap.style.display = open ? 'block' : 'none';
+      if (open) {
+        var msgs = document.getElementById('chat-messages-' + orderId);
+        if (msgs && typeof htmx !== 'undefined') htmx.trigger(msgs, 'revealed');
+        if (window.DaxiChatComposer) DaxiChatComposer.init();
+      }
+    };
+
+    window.switchOrdersTab = function(tab) {
+      ['active','history'].forEach(function(t) {
+        var btn = el('etab-' + t);
+        if (btn) btn.className = 'orders-tab' + (t === tab ? ' active' : '');
+      });
+      loadOrders(tab);
+    };
+
+    window.openEntCheckout = function(orderId) {
+      var modal = el('ent-checkout-modal');
+      var body = el('ent-checkout-body');
+      if (!modal || !body) return;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      body.innerHTML = '<div class="empty-state"><i class="ri-loader-4-line ent-spin"></i> Chargement...</div>';
+      fetch('/htmx/enterprise/orders/' + orderId + '/checkout/', {
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          body.innerHTML = html;
+          entInitCheckoutBody(body);
+        })
+        .catch(function() { body.innerHTML = '<div class="ent-alert ent-alert-error">Erreur de chargement</div>'; });
+    };
+    window.closeEntCheckoutModal = function() {
+      var modal = el('ent-checkout-modal');
+      if (modal) modal.classList.remove('show');
+      document.body.style.overflow = '';
+    };
+    window.entInitCheckoutBody = function(root) {
+      root = root || el('ent-checkout-body');
+      if (!root) return;
+      var checkout = root.querySelector('.ent-checkout');
+      if (!checkout) return;
+
+      var contractCheck = root.querySelector('#ent-contract-check');
+      var submitBtn = root.querySelector('#ent-checkout-submit-btn');
+      if (contractCheck && submitBtn) {
+        function syncSubmit() { submitBtn.disabled = !contractCheck.checked; }
+        contractCheck.addEventListener('change', syncSubmit);
+        syncSubmit();
+      }
+
+      var payerRadios = root.querySelectorAll('input[name="ent-payer"]');
+      var methodSec = root.querySelector('#ent-pay-method-section');
+      function syncPayer() {
+        var checked = root.querySelector('input[name="ent-payer"]:checked');
+        if (methodSec && checked) methodSec.style.display = checked.value === 'driver' ? 'none' : '';
+      }
+      payerRadios.forEach(function(r) { r.addEventListener('change', syncPayer); });
+      syncPayer();
+
+      var qrEl = root.querySelector('#ent-client-pay-qr');
+      var urlInp = root.querySelector('#ent-client-pay-url');
+      var payUrl = (checkout.getAttribute('data-pay-url') || '').trim();
+      if (!payUrl && urlInp) payUrl = urlInp.value.trim();
+      if (qrEl && payUrl && window.QRCode) {
+        qrEl.innerHTML = '';
+        new QRCode(qrEl, { text: payUrl, width: 180, height: 180, colorDark: '#0f172a', colorLight: '#ffffff' });
+      }
+    };
+    window.entOpenContractModal = function() {
+      var overlay = document.getElementById('ent-contract-overlay');
+      var content = document.getElementById('ent-contract-content');
+      if (!overlay) return;
+      function show() {
+        overlay.classList.add('open');
+        document.body.classList.add('daxi-contract-open');
+      }
+      if (content && content.querySelector('.daxi-contract-doc')) {
+        show();
+        return;
+      }
+      fetch('/htmx/enterprise/contract/', { credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() } })
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          if (content) content.innerHTML = html;
+          show();
+        })
+        .catch(function() { if (typeof showToast === 'function') showToast('Erreur chargement contrat', 'error'); });
+    };
+    window.entCloseContractModal = function() {
+      var overlay = document.getElementById('ent-contract-overlay');
+      if (overlay) overlay.classList.remove('open');
+      document.body.classList.remove('daxi-contract-open');
+    };
+    window.entCopyClientPayLink = function() {
+      var inp = el('ent-client-pay-url');
+      if (!inp) return;
+      inp.select();
+      try { navigator.clipboard.writeText(inp.value); showToast('Lien copié', 'success'); }
+      catch (e) { document.execCommand('copy'); showToast('Lien copié', 'success'); }
+    };
+    window.entCancelOrder = function(orderId) {
+      if (!confirm('Annuler cette commande ?')) return;
+      fetch('/htmx/enterprise/orders/' + orderId + '/cancel/', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          closeEntCheckoutModal();
+          var container = el('ent-orders-container');
+          if (container) container.innerHTML = html;
+          else loadOrders(_currentTab || 'active');
+          if (typeof showToast === 'function') showToast('Commande annulée', 'success');
+        })
+        .catch(function() { if (typeof showToast === 'function') showToast('Erreur réseau', 'error'); });
+    };
+    window.entSubmitCheckout = function(orderId) {
+      var contract = el('ent-contract-check');
+      var submitBtn = el('ent-checkout-submit-btn');
+      if (!contract || !contract.checked || (submitBtn && submitBtn.disabled)) return;
+      var payerEl = document.querySelector('input[name="ent-payer"]:checked');
+      var methodEl = document.querySelector('input[name="ent-method"]:checked');
+      var fd = new FormData();
+      fd.append('contract_accepted', '1');
+      fd.append('payer', payerEl ? payerEl.value : 'self');
+      fd.append('method', methodEl ? methodEl.value : '');
+      if (submitBtn) submitBtn.disabled = true;
+      fetch('/htmx/enterprise/orders/' + orderId + '/payment/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          if (html.indexOf('window.top.location') !== -1 || html.indexOf('window.location') !== -1) {
+            var wrap = document.createElement('div');
+            wrap.innerHTML = html;
+            document.body.appendChild(wrap);
+          } else {
+            el('ent-checkout-body').innerHTML = html;
+            entInitCheckoutBody(el('ent-checkout-body'));
+            loadOrders(_currentTab);
+          }
+        }).catch(function() {
+          if (submitBtn) submitBtn.disabled = !contract.checked;
+          if (typeof showToast === 'function') showToast('Erreur réseau', 'error');
+        });
+    };
+
+
+    window.logoutEnterprise = function() {
+      if (window.DaxiShellRole && DaxiShellRole.clearAuth) DaxiShellRole.clearAuth();
+      fetch('/htmx/enterprise/logout/', {
+        method: 'POST', credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function() { window.location.href = '/entreprise/'; });
+    };
+
+
+    var _entPassCount = 1;
+
+    window.setTripType = function(type) {
+      el('ent-trip-one').className = 'ent-daxi-trip-btn' + (type === 'one' ? ' active' : '');
+      el('ent-trip-round').className = 'ent-daxi-trip-btn' + (type === 'round' ? ' active' : '');
+      var rt = el('ent-rt-wait-block');
+      if (rt) rt.classList.toggle('hidden', type !== 'round');
+      if (type !== 'round') entSyncRtAllow();
+    };
+    window.entSyncRtAllow = function() {
+      var wait = parseInt(el('ent-rt-wait-min') ? el('ent-rt-wait-min').value : '0', 10) || 0;
+      var wrap = el('ent-rt-allow-wrap');
+      if (wrap) wrap.classList.toggle('hidden', wait <= 30);
+    };
+    window.setTimeMode = function(mode) {
+      el('ent-time-now').className  = 'ent-daxi-time-btn' + (mode === 'now'   ? ' active' : '');
+      el('ent-time-later').className = 'ent-daxi-time-btn' + (mode === 'later' ? ' active' : '');
+      var sched = el('ent-schedule-fields');
+      if (sched) sched.classList.toggle('show', mode === 'later');
+    };
+    window.entMyPosition = function() {
+      if (_entLocation.lat && _entLocation.lng) {
+        entApplyPickupFromEnterprise();
+        return;
+      }
+      if (entIsAdminLocationPending()) {
+        openEntAdminPendingModal();
+        return;
+      }
+      var label = entPickupLabel();
+      if (!navigator.geolocation) {
+        openEntLocationModal();
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        el('ent-pickup-lat').value = pos.coords.latitude;
+        el('ent-pickup-lng').value = pos.coords.longitude;
+        el('ent-pickup-input').value = label;
+        el('ent-pickup-text').value = label;
+      }, function() {
+        alert('Impossible d\'obtenir votre position. Configurez l\'emplacement de l\'entreprise sur la carte.');
+        openEntLocationModal();
+      }, { enableHighAccuracy: true, timeout: 12000 });
+    };
+    function entSyncPassDisplay() {
+      el('ent-pass-display').textContent = _entPassCount;
+      el('ent-passengers').value = _entPassCount;
+      el('ent-pass-minus').disabled = _entPassCount <= 1;
+      el('ent-pass-plus').disabled = _entPassCount >= 20;
+    }
+    function entInitBookingForm() {
+      var minus = el('ent-pass-minus'), plus = el('ent-pass-plus');
+      if (minus) minus.onclick = function() { if (_entPassCount > 1) { _entPassCount--; entSyncPassDisplay(); } };
+      if (plus) plus.onclick = function() { if (_entPassCount < 20) { _entPassCount++; entSyncPassDisplay(); } };
+      entSyncPassDisplay();
+      var notesToggle = el('ent-notes-toggle');
+      if (notesToggle) {
+        notesToggle.onclick = function() {
+          var exp = el('ent-notes-expand');
+          var open = exp.classList.toggle('open');
+          el('ent-notes-chevron').className = open ? 'ri-arrow-down-s-line ent-daxi-icon ent-daxi-icon--muted' : 'ri-arrow-right-s-line ent-daxi-icon ent-daxi-icon--muted';
+        };
+      }
+      setTripType('one');
+      setTimeMode('now');
+    }
+    entInitBookingForm();
+
+
+    window.submitEntOrder = function() {
+      var pickupRaw = (el('ent-pickup-text').value || el('ent-pickup-input').value || '').trim();
+      var pickup = pickupRaw || entPickupLabel();
+      var destination = (el('ent-dest-text').value || el('ent-dest-input').value).trim();
+      var tripType = el('ent-trip-round').classList.contains('active') ? 'aller-retour' : 'aller simple';
+      if (!destination) {
+        el('order-result').innerHTML = '<div class="ent-alert ent-alert-error"><i class="ri-error-warning-line"></i> Veuillez saisir une destination.</div>';
+        return;
+      }
+      if (!entEnsurePickupCoords()) {
+        if (entIsAdminLocationPending()) {
+          openEntAdminPendingModal();
+        } else {
+          el('order-result').innerHTML = '<div class="ent-alert ent-alert-error"><i class="ri-map-pin-warning-line"></i> Configurez d\'abord l\'emplacement GPS de votre entreprise.</div>';
+          openEntLocationModal();
+        }
+        return;
+      }
+      var uncovered = entUncoveredFieldLabel();
+      if (uncovered) {
+        el('order-result').innerHTML = '<div class="ent-alert ent-alert-error"><i class="ri-error-warning-line"></i> DAXI ne couvre pas encore la ' + uncovered + ' sélectionnée. Choisissez une adresse dans une zone desservie.</div>';
+        return;
+      }
+      if (!el('ent-dest-lat').value || !el('ent-dest-lng').value) {
+        el('order-result').innerHTML = '<div class="ent-alert ent-alert-error"><i class="ri-error-warning-line"></i> Sélectionnez la destination dans les suggestions (tapez l\'adresse et choisissez une proposition).</div>';
+        if (el('ent-dest-input')) el('ent-dest-input').focus();
+        return;
+      }
+      var btn = el('ent-order-submit-btn');
+      btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line ent-spin"></i> Commande en cours...';
+      var fd = new FormData();
+      fd.append('pickup', pickup);
+      fd.append('destination', destination);
+      fd.append('trip_type', tripType);
+      fd.append('pickup_lat',      el('ent-pickup-lat').value || '');
+      fd.append('pickup_lng',      el('ent-pickup-lng').value || '');
+      fd.append('destination_lat', el('ent-dest-lat').value || '');
+      fd.append('destination_lng', el('ent-dest-lng').value || '');
+      fd.append('client_name',     el('ent-client-name').value || '');
+      fd.append('client_phone',    entFullPhone(el('ent-client-phone').value));
+      fd.append('notes',           el('ent-notes').value || '');
+      fd.append('passengers',      el('ent-passengers').value || '1');
+      var isLater = el('ent-time-later') && el('ent-time-later').classList.contains('active');
+      fd.append('is_later', isLater ? 'true' : 'false');
+      if (isLater) {
+        fd.append('date', el('ent-order-date') ? el('ent-order-date').value : '');
+        fd.append('time', el('ent-order-time') ? el('ent-order-time').value : '');
+      }
+      if (tripType === 'aller-retour') {
+        fd.append('round_trip_wait_minutes', el('ent-rt-wait-min') ? el('ent-rt-wait-min').value : '0');
+        fd.append('round_trip_allow_driver_other_rides', (el('ent-rt-allow-other') && el('ent-rt-allow-other').checked) ? 'true' : 'false');
+      }
+      fetch('/htmx/enterprise/order/create/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          btn.disabled = false; btn.innerHTML = '<i class="ri-taxi-line"></i> Commander un taxi';
+          if (html.indexOf('success') !== -1 || html.indexOf('créée') !== -1 || html.indexOf('Commande') !== -1) {
+            el('order-result').innerHTML = '<div class="ent-alert ent-alert-success"><i class="ri-checkbox-circle-line"></i> Commande créée avec succès !</div>';
+            resetOrderForm();
+            loadOrders(_currentTab);
+          } else if (html.indexOf('administrateur DAXI') !== -1 && html.indexOf('emplacement') !== -1) {
+            el('order-result').innerHTML = '';
+            openEntAdminPendingModal();
+          } else {
+            el('order-result').innerHTML = html;
+          }
+        }).catch(function() {
+          btn.disabled = false; btn.innerHTML = '<i class="ri-taxi-line"></i> Commander un taxi';
+          el('order-result').innerHTML = '<div class="ent-alert ent-alert-error"><i class="ri-error-warning-line"></i> Erreur réseau. Réessayez.</div>';
+        });
+    };
+
+    function resetOrderForm() {
+      ['ent-dest-input','ent-client-name','ent-client-phone','ent-notes',
+       'ent-pickup-lat','ent-pickup-lng','ent-dest-lat','ent-dest-lng','ent-dest-text','ent-pickup-text']
+        .forEach(function(id) { var e = el(id); if (e) e.value = ''; });
+      entClearUncoveredBlock(el('ent-pickup-input'));
+      entClearUncoveredBlock(el('ent-dest-input'));
+      entApplyPickupFromEnterprise();
+      _entPassCount = 1; entSyncPassDisplay();
+      if (el('ent-rt-wait-min')) el('ent-rt-wait-min').value = '0';
+      if (el('ent-rt-allow-other')) el('ent-rt-allow-other').checked = false;
+      setTripType('one'); setTimeMode('now');
+      var exp = el('ent-notes-expand');
+      if (exp) exp.classList.remove('open');
+    }
+
+
+    function _sendEntPlanOrder(fd, n) {
+      fetch('/htmx/enterprise/order/create/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          closeEntPlanModal(n);
+          if (html.indexOf('créée') !== -1 || html.indexOf('success') !== -1) {
+            el('order-result').innerHTML = '<div class="ent-alert ent-alert-success"><i class="ri-checkbox-circle-line"></i> Commande plan créée !</div>';
+            loadOrders(_currentTab);
+          } else {
+            var res = el('ent-plan-' + n + '-result');
+            if (res) res.innerHTML = html;
+          }
+        }).catch(function() { alert('Erreur réseau'); });
+    }
+
+    window.submitEntPlan = function(n) {
+      if (n === 6) {
+        var waMsg = 'Bonjour DAXI\n\nJe suis intéressé(e) par le Plan Business / VIP (entreprise).\n\nMerci de me contacter.';
+        window.open('https://wa.me/50944969696?text=' + encodeURIComponent(waMsg), '_blank');
+        closeEntPlanModal(6);
+        return;
+      }
+      if (n === 5) {
+        var signName = el('ep5-sign-name') ? el('ep5-sign-name').value.trim() : '';
+        var arrDate  = el('ep5-arrival-date') ? el('ep5-arrival-date').value : '';
+        var arrTime  = el('ep5-arrival-time') ? el('ep5-arrival-time').value : '';
+        var destInput = el('ep5-destination');
+        if (!signName) { alert('Veuillez indiquer le nom pour le panneau d\'accueil.'); return; }
+        if (!arrDate || !arrTime) { alert('Veuillez indiquer la date et l\'heure d\'atterrissage.'); return; }
+        if (!destInput || !destInput.value.trim()) { alert('Veuillez saisir la destination finale.'); return; }
+        var notes = 'Plan: Accueil Aéroport\nPanneau : ' + signName + '\nAtterrissage prévu : ' + arrDate + ' ' + arrTime;
+        var fd5 = new FormData();
+        fd5.append('pickup', 'Aéroport International Hugo Chávez, Cap-Haïtien');
+        fd5.append('destination', destInput.value.trim());
+        fd5.append('client_name', el('ent-client-name') && el('ent-client-name').value ? el('ent-client-name').value : signName);
+        fd5.append('client_phone', entFullPhone(el('ent-client-phone') ? el('ent-client-phone').value : ''));
+        fd5.append('notes', notes);
+        fd5.append('passengers', el('ep5-passengers') ? el('ep5-passengers').value : '1');
+        fd5.append('date', arrDate);
+        fd5.append('time', arrTime);
+        fd5.append('is_later', 'true');
+        fd5.append('service_plan', 'accueil-aeroport-cap');
+        fd5.append('pickup_lat', '19.732978');
+        fd5.append('pickup_lng', '-72.195742');
+        fd5.append('destination_lat', plCoord('ep5-destination-lat'));
+        fd5.append('destination_lng', plCoord('ep5-destination-lng'));
+        _sendEntPlanOrder(fd5, n);
+        return;
+      }
+      var PLAN_NAMES = { 1: '', 2: 'demi-journee', 3: 'journee-complete', 4: 'elegance-night' };
+      var FIXED_PRICES = { 2: 70, 3: 140, 4: 150 };
+      var dep = el('ep' + n + '-departure');
+      var dest = el('ep' + n + '-destination');
+      if (!dep || !dep.value.trim()) { alert('Veuillez saisir un point de départ.'); return; }
+      var pickup = dep.value.trim();
+      var destination = (dest && dest.value.trim()) ? dest.value.trim() : pickup;
+      var notes = 'Plan: ' + ({1:'Course Ville à Ville',2:'Demi-Journée',3:'Journée Complète',4:'Élégance Night'}[n] || '');
+      var fd = new FormData();
+      fd.append('pickup', pickup);
+      fd.append('destination', destination);
+      fd.append('client_name', el('ent-client-name') ? el('ent-client-name').value : 'Client Entreprise');
+      fd.append('client_phone', entFullPhone(el('ent-client-phone') ? el('ent-client-phone').value : ''));
+      fd.append('notes', notes);
+      fd.append('passengers', el('ep' + n + '-passengers') ? el('ep' + n + '-passengers').value : '1');
+      if (el('ep' + n + '-date')) fd.append('date', el('ep' + n + '-date').value);
+      if (el('ep' + n + '-time')) fd.append('time', el('ep' + n + '-time').value);
+      if (el('ep' + n + '-date') && el('ep' + n + '-date').value) fd.append('is_later', 'true');
+      if (PLAN_NAMES[n]) {
+        fd.append('service_plan', PLAN_NAMES[n]);
+        fd.append('fixed_price', FIXED_PRICES[n] || '');
+      }
+      fd.append('pickup_lat', plCoord('ep' + n + '-departure-lat'));
+      fd.append('pickup_lng', plCoord('ep' + n + '-departure-lng'));
+      fd.append('destination_lat', plCoord('ep' + n + '-destination-lat') || plCoord('ep' + n + '-departure-lat'));
+      fd.append('destination_lng', plCoord('ep' + n + '-destination-lng') || plCoord('ep' + n + '-departure-lng'));
+      _sendEntPlanOrder(fd, n);
+    };
+
+
+    var _entLocMode = 'admin';
+    function daxiEntMapOptions(center) {
+      var opts = {
+        mapId: 'c4948b020bfc08331f1cb94e',
+        center: center,
+        zoom: 16,
+        tilt: 45,
+        heading: 0,
+        disableDefaultUI: true,
+        gestureHandling: 'greedy',
+        clickableIcons: false,
+        scrollwheel: true,
+        backgroundColor: '#070b14',
+      };
+      if (google.maps.ColorScheme) opts.colorScheme = google.maps.ColorScheme.DARK;
+      if (google.maps.RenderingType && google.maps.RenderingType.VECTOR) {
+        opts.renderingType = google.maps.RenderingType.VECTOR;
+      }
+      return opts;
+    }
+    window.setEntLocMode = function(mode) {
+      _entLocMode = mode === 'map' ? 'map' : 'admin';
+      var adminBtn = el('ent-loc-mode-admin');
+      var mapBtn = el('ent-loc-mode-map');
+      var adminPanel = el('ent-loc-admin-panel');
+      var mapPanel = el('ent-loc-map-panel');
+      if (adminBtn) adminBtn.classList.toggle('active', _entLocMode === 'admin');
+      if (mapBtn) mapBtn.classList.toggle('active', _entLocMode === 'map');
+      if (adminPanel) adminPanel.classList.toggle('show', _entLocMode === 'admin');
+      if (mapPanel) mapPanel.classList.toggle('show', _entLocMode === 'map');
+      if (_entLocMode === 'map') {
+        if (window.google && window.google.maps) {
+          setTimeout(function() {
+            initEntLocationMap();
+            if (_entLocMap && google.maps.event) {
+              google.maps.event.trigger(_entLocMap, 'resize');
+              syncEntLocFromMapCenter();
+            }
+          }, 80);
+        } else {
+          setTimeout(function() {
+            if (window.google && window.google.maps) initEntLocationMap();
+          }, 600);
+        }
+      }
+    };
+    window.closeEntLocationModal = function(force) {
+      if (!force && _entLocation.status === 'unset') return;
+      var modal = el('ent-location-modal');
+      if (modal) modal.classList.remove('show');
+      document.body.style.overflow = '';
+    };
+    window.openEntLocationModal = function() {
+      var modal = el('ent-location-modal');
+      if (!modal) return;
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      var labelInput = el('ent-loc-label');
+      if (labelInput && !labelInput.value) labelInput.value = session.enterprise_name || '';
+      if (el('ent-loc-result')) el('ent-loc-result').innerHTML = '';
+      setEntLocMode('admin');
+    };
+    function syncEntLocFromMapCenter() {
+      if (!_entLocMap) return;
+      var c = _entLocMap.getCenter();
+      if (!c) return;
+      if (el('ent-loc-lat')) el('ent-loc-lat').value = c.lat();
+      if (el('ent-loc-lng')) el('ent-loc-lng').value = c.lng();
+    }
+    function initEntLocationMap() {
+      var mapEl = el('ent-loc-map');
+      if (!mapEl || !window.google || !window.google.maps) return;
+      var center = {
+        lat: parseFloat(_entLocation.lat) || 19.7607,
+        lng: parseFloat(_entLocation.lng) || -72.2039
+      };
+      if (!_entLocMap) {
+        _entLocMap = new google.maps.Map(mapEl, daxiEntMapOptions(center));
+        _entLocMap.addListener('idle', syncEntLocFromMapCenter);
+        google.maps.event.addListenerOnce(_entLocMap, 'idle', syncEntLocFromMapCenter);
+      } else {
+        _entLocMap.setCenter(center);
+      }
+      syncEntLocFromMapCenter();
+    }
+    window.saveEntLocation = function() {
+      syncEntLocFromMapCenter();
+      var lat = el('ent-loc-lat') ? el('ent-loc-lat').value : '';
+      var lng = el('ent-loc-lng') ? el('ent-loc-lng').value : '';
+      if (!lat || !lng) { alert('Déplacez la carte pour placer le repère sur votre entreprise.'); return; }
+      var fd = new FormData();
+      fd.append('lat', lat);
+      fd.append('lng', lng);
+      fd.append('label', (el('ent-loc-label') && el('ent-loc-label').value) || entPickupLabel());
+      fetch('/htmx/enterprise/location/set/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          _entLocation.lat = parseFloat(lat);
+          _entLocation.lng = parseFloat(lng);
+          _entLocation.label = (el('ent-loc-label') && el('ent-loc-label').value) || entPickupLabel();
+          _entLocation.status = 'set';
+          session.enterprise_needs_location = false;
+          entApplyPickupFromEnterprise();
+          entSyncLocationBanner();
+          if (el('ent-loc-result')) el('ent-loc-result').innerHTML = html;
+          setTimeout(function() { closeEntLocationModal(true); }, 1000);
+        }).catch(function() { alert('Erreur lors de l\'enregistrement.'); });
+    };
+    window.sendEntLocationHelp = function() {
+      var msg = el('ent-loc-help-msg') ? el('ent-loc-help-msg').value.trim() : '';
+      if (msg.length < 10) { alert('Décrivez votre emplacement (min. 10 caractères).'); return; }
+      var fd = new FormData();
+      fd.append('message', msg);
+      fetch('/htmx/enterprise/location/help/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function(r) { return r.text(); })
+        .then(function(html) {
+          _entLocation.status = 'admin_help';
+          session.enterprise_needs_location = false;
+          entSyncLocationBanner();
+          if (el('ent-loc-result')) el('ent-loc-result').innerHTML = html;
+          setTimeout(function() { closeEntLocationModal(true); }, 1400);
+        }).catch(function() { alert('Erreur réseau.'); });
+    };
+
+
+    var _entAllDepts = [];
+    var _entDeptsReady = false;
+    function entParseCoveredDepts(data) {
+      if (!data || !data.departments) return;
+      _entAllDepts = data.departments;
+      _entDeptsReady = true;
+      entValidateExistingCoords();
+    }
+    (function entLoadCoveredDepts() {
+      fetch('/api/admin-panel/covered-departments/')
+        .then(function(r) { return r.json(); })
+        .then(entParseCoveredDepts)
+        .catch(function() {});
+    })();
+    function entIsPlaceCovered(lat, lng) {
+      if (!_entDeptsReady || lat == null || lng == null) return true;
+      var covered = _entAllDepts.filter(function(d) { return d.is_active; });
+      if (!covered.length) return true;
+      for (var i = 0; i < covered.length; i++) {
+        var d = covered[i];
+        if (d.lat_min && lat >= d.lat_min && lat <= d.lat_max && lng >= d.lng_min && lng <= d.lng_max) return true;
+      }
+      return false;
+    }
+    window.entIsPlaceCovered = entIsPlaceCovered;
+    function entShowUncoveredBlock(inputEl) {
+      if (!inputEl) return;
+      var id = 'ent-uncovered-' + (inputEl.id || 'field');
+      if (document.getElementById(id)) return;
+      var warn = document.createElement('div');
+      warn.id = id;
+      warn.className = 'ent-uncovered-block';
+      warn.innerHTML = '<i class="ri-error-warning-line"></i><span>DAXI ne couvre pas encore cette zone. Choisissez une adresse dans une zone desservie.</span>';
+      var host = inputEl.closest('.ent-daxi-body') || inputEl.parentNode;
+      if (host) host.appendChild(warn);
+    }
+    function entClearUncoveredBlock(inputEl) {
+      if (!inputEl) return;
+      inputEl.dataset.daxiUncovered = '';
+      var block = document.getElementById('ent-uncovered-' + (inputEl.id || 'field'));
+      if (block) block.remove();
+    }
+    window.entClearUncoveredBlock = entClearUncoveredBlock;
+    function entRejectUncoveredPlace(inputEl, clearCoords) {
+      if (clearCoords) clearCoords();
+      if (inputEl) {
+        inputEl.value = '';
+        inputEl.dataset.daxiUncovered = '1';
+        entShowUncoveredBlock(inputEl);
+      }
+    }
+    window.entRejectUncoveredPlace = entRejectUncoveredPlace;
+    function entUncoveredFieldLabel() {
+      var pickupInp = el('ent-pickup-input');
+      var destInp = el('ent-dest-input');
+      if (pickupInp && pickupInp.dataset.daxiUncovered === '1') return 'adresse de départ';
+      if (destInp && destInp.dataset.daxiUncovered === '1') return 'destination';
+      var plat = parseFloat(el('ent-pickup-lat') && el('ent-pickup-lat').value);
+      var plng = parseFloat(el('ent-pickup-lng') && el('ent-pickup-lng').value);
+      var dlat = parseFloat(el('ent-dest-lat') && el('ent-dest-lat').value);
+      var dlng = parseFloat(el('ent-dest-lng') && el('ent-dest-lng').value);
+      if (plat && plng && !entIsPlaceCovered(plat, plng)) return 'adresse de départ';
+      if (dlat && dlng && !entIsPlaceCovered(dlat, dlng)) return 'destination';
+      return '';
+    }
+    function entValidateExistingCoords() {
+      if (!_entDeptsReady) return;
+      [['ent-pickup-input', 'ent-pickup-lat', 'ent-pickup-lng'], ['ent-dest-input', 'ent-dest-lat', 'ent-dest-lng']].forEach(function(row) {
+        var inputEl = el(row[0]);
+        var latEl = el(row[1]);
+        var lngEl = el(row[2]);
+        if (!inputEl || !latEl || !lngEl) return;
+        var lat = parseFloat(latEl.value);
+        var lng = parseFloat(lngEl.value);
+        if (lat && lng && !entIsPlaceCovered(lat, lng)) {
+          inputEl.dataset.daxiUncovered = '1';
+          entShowUncoveredBlock(inputEl);
+        }
+      });
+    }
+    function entRegisterPlacesFields() {
+      if (!window.EntPlaces) return;
+      EntPlaces.register('ent-pickup-input', function(data) {
+        if (el('ent-pickup-lat')) el('ent-pickup-lat').value = data.lat;
+        if (el('ent-pickup-lng')) el('ent-pickup-lng').value = data.lng;
+        if (el('ent-pickup-text')) el('ent-pickup-text').value = data.name;
+      }, function() {
+        if (el('ent-pickup-lat')) el('ent-pickup-lat').value = '';
+        if (el('ent-pickup-lng')) el('ent-pickup-lng').value = '';
+        if (el('ent-pickup-text')) el('ent-pickup-text').value = '';
+      });
+      EntPlaces.register('ent-dest-input', function(data) {
+        if (el('ent-dest-lat')) el('ent-dest-lat').value = data.lat;
+        if (el('ent-dest-lng')) el('ent-dest-lng').value = data.lng;
+        if (el('ent-dest-text')) el('ent-dest-text').value = data.name;
+      }, function() {
+        if (el('ent-dest-lat')) el('ent-dest-lat').value = '';
+        if (el('ent-dest-lng')) el('ent-dest-lng').value = '';
+        if (el('ent-dest-text')) el('ent-dest-text').value = '';
+      });
+      ['ep1-departure', 'ep1-destination', 'ep2-departure', 'ep2-destination', 'ep3-departure', 'ep3-destination', 'ep4-departure', 'ep4-destination', 'ep5-destination', 'ep6-departure', 'ep6-destination']
+        .forEach(function(inputId) {
+          EntPlaces.register(inputId, function(data) {
+            var lat = el(inputId + '-lat'), lng = el(inputId + '-lng');
+            if (lat) lat.value = data.lat;
+            if (lng) lng.value = data.lng;
+          }, function() {
+            var lat = el(inputId + '-lat'), lng = el(inputId + '-lng');
+            if (lat) lat.value = '';
+            if (lng) lng.value = '';
+          });
+        });
+    }
+    entRegisterPlacesFields();
+
+    window.__entMapsReady = function() {
+      if (window.EntPlaces) EntPlaces.init();
+      if (window.DaxiOrderCardMap) DaxiOrderCardMap.init();
+    };
+
+
+    function showToast(msg, type) {
+      if (typeof showDaxiNotification === 'function') {
+        showDaxiNotification(type === 'error' ? 'Erreur' : 'Daxi', msg, { type: type || 'info' });
+        return;
+      }
+      var t = document.createElement('div');
+      t.className = 'dash-toast'; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(function() { t.remove(); }, 2200);
+    }
+
+
+
+    if (session.enterprise_name) {
+      var nameEl = el('ent-company-name');
+      if (nameEl) nameEl.textContent = session.enterprise_name;
+    }
+    entApplyPickupFromEnterprise();
+    document.addEventListener('daxi-theme-change', function() {
+      if (window._entChartData) {
+        renderOrdersChart(window._entChartData.labels, window._entChartData.orders);
+        renderEarningsChart(window._entChartData.labels, window._entChartData.earn);
+      }
+    });
+
+    loadDashboardData();
+    loadOrders(_currentTab);
+    if (session.enterprise_id && window.DaxiRealtime) {
+      DaxiRealtime.connect('enterprise-' + session.enterprise_id, DaxiRealtime.wsUrl('/ws/enterprise/' + session.enterprise_id + '/'), {
+        onEvent: function(ev, payload) {
+          var isEv = DaxiRealtime.isOrderEvent(ev) || (window.DaxiRealtimeSync && DaxiRealtimeSync.isRealtimeEvent(ev));
+          if (isEv) {
+            if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent(ev, payload || {});
+            if (window.DaxiRealtimeSync) DaxiRealtimeSync.handle(ev, payload || {});
+            else {
+              loadOrders(_currentTab || 'active');
+              if (typeof loadDashboardData === 'function') loadDashboardData();
+            }
+          }
+        }
+      });
+    }
+    if (window.google && window.google.maps && window.__entMapsReady) window.__entMapsReady();
+
+  })();
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAnJLrSxMKAvUEni2TU2_-8awj_0lg29Fc&v=weekly&libraries=places&callback=__entMapsReady" async defer></script>
+</body>
+</html>

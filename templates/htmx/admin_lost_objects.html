@@ -1,0 +1,60 @@
+<div id="admin-lost-objects-container" data-pending-count="{{ pending_count|default:0 }}">
+
+{% if pending_count %}
+<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:16px;color:#92400e;font-size:13px;font-weight:600;">
+  <i class="ri-alarm-warning-line"></i> {{ pending_count }} objet{{ pending_count|pluralize }} oublié{{ pending_count|pluralize }} en attente de traitement
+</div>
+{% endif %}
+
+{% if not items %}
+<div style="text-align:center;padding:40px;color:#9ca3af;">
+  <div style="font-size:40px;margin-bottom:8px;"><i class="ri-briefcase-line"></i></div>
+  <p>Aucun signalement d'objet oublié.</p>
+</div>
+{% endif %}
+
+{% for item in items %}
+<div id="lost-object-{{ item.pk }}" style="background:#1f2937;border-radius:14px;border:1px solid {% if item.status == 'reported' and not item.driver_handled %}#f59e0b55{% elif item.status == 'returned' %}#10b98155{% else %}#374151{% endif %};padding:16px;margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#f9fafb;">Course #{{ item.order_id }}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ item.order.client_name|default:"Client" }} · {{ item.created_at|date:"d/m/Y H:i" }}</div>
+      {% if item.order.driver %}
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">Chauffeur : {{ item.order.driver.get_full_name }}</div>
+      {% endif %}
+    </div>
+    <span style="display:inline-block;background:{% if item.driver_handled %}rgba(16,185,129,.15){% else %}rgba(245,158,11,.15){% endif %};color:{% if item.driver_handled %}#34d399{% else %}#fbbf24{% endif %};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">
+      {% if item.driver_handled %}Chauffeur a traité{% else %}Urgent chauffeur{% endif %}
+    </span>
+  </div>
+
+  <div style="margin-top:12px;background:#111827;border-radius:10px;padding:12px;">
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Objet décrit</div>
+    <div style="font-size:14px;color:#e5e7eb;margin-top:4px;">{{ item.description }}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
+      📍 {{ item.order.pickup|truncatechars:60 }} → {{ item.order.destination|truncatechars:60 }}
+    </div>
+    {% if item.order.client_phone %}
+    <div style="font-size:11px;color:#60a5fa;margin-top:4px;">📞 Client : {{ item.order.client_phone }}</div>
+    {% endif %}
+  </div>
+
+  {% if item.status == 'reported' %}
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+    <form hx-post="/htmx/admin/lost-objects/{{ item.pk }}/status/" hx-target="#lost-object-{{ item.pk }}" hx-swap="outerHTML"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' style="flex:1;min-width:120px;">
+      <input type="hidden" name="status" value="found">
+      <button type="submit" style="width:100%;padding:8px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Objet retrouvé</button>
+    </form>
+    <form hx-post="/htmx/admin/lost-objects/{{ item.pk }}/status/" hx-target="#lost-object-{{ item.pk }}" hx-swap="outerHTML"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' style="flex:1;min-width:120px;">
+      <input type="hidden" name="status" value="returned">
+      <button type="submit" style="width:100%;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Rendu au client</button>
+    </form>
+  </div>
+  {% else %}
+  <div style="margin-top:10px;font-size:12px;color:#34d399;font-weight:700;">✅ {{ item.get_status_display }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+</div>

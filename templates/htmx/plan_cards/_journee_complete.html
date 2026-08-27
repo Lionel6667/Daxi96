@@ -1,0 +1,71 @@
+
+{% include "htmx/_order_map_snippet.html" with map_scope="client" show_map_actions=True %}
+<div id="co-{{ o.id }}"
+     class="daxi-oc-card daxi-oc-card--plan daxi-oc-card--plan-journee"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-payment-status="{{ o.payment_status|default:'pending' }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0 }}"
+     data-timing="{% if o.is_later %}later{% else %}now{% endif %}">
+
+  <div class="daxi-oc-accent daxi-oc-accent--plan"></div>
+  <div class="daxi-oc-inner">
+    <div class="daxi-oc-plan-hero">
+      <div class="daxi-oc-plan-hero-left">
+        <i class="ri-sun-line"></i>
+        <div>
+          <div class="daxi-oc-plan-name">Journée Complète</div>
+          <div class="daxi-oc-plan-hint">8 h · multi-arrêts · 140$ forfait</div>
+        </div>
+      </div>
+      <div class="daxi-oc-plan-price">${{ o.total_price|default:o.price|floatformat:2 }} <span data-translate="dpw_fixed_price">forfait</span></div>
+    </div>
+
+    {% include "htmx/_order_status_pipeline.html" %}
+
+    <div class="daxi-oc-head">
+      {% include "htmx/_order_client_status_badge.html" %}
+      <span class="daxi-oc-badge daxi-oc-badge--plan"><i class="ri-sun-line"></i> 8h</span>
+      {% if o.is_later %}
+      <span class="daxi-oc-timing daxi-oc-timing--later">
+        <i class="ri-calendar-schedule-line"></i>
+        <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong>
+      </span>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_plan_stops_timeline.html" %}
+    {% if not o.plan_stops and not o.plan_itinerary %}
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--pickup"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="label_departure">Départ</span>
+          <span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup|default:"—" }}</span>
+        </div>
+      </div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--dest"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="dpw_last_stop">Dernière destination</span>
+          <span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination|default:"—" }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="daxi-oc-meta">
+      <span class="daxi-oc-chip daxi-oc-chip--plan"><i class="ri-price-tag-3-line"></i> 140$ fixe</span>
+      {% if o.passengers %}<span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>{% endif %}
+      {% if o.payment_method %}
+      <span class="daxi-oc-chip"><i class="ri-bank-card-line"></i>
+        {% if o.payment_method == 'in_person' %}Sur place{% elif o.payment_method == 'moncash' %}MonCash{% elif o.payment_method == 'card' %}Carte{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_client_order_driver_block.html" %}
+    {% include "htmx/_client_order_actions.html" %}
+  </div>
+</div>

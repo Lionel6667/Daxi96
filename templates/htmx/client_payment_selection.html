@@ -1,0 +1,275 @@
+{% load static %}
+
+<style>
+.daxi-pay-wrap {
+  background: linear-gradient(165deg, #0f172a 0%, #070b14 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(245,158,11,0.15);
+  overflow: hidden;
+  margin-bottom: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+.daxi-pay-head {
+  background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(15,23,42,0.95) 60%);
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.daxi-pay-head-title { font-size: 14px; font-weight: 900; color: #f8fafc; }
+.daxi-pay-head-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
+.daxi-pay-head-sub strong { color: #fbbf24; font-weight: 800; }
+.daxi-pay-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.daxi-pay-opt {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  border-radius: 14px; padding: 14px 14px 14px 12px;
+  cursor: pointer; text-align: left;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(145deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95));
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.daxi-pay-opt.selected {
+  border-color: rgba(245,158,11,0.55);
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.25), 0 10px 28px rgba(0,0,0,0.35);
+}
+.daxi-pay-opt--moncash.selected { border-color: rgba(239,68,68,0.55); }
+.daxi-pay-opt--card.selected { border-color: rgba(96,165,250,0.55); }
+.daxi-pay-opt--cash.selected { border-color: rgba(251,191,36,0.55); }
+.daxi-pay-icon {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); overflow: hidden;
+}
+.daxi-pay-icon img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+.daxi-pay-icon--moncash {
+  width: 52px !important; height: 52px !important; padding: 2px !important; box-sizing: border-box !important;
+  background: #ffffff !important; border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+}
+.daxi-pay-icon--moncash img {
+  width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important;
+  object-fit: contain !important; object-position: center !important; padding: 0 !important;
+  background: #ffffff !important;
+}
+.daxi-pay-icon--natcash {
+  width: 52px; height: 52px; padding: 6px; box-sizing: border-box;
+  background: #fff; border: 1px solid #e2e8f0;
+}
+.daxi-pay-icon--natcash img { width: 100%; height: 100%; object-fit: contain; padding: 0; }
+.daxi-pay-icon--card { background: linear-gradient(145deg, #1e3a8a, #2563eb); }
+.daxi-pay-icon--cash { background: linear-gradient(145deg, #92400e, #f59e0b); }
+.daxi-pay-label { font-size: 14px; font-weight: 800; color: #f1f5f9; }
+.daxi-pay-desc { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.35; }
+.daxi-pay-radio {
+  margin-left: auto; width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid rgba(148,163,184,0.5); flex-shrink: 0;
+}
+.daxi-pay-opt.selected .daxi-pay-radio {
+  border-color: #fbbf24;
+  box-shadow: inset 0 0 0 5px #fbbf24;
+}
+.daxi-pay-contract {
+  margin-top: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(15,23,42,0.9);
+  border: 1px solid rgba(148,163,184,0.2);
+}
+.daxi-pay-contract label {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 11px; color: #cbd5e1; line-height: 1.45; cursor: pointer;
+}
+.daxi-pay-contract input { margin-top: 2px; accent-color: #f59e0b; width: 16px; height: 16px; flex-shrink: 0; }
+.daxi-pay-contract a, .daxi-pay-contract button.daxi-link {
+  color: #fbbf24; font-weight: 700; text-decoration: underline; background: none; border: none;
+  padding: 0; cursor: pointer; font-size: inherit;
+}
+.daxi-pay-continue {
+  width: 100%; margin-top: 6px;
+  padding: 14px 16px; border-radius: 14px; border: none;
+  font-size: 14px; font-weight: 900; letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #f59e0b, #eab308);
+  color: #0f172a;
+  box-shadow: 0 8px 24px rgba(245,158,11,0.35);
+  transition: opacity 0.2s, transform 0.15s;
+}
+.daxi-pay-continue:disabled {
+  opacity: 0.45; cursor: not-allowed; transform: none;
+  box-shadow: none;
+}
+.daxi-contract-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200100;
+  background: rgba(2, 6, 23, 0.94);
+  backdrop-filter: blur(22px) saturate(0.45);
+  -webkit-backdrop-filter: blur(22px) saturate(0.45);
+  align-items: center; justify-content: center; padding: 16px;
+}
+.daxi-contract-overlay.open { display: flex; }
+body.daxi-contract-open {
+  overflow: hidden;
+}
+body.daxi-contract-open #daxi-map-stage,
+body.daxi-contract-open nav.nav-gradient,
+body.daxi-contract-open #appSheet,
+body.daxi-contract-open .daxi-bottom-tabbar,
+body.daxi-contract-open #daxiSheetExpandFab,
+body.daxi-contract-open #daxiRouteStatsHud,
+body.daxi-contract-open #daxiMenuFab,
+body.daxi-contract-open #client-map-compass,
+body.daxi-contract-open #client-map-whatsapp {
+  filter: blur(16px) brightness(0.32) saturate(0.65);
+  transition: filter 0.22s ease;
+  pointer-events: none !important;
+}
+.daxi-contract-modal {
+  position: relative;
+  max-width: 520px; max-height: 85vh; overflow: auto;
+  background: #0a0f1a; border-radius: 18px;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+  padding: 18px 18px 14px;
+  color: #cbd5e1; font-size: 12px; line-height: 1.5;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.75);
+}
+.daxi-contract-modal-close-icon {
+  position: sticky; top: 0; float: right; z-index: 2;
+  width: 36px; height: 36px; margin: -4px -4px 8px 8px;
+  border-radius: 10px; border: 1px solid rgba(148,163,184,0.35);
+  background: rgba(15,23,42,0.95); color: #f1f5f9;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 20px;
+}
+.daxi-contract-modal .daxi-contract-doc { padding: 0 2px; clear: both; }
+.daxi-contract-modal .daxi-contract-hero {
+  padding: 14px 14px 12px; margin: 0 0 12px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+.daxi-contract-modal .daxi-contract-kicker {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #fbbf24; margin: 0 0 6px;
+}
+.daxi-contract-modal h2 { font-size: 15px; font-weight: 900; color: #f1f5f9; margin: 0 0 8px; }
+.daxi-contract-modal h3 { font-size: 13px; font-weight: 800; color: #e2e8f0; margin: 14px 0 6px; }
+.daxi-contract-modal p,
+.daxi-contract-modal li { color: #cbd5e1; }
+.daxi-contract-modal ul { margin: 0 0 8px 18px; padding: 0; }
+.daxi-contract-modal .daxi-contract-lead { color: #94a3b8; margin: 0; font-size: 11px; line-height: 1.45; }
+.daxi-contract-modal .daxi-contract-refund-box {
+  padding: 12px 12px 10px; border-radius: 14px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+.daxi-contract-modal .daxi-contract-refund-note {
+  font-size: 11px; color: #94a3b8; margin: 0 0 10px; line-height: 1.45;
+}
+.daxi-contract-modal .daxi-contract-refund-bullets { margin-top: 10px !important; font-size: 11px; color: #94a3b8; }
+.daxi-contract-modal .daxi-contract-footer { font-size: 10px; color: #64748b; margin-top: 12px; }
+.daxi-contract-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 11px; }
+.daxi-contract-table th, .daxi-contract-table td {
+  border: 1px solid rgba(71, 85, 105, 0.45); padding: 7px 8px; text-align: left; vertical-align: top;
+  background: rgba(15, 23, 42, 0.75); color: #e2e8f0;
+}
+.daxi-contract-table th { background: rgba(30, 41, 59, 0.95); color: #f8fafc; font-weight: 800; }
+.daxi-contract-table tbody tr:nth-child(even) td { background: rgba(11, 18, 32, 0.9); }
+.daxi-contract-table .daxi-contract-fee { color: #fca5a5; white-space: nowrap; }
+.daxi-contract-table .daxi-contract-refund { color: #86efac; white-space: nowrap; }
+.daxi-contract-table--refund th:nth-child(2), .daxi-contract-table--refund th:nth-child(3) { text-align: center; }
+.daxi-contract-table--refund .daxi-contract-fee, .daxi-contract-table--refund .daxi-contract-refund { text-align: center; }
+.daxi-contract-close {
+  width: 100%; margin-top: 12px; padding: 10px;
+  border-radius: 12px; border: 1px solid rgba(148,163,184,0.3);
+  background: rgba(30,41,59,0.8); color: #f8fafc; font-weight: 700; cursor: pointer;
+}
+</style>
+
+<div id="co-{{ order.id }}" class="daxi-pay-wrap" data-order-id="{{ order.id }}" data-daxi-checkout-flow="1">
+
+  <div class="daxi-pay-head">
+    <div class="daxi-pay-head-title" data-translate="pay_choose_method">Choisir votre moyen de paiement</div>
+    {% if payment_pending %}
+    <div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);font-size:11px;color:#fca5a5;font-weight:600;" data-translate="pay_pending_msg">
+      Paiement non finalisé — choisissez à nouveau votre moyen de paiement pour continuer.
+    </div>
+    {% endif %}
+    <div class="daxi-pay-head-sub"><span data-translate="pay_order_label">Commande</span> {{ order.ref_code }} · <strong>${{ order.price|floatformat:2 }}</strong></div>
+  </div>
+
+  <div class="daxi-pay-body">
+
+    <button type="button" class="daxi-pay-opt daxi-pay-opt--moncash" data-method="moncash">
+      <div class="daxi-pay-icon daxi-pay-icon--moncash">
+        <img src="{% static 'payments/moncash-badge.png' %}?v=20260827d" alt="MonCash" style="background:#fff;object-fit:contain;">
+      </div>
+      <div>
+        <div class="daxi-pay-label">MonCash</div>
+        <div class="daxi-pay-desc" data-translate="pay_moncash_desc">Paiement mobile Digicel · rapide et sécurisé</div>
+      </div>
+      <div class="daxi-pay-radio" aria-hidden="true"></div>
+    </button>
+
+    <button type="button" class="daxi-pay-opt daxi-pay-opt--card" data-method="card">
+      <div class="daxi-pay-icon daxi-pay-icon--card">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+          <rect x="2" y="4" width="20" height="16" rx="2.5" fill="#1e40af" stroke="#93c5fd" stroke-width="1.2"/>
+          <rect x="2" y="8" width="20" height="4" fill="#172554"/>
+          <rect x="4" y="14" width="5" height="3" rx="0.6" fill="#fbbf24"/>
+        </svg>
+      </div>
+      <div>
+        <div class="daxi-pay-label" data-translate="pay_card_label">Carte bancaire</div>
+        <div class="daxi-pay-desc" data-translate="pay_card_desc">Visa, Mastercard, American Express</div>
+      </div>
+      <div class="daxi-pay-radio" aria-hidden="true"></div>
+    </button>
+
+    <button type="button" class="daxi-pay-opt daxi-pay-opt--cash" data-method="in_person">
+      <div class="daxi-pay-icon daxi-pay-icon--cash">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
+          <rect x="3" y="6" width="18" height="10" rx="1.5" fill="#15803d" stroke="#86efac" stroke-width="1.2"/>
+          <circle cx="12" cy="11" r="2.8" stroke="#fef9c3" stroke-width="1.2" fill="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="daxi-pay-label" data-translate="pay_cash_label">Payer au chauffeur</div>
+        <div class="daxi-pay-desc" data-translate="pay_cash_desc">Espèces à bord — les pénalités d'annulation se règlent en ligne</div>
+      </div>
+      <div class="daxi-pay-radio" aria-hidden="true"></div>
+    </button>
+
+    <div class="daxi-pay-contract">
+      <label>
+        <input type="checkbox" id="daxiPayContractCheck-{{ order.id }}">
+        <span data-translate="pay_contract_line">J'accepte le contrat de transport et conditions de remboursement de DAXI.</span>
+      </label>
+      <button type="button" class="daxi-link" id="daxiPayContractOpen-{{ order.id }}" style="margin-top:8px;font-size:11px;" data-translate="pay_contract_view">Voir le contrat</button>
+    </div>
+
+    <form id="daxiPayForm-{{ order.id }}"
+          hx-post="/htmx/client/orders/{{ order.id }}/payment/init/"
+          hx-target="#daxi-sheet-order-slot"
+          hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+      <input type="hidden" name="method" id="daxiPayMethod-{{ order.id }}" value="">
+      <input type="hidden" name="contract_accepted" id="daxiPayContractVal-{{ order.id }}" value="0">
+      {% if order.guest_id %}<input type="hidden" name="guest_id" value="{{ order.guest_id }}">{% endif %}
+      <button type="button" id="daxiPayContinue-{{ order.id }}" class="daxi-pay-continue" disabled data-translate="pay_continue_btn">Continuer</button>
+    </form>
+  </div>
+</div>
+
+<div class="daxi-contract-overlay" id="daxiContractOverlay-{{ order.id }}" role="dialog" aria-modal="true">
+  <div class="daxi-contract-modal">
+    <button type="button" class="daxi-contract-modal-close-icon" id="daxiContractCloseIcon-{{ order.id }}" aria-label="Fermer"><i class="ri-close-line"></i></button>
+    {{ contract_html|safe }}
+    <button type="button" class="daxi-contract-close" id="daxiContractClose-{{ order.id }}">Fermer</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  if (window._daxiInitPaymentCheckoutInRoot) window._daxiInitPaymentCheckoutInRoot(document);
+  if (window.DaxiAutoI18n && window.DaxiAutoI18n.apply) window.DaxiAutoI18n.apply();
+  else if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+})();
+</script>

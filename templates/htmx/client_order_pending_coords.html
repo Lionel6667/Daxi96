@@ -1,0 +1,29 @@
+{% load static %}
+<div id="pending-coords-card" data-order-id="{{ order_id }}" data-daxi-checkout-flow="1" style="border-radius:16px;overflow:hidden;margin:0;background:rgba(8,14,35,0.98);border:1px solid rgba(148,163,184,0.22);">
+  <div style="background:linear-gradient(135deg,#1e3a5f,#0f172a);padding:18px;text-align:center;color:#fff;">
+    <div style="font-size:15px;font-weight:800;">Commande {% firstof order.code order.ref_code order.public_code order_code %} enregistrée</div>
+    <div style="font-size:11px;opacity:.9;margin-top:6px;line-height:1.45;">
+      Votre adresse n'est pas dans les suggestions Google — un chauffeur ou l'équipe DAXI<br>
+      placera les lieux sur la carte et calculera le prix.
+    </div>
+  </div>
+  <div style="padding:14px 16px;">
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Départ</div>
+    <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:10px;">{{ pickup }}</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Destination</div>
+    <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;">{{ destination }}</div>
+    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px;font-size:12px;color:#fcd34d;line-height:1.45;">
+      <strong>En attente du prix.</strong> Vous le recevrez par WhatsApp dès qu'il sera calculé.
+      Revenez sur le site pour l'accepter ou le refuser — ensuite un chauffeur prendra votre course.
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  if (typeof _daxiSetSheetMode === 'function') _daxiSetSheetMode('order', { expand: true });
+  if (typeof _daxiSetSheetCollapsed === 'function') _daxiSetSheetCollapsed(false);
+  if (window._daxiOnSheetOrderSwap) window._daxiOnSheetOrderSwap('{{ order_id }}');
+  if (typeof _loadDaxiSheetOrders === 'function') _loadDaxiSheetOrders({ metaOnly: true });
+  if (window._daxiStartLiveTracking) setTimeout(function() { _daxiStartLiveTracking('{{ order_id }}'); }, 300);
+})();
+</script>

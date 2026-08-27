@@ -1,0 +1,104 @@
+<div id="client-lost-objects-panel" class="daxi-lost-panel">
+
+{% if not is_authenticated and not guest_id %}
+<div class="daxi-lost-alert">
+  <div class="daxi-lost-alert__icon"><i class="ri-lock-2-line"></i></div>
+  <p data-translate="lost_login_required">Connectez-vous ou commandez une course pour signaler un objet perdu.</p>
+</div>
+{% elif not orders %}
+<div class="daxi-lost-empty">
+  <div class="daxi-lost-empty__icon"><i class="ri-inbox-line"></i></div>
+  <p class="daxi-lost-empty__title" data-translate="lost_no_completed">Aucune course terminée</p>
+  <p class="daxi-lost-empty__sub" data-translate="lost_no_completed_sub">Terminez une course pour pouvoir signaler un objet oublié.</p>
+</div>
+{% else %}
+
+<p class="daxi-lost-intro" data-translate="lost_intro">
+  Sélectionnez la course pendant laquelle vous avez oublié un objet, décrivez-le, puis envoyez — le chauffeur et notre équipe seront notifiés.
+</p>
+
+<form id="client-lost-object-form" class="daxi-lost-form">
+  <label class="daxi-lost-label" data-translate="lost_order_label">Course concernée</label>
+  <select id="lost-order-select" name="order_id" required class="daxi-lost-input">
+    <option value="" data-translate="lost_order_placeholder">— Choisir une course —</option>
+    {% for o in orders %}
+    <option value="{{ o.id }}">{% firstof o.code o.ref_code o.public_code %} · {{ o.pickup_display|default:o.pickup|truncatechars:35 }} → {{ o.destination_display|default:o.destination|truncatechars:35 }} ({{ o.created_display }})</option>
+    {% endfor %}
+  </select>
+
+  <label class="daxi-lost-label" data-translate="lost_desc_label">Description de l'objet</label>
+  <textarea id="lost-object-description" name="description" rows="4" required minlength="5"
+            placeholder="Ex: sac noir, téléphone Samsung, clés avec porte-clés rouge…"
+            data-translate="lost_desc_placeholder"
+            class="daxi-lost-input daxi-lost-textarea"></textarea>
+
+  <button type="submit" id="lost-object-submit-btn" class="daxi-lost-submit" data-translate="lost_submit">
+    Signaler l'objet perdu
+  </button>
+  <div id="lost-object-feedback" class="daxi-lost-feedback"></div>
+</form>
+
+<script>
+(function() {
+  var form = document.getElementById('client-lost-object-form');
+  if (!form) return;
+  function _lostDict() {
+    var lang = localStorage.getItem('daxi_lang') || 'fr';
+    return (window._localTranslations && window._localTranslations[lang]) || {};
+  }
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var d = _lostDict();
+    var orderId = (document.getElementById('lost-order-select') || {}).value;
+    var desc = (document.getElementById('lost-object-description') || {}).value || '';
+    var fb = document.getElementById('lost-object-feedback');
+    var btn = document.getElementById('lost-object-submit-btn');
+    if (!orderId) { if (fb) fb.innerHTML = '<p class="daxi-lost-err">' + (d.lost_choose_order || 'Choisissez une course.') + '</p>'; return; }
+    if (desc.trim().length < 5) { if (fb) fb.innerHTML = '<p class="daxi-lost-err">' + (d.lost_min_chars || 'Minimum 5 caractères.') + '</p>'; return; }
+    if (btn) { btn.disabled = true; btn.textContent = d.lost_sending || 'Envoi…'; }
+    var fd = new FormData();
+    fd.append('description', desc.trim());
+    fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    {% if guest_id %}fd.append('guest_id', '{{ guest_id }}');{% endif %}
+    fetch('/htmx/client/orders/' + orderId + '/lost-object/', {
+      method: 'POST', body: fd, credentials: 'include',
+    }).then(function(r) { return r.text(); }).then(function(html) {
+      if (fb) fb.innerHTML = html;
+      if (btn) { btn.disabled = false; btn.textContent = d.lost_submit || 'Signaler l\'objet perdu'; }
+    }).catch(function() {
+      if (fb) fb.innerHTML = '<p class="daxi-lost-err">' + (d.lost_network_error || 'Erreur réseau.') + '</p>';
+      if (btn) { btn.disabled = false; btn.textContent = d.lost_submit || 'Signaler l\'objet perdu'; }
+    });
+  });
+  if (window.DaxiAutoI18n && window.DaxiAutoI18n.apply) window.DaxiAutoI18n.apply();
+  else if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+})();
+</script>
+
+{% endif %}
+</div>
+<style>
+.daxi-lost-panel { max-width: 520px; margin: 0 auto; padding: 8px 4px; color: rgba(255,255,255,0.9); }
+.daxi-lost-alert {
+  text-align: center; padding: 32px 16px; border-radius: 16px;
+  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); color: rgba(255,255,255,0.85);
+}
+.daxi-lost-alert__icon { font-size: 32px; color: #f59e0b; margin-bottom: 10px; }
+.daxi-lost-empty { text-align: center; padding: 40px 16px; color: rgba(255,255,255,0.5); }
+.daxi-lost-empty__icon { font-size: 48px; color: rgba(255,255,255,0.2); margin-bottom: 10px; }
+.daxi-lost-empty__title { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.8); margin: 0; }
+.daxi-lost-empty__sub { font-size: 12px; margin: 8px 0 0; }
+.daxi-lost-intro { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 16px; line-height: 1.55; }
+.daxi-lost-label { display: block; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.65); margin-bottom: 6px; }
+.daxi-lost-input {
+  width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  font-size: 13px; margin-bottom: 14px; background: rgba(255,255,255,0.05); color: #fff;
+}
+.daxi-lost-textarea { resize: vertical; min-height: 96px; }
+.daxi-lost-submit {
+  width: 100%; padding: 14px; background: linear-gradient(135deg,#f59e0b,#d97706);
+  color: #0a0f1a; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.daxi-lost-err { color: #f87171; font-size: 12px; margin: 0; }
+.daxi-lost-feedback { margin-top: 12px; }
+</style>

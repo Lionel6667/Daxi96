@@ -1,0 +1,567 @@
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body.drv-auth-page {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--daxi-bg, linear-gradient(160deg, #fffbeb 0%, #fcfcfd 35%, #f8fafc 100%));
+    color: var(--daxi-text, #111827);
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="dark"] body.drv-auth-page {
+    background: var(--drv-bg, #070b14);
+    color: var(--daxi-text, #f8fafc);
+}
+
+#login-section,
+#register-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+}
+
+#register-section { padding: 64px 16px; }
+
+#login-section .glass-card,
+#register-section .glass-card {
+    width: 100%;
+    max-width: 28rem;
+    margin: 0 auto;
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    background: var(--daxi-surface, rgba(255, 255, 255, 0.97));
+    border: 1px solid var(--daxi-border, rgba(229, 231, 235, 0.9));
+    box-shadow: var(--daxi-card-shadow, 0 25px 50px -12px rgba(15, 23, 42, 0.15));
+    color: var(--daxi-text, #111827);
+}
+
+#register-section .glass-card {
+    max-width: 42rem;
+    padding: 2rem 2.5rem;
+    border-radius: 2rem;
+}
+
+.drv-auth-logo-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto 0.5rem;
+    line-height: 0;
+    background: none;
+}
+
+.drv-auth-logo-wrap .daxi-brand-logo--gold {
+    display: block;
+    width: min(200px, 70vw) !important;
+    max-width: 200px !important;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    object-position: center;
+}
+
+.drv-auth-logo-wrap .daxi-brand-logo--dark {
+    display: none;
+    width: min(200px, 70vw) !important;
+    max-width: 200px !important;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    object-position: center;
+}
+
+[data-theme="light"] .drv-auth-logo-wrap .daxi-brand-logo--gold {
+    display: none;
+}
+
+[data-theme="light"] .drv-auth-logo-wrap .daxi-brand-logo--dark {
+    display: block;
+}
+
+.drv-auth-hero-icon {
+    width: 5rem;
+    height: 5rem;
+    margin: 0 auto 1rem;
+    border-radius: 1.5rem;
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem;
+    color: var(--daxi-accent, #d97706);
+}
+
+.drv-auth-title {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: var(--daxi-text, #111827);
+    margin: 0 0 0.5rem;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.drv-auth-sub {
+    font-size: 0.95rem;
+    color: var(--daxi-text-muted, #6b7280);
+    font-weight: 500;
+    margin: 0 0 2rem;
+    text-align: center;
+}
+
+.drv-auth-form-stack > * + * { margin-top: 1.25rem; }
+
+.drv-auth-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--daxi-text-muted, #9ca3af);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    margin-left: 0.25rem;
+}
+
+.drv-auth-input,
+#driver-login-form input[type="text"],
+#driver-login-form input[type="password"],
+#driver-login-form input[type="email"],
+#driver-login-form input[type="tel"],
+#register-form input[type="text"],
+#register-form input[type="password"],
+#register-form input[type="email"],
+#register-form input[type="tel"],
+.input-premium {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    border: 2px solid var(--daxi-border, #f1f5f9);
+    background: var(--daxi-input-bg, #f8fafc);
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--daxi-text, #111827);
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.drv-auth-input::placeholder,
+#driver-login-form input::placeholder,
+#register-form input::placeholder,
+.input-premium::placeholder {
+    color: var(--daxi-text-muted, #9ca3af);
+}
+
+.drv-auth-input:focus,
+#driver-login-form input:focus,
+#register-form input:focus,
+.input-premium:focus {
+    outline: none;
+    border-color: var(--daxi-accent, #f59e0b);
+    background: var(--daxi-surface-2, #fff);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+}
+
+.btn-gold,
+#driver-login-form button[type="submit"],
+#register-submit-btn {
+    width: 100%;
+    padding: 1.1rem 1.25rem;
+    border: none;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.28);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-gold:hover,
+#driver-login-form button[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(245, 158, 11, 0.35);
+}
+
+.drv-auth-switch {
+    text-align: center;
+    padding-top: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.drv-auth-switch p { color: var(--daxi-text-muted, #9ca3af); font-weight: 500; margin: 0 0 0.25rem; }
+
+.drv-auth-link {
+    background: none;
+    border: none;
+    color: var(--daxi-accent, #d97706);
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.drv-auth-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .drv-auth-grid-2 { grid-template-columns: 1fr 1fr; }
+}
+
+.drv-reg-step-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.drv-reg-step-num {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.drv-reg-step-title h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--daxi-text, #1f2937);
+}
+
+.file-drop-zone {
+    border: 2px dashed var(--daxi-border-strong, #e2e8f0);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: var(--daxi-input-bg, rgba(255, 255, 255, 0.04));
+    color: var(--daxi-text-muted, #64748b);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.file-drop-zone:hover {
+    border-color: var(--daxi-accent, #f59e0b);
+    background: rgba(245, 158, 11, 0.06);
+}
+
+.file-drop-zone i {
+    color: var(--daxi-text-muted, #94a3b8);
+}
+
+
+.drv-docs-intro {
+    border-radius: 24px;
+    border: 1px solid var(--daxi-border, #fde68a);
+    background: var(--daxi-surface-2, linear-gradient(180deg, #fffbeb 0%, #fff 100%));
+    padding: 20px;
+}
+
+.drv-docs-intro-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--daxi-accent, #92400e);
+    margin: 0 0 8px;
+    text-align: center;
+}
+
+.drv-docs-intro-lead {
+    font-size: 13px;
+    color: var(--daxi-text-muted, #78716c);
+    text-align: center;
+    line-height: 1.55;
+    margin: 0 0 18px;
+}
+
+.drv-docs-list {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.drv-docs-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--daxi-surface, #fff);
+    border: 1px solid var(--daxi-border, #f1f5f9);
+}
+
+.drv-docs-item i {
+    font-size: 20px;
+    color: var(--daxi-accent, #f59e0b);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.drv-docs-item strong {
+    display: block;
+    font-size: 14px;
+    color: var(--daxi-text, #1f2937);
+    margin-bottom: 2px;
+}
+
+.drv-docs-item span {
+    display: block;
+    font-size: 12px;
+    color: var(--daxi-text-muted, #64748b);
+    line-height: 1.45;
+}
+
+.drv-docs-item.optional {
+    border-style: dashed;
+    background: var(--daxi-input-bg, #fafafa);
+}
+
+.drv-docs-note {
+    font-size: 12px;
+    color: var(--daxi-accent, #b45309);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 14px;
+    padding: 12px 14px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+
+.drv-login-mode-switch {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 5px;
+    border-radius: 18px;
+    background: var(--daxi-input-bg, rgba(255, 255, 255, 0.06));
+    border: 2px solid var(--daxi-border, #f1f5f9);
+    overflow: hidden;
+}
+
+.drv-login-mode-switch::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    height: calc(100% - 10px);
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 8px 22px rgba(245, 158, 11, 0.38);
+    transition: transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1);
+    z-index: 0;
+}
+
+.drv-login-mode-switch[data-mode="phone"]::before {
+    transform: translateX(100%);
+}
+
+.drv-login-mode-btn {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--daxi-text-muted, #94a3b8);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.drv-login-mode-btn i {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.drv-login-mode-btn.is-active {
+    color: #fff;
+}
+
+.drv-login-id-panel[hidden] {
+    display: none !important;
+}
+
+.drv-login-error {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: #fecaca;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+
+.drv-phone-wrap {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    background: var(--daxi-input-bg, #f8fafc);
+    border: 2px solid var(--daxi-border, #f1f5f9);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.drv-phone-wrap:focus-within {
+    border-color: var(--daxi-accent, #f59e0b);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+}
+
+.drv-phone-wrap.drv-phone-prefix-open {
+    overflow: visible;
+}
+
+.drv-phone-prefix-picker {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.drv-phone-prefix-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.drv-phone-prefix-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 118px;
+    max-width: 150px;
+    border: none;
+    background: rgba(245, 158, 11, 0.12);
+    border-right: 2px solid var(--daxi-border, #f1f5f9);
+    padding: 16px 28px 16px 12px;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: inherit;
+    color: var(--daxi-text, #374151);
+    outline: none;
+    cursor: pointer;
+    text-align: left;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.drv-phone-prefix-btn:hover,
+.drv-phone-prefix-btn[aria-expanded="true"] {
+    background-color: rgba(245, 158, 11, 0.2);
+}
+
+.drv-phone-prefix-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 40;
+    min-width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--daxi-border-strong, rgba(148, 163, 184, 0.28));
+    background: var(--daxi-surface-2, #111c30);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(245, 158, 11, 0.08);
+    backdrop-filter: blur(12px);
+}
+
+.drv-phone-prefix-menu[hidden] {
+    display: none;
+}
+
+.drv-phone-prefix-menu [role="option"] {
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--daxi-text-secondary, #e2e8f0);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.drv-phone-prefix-menu [role="option"]:hover {
+    background: rgba(245, 158, 11, 0.14);
+    color: var(--daxi-accent-light, #fbbf24);
+}
+
+.drv-phone-prefix-menu [role="option"].is-selected {
+    background: rgba(245, 158, 11, 0.22);
+    color: var(--daxi-accent-light, #fbbf24);
+}
+
+[data-theme="light"] .drv-phone-prefix-menu {
+    background: #ffffff;
+    border-color: var(--daxi-border, #e2e8f0);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .drv-phone-prefix-menu [role="option"] {
+    color: #334155;
+}
+
+[data-theme="light"] .drv-phone-prefix-menu [role="option"]:hover,
+[data-theme="light"] .drv-phone-prefix-menu [role="option"].is-selected {
+    color: #b45309;
+}
+
+.drv-phone-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 16px 18px;
+    font-size: 16px;
+    outline: none;
+    color: var(--daxi-text, #111827);
+}
+
+.drv-phone-input::placeholder { color: var(--daxi-text-muted, #9ca3af); }
+
+.drv-otp-section {
+    border-radius: 20px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+    padding: 16px;
+}
+
+.drv-otp-single {
+    background: var(--daxi-input-bg, #fff);
+    border: 2px solid var(--daxi-border, #fde68a);
+    color: var(--daxi-text, #1f2937);
+}
+
+.hidden { display: none !important; }

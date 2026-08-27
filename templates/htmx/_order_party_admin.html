@@ -1,0 +1,48 @@
+
+<div class="daxi-oc-parties daxi-oc-parties--admin">
+  {% if o.client_name %}
+  <div class="daxi-oc-party daxi-oc-party--client daxi-oc-party--admin">
+    <div class="daxi-oc-party-avatar daxi-oc-party-avatar--client">
+      <span class="daxi-oc-party-initial">{{ o.client_name|first|upper }}</span>
+    </div>
+    <div class="daxi-oc-party-info">
+      <span class="daxi-oc-party-role">Client</span>
+      <span class="daxi-oc-party-name">{{ o.client_name }}</span>
+      <span class="daxi-oc-party-meta">
+        {% if o.client_phone %}{{ o.client_phone }}{% else %}Téléphone non fourni{% endif %}
+        {% if not o.contact_unlocked and o.unlock_time %} · débloqué à {{ o.unlock_time }}{% endif %}
+      </span>
+      {% if o.client_email %}<span class="daxi-oc-party-meta">{{ o.client_email }}</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if o.driver_name and o.status != 'pending' and o.status != 'price_proposed' and o.status != 'price_confirmed' and o.status != 'cancelled' %}
+  <div class="daxi-oc-party daxi-oc-party--driver daxi-oc-party--admin">
+    <div class="daxi-oc-party-avatar daxi-oc-party-avatar--driver">
+      {% if o.driver_photo %}
+      <img src="{{ o.driver_photo }}" alt="{{ o.driver_name }}">
+      {% else %}
+      <i class="ri-steering-2-fill"></i>
+      {% endif %}
+    </div>
+    <div class="daxi-oc-party-info">
+      <span class="daxi-oc-party-role">Chauffeur</span>
+      <span class="daxi-oc-party-name">
+        {{ o.driver_name }}
+        {% if o.driver_is_verified %}<i class="ri-verified-badge-fill" title="Vérifié"></i>{% endif %}
+      </span>
+      {% if o.driver_vehicle_label or o.driver_car_brand or o.driver_vehicle %}
+      <span class="daxi-oc-party-meta">
+        {{ o.driver_vehicle_label|default:o.driver_car_brand }} {{ o.driver_car_model|default:"" }}
+        {% if o.driver_car_year %}({{ o.driver_car_year }}){% endif %}
+        {% if o.driver_plate %} · {{ o.driver_plate }}{% endif %}
+      </span>
+      {% endif %}
+      {% if o.driver_phone %}<span class="daxi-oc-party-meta">{{ o.driver_phone }}</span>{% endif %}
+      {% if o.driver_rating %}<span class="daxi-oc-party-meta"><i class="ri-star-fill"></i> {{ o.driver_rating }}</span>{% endif %}
+    </div>
+    {% include "htmx/_daxi_car_image_thumb.html" %}
+  </div>
+  {% endif %}
+</div>

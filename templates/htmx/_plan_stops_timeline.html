@@ -1,0 +1,36 @@
+
+{% if o.plan_stops %}
+<div class="daxi-plan-stops">
+  <div class="daxi-plan-stops__head">
+    <i class="ri-route-line"></i>
+    <span data-translate="dpw_itinerary">Itinéraire</span>
+    <span class="daxi-plan-stops__count">{{ o.plan_stops|length }} arrêt{{ o.plan_stops|length|pluralize }}</span>
+  </div>
+  <div class="daxi-plan-stop">
+    <span class="daxi-plan-stop__dot daxi-plan-stop__dot--pickup"></span>
+    <div class="daxi-plan-stop__body">
+      <span class="daxi-plan-stop__lbl" data-translate="label_departure">Départ</span>
+      <span class="daxi-plan-stop__addr">{{ o.pickup_display|default:o.pickup|default:"—" }}</span>
+    </div>
+  </div>
+  {% for stop in o.plan_stops %}
+  <div class="daxi-plan-stop__rail" aria-hidden="true"></div>
+  <div class="daxi-plan-stop">
+    <span class="daxi-plan-stop__dot {% if forloop.last %}daxi-plan-stop__dot--dest{% else %}daxi-plan-stop__dot--mid{% endif %}">
+      {% if forloop.last %}<i class="ri-flag-fill"></i>{% else %}{{ forloop.counter }}{% endif %}
+    </span>
+    <div class="daxi-plan-stop__body">
+      <span class="daxi-plan-stop__lbl">
+        {% if forloop.last %}<span data-translate="label_arrival">Arrivée</span>{% else %}Arrêt {{ forloop.counter }}{% endif %}
+      </span>
+      <span class="daxi-plan-stop__addr">{{ stop.label }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% elif o.plan_itinerary %}
+<div class="daxi-oc-plan-itinerary">
+  <div class="daxi-oc-plan-itinerary-lbl"><i class="ri-route-line"></i> <span data-translate="dpw_itinerary">Itinéraire</span></div>
+  <div class="daxi-oc-plan-itinerary-val">{{ o.plan_itinerary }}</div>
+</div>
+{% endif %}

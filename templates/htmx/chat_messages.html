@@ -1,0 +1,61 @@
+{% load daxi_extras %}
+<div id="chat-inner-{{ order_id }}" class="daxi-wa" data-order-id="{{ order_id }}" data-scope="{{ scope }}">
+  <div class="daxi-wa-msgs" id="daxi-wa-msgs-{{ order_id }}">
+    {% if not messages %}
+    <div class="daxi-wa-empty">Envoyez un message pour démarrer la conversation</div>
+    {% endif %}
+    {% for msg in messages %}
+    {% ifchanged msg.timestamp|daxi_date_key %}
+    <div class="daxi-wa-day-sep" data-day="{{ msg.timestamp|daxi_date_key }}"><span>{{ msg.timestamp|daxi_chat_day }}</span></div>
+    {% endifchanged %}
+    {% if msg.sender_type == scope or scope == 'enterprise' and msg.sender_type == 'admin' %}
+    <div class="daxi-wa-row daxi-wa-row--out" data-msg-id="{{ msg.id }}" data-own="1"
+         data-preview="{{ msg|daxi_chat_preview|escape }}"
+         data-can-edit="{% if msg.message_type == 'text' and not msg.image_url and not msg.audio_url %}1{% else %}0{% endif %}">
+    {% else %}
+    <div class="daxi-wa-row daxi-wa-row--in" data-msg-id="{{ msg.id }}" data-own="0"
+         data-preview="{{ msg|daxi_chat_preview|escape }}" data-can-edit="0">
+    {% endif %}
+      <div class="daxi-wa-bubble {% if msg.sender_type == scope or scope == 'enterprise' and msg.sender_type == 'admin' %}daxi-wa-bubble--out{% elif msg.sender_type == 'admin' %}daxi-wa-bubble--admin{% else %}daxi-wa-bubble--in{% endif %}">
+        <div class="daxi-wa-sender">
+          {% if msg.sender_type == scope or scope == 'enterprise' and msg.sender_type == 'admin' %}
+            Vous
+          {% elif msg.sender_type == 'admin' %}
+            Admin
+          {% elif msg.sender_type == 'driver' %}
+            {{ msg.sender_name|default:'Chauffeur' }}
+          {% elif msg.sender_type == 'user' %}
+            {{ msg.sender_name|default:'Client' }}
+          {% else %}
+            {{ msg.sender_name|default:'Système' }}
+          {% endif %}
+        </div>
+        {% if msg.reply_to %}
+        <div class="daxi-wa-reply">{{ msg.reply_to|daxi_chat_preview|truncatechars:60 }}</div>
+        {% endif %}
+        {% if msg.image_url %}
+        <a href="{{ msg.image_url }}" target="_blank" rel="noopener"><img src="{{ msg.image_url }}" class="daxi-wa-img" alt="Image" loading="eager"></a>
+        {% endif %}
+        {% if msg.audio_url %}
+        <div class="daxi-wa-audio" data-audio-id="{{ msg.id }}"{% if msg.audio_duration_sec %} data-duration="{{ msg.audio_duration_sec }}"{% endif %}>
+          <button type="button" class="daxi-wa-audio-play" data-src="{{ msg.audio_url }}" aria-label="Lire le message vocal"><i class="ri-play-fill"></i></button>
+          <div class="daxi-wa-audio-track"><div class="daxi-wa-audio-fill"></div></div>
+          <span class="daxi-wa-audio-dur">{% if msg.audio_duration_sec %}{{ msg.audio_duration_sec|daxi_audio_dur }}{% else %}…{% endif %}</span>
+        </div>
+        {% endif %}
+        {% if msg.content %}<div class="daxi-wa-text">{{ msg.content }}</div>{% endif %}
+        <div class="daxi-wa-meta"><span class="daxi-wa-time">{{ msg.timestamp|daxi_time }}</span></div>
+      </div>
+      <button type="button" class="daxi-wa-row-menu" title="Options" aria-label="Options message"><i class="ri-more-2-fill"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<script>
+(function(){
+  if (window.DaxiChatUI && window.DaxiChatUI.initMessagesRoot) {
+    var inner = document.getElementById('chat-inner-{{ order_id }}');
+    if (inner) window.DaxiChatUI.initMessagesRoot(inner);
+  }
+})();
+</script>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="{{ theme|default:'dark' }}"{% if embed %} class="embed"{% endif %}>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paiement par carte · DAXI</title>
+<link rel="icon" href="/assets/images/daxi-logo-gold.png">
+<link rel="stylesheet" href="/assets/css/remixicon.min.css">
+<style>
+  :root {
+    --bg: #070b14;
+    --surface: #0f172a;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --gold: #fbbf24;
+    --gold-2: #f59e0b;
+    --line: rgba(245,158,11,0.18);
+  }
+  html[data-theme="light"] {
+    --bg: #f4f1ea;
+    --surface: #fffdf8;
+    --text: #102a43;
+    --muted: #3e4c59;
+    --gold: #b45309;
+    --gold-2: #d97706;
+    --line: rgba(180,83,9,0.22);
+  }
+  html[data-theme="light"] body {
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(245,158,11,0.10), transparent 55%),
+      radial-gradient(900px 420px at 110% 0%, rgba(37,99,235,0.08), transparent 50%),
+      var(--bg);
+  }
+  html[data-theme="light"] .back {
+    background: #fff;
+    border-color: rgba(15,23,42,0.12);
+    color: #102a43;
+  }
+  html[data-theme="light"] .sheet {
+    background: linear-gradient(165deg, #fffdf8, #fff7ed);
+    border-color: var(--line);
+  }
+  html[data-theme="light"] .amount {
+    background: #fff;
+    border-color: rgba(180,83,9,0.18);
+  }
+  html[data-theme="light"] input {
+    background: #fff;
+    color: #102a43;
+    border-color: rgba(15,23,42,0.16);
+  }
+  html[data-theme="light"] label { color: #3e4c59; }
+  html[data-theme="light"] .err {
+    background: #fef2f2;
+    border-color: rgba(185,28,28,0.35);
+    color: #9f1239;
+  }
+  html[data-theme="light"] .note { color: #3e4c59; }
+  html[data-theme="light"] .btn { color: #102a43; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(245,158,11,0.14), transparent 55%),
+      radial-gradient(900px 420px at 110% 0%, rgba(37,99,235,0.18), transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+  .wrap { max-width: 430px; margin: 0 auto; }
+  .top {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px;
+  }
+  .back {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid rgba(148,163,184,0.28);
+    background: rgba(15,23,42,0.72);
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; font-size: 20px; cursor: pointer;
+  }
+  html[data-theme="light"] .back { background: #fff; }
+  .top-copy { flex: 1; }
+  .kicker {
+    font-size: 10px; font-weight: 800; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--gold);
+  }
+  .top-copy h1 { font-size: 18px; font-weight: 900; line-height: 1.2; }
+  .scene {
+    perspective: 1100px;
+    margin: 0 8px 18px;
+  }
+  .plastic {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.586;
+    transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .plastic.is-flipped { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0;
+    border-radius: 18px;
+    backface-visibility: hidden;
+    overflow: hidden;
+    box-shadow: 0 22px 50px rgba(0,0,0,0.38);
+  }
+  .face-front {
+    background:
+      linear-gradient(135deg, rgba(251,191,36,0.18), transparent 38%),
+      linear-gradient(165deg, #1e3a8a 0%, #0f172a 48%, #111827 100%);
+    border: 1px solid rgba(251,191,36,0.28);
+    padding: 18px 18px 16px;
+    color: #fff;
+  }
+  .face-front::after {
+    content: "";
+    position: absolute; inset: -40% -20%;
+    background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.16) 50%, transparent 60%);
+    animation: shine 4.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes shine {
+    0% { transform: translateX(-30%); }
+    55%, 100% { transform: translateX(55%); }
+  }
+  .face-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(165deg, #0b1220, #1e293b);
+    border: 1px solid rgba(148,163,184,0.25);
+  }
+  .row-top, .row-mid, .row-bot {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { font-size: 13px; font-weight: 900; letter-spacing: .18em; color: #fde68a; }
+  .chip {
+    width: 42px; height: 32px; border-radius: 6px;
+    background: linear-gradient(145deg, #fde68a, #d97706);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+    position: relative;
+  }
+  .chip::before, .chip::after {
+    content: ""; position: absolute; left: 6px; right: 6px; height: 1px;
+    background: rgba(120,53,15,0.35);
+  }
+  .chip::before { top: 10px; }
+  .chip::after { bottom: 10px; }
+  .contactless { font-size: 22px; color: rgba(253,230,138,0.85); }
+  .pan {
+    margin: 22px 0 14px;
+    font-size: 18px; font-weight: 800; letter-spacing: .16em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  }
+  .meta { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #cbd5e1; }
+  .meta b { display: block; margin-top: 3px; font-size: 13px; color: #fff; letter-spacing: .06em; }
+  .logo-slot { height: 28px; }
+  .logo-slot img { height: 28px; width: auto; display: none; }
+  .logo-slot img.show { display: block; }
+  .mag {
+    height: 46px; margin-top: 22px;
+    background: #0b0f19;
+  }
+  .cvv-box {
+    margin: 28px 18px 0;
+    background: #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: right;
+    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: .2em;
+  }
+  .cvv-box span { font-size: 10px; color: #64748b; letter-spacing: .08em; display: block; margin-bottom: 4px; }
+  .sheet {
+    background: linear-gradient(165deg, rgba(15,23,42,0.96), rgba(7,11,20,0.98));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 16px 14px 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.28);
+  }
+  html[data-theme="light"] .sheet {
+    background: linear-gradient(165deg, #fffdf8, #fff7ed);
+  }
+  .amount {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 12px 14px; border-radius: 14px; margin-bottom: 14px;
+    background: rgba(15,23,42,.72);
+    border: 1px solid rgba(148,163,184,.18);
+  }
+  html[data-theme="light"] .amount { background: #fff; }
+  .amount strong { font-size: 22px; color: var(--gold); }
+  .amount span { font-size: 12px; color: var(--muted); }
+  .brands { display: flex; gap: 8px; margin: 0 0 14px; }
+  .brands img { height: 22px; width: auto; opacity: .42; transition: opacity .2s, transform .2s; }
+  .brands img.on { opacity: 1; transform: scale(1.06); }
+  label { display: block; font-size: 11px; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
+  input {
+    width: 100%; padding: 13px 12px; border-radius: 12px; margin-bottom: 12px;
+    border: 1px solid rgba(148,163,184,.28);
+    background: #0b1220; color: #f8fafc;
+    font-size: 16px; letter-spacing: .04em;
+  }
+  html[data-theme="light"] input { background: #fff; color: #102a43; }
+  input:focus { outline: none; border-color: var(--gold-2); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn {
+    width: 100%; border: none; border-radius: 14px; padding: 14px 16px;
+    font-size: 14px; font-weight: 900; letter-spacing: .04em; cursor: pointer;
+    background: linear-gradient(135deg, #f59e0b, #eab308); color: #0f172a;
+    box-shadow: 0 8px 24px rgba(245,158,11,0.35);
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .err {
+    display: none; margin: 0 0 12px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(127,29,29,.35); border: 1px solid rgba(248,113,113,.4);
+    color: #fecaca; font-size: 13px; line-height: 1.4;
+  }
+  .err.show { display: block; }
+  .note {
+    margin-top: 12px; font-size: 11px; color: var(--muted);
+    line-height: 1.45; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .note i { color: var(--gold); }
+  html.embed .top { padding-left: 44px; }
+  html.embed .back { display: none; }
+</style>
+</head>
+<body{% if embed %} class="embed"{% endif %}>
+  <div class="wrap">
+    <div class="top">
+      <button type="button" class="back" id="cardBack" aria-label="Retour"><i class="ri-arrow-left-line"></i></button>
+      <div class="top-copy">
+        <div class="kicker">DAXI</div>
+        <h1>Paiement par carte</h1>
+      </div>
+    </div>
+
+    <div class="scene">
+      <div class="plastic" id="plastic">
+        <div class="face face-front">
+          <div class="row-top">
+            <div class="brand">DAXI</div>
+            <i class="ri-contactless-line contactless"></i>
+          </div>
+          <div class="row-mid" style="margin-top:18px;">
+            <div class="chip"></div>
+          </div>
+          <div class="pan" id="vizPan">•••• •••• •••• ••••</div>
+          <div class="row-bot">
+            <div class="meta">Expire<b id="vizExp">MM/AA</b></div>
+            <div class="logo-slot">
+              <img id="vizVisa" src="/static/payments/visa.svg" alt="">
+              <img id="vizMc" src="/static/payments/mastercard.svg" alt="">
+              <img id="vizAmex" src="/static/payments/amex.svg" alt="">
+            </div>
+          </div>
+        </div>
+        <div class="face face-back">
+          <div class="mag"></div>
+          <div class="cvv-box"><span>CVV</span><span id="vizCvv">•••</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="amount">
+        <strong>{{ amount_display }}</strong>
+        {% if amount_htg %}<span>{{ amount_htg }} HTG</span>{% endif %}
+      </div>
+
+      {% if config_error %}
+        <div class="err show">Le paiement par carte est temporairement indisponible. Utilisez MonCash ou contactez le support DAXI.</div>
+        <button type="button" class="btn" id="cardBackAlt">Choisir un autre moyen</button>
+      {% else %}
+        <div class="brands">
+          <img id="bVisa" src="/static/payments/visa.svg" alt="Visa">
+          <img id="bMc" src="/static/payments/mastercard.svg" alt="Mastercard">
+          <img id="bAmex" src="/static/payments/amex.svg" alt="American Express">
+        </div>
+        <div id="payErr" class="err"></div>
+        <form id="cardForm" autocomplete="on">
+          {% csrf_token %}
+          <label for="cardNumber">Numéro de carte</label>
+          <input id="cardNumber" name="card_number" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="XXXX XXXX XXXX XXXX" required>
+          <div class="grid">
+            <div>
+              <label for="cardExp">Expiration</label>
+              <input id="cardExp" name="exp" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA" required>
+            </div>
+            <div>
+              <label for="cardCvv">CVV</label>
+              <input id="cardCvv" name="cvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" required>
+            </div>
+          </div>
+          <button type="submit" class="btn" id="payBtn">Payer {{ amount_display }}</button>
+        </form>
+        <p class="note"><i class="ri-lock-2-fill"></i> Paiement sécurisé. DAXI ne stocke pas le numéro de votre carte.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var ORDER_ID = {{ order.id }};
+    var EMBED = {{ embed|yesno:"true,false" }};
+    if (EMBED) document.documentElement.classList.add('embed');
+
+    function closeOrBack() {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'daxi-card-close', orderId: ORDER_ID }, '*');
+        return;
+      }
+      window.location.href = '/#/courses/' + ORDER_ID;
+    }
+    function paid() {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'daxi-card-paid', orderId: ORDER_ID }, '*');
+        return;
+      }
+      window.location.href = '/?payment=success&order_id=' + ORDER_ID + '#/courses/' + ORDER_ID;
+    }
+
+    var back = document.getElementById('cardBack');
+    var backAlt = document.getElementById('cardBackAlt');
+    if (back) back.addEventListener('click', closeOrBack);
+    if (backAlt) backAlt.addEventListener('click', closeOrBack);
+
+    var form = document.getElementById('cardForm');
+    if (!form) return;
+    var btn = document.getElementById('payBtn');
+    var err = document.getElementById('payErr');
+    var num = document.getElementById('cardNumber');
+    var exp = document.getElementById('cardExp');
+    var cvv = document.getElementById('cardCvv');
+    var plastic = document.getElementById('plastic');
+    var csrf = (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || '';
+
+    function brandOf(d) {
+      if (/^3[47]/.test(d)) return 'amex';
+      if (/^5[1-5]/.test(d) || /^2[2-7]/.test(d)) return 'mc';
+      if (/^4/.test(d)) return 'visa';
+      return '';
+    }
+    function setBrand(b) {
+      ['vizVisa','vizMc','vizAmex','bVisa','bMc','bAmex'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var on = (id.toLowerCase().indexOf(b) >= 0) && b;
+        el.classList.toggle('show', on && id.indexOf('viz') === 0);
+        el.classList.toggle('on', on && id.indexOf('b') === 0);
+      });
+      if (!b) {
+        ['bVisa','bMc','bAmex'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.classList.add('on');
+        });
+      }
+    }
+    setBrand('');
+
+    function luhnOk(d) {
+      var sum = 0, alt = false;
+      for (var i = d.length - 1; i >= 0; i--) {
+        var n = d.charCodeAt(i) - 48;
+        if (n < 0 || n > 9) return false;
+        if (alt) { n *= 2; if (n > 9) n -= 9; }
+        sum += n;
+        alt = !alt;
+      }
+      return d.length >= 13 && (sum % 10 === 0);
+    }
+    function validateCard() {
+      var digits = (num.value || '').replace(/\D/g, '');
+      var b = brandOf(digits);
+      if (digits.length < 13 || digits.length > 19 || !luhnOk(digits)) {
+        return 'Le numéro de carte est incorrect. Vérifiez les chiffres.';
+      }
+      var parts = (exp.value || '').split('/');
+      var mm = parseInt(parts[0], 10);
+      var yy = parseInt(parts[1], 10);
+      if (!(mm >= 1 && mm <= 12) || !(yy >= 0 && (exp.value || '').length === 5)) {
+        return "La date d'expiration est incorrecte (MM/AA).";
+      }
+      var now = new Date();
+      var expDate = new Date(2000 + yy, mm, 1);
+      if (expDate <= now) {
+        return "Cette carte est expirée. Vérifiez la date ou utilisez une autre carte.";
+      }
+      var cvvDigits = (cvv.value || '').replace(/\D/g, '');
+      var need = b === 'amex' ? 4 : 3;
+      if (cvvDigits.length !== need) {
+        return b === 'amex'
+          ? 'Le code de sécurité American Express doit avoir 4 chiffres.'
+          : 'Le CVV est incorrect. Entrez les 3 chiffres au dos de la carte.';
+      }
+      return '';
+    }
+    function showErr(msg) {
+      err.textContent = msg || 'Paiement refusé. Vérifiez les informations de la carte.';
+      err.classList.add('show');
+    }
+    num.addEventListener('input', function () {
+      var d = num.value.replace(/\D/g, '').slice(0, 19);
+      var b = brandOf(d);
+      num.value = b === 'amex'
+        ? d.replace(/^(\d{0,4})(\d{0,6})(\d{0,5}).*/, function(_, a, c, e) {
+            return [a, c, e].filter(Boolean).join(' ');
+          })
+        : d.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+      document.getElementById('vizPan').textContent = num.value || '•••• •••• •••• ••••';
+      setBrand(b);
+    });
+    exp.addEventListener('input', function () {
+      var d = exp.value.replace(/\D/g, '').slice(0, 4);
+      exp.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+      document.getElementById('vizExp').textContent = exp.value || 'MM/AA';
+    });
+    cvv.addEventListener('focus', function () { plastic.classList.add('is-flipped'); });
+    cvv.addEventListener('blur', function () { plastic.classList.remove('is-flipped'); });
+    cvv.addEventListener('input', function () {
+      cvv.value = cvv.value.replace(/\D/g, '').slice(0, 4);
+      document.getElementById('vizCvv').textContent = cvv.value ? cvv.value.replace(/./g, '•') : '•••';
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      err.classList.remove('show');
+      var localErr = validateCard();
+      if (localErr) {
+        showErr(localErr);
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Paiement en cours…';
+      fetch('/payment/' + ORDER_ID + '/card/charge/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf
+        },
+        body: JSON.stringify({
+          card_number: num.value,
+          exp: exp.value,
+          cvv: cvv.value,
+          guest_id: '{{ guest_id|escapejs }}'
+        })
+      }).then(function (r) {
+        return r.text().then(function (text) {
+          var data = {};
+          try { data = text ? JSON.parse(text) : {}; } catch (e) {}
+          return { ok: r.ok, data: data };
+        });
+      }).then(function (res) {
+        if (res.data && (res.data.success || res.data.already_paid)) {
+          paid();
+          return;
+        }
+        showErr((res.data && res.data.error) || 'Paiement refusé. Vérifiez les informations de la carte.');
+        btn.disabled = false;
+        btn.textContent = 'Payer {{ amount_display }}';
+      }).catch(function () {
+        showErr('Connexion interrompue. Réessayez.');
+        btn.disabled = false;
+        btn.textContent = 'Payer {{ amount_display }}';
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

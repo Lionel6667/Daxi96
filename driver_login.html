@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daxi - Espace Chauffeur</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/daxi-logo-gold.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/daxi-logo-gold.png">
+    <link rel="shortcut icon" href="/assets/images/daxi-logo-gold.png">
+    <link rel="icon" href="/assets/images/daxi-logo-gold.png">
+    <link rel="stylesheet" href="/assets/css/drv-auth.css?v=20260803k">
+    <link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
+    <script src="/static/js/daxi-web-radar.js?v=20260823i" defer></script>
+    <script src="/assets/js/tailwindcss-3.4.16.js"></script>
+    <script>
+    (function(){
+      var _warn = console.warn;
+      console.warn = function() {
+        var m = arguments[0];
+        if (m != null && String(m).indexOf('cdn.tailwindcss.com') !== -1) return;
+        return _warn.apply(console, arguments);
+      };
+    })();
+    </script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#f59e0b' } } } };</script>
+    <link rel="stylesheet" href="/assets/css/remixicon.min.css">
+    <script src="/assets/js/htmx.min.js"></script>
+    <script>
+    document.addEventListener('htmx:configRequest', function(evt) {
+        var token = (window.DJANGO_SESSION && window.DJANGO_SESSION.csrf_token) || '';
+        if (!token) {
+            var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+            if (m) token = decodeURIComponent(m[1]);
+        }
+        if (token) evt.detail.headers['X-CSRFToken'] = token;
+    });
+    </script>
+    
+    <style>
+        body { font-family: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        .hidden { display: none; }
+        .bg-primary { background-color: #f59e0b; }
+        .text-primary { color: #f59e0b; }
+        
+        
+        .glass-card {
+            background: var(--daxi-surface, rgba(255, 255, 255, 0.95));
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--daxi-border, rgba(255, 255, 255, 0.2));
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        @keyframes drvAuthBtnShine {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+        @keyframes drvAuthBtnPulse {
+            0%, 100% { box-shadow: 0 10px 28px rgba(245, 158, 11, 0.35); }
+            50% { box-shadow: 0 14px 36px rgba(245, 158, 11, 0.55); }
+        }
+        @keyframes drvAuthLinkNudge {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+        .btn-gold-animated {
+            background: linear-gradient(90deg, #d97706 0%, #fbbf24 22%, #f59e0b 50%, #fbbf24 78%, #d97706 100%);
+            background-size: 220% auto;
+            animation: drvAuthBtnShine 3.2s linear infinite, drvAuthBtnPulse 2.4s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-gold-animated::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.22) 50%, transparent 60%);
+            transform: translateX(-120%);
+            animation: drvAuthBtnGlint 3.2s ease-in-out infinite;
+        }
+        @keyframes drvAuthBtnGlint {
+            0%, 75% { transform: translateX(-120%); }
+            100% { transform: translateX(120%); }
+        }
+        .drv-auth-link-animated {
+            display: inline-block;
+            animation: drvAuthLinkNudge 2s ease-in-out infinite;
+        }
+        .drv-auth-link-animated:hover {
+            animation: none;
+            transform: translateX(4px);
+        }
+
+        .input-premium {
+            background: var(--daxi-input-bg, #f8fafc);
+            border: 2px solid var(--daxi-border, #f1f5f9);
+            color: var(--daxi-text, #111827);
+            transition: all 0.3s ease;
+        }
+
+        .input-premium:focus {
+            border-color: #f59e0b;
+            background: var(--daxi-surface-2, white);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+        
+        .file-drop-zone {
+            border: 2px dashed var(--daxi-border-strong, #e2e8f0);
+            background: var(--daxi-input-bg, rgba(255,255,255,0.04));
+            transition: all 0.3s ease;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        
+        @keyframes scan {
+            0% { transform: translateY(-10%); opacity: 0.2; }
+            15% { opacity: 1; }
+            100% { transform: translateY(110%); opacity: 0.15; }
+        }
+        @keyframes daxiScanGrid {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 12px 8px, -8px 12px; }
+        }
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            top: 0;
+            background: linear-gradient(to right, transparent, #34d399, #60a5fa, transparent);
+            box-shadow: 0 0 22px 6px rgba(52, 211, 153, 0.55);
+            animation: scan 1.15s linear infinite;
+            z-index: 22;
+            pointer-events: none;
+        }
+        .analyzing {
+            position: relative;
+        }
+        .analyzing::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background:
+              linear-gradient(rgba(15,23,42,0.18), rgba(15,23,42,0.18)),
+              repeating-linear-gradient(0deg, transparent 0 10px, rgba(52,211,153,0.07) 10px 11px),
+              repeating-linear-gradient(90deg, transparent 0 10px, rgba(96,165,250,0.06) 10px 11px);
+            animation: daxiScanGrid 1.4s linear infinite;
+            pointer-events: none;
+        }
+        .border-valid { border-color: #10b981 !important; border-width: 4px !important; border-style: solid !important; box-shadow: 0 0 0 3px rgba(16,185,129,.25); }
+        .border-near-expiry { border-color: #f59e0b !important; border-width: 4px !important; border-style: solid !important; }
+        .border-expired { border-color: #ef4444 !important; border-width: 4px !important; border-style: solid !important; box-shadow: 0 0 0 3px rgba(239,68,68,.28); }
+
+        #daxi-doc-fail-modal {
+            display: none; position: fixed; inset: 0; z-index: 12000;
+            background: rgba(2,6,23,.62); align-items: center; justify-content: center; padding: 18px;
+        }
+        #daxi-doc-fail-modal.is-open { display: flex; }
+        #daxi-doc-fail-modal .box {
+            background: #fff; border-radius: 22px; padding: 22px 20px; max-width: 420px; width: 100%;
+            box-shadow: 0 24px 70px rgba(0,0,0,.28);
+        }
+        #daxi-doc-fail-modal h3 { margin: 0 0 8px; font-size: 18px; color: #0f172a; }
+        #daxi-doc-fail-msg { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #334155; }
+        #daxi-doc-fail-modal .row { display: flex; flex-direction: column; gap: 8px; }
+        #daxi-doc-fail-modal button {
+            border: none; border-radius: 14px; padding: 12px 14px; font-weight: 800; cursor: pointer;
+        }
+        #daxi-doc-fail-close { background: #e2e8f0; color: #334155; }
+        #daxi-doc-fail-gallery, #daxi-doc-fail-camera {
+            background: linear-gradient(135deg,#2563eb,#10b981); color: #fff;
+        }
+
+        #drv-reg-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            max-width: min(420px, calc(100vw - 32px)); padding: 14px 18px; border-radius: 16px;
+            font-size: 13px; font-weight: 600; z-index: 9999; display: none;
+            box-shadow: 0 12px 40px rgba(15,23,42,.18);
+        }
+        #drv-reg-status {
+            display: none;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.45;
+            margin-top: 4px;
+        }
+        #drv-reg-status.show { display: block; }
+        #drv-reg-status.error {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        #drv-reg-status.success {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        #drv-reg-status.info {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+        #drv-reg-toast.show { display: block; animation: drvToastIn .35s ease; }
+        #drv-reg-toast.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        #drv-reg-toast.success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        #drv-reg-toast.info { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        @keyframes drvToastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .drv-reg-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; margin-left: 4px; }
+        .drv-otp-section {
+            border-radius: 20px;
+            border: 1px solid #fde68a;
+            background: #fffbeb;
+            padding: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .drv-otp-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #92400e;
+            text-align: center;
+            margin: 0 0 6px;
+        }
+        .drv-otp-hint {
+            font-size: 12px;
+            color: #78716c;
+            text-align: center;
+            margin: 0 0 12px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .drv-otp-single {
+            width: 100%;
+            box-sizing: border-box;
+            height: 54px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.35em;
+            border-radius: 16px;
+            border: 2px solid #fde68a;
+            background: #fff;
+            color: #1f2937;
+            padding: 0 12px;
+        }
+        .drv-otp-single:focus {
+            border-color: #f59e0b;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+        }
+        .drv-otp-resend {
+            width: 100%;
+            margin-top: 10px;
+            color: #d97706;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 8px 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        @media (max-width: 480px) {
+            .drv-phone-prefix-btn {
+                min-width: 92px;
+                max-width: 108px;
+                padding-right: 24px;
+                font-size: 13px;
+            }
+            .drv-phone-input {
+                padding: 14px 12px;
+                font-size: 15px;
+            }
+            .drv-otp-single {
+                font-size: 22px;
+                letter-spacing: 0.28em;
+                height: 50px;
+            }
+            #register-section .glass-card {
+                padding: 20px 16px;
+                border-radius: 28px;
+            }
+        }
+        .drv-auth-back-link {
+            width: 100%; color: #94a3b8; font-weight: 700; font-size: 13px;
+            letter-spacing: 0.04em; padding: 10px 0; margin-top: 4px;
+        }
+        .drv-auth-back-link:hover { color: #f59e0b; }
+        #driver-login-errors:empty { display: none; }
+        #driver-login-errors { margin-bottom: 12px; }
+        #driver-login-errors .bg-red-500\/10,
+        #driver-login-errors > div {
+            background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+            padding: 12px 14px; border-radius: 14px; font-size: 13px; font-weight: 700;
+        }
+        @keyframes daxiAutofillTick { from { opacity: 0.99; } to { opacity: 1; } }
+        #drv-login-email:-webkit-autofill,
+        #driver-login-form input[type="password"]:-webkit-autofill {
+            animation-name: daxiAutofillTick;
+        }
+    </style>
+    
+    
+    <script>
+    (function(c,a,r,i){c.CI_API_KEY=i;var s=a.createElement('script');
+    s.async=1;s.src=r+'?v='+new Date().toISOString().slice(0,10).replace(/-/g,'');
+    a.head.appendChild(s)})(window,document,
+    'https://carimagesapi.com/assets/js/carimages.js','ci_787b354548a6c662bbe27778fd45a1e0f6dcafead2c4121b46ff00cb');
+    </script>
+    <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260803h">
+    <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+    <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+    <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+    <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260803">
+    <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+    <script src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+    <script src="/static/js/daxi-shell-role.js?v=20260820f"></script>
+</head>
+<body class="drv-auth-page min-h-screen">
+    <header class="daxi-mini-nav">
+      <a href="/driver/" class="daxi-mini-nav__brand daxi-header-brand">
+        <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--gold" style="max-width:120px;height:32px;width:auto;">
+        <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--dark" style="max-width:120px;height:32px;width:auto;">
+      </a>
+      <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+    </header>
+    <div id="drv-reg-toast" role="alert"></div>
+
+    
+    <section id="login-section" class="min-h-screen flex items-center justify-center px-4 py-12">
+        <div class="glass-card rounded-3xl shadow-2xl p-10 w-full max-w-md border border-gray-100">
+            <div class="text-center mb-8">
+                <div class="drv-auth-logo-wrap">
+                    <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--gold">
+                    <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--dark">
+                </div>
+                <h2 class="drv-auth-title text-3xl font-extrabold text-gray-900 tracking-tight">Espace Chauffeur</h2>
+                <p class="drv-auth-sub text-gray-500 font-medium mt-2">Connectez-vous pour commencer vos courses</p>
+            </div>
+
+            <div id="driver-login-errors"></div>
+            <form id="driver-login-form" hx-post="/htmx/driver/login/" hx-target="#driver-login-errors" hx-swap="innerHTML" novalidate>
+                <div class="drv-auth-form-stack space-y-6">
+                    <div>
+                        <label class="drv-auth-label block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Identifiant</label>
+                        <div id="drv-login-mode-switch" class="drv-login-mode-switch" data-mode="email" role="tablist" aria-label="Mode de connexion">
+                            <button type="button" class="drv-login-mode-btn is-active" data-login-mode="email" role="tab" aria-selected="true">
+                                <i class="ri-mail-line" aria-hidden="true"></i>
+                                <span>Email</span>
+                            </button>
+                            <button type="button" class="drv-login-mode-btn" data-login-mode="phone" role="tab" aria-selected="false">
+                                <i class="ri-phone-line" aria-hidden="true"></i>
+                                <span>Téléphone</span>
+                            </button>
+                        </div>
+                        <div id="drv-login-email-panel" class="drv-login-id-panel mt-4">
+                            <input type="email" id="drv-login-email" name="email" autocomplete="username"
+                                   class="drv-auth-input w-full px-5 py-4 input-premium rounded-2xl text-base"
+                                   placeholder="exemple@gmail.com">
+                        </div>
+                        <div id="drv-login-phone-panel" class="drv-login-id-panel mt-4" hidden>
+                            <div class="drv-phone-wrap">
+                                <div class="drv-phone-prefix-picker" id="drv-login-phone-prefix-picker">
+                                    <select id="drv-login-phone-prefix" class="drv-phone-prefix-native" aria-hidden="true" tabindex="-1">
+                                        <option value="+509" selected title="Haïti">HT +509</option>
+                                        <option value="+1" title="États-Unis">US +1</option>
+                                        <option value="+1-DO" title="Saint-Domingue">DO +1</option>
+                                        <option value="+33" title="France">FR +33</option>
+                                        <option value="+52" title="Mexique">MX +52</option>
+                                    </select>
+                                    <button type="button" id="drv-login-phone-prefix-btn" class="drv-phone-prefix-btn"
+                                            aria-label="Indicatif pays" aria-haspopup="listbox" aria-expanded="false"
+                                            aria-controls="drv-login-phone-prefix-menu">
+                                        <span id="drv-login-phone-prefix-label">HT +509</span>
+                                    </button>
+                                    <ul id="drv-login-phone-prefix-menu" class="drv-phone-prefix-menu" role="listbox" hidden>
+                                        <li role="option" data-value="+509" class="is-selected">HT +509</li>
+                                        <li role="option" data-value="+1">US +1</li>
+                                        <li role="option" data-value="+1-DO">DO +1</li>
+                                        <li role="option" data-value="+33">FR +33</li>
+                                        <li role="option" data-value="+52">MX +52</li>
+                                    </ul>
+                                </div>
+                                <input type="tel" id="drv-login-phone-national" inputmode="numeric" maxlength="8"
+                                       placeholder="44123456" autocomplete="tel-national"
+                                       class="drv-phone-input">
+                            </div>
+                        </div>
+                        <input type="hidden" name="identifier" id="drv-login-identifier" value="">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Mot de passe</label>
+                        <input type="password" name="password" autocomplete="current-password"
+                               class="w-full px-5 py-4 input-premium rounded-2xl text-base"
+                               placeholder="••••••••">
+                    </div>
+                    
+                    <button type="submit" id="driver-login-submit-btn" class="w-full btn-gold btn-gold-animated py-5 rounded-2xl font-bold text-lg shadow-xl shadow-amber-100 mt-4 relative">
+                        SE CONNECTER
+                    </button>
+                    
+                    <div class="drv-auth-switch text-center pt-6">
+                        <p class="text-gray-400 font-medium">Pas encore de compte ?</p>
+                        <button type="button" onclick="toggleAuth('register')" class="drv-auth-link drv-auth-link-animated text-amber-600 font-bold hover:text-amber-700 mt-1">
+                            S'INSCRIRE MAINTENANT →
+                        </button>
+                        <button type="button" id="daxi-shell-back-client"
+                                onclick="if(window.DaxiShellRole){DaxiShellRole.goClient();}else if(window.DaxiAppShell){DaxiAppShell.goClient();}else{location.href='/';}"
+                                class="mt-5 w-full py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                            ← Retour à l'espace client
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    
+    <section id="register-section" class="min-h-screen flex items-center justify-center px-4 py-16 hidden">
+        <div class="glass-card rounded-[40px] shadow-2xl p-8 md:p-12 w-full max-w-2xl border border-gray-100">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-black text-gray-900 tracking-tighter">Devenir Chauffeur</h2>
+                <p class="text-gray-500 font-medium mt-2">Remplissez vos informations pour rejoindre DAXI</p>
+            </div>
+
+            <form id="register-form" enctype="multipart/form-data" class="space-y-10" autocomplete="off" novalidate>
+                <div id="drv-reg-dots" style="display:none;justify-content:center;gap:10px;margin-bottom:8px;">
+                    <span class="drv-reg-dot" data-drv-step="1" style="width:10px;height:10px;border-radius:50%;background:#e5e7eb;"></span>
+                    <span class="drv-reg-dot" data-drv-step="2" style="width:10px;height:10px;border-radius:50%;background:#e5e7eb;"></span>
+                    <span class="drv-reg-dot" data-drv-step="3" style="width:10px;height:10px;border-radius:50%;background:#e5e7eb;"></span>
+                </div>
+
+                
+                <div class="drv-reg-step space-y-5" data-drv-reg-step="0">
+                    <div class="drv-docs-intro">
+                        <h3 class="drv-docs-intro-title">Préparez vos documents</h3>
+                        <p class="drv-docs-intro-lead">
+                            Avant de commencer, assurez-vous d'avoir <strong>tous les documents ci-dessous</strong>.
+                            Ne lancez l'inscription que lorsque vous pouvez les photographier tout de suite
+                            (photos nettes, bien éclairées, sans reflet).
+                        </p>
+                        <ul class="drv-docs-list">
+                            <li class="drv-docs-item">
+                                <i class="ri-user-smile-line"></i>
+                                <div>
+                                    <strong>Photo de profil</strong>
+                                    <span>Selfie clair de votre visage — obligatoire</span>
+                                </div>
+                            </li>
+                            <li class="drv-docs-item">
+                                <i class="ri-profile-line"></i>
+                                <div>
+                                    <strong>Permis de conduire</strong>
+                                    <span>Photo lisible des deux côtés si possible</span>
+                                </div>
+                            </li>
+                            <li class="drv-docs-item">
+                                <i class="ri-shield-check-line"></i>
+                                <div>
+                                    <strong>Assurance OAVCT</strong>
+                                    <span>Assurance véhicule en cours de validité</span>
+                                </div>
+                            </li>
+                            <li class="drv-docs-item">
+                                <i class="ri-bank-card-line"></i>
+                                <div>
+                                    <strong>Carte DGI / Enregistrement</strong>
+                                    <span>Carte d'immatriculation ou document d'enregistrement du véhicule</span>
+                                </div>
+                            </li>
+                            <li class="drv-docs-item optional">
+                                <i class="ri-contrast-drop-line"></i>
+                                <div>
+                                    <strong>Autorisation vitres teintées</strong>
+                                    <span>Seulement si votre véhicule a des vitres teintées</span>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="drv-docs-note">
+                            Vous aurez aussi besoin de : votre nom, email, numéro WhatsApp, mot de passe,
+                            et les informations du véhicule (marque, modèle, année, couleur, plaque).
+                        </div>
+                    </div>
+                    <button type="button" onclick="drvRegGo(1)" class="w-full btn-gold btn-gold-animated py-4 rounded-2xl font-black relative">
+                        Commencer l'inscription
+                    </button>
+                    <button type="button" onclick="toggleAuth('login')" class="drv-auth-back-link">
+                        ← RETOUR À LA CONNEXION
+                    </button>
+                </div>
+
+                
+                <div class="drv-reg-step space-y-5" data-drv-reg-step="1" style="display:none;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</span>
+                        <h3 class="text-lg font-bold text-gray-800">Profil & Identité</h3>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Photo de profil (obligatoire)</label>
+                        <div id="photo-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-44 flex flex-col items-center justify-center mx-auto max-w-xs">
+                            <i class="ri-user-follow-line text-4xl text-gray-300"></i>
+                            <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Selfie clair du visage</span>
+                            <input type="file" id="photo-upload" name="photo" accept="image/*" capture="user" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <img id="photo-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <input type="text" name="firstname" placeholder="Prénom" autocomplete="given-name" class="px-5 py-4 input-premium rounded-2xl w-full">
+                        <input type="text" name="lastname" placeholder="Nom" autocomplete="family-name" class="px-5 py-4 input-premium rounded-2xl w-full">
+                    </div>
+                    <input type="email" name="email" placeholder="exemple@gmail.com" autocomplete="off" class="px-5 py-4 input-premium rounded-2xl w-full">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2">WhatsApp</label>
+                        <div class="drv-phone-wrap">
+                            <div class="drv-phone-prefix-picker" id="drv-phone-prefix-picker">
+                                <select id="drv-phone-prefix" name="phone_prefix" class="drv-phone-prefix-native" aria-hidden="true" tabindex="-1">
+                                    <option value="+509" selected title="Haïti">HT +509</option>
+                                    <option value="+1" title="États-Unis">US +1</option>
+                                    <option value="+1-DO" title="Saint-Domingue">DO +1</option>
+                                    <option value="+33" title="France">FR +33</option>
+                                    <option value="+52" title="Mexique">MX +52</option>
+                                </select>
+                                <button type="button" id="drv-phone-prefix-btn" class="drv-phone-prefix-btn"
+                                        aria-label="Indicatif pays" aria-haspopup="listbox" aria-expanded="false"
+                                        aria-controls="drv-phone-prefix-menu">
+                                    <span id="drv-phone-prefix-label">HT +509</span>
+                                </button>
+                                <ul id="drv-phone-prefix-menu" class="drv-phone-prefix-menu" role="listbox" hidden>
+                                    <li role="option" data-value="+509" class="is-selected">HT +509</li>
+                                    <li role="option" data-value="+1">US +1</li>
+                                    <li role="option" data-value="+1-DO">DO +1</li>
+                                    <li role="option" data-value="+33">FR +33</li>
+                                    <li role="option" data-value="+52">MX +52</li>
+                                </ul>
+                            </div>
+                            <input type="tel" name="phone" id="drv-phone-national" inputmode="numeric" maxlength="8"
+                                   placeholder="44123456" autocomplete="tel-national"
+                                   class="drv-phone-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <input type="password" name="password" id="drv-password" placeholder="Mot de passe (min. 8 caractères)" minlength="8" autocomplete="new-password" class="px-5 py-4 input-premium rounded-2xl w-full">
+                        <input type="password" name="password_confirm" id="drv-password-confirm" placeholder="Confirmer le mot de passe" minlength="8" autocomplete="new-password" class="px-5 py-4 input-premium rounded-2xl w-full">
+                    </div>
+                    <input type="hidden" name="otp" id="drv-otp-hidden">
+
+                    <div id="drv-otp-section" class="hidden drv-otp-section">
+                        <p class="drv-otp-title">Vérification WhatsApp</p>
+                        <p id="drv-otp-hint" class="drv-otp-hint">Un code à 6 chiffres a été envoyé sur votre WhatsApp.</p>
+                        <input type="text" id="drv-otp-single" inputmode="numeric" maxlength="6"
+                               autocomplete="one-time-code" placeholder="000000" class="drv-otp-single"
+                               aria-label="Code de vérification à 6 chiffres">
+                        <button type="button" id="drv-otp-resend" class="drv-otp-resend">Renvoyer le code</button>
+                    </div>
+
+                    <input type="hidden" name="verification_notes" id="verification-notes-input">
+                    <div id="drv-reg-status" role="alert"></div>
+                    <button type="button" id="drv-step1-next" onclick="drvStep1Next()" class="w-full btn-gold py-4 rounded-2xl font-black">Suivant →</button>
+                    <button type="button" onclick="drvRegGo(0)" class="w-full py-3 rounded-2xl border border-gray-200 font-bold text-gray-500">
+                        ← Voir les documents requis
+                    </button>
+                    <button type="button" onclick="toggleAuth('login')" class="drv-auth-back-link">
+                        ← RETOUR À LA CONNEXION
+                    </button>
+                </div>
+
+                
+                <div class="drv-reg-step space-y-5 pt-8 border-t border-gray-100" data-drv-reg-step="2" style="display:none;">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</span>
+                        <h3 class="text-lg font-bold text-gray-800">Votre Véhicule</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <input type="text" id="car_brand" name="car_brand" placeholder="Marque (ex: Toyota)" class="px-5 py-4 input-premium rounded-2xl w-full">
+                        <input type="text" id="car_model" name="car_model" placeholder="Modèle (ex: Hilux)" class="px-5 py-4 input-premium rounded-2xl w-full">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <input type="text" id="car_year" name="car_year" placeholder="Année (ex: 2021)" class="px-5 py-4 input-premium rounded-2xl w-full">
+                        <input type="text" id="car_color" name="car_color" placeholder="Couleur (ex: Blanc)" class="px-5 py-4 input-premium rounded-2xl w-full">
+                    </div>
+                    <input type="text" name="plate" placeholder="Immatriculation (ex: BB-1234)" class="px-5 py-4 input-premium rounded-2xl w-full">
+
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Photo de votre véhicule <span class="text-amber-600">*</span></label>
+                        <p class="text-xs text-gray-500 leading-relaxed">Photo claire de l'extérieur de votre voiture (référence pour l'administration, pas affichée publiquement).</p>
+                        <div id="vehicle-ref-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-44 flex flex-col items-center justify-center mx-auto max-w-md">
+                            <i class="ri-car-line text-3xl text-gray-300"></i>
+                            <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Uploader la photo du véhicule</span>
+                            <input type="file" id="vehicle-reference-upload" name="vehicle_reference_photo" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <img id="vehicle-ref-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;">
+                        <button type="button" onclick="drvRegGo(1)" class="flex-1 py-4 rounded-2xl border border-gray-200 font-bold text-gray-500">← Retour</button>
+                        <button type="button" onclick="drvRegGo(3)" class="flex-1 btn-gold py-4 rounded-2xl font-black">Suivant →</button>
+                    </div>
+                    <button type="button" onclick="toggleAuth('login')" class="drv-auth-back-link">
+                        ← RETOUR À LA CONNEXION
+                    </button>
+                </div>
+
+                
+                <div class="drv-reg-step space-y-5 pt-8 border-t border-gray-100" data-drv-reg-step="3" style="display:none;">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</span>
+                        <h3 class="text-lg font-bold text-gray-800">Documents officiels</h3>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4 leading-relaxed">
+                        Photos nettes et bien éclairées. L'analyse IA est un aide — si elle échoue, votre dossier sera quand même envoyé à l'admin pour validation.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Permis de conduire</label>
+                            <div id="license-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-40 flex flex-col items-center justify-center">
+                                <i class="ri-profile-line text-3xl text-gray-300"></i>
+                                <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Uploader le permis</span>
+                                <input type="file" id="license-upload" name="driving_license" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer doc-upload" data-doc-type="license">
+                                <img id="license-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            </div>
+                            <div class="status-msg text-xs font-semibold mt-2 hidden px-1"></div>
+                        </div>
+
+                        
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Assurance OAVCT</label>
+                            <div id="oavct-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-40 flex flex-col items-center justify-center">
+                                <i class="ri-shield-check-line text-3xl text-gray-300"></i>
+                                <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Uploader l'OAVCT</span>
+                                <input type="file" id="oavct-upload" name="oavct_insurance" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer doc-upload" data-doc-type="oavct">
+                                <img id="oavct-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            </div>
+                            <div class="status-msg text-xs font-semibold mt-2 hidden px-1"></div>
+                        </div>
+
+                        
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Carte DGI / Enregistrement</label>
+                            <div id="dgi-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-40 flex flex-col items-center justify-center">
+                                <i class="ri-bank-card-line text-3xl text-gray-300"></i>
+                                <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Uploader la carte DGI</span>
+                                <input type="file" id="dgi-upload" name="dgi_card" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer doc-upload" data-doc-type="dgi">
+                                <img id="dgi-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            </div>
+                            <div class="status-msg text-xs font-semibold mt-2 hidden px-1"></div>
+                        </div>
+
+                        
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Autorisation Teinte (si applicable)</label>
+                            <div id="tint-dropzone" class="file-drop-zone rounded-3xl p-6 text-center cursor-pointer relative overflow-hidden h-40 flex flex-col items-center justify-center">
+                                <i class="ri-contrast-drop-line text-3xl text-gray-300"></i>
+                                <span class="text-xs text-gray-400 mt-2 font-bold uppercase">Uploader le permis de teinte</span>
+                                <input type="file" id="tint-upload" name="tint_permit" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer doc-upload" data-doc-type="tint">
+                                <img id="tint-img-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            </div>
+                            <div class="status-msg text-xs font-semibold mt-2 hidden px-1"></div>
+                        </div>
+
+                    </div>
+                    <button type="button" onclick="drvRegGo(2)" class="w-full py-4 rounded-2xl border border-gray-200 font-bold text-gray-500 mb-4">← Retour</button>
+                </div>
+
+                
+                <div class="pt-4 space-y-4 drv-reg-step" data-drv-reg-step="3" style="display:none;">
+                    <p class="text-center text-xs text-gray-400">Après inscription, votre compte reste <strong class="text-amber-600">en attente de validation</strong> par l'équipe DAXI.</p>
+                    <button type="button" id="register-submit-btn" class="w-full btn-gold btn-gold-animated py-6 rounded-[24px] font-black text-xl shadow-2xl shadow-amber-200 relative">
+                        ENVOYER MON DOSSIER
+                    </button>
+                    <button type="button" onclick="toggleAuth('login')" class="w-full text-gray-400 font-bold text-sm tracking-wide py-2">
+                        ← RETOUR À LA CONNEXION
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+    <div id="daxi-doc-fail-modal">
+        <div class="box">
+            <h3>Document non validé</h3>
+            <p id="daxi-doc-fail-msg"></p>
+            <div class="row">
+                <button type="button" id="daxi-doc-fail-gallery">Uploader une autre image</button>
+                <button type="button" id="daxi-doc-fail-camera">Capturer une nouvelle photo</button>
+                <button type="button" id="daxi-doc-fail-close">Fermer</button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="daxi-doc-retry-gallery" accept="image/*" style="display:none">
+    <input type="file" id="daxi-doc-retry-camera" accept="image/*" capture="environment" style="display:none">
+
+    <script src="/static/js/daxi-app-api.js?v=20260813"></script>
+    <script src="/static/js/daxi-phone.js?v=20260702"></script>
+    <script>
+        var drvOtpSent = false;
+        var drvOtpVerified = false;
+        var drvOtpSending = false;
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener('htmx:configRequest', function(evt) {
+            var token = (window.DJANGO_SESSION && window.DJANGO_SESSION.csrf_token) || getCookie('csrftoken') || '';
+            if (token) evt.detail.headers['X-CSRFToken'] = token;
+            var path = (evt.detail.path || evt.detail.elt && evt.detail.elt.getAttribute('hx-post') || '') + '';
+            if (path.indexOf('/htmx/driver/login/') >= 0) {
+                if (!drvPrepareLoginIdentifier()) {
+                    evt.preventDefault();
+                    return;
+                }
+                var ident = document.getElementById('drv-login-identifier');
+                var email = document.getElementById('drv-login-email');
+                if (ident && ident.value) evt.detail.parameters['identifier'] = ident.value;
+                if (email && email.value) evt.detail.parameters['email'] = email.value;
+            }
+        });
+
+        function drvShowStatus(msg, type) {
+            var el = document.getElementById('drv-reg-status');
+            if (!el) return;
+            if (!msg) {
+                el.textContent = '';
+                el.className = '';
+                return;
+            }
+            el.textContent = msg;
+            el.className = 'show ' + (type || 'info');
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function drvShowToast(msg, type) {
+            drvShowStatus(msg, type);
+            var el = document.getElementById('drv-reg-toast');
+            if (!el) { alert(msg); return; }
+            el.textContent = msg;
+            el.className = 'show ' + (type || 'info');
+            clearTimeout(el._t);
+            el._t = setTimeout(function() { el.classList.remove('show'); }, 6000);
+        }
+        var DRV_LOGIN_MODE_KEY = 'daxi_drv_login_mode';
+        function drvPhoneCfg(which) {
+            if (which === 'login') {
+                return {
+                    selectId: 'drv-login-phone-prefix',
+                    labelId: 'drv-login-phone-prefix-label',
+                    menuId: 'drv-login-phone-prefix-menu',
+                    btnId: 'drv-login-phone-prefix-btn',
+                    pickerId: 'drv-login-phone-prefix-picker',
+                    nationalId: 'drv-login-phone-national',
+                    storageKey: 'daxi_drv_login_phone_prefix'
+                };
+            }
+            return {
+                selectId: 'drv-phone-prefix',
+                labelId: 'drv-phone-prefix-label',
+                menuId: 'drv-phone-prefix-menu',
+                btnId: 'drv-phone-prefix-btn',
+                pickerId: 'drv-phone-prefix-picker',
+                nationalId: 'drv-phone-national',
+                storageKey: null
+            };
+        }
+        function drvSyncPhonePrefixUi(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var select = document.getElementById(cfg.selectId);
+            var label = document.getElementById(cfg.labelId);
+            var menu = document.getElementById(cfg.menuId);
+            if (!select) return;
+            var val = select.value;
+            var opt = null;
+            for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === val) { opt = select.options[i]; break; }
+            }
+            if (label) label.textContent = opt ? opt.textContent : val;
+            if (menu) {
+                menu.querySelectorAll('[role="option"]').forEach(function(li) {
+                    var on = li.getAttribute('data-value') === val;
+                    li.classList.toggle('is-selected', on);
+                    li.setAttribute('aria-selected', on ? 'true' : 'false');
+                });
+            }
+        }
+        function drvClosePhonePrefixMenu(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var menu = document.getElementById(cfg.menuId);
+            var btn = document.getElementById(cfg.btnId);
+            var wrap = document.getElementById(cfg.pickerId)?.closest('.drv-phone-wrap');
+            if (menu) menu.hidden = true;
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+            if (wrap) wrap.classList.remove('drv-phone-prefix-open');
+        }
+        function drvOpenPhonePrefixMenu(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var menu = document.getElementById(cfg.menuId);
+            var btn = document.getElementById(cfg.btnId);
+            var wrap = document.getElementById(cfg.pickerId)?.closest('.drv-phone-wrap');
+            if (!menu) return;
+            menu.hidden = false;
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+            if (wrap) wrap.classList.add('drv-phone-prefix-open');
+        }
+        function drvSetPhonePrefix(val, cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var select = document.getElementById(cfg.selectId);
+            if (!select) return;
+            if (select.value === val) {
+                drvClosePhonePrefixMenu(cfg);
+                return;
+            }
+            select.value = val;
+            drvSyncPhonePrefixUi(cfg);
+            drvClosePhonePrefixMenu(cfg);
+            if (cfg.storageKey) {
+                try { localStorage.setItem(cfg.storageKey, val); } catch (e) {}
+            }
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        function drvInitPhonePrefixPicker(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var select = document.getElementById(cfg.selectId);
+            var btn = document.getElementById(cfg.btnId);
+            var menu = document.getElementById(cfg.menuId);
+            if (!select || !btn || !menu) return;
+            drvSyncPhonePrefixUi(cfg);
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (menu.hidden) drvOpenPhonePrefixMenu(cfg);
+                else drvClosePhonePrefixMenu(cfg);
+            });
+            menu.querySelectorAll('[role="option"]').forEach(function(li) {
+                li.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    drvSetPhonePrefix(li.getAttribute('data-value'), cfg);
+                });
+            });
+            document.addEventListener('click', function(e) {
+                if (!document.getElementById(cfg.pickerId)?.contains(e.target)) {
+                    drvClosePhonePrefixMenu(cfg);
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') drvClosePhonePrefixMenu(cfg);
+            });
+        }
+        function drvPhonePrefixValue(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var el = document.getElementById(cfg.selectId);
+            var val = el ? el.value : '+509';
+            return val === '+1-DO' ? '+1' : val;
+        }
+        function drvPhoneRules(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var raw = document.getElementById(cfg.selectId)?.value || '+509';
+            if (raw === '+509') return { min: 8, max: 8, placeholder: '44123456' };
+            if (raw === '+1' || raw === '+1-DO') return { min: 10, max: 10, placeholder: '3051234567' };
+            if (raw === '+33') return { min: 9, max: 9, placeholder: '612345678' };
+            if (raw === '+52') return { min: 10, max: 10, placeholder: '5512345678' };
+            return { min: 8, max: 15, placeholder: '' };
+        }
+        function drvUpdatePhoneFieldUi(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var rules = drvPhoneRules(cfg);
+            var input = document.getElementById(cfg.nationalId);
+            if (!input) return;
+            input.maxLength = rules.max;
+            input.placeholder = rules.placeholder;
+        }
+        function drvNormalizePhoneInput(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            var input = document.getElementById(cfg.nationalId);
+            if (!input) return '';
+            var prefix = drvPhonePrefixValue(cfg);
+            var rules = drvPhoneRules(cfg);
+            var digits = (input.value || '').replace(/\D/g, '');
+            var prefixDigits = prefix.replace(/\D/g, '');
+            if (digits.indexOf(prefixDigits) === 0 && digits.length > prefixDigits.length + 4) {
+                digits = digits.slice(prefixDigits.length);
+            }
+            if (prefix === '+509') {
+                if (digits.indexOf('509') === 0 && digits.length > 3) digits = digits.slice(3);
+                if (digits.length === 9 && digits.charAt(0) === '0') digits = digits.slice(1);
+            }
+            if (prefix === '+33' && digits.charAt(0) === '0') digits = digits.slice(1);
+            if (prefix === '+1' && digits.length === 11 && digits.charAt(0) === '1') digits = digits.slice(1);
+            if (prefix === '+52' && digits.indexOf('52') === 0 && digits.length > 10) digits = digits.slice(2);
+            digits = digits.slice(0, rules.max);
+            input.value = digits;
+            return digits;
+        }
+        function drvFullPhone(cfg) {
+            cfg = cfg || drvPhoneCfg('reg');
+            drvNormalizePhoneInput(cfg);
+            var prefix = drvPhonePrefixValue(cfg);
+            var national = document.getElementById(cfg.nationalId)?.value || '';
+            if (typeof daxiNormalizePhone === 'function') {
+                var full = daxiNormalizePhone(prefix, national);
+                if (full) return full;
+            }
+            return prefix + national.replace(/\D/g, '');
+        }
+        function drvSetLoginMode(mode) {
+            mode = mode === 'phone' ? 'phone' : 'email';
+            var switchEl = document.getElementById('drv-login-mode-switch');
+            var emailPanel = document.getElementById('drv-login-email-panel');
+            var phonePanel = document.getElementById('drv-login-phone-panel');
+            if (switchEl) switchEl.setAttribute('data-mode', mode);
+            if (emailPanel) emailPanel.hidden = mode !== 'email';
+            if (phonePanel) phonePanel.hidden = mode !== 'phone';
+            switchEl?.querySelectorAll('[data-login-mode]').forEach(function(btn) {
+                var on = btn.getAttribute('data-login-mode') === mode;
+                btn.classList.toggle('is-active', on);
+                btn.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            var emailInput = document.getElementById('drv-login-email');
+            var phoneInput = document.getElementById('drv-login-phone-national');
+            if (emailInput) {
+                emailInput.required = false;
+                if (mode === 'email') emailInput.focus();
+            }
+            if (phoneInput) phoneInput.required = false;
+        }
+        function drvShowLoginError(msg) {
+            var el = document.getElementById('driver-login-errors');
+            if (!el) return;
+            el.innerHTML = '<div class="drv-login-error">' + msg + '</div>';
+        }
+        function drvReadFilledValue(el) {
+            if (!el) return '';
+            try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+            return (el.value || '').trim();
+        }
+        function drvPrepareLoginIdentifier() {
+            var mode = document.getElementById('drv-login-mode-switch')?.getAttribute('data-mode') || 'email';
+            var hidden = document.getElementById('drv-login-identifier');
+            if (!hidden) return false;
+            if (mode === 'email') {
+                var emailEl = document.getElementById('drv-login-email');
+                var email = drvReadFilledValue(emailEl);
+                if (!email) {
+                    drvShowLoginError('Veuillez saisir votre email.');
+                    return false;
+                }
+                hidden.value = email;
+            } else {
+                var cfg = drvPhoneCfg('login');
+                var digits = drvNormalizePhoneInput(cfg);
+                var rules = drvPhoneRules(cfg);
+                if (digits.length < rules.min || digits.length > rules.max) {
+                    drvShowLoginError('Numéro invalide pour l\'indicatif sélectionné.');
+                    return false;
+                }
+                var full = drvFullPhone(cfg);
+                if (!full) {
+                    drvShowLoginError('Numéro invalide pour l\'indicatif sélectionné.');
+                    return false;
+                }
+                hidden.value = full;
+                try {
+                    localStorage.setItem(cfg.storageKey, document.getElementById(cfg.selectId).value);
+                } catch (e) {}
+            }
+            try { localStorage.setItem(DRV_LOGIN_MODE_KEY, mode); } catch (e) {}
+            return true;
+        }
+        function drvInitLoginModeSwitch() {
+            var switchEl = document.getElementById('drv-login-mode-switch');
+            if (!switchEl) return;
+            var savedMode = 'email';
+            try {
+                savedMode = localStorage.getItem(DRV_LOGIN_MODE_KEY) || 'email';
+            } catch (e) {}
+            drvSetLoginMode(savedMode);
+            switchEl.querySelectorAll('[data-login-mode]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    drvSetLoginMode(btn.getAttribute('data-login-mode'));
+                });
+            });
+            var loginCfg = drvPhoneCfg('login');
+            var savedPrefix = '+509';
+            try {
+                savedPrefix = localStorage.getItem(loginCfg.storageKey) || '+509';
+            } catch (e) {}
+            var loginSelect = document.getElementById(loginCfg.selectId);
+            if (loginSelect) {
+                var hasOpt = false;
+                for (var i = 0; i < loginSelect.options.length; i++) {
+                    if (loginSelect.options[i].value === savedPrefix) { hasOpt = true; break; }
+                }
+                loginSelect.value = hasOpt ? savedPrefix : '+509';
+            }
+            drvInitPhonePrefixPicker(loginCfg);
+            drvUpdatePhoneFieldUi(loginCfg);
+            var loginPhone = document.getElementById(loginCfg.nationalId);
+            if (loginPhone) {
+                loginPhone.addEventListener('input', function() { drvNormalizePhoneInput(loginCfg); });
+                loginPhone.addEventListener('blur', function() { drvNormalizePhoneInput(loginCfg); });
+            }
+            if (loginSelect) {
+                loginSelect.addEventListener('change', function() {
+                    drvUpdatePhoneFieldUi(loginCfg);
+                    drvNormalizePhoneInput(loginCfg);
+                });
+            }
+        }
+        function drvValidateStep1Fields() {
+            var f = document.getElementById('register-form');
+            var missing = [];
+            if (!f.firstname.value.trim()) missing.push('prénom');
+            if (!f.lastname.value.trim()) missing.push('nom');
+            if (!f.email.value.trim()) missing.push('email');
+            if (!drvFullPhone()) missing.push('numéro');
+            if (!f.password.value) missing.push('mot de passe');
+            if (!f.password_confirm.value) missing.push('confirmation du mot de passe');
+            if (missing.length) {
+                drvShowToast('Champs manquants : ' + missing.join(', ') + '.', 'error');
+                return false;
+            }
+            if ((f.password.value || '').length < 8) {
+                drvShowToast('Mot de passe : minimum 8 caractères.', 'error');
+                return false;
+            }
+            if (f.password.value !== f.password_confirm.value) {
+                drvShowToast('Les mots de passe ne correspondent pas.', 'error');
+                return false;
+            }
+            var phoneDigits = drvNormalizePhoneInput(drvPhoneCfg('reg'));
+            var rules = drvPhoneRules();
+            if (phoneDigits.length < rules.min || phoneDigits.length > rules.max) {
+                drvShowToast('Numéro WhatsApp invalide pour le pays sélectionné.', 'error');
+                return false;
+            }
+            if (!drvFullPhone()) {
+                drvShowToast('Numéro WhatsApp invalide pour le pays sélectionné.', 'error');
+                return false;
+            }
+            return true;
+        }
+        function drvGetOtpCode() {
+            var el = document.getElementById('drv-otp-single');
+            return ((el && el.value) || '').replace(/\D/g, '').slice(0, 6);
+        }
+        function drvClearOtpInputs() {
+            var el = document.getElementById('drv-otp-single');
+            if (el) el.value = '';
+            document.getElementById('drv-otp-hidden').value = '';
+        }
+        function drvResetOtpState() {
+            drvOtpSent = false;
+            drvOtpVerified = false;
+            drvOtpSending = false;
+            drvClearOtpInputs();
+            var section = document.getElementById('drv-otp-section');
+            if (section) section.classList.add('hidden');
+            var btn = document.getElementById('drv-step1-next');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Suivant →';
+            }
+        }
+        async function drvSendRegOtp() {
+            if (drvOtpSending) return false;
+            var f = document.getElementById('register-form');
+            drvOtpSending = true;
+            var btn = document.getElementById('drv-step1-next');
+            if (btn) { btn.disabled = true; btn.innerText = 'Envoi du code...'; }
+            try {
+                var fd = new FormData();
+                fd.append('email', f.email.value.trim());
+                fd.append('phone', f.phone.value.trim());
+                fd.append('phone_prefix', document.getElementById('drv-phone-prefix').value);
+                fd.append('firstname', f.firstname.value.trim());
+                var res = await fetch('/htmx/driver/register/send-otp/', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'include',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                var data = await res.json().catch(function() { return {}; });
+                if (!res.ok || !data.success) {
+                    var msg = data.message || 'Impossible d\'envoyer le code.';
+                    if (/déjà utilisé|deja utilise|existe déjà|existe deja/i.test(msg)) {
+                        msg += ' Utilisez « Retour à la connexion » si vous avez déjà un compte.';
+                    }
+                    drvShowToast(msg, 'error');
+                    return false;
+                }
+                drvShowStatus('', '');
+                drvOtpSent = true;
+                drvOtpVerified = false;
+                document.getElementById('drv-otp-section').classList.remove('hidden');
+                document.getElementById('drv-otp-hint').textContent =
+                    'Code envoyé au ' + drvFullPhone() + '. Entrez les 6 chiffres ci-dessous.';
+                if (btn) { btn.disabled = false; btn.innerText = 'Vérifier et continuer →'; }
+                drvShowToast('Code envoyé sur WhatsApp.', 'success');
+                var otpInput = document.getElementById('drv-otp-single');
+                if (otpInput) otpInput.focus();
+                return true;
+            } catch (err) {
+                drvShowToast('Erreur réseau — réessayez.', 'error');
+                return false;
+            } finally {
+                drvOtpSending = false;
+                var btn2 = document.getElementById('drv-step1-next');
+                if (btn2 && !drvOtpSent) {
+                    btn2.disabled = false;
+                    btn2.innerText = 'Suivant →';
+                }
+            }
+        }
+        async function drvStep1Next() {
+            if (!drvValidateStep1Fields()) return;
+            if (!drvOtpSent) {
+                await drvSendRegOtp();
+                return;
+            }
+            if (drvOtpVerified) {
+                drvRegGo(2);
+                return;
+            }
+            var f = document.getElementById('register-form');
+            var otp = drvGetOtpCode();
+            if (otp.length !== 6) {
+                drvShowToast('Entrez le code à 6 chiffres reçu sur WhatsApp.', 'error');
+                return;
+            }
+            var btn = document.getElementById('drv-step1-next');
+            if (btn) { btn.disabled = true; btn.innerText = 'Vérification...'; }
+            try {
+                var fd = new FormData();
+                fd.append('email', f.email.value.trim());
+                fd.append('phone', f.phone.value.trim());
+                fd.append('phone_prefix', document.getElementById('drv-phone-prefix').value);
+                fd.append('otp', otp);
+                var res = await fetch('/htmx/driver/register/verify-otp/', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'include',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                });
+                var data = await res.json();
+                if (!data.success) {
+                    drvShowToast(data.message || 'Code incorrect.', 'error');
+                    return;
+                }
+                drvOtpVerified = true;
+                document.getElementById('drv-otp-hidden').value = otp;
+                drvShowToast('WhatsApp vérifié.', 'success');
+                drvRegGo(2);
+            } catch (err) {
+                drvShowToast('Erreur réseau — réessayez.', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = drvOtpVerified ? 'Suivant →' : 'Vérifier et continuer →';
+                }
+            }
+        }
+        function drvRegGo(step) {
+            if (step === 2 && !drvOtpVerified) {
+                drvShowToast('Vérifiez votre numéro WhatsApp avant de continuer.', 'error');
+                return;
+            }
+            if (step === 2) {
+                if (!document.getElementById('photo-upload')?.files?.length) {
+                    drvShowToast('Ajoutez votre photo de profil avant de continuer.', 'error');
+                    return;
+                }
+            }
+            if (step === 3) {
+                var f2 = document.getElementById('register-form');
+                if (!f2.car_brand.value || !f2.car_model.value || !f2.plate.value) {
+                    drvShowToast('Remplissez marque, modèle et plaque.', 'error');
+                    return;
+                }
+                if (!document.getElementById('vehicle-reference-upload')?.files?.length) {
+                    drvShowToast('Ajoutez une photo de votre véhicule avant de continuer.', 'error');
+                    return;
+                }
+            }
+            document.querySelectorAll('.drv-reg-step').forEach(function(el) {
+                el.style.display = (parseInt(el.getAttribute('data-drv-reg-step'), 10) === step) ? '' : 'none';
+            });
+            var dots = document.getElementById('drv-reg-dots');
+            if (dots) dots.style.display = (step === 0) ? 'none' : 'flex';
+            document.querySelectorAll('.drv-reg-dot').forEach(function(dot) {
+                var n = parseInt(dot.getAttribute('data-drv-step'), 10);
+                dot.style.background = (step > 0 && n <= step) ? '#f59e0b' : '#e5e7eb';
+            });
+            if (step > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function toggleAuth(mode) {
+            const login = document.getElementById('login-section');
+            const register = document.getElementById('register-section');
+            if (mode === 'register') {
+                login.classList.add('hidden');
+                register.classList.remove('hidden');
+                drvRegGo(0);
+            } else {
+                register.classList.add('hidden');
+                login.classList.remove('hidden');
+                drvResetOtpState();
+                drvRegGo(0);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            var loginForm = document.getElementById('driver-login-form');
+            var loginBtn = document.getElementById('driver-login-submit-btn');
+            if (loginForm && loginBtn) {
+                loginForm.addEventListener('animationstart', function(e) {
+                    if (e.animationName !== 'daxiAutofillTick') return;
+                    var hidden = document.getElementById('drv-login-identifier');
+                    var email = document.getElementById('drv-login-email');
+                    if (hidden && email && (email.value || '').trim()) hidden.value = email.value.trim();
+                }, true);
+                loginForm.addEventListener('submit', function(e) {
+                    if (!drvPrepareLoginIdentifier()) {
+                        e.preventDefault();
+                        loginBtn.disabled = false;
+                        return;
+                    }
+                    var pw = loginForm.querySelector('input[name="password"]');
+                    if (!drvReadFilledValue(pw)) {
+                        e.preventDefault();
+                        drvShowLoginError('Veuillez saisir votre mot de passe.');
+                        loginBtn.disabled = false;
+                        return;
+                    }
+                    loginBtn.disabled = true;
+                    loginBtn.classList.add('opacity-80', 'scale-[0.98]');
+                    loginBtn.innerHTML = '<span class="inline-flex items-center justify-center gap-2"><span class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Connexion…</span>';
+                });
+            }
+            drvInitLoginModeSwitch();
+            var regCfg = drvPhoneCfg('reg');
+            var phoneInput = document.getElementById(regCfg.nationalId);
+            var prefixSelect = document.getElementById(regCfg.selectId);
+            drvInitPhonePrefixPicker(regCfg);
+            drvUpdatePhoneFieldUi(regCfg);
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function() { drvNormalizePhoneInput(regCfg); });
+                phoneInput.addEventListener('blur', function() { drvNormalizePhoneInput(regCfg); });
+            }
+            if (prefixSelect) {
+                prefixSelect.addEventListener('change', function() {
+                    drvUpdatePhoneFieldUi(regCfg);
+                    drvNormalizePhoneInput(regCfg);
+                    if (drvOtpSent || drvOtpVerified) {
+                        drvOtpSent = false;
+                        drvOtpVerified = false;
+                        document.getElementById('drv-otp-hidden').value = '';
+                        var btn = document.getElementById('drv-step1-next');
+                        if (btn) btn.innerText = 'Suivant →';
+                    }
+                });
+            }
+            var otpSingle = document.getElementById('drv-otp-single');
+            if (otpSingle) {
+                otpSingle.addEventListener('input', function() {
+                    this.value = (this.value || '').replace(/\D/g, '').slice(0, 6);
+                });
+            }
+            var resendBtn = document.getElementById('drv-otp-resend');
+            if (resendBtn) {
+                resendBtn.addEventListener('click', async function() {
+                    if (!drvValidateStep1Fields()) return;
+                    drvClearOtpInputs();
+                    drvOtpSent = false;
+                    drvOtpVerified = false;
+                    await drvSendRegOtp();
+                });
+            }
+            ['email', 'phone'].forEach(function(name) {
+                var el = document.querySelector('#register-form [name="' + name + '"]');
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    if (drvOtpSent || drvOtpVerified) {
+                        drvOtpSent = false;
+                        drvOtpVerified = false;
+                        document.getElementById('drv-otp-hidden').value = '';
+                        var btn = document.getElementById('drv-step1-next');
+                        if (btn) btn.innerText = 'Suivant →';
+                    }
+                });
+            });
+
+            const setupPreview = (inputId, previewId) => {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                if (!input || !preview) return;
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (re) => {
+                            preview.src = re.target.result;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+            };
+
+            setupPreview('license-upload', 'license-img-preview');
+            setupPreview('photo-upload', 'photo-img-preview');
+            setupPreview('vehicle-reference-upload', 'vehicle-ref-img-preview');
+            setupPreview('oavct-upload', 'oavct-img-preview');
+            setupPreview('dgi-upload', 'dgi-img-preview');
+            setupPreview('tint-upload', 'tint-img-preview');
+
+
+            const analyzedDocs = {
+                license: false,
+                oavct: false,
+                dgi: false,
+                tint: true 
+            };
+            const verificationNotes = {};
+
+            var _daxiRetryTargetInput = null;
+            function daxiCloseDocFail() {
+                var m = document.getElementById('daxi-doc-fail-modal');
+                if (m) m.classList.remove('is-open');
+            }
+            function daxiOpenDocFail(inputEl, message) {
+                _daxiRetryTargetInput = inputEl;
+                var msg = document.getElementById('daxi-doc-fail-msg');
+                if (msg) msg.textContent = message || 'Document refusé.';
+                var m = document.getElementById('daxi-doc-fail-modal');
+                if (m) m.classList.add('is-open');
+            }
+            function daxiAssignRetryFile(file) {
+                if (!_daxiRetryTargetInput || !file) return;
+                try {
+                    var dt = new DataTransfer();
+                    dt.items.add(file);
+                    _daxiRetryTargetInput.files = dt.files;
+                } catch (e) {}
+                _daxiRetryTargetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                daxiCloseDocFail();
+            }
+            var failClose = document.getElementById('daxi-doc-fail-close');
+            if (failClose) failClose.onclick = daxiCloseDocFail;
+            var galBtn = document.getElementById('daxi-doc-fail-gallery');
+            var camBtn = document.getElementById('daxi-doc-fail-camera');
+            var galInp = document.getElementById('daxi-doc-retry-gallery');
+            var camInp = document.getElementById('daxi-doc-retry-camera');
+            if (galBtn && galInp) galBtn.onclick = function() { galInp.value = ''; galInp.click(); };
+            if (camBtn && camInp) camBtn.onclick = function() { camInp.value = ''; camInp.click(); };
+            if (galInp) galInp.onchange = function() { if (this.files[0]) daxiAssignRetryFile(this.files[0]); };
+            if (camInp) camInp.onchange = function() { if (this.files[0]) daxiAssignRetryFile(this.files[0]); };
+
+            document.querySelectorAll('.doc-upload').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const docType = input.dataset.docType;
+                    const dropzone = input.parentElement;
+                    const preview = dropzone.querySelector('img');
+                    const statusMsg = dropzone.nextElementSibling; 
+                    
+
+                    const reader = new FileReader();
+                    reader.onload = (re) => {
+                        preview.src = re.target.result;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+
+
+                    dropzone.classList.add('analyzing');
+                    statusMsg.innerText = "Analyse IA en cours...";
+                    statusMsg.classList.remove('hidden', 'text-emerald-600', 'text-amber-600', 'text-red-600');
+                    statusMsg.classList.add('text-blue-500', 'animate-pulse');
+
+                    const scanLine = document.createElement('div');
+                    scanLine.className = 'scan-line';
+                    dropzone.appendChild(scanLine);
+
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('doc_type', docType);
+                    formData.append('firstname', document.querySelector('input[name="firstname"]').value || '');
+                    formData.append('lastname', document.querySelector('input[name="lastname"]').value || '');
+                    
+                    try {
+                        const response = await fetch('/htmx/analyze-document/', {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                        });
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            throw new Error(`Erreur serveur (${response.status}) : ${errorText.substring(0, 50)}...`);
+                        }
+                        
+                        const data = await response.json();
+
+
+                        scanLine.remove();
+                        dropzone.classList.remove('analyzing');
+                        statusMsg.classList.remove('animate-pulse', 'text-blue-500');
+
+
+                        dropzone.classList.remove('border-valid', 'border-near-expiry', 'border-expired');
+                        statusMsg.classList.remove('hidden', 'text-emerald-600', 'text-amber-600', 'text-red-600');
+
+                        if (data.error) {
+                            dropzone.classList.add('border-expired');
+                            statusMsg.innerText = data.error;
+                            statusMsg.classList.remove('hidden');
+                            statusMsg.classList.add('text-red-600');
+                            analyzedDocs[docType] = !!file;
+                            verificationNotes[docType] = 'Vérification manuelle requise — ' + data.error;
+                            document.getElementById('verification-notes-input').value = JSON.stringify(verificationNotes);
+                            return;
+                        }
+
+                        if (data.warning || data.manual_review) {
+                            dropzone.classList.add('border-near-expiry');
+                            statusMsg.innerText = data.warning || data.message || 'Document enregistré — vérification manuelle';
+                            statusMsg.classList.add('text-amber-600');
+                            analyzedDocs[docType] = true;
+                            verificationNotes[docType] = statusMsg.innerText;
+                            document.getElementById('verification-notes-input').value = JSON.stringify(verificationNotes);
+                            return;
+                        }
+
+
+                        statusMsg.innerText = `${data.document_type.toUpperCase()} : ${data.message}`;
+                        statusMsg.classList.remove('hidden');
+
+                        if (data.status === 'valid') {
+                            dropzone.classList.add('border-valid');
+                            statusMsg.classList.add('text-emerald-600');
+                            analyzedDocs[docType] = true;
+                        } else if (data.status === 'near_expiry') {
+                            dropzone.classList.add('border-near-expiry');
+                            statusMsg.classList.add('text-amber-600');
+                            analyzedDocs[docType] = true;
+                        } else if (data.status === 'manual_verification') {
+                            dropzone.classList.add('border-near-expiry');
+                            statusMsg.classList.add('text-amber-600');
+                            statusMsg.innerText = data.message || 'Document enregistré — vérification manuelle';
+                            analyzedDocs[docType] = true;
+                            verificationNotes[docType] = statusMsg.innerText;
+                        } else if (data.status === 'expired' || data.status === 'invalid_name' || data.status === 'fake_document' || data.status === 'wrong_type' || data.ok === false) {
+                            dropzone.classList.add('border-expired');
+                            statusMsg.classList.add('text-red-600');
+                            statusMsg.innerText = data.message || 'Document refusé';
+                            input.value = '';
+                            analyzedDocs[docType] = false;
+                            verificationNotes[docType] = data.message;
+                            daxiOpenDocFail(input, data.message || 'Document refusé');
+                        }
+
+
+                        document.getElementById('verification-notes-input').value = JSON.stringify(verificationNotes);
+                    } catch (err) {
+                        console.error(err);
+                        if (scanLine) scanLine.remove();
+                        dropzone.classList.remove('analyzing');
+                        statusMsg.classList.remove('animate-pulse', 'text-blue-500');
+                        statusMsg.innerText = "Analyse indisponible — document conservé pour vérification manuelle.";
+                        statusMsg.classList.add('text-amber-600');
+                        if (file) {
+                            analyzedDocs[docType] = true;
+                            verificationNotes[docType] = 'OCR indisponible — vérification manuelle';
+                            document.getElementById('verification-notes-input').value = JSON.stringify(verificationNotes);
+                        }
+                    }
+                });
+            });
+
+
+            const registerBtn = document.getElementById('register-submit-btn');
+            const registerForm = document.getElementById('register-form');
+
+            if (registerBtn && registerForm) {
+                registerBtn.onclick = async () => {
+                    drvNormalizePhoneInput(drvPhoneCfg('reg'));
+                    const formData = new FormData(registerForm);
+                    formData.set('phone', drvFullPhone());
+                    formData.set('phone_prefix', document.getElementById('drv-phone-prefix').value);
+
+                    const fields = ['firstname', 'lastname', 'email', 'phone', 'password', 'car_brand', 'car_model', 'plate'];
+                    for (const f of fields) {
+                        if (!formData.get(f)) {
+                            drvShowToast('Le champ « ' + f + ' » est manquant.', 'error');
+                            return;
+                        }
+                    }
+                    if ((formData.get('password') || '').length < 8) {
+                        drvShowToast('Mot de passe : minimum 8 caractères.', 'error');
+                        return;
+                    }
+                    if (formData.get('password') !== formData.get('password_confirm')) {
+                        drvShowToast('Les mots de passe ne correspondent pas.', 'error');
+                        drvRegGo(1);
+                        return;
+                    }
+                    if (!formData.get('otp')) {
+                        drvShowToast('Vérifiez votre WhatsApp à l\'étape 1 (code OTP).', 'error');
+                        drvRegGo(1);
+                        return;
+                    }
+                    
+                    const docChecks = [
+                        ['driving_license', 'permis de conduire'],
+                        ['oavct_insurance', 'assurance OAVCT'],
+                        ['dgi_card', 'carte DGI'],
+                        ['vehicle_reference_photo', 'photo du véhicule'],
+                    ];
+                    for (const [name, label] of docChecks) {
+                        const input = registerForm.querySelector(`input[name="${name}"]`);
+                        if (!input?.files?.length) {
+                            drvShowToast('Veuillez uploader votre ' + label + '.', 'error');
+                            return;
+                        }
+                    }
+
+                    if (!formData.get('photo') || !document.getElementById('photo-upload')?.files?.length) {
+                        drvShowToast('La photo de profil est obligatoire.', 'error');
+                        return;
+                    }
+
+                    registerBtn.disabled = true;
+                    registerBtn.innerText = 'ENVOI DU DOSSIER...';
+
+                    try {
+                        const response = await fetch('/htmx/driver/register/', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include',
+                            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                        });
+
+                        const redirect = response.headers.get('HX-Redirect') || response.headers.get('Hx-Redirect');
+                        if (redirect) {
+                            drvShowToast('Dossier envoyé ! Redirection…', 'success');
+                            setTimeout(function() { window.location.href = redirect; }, 400);
+                            return;
+                        }
+                        const html = await response.text();
+                        if (html.includes('ri-error-warning') || html.toLowerCase().includes('erreur')) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.innerHTML = html;
+                            drvShowToast(errorDiv.innerText.replace(/\s+/g, ' ').trim().slice(0, 280) || 'Inscription refusée.', 'error');
+                        } else if (response.ok) {
+                            window.location.href = '/driver/';
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        drvShowToast('Erreur réseau — vérifiez votre connexion.', 'error');
+                    } finally {
+                        registerBtn.disabled = false;
+                        registerBtn.innerText = "ENVOYER MON DOSSIER";
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>

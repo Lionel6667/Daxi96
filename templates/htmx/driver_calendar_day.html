@@ -1,0 +1,35 @@
+{% load static %}
+
+<div class="drv-cal-day" data-cal-day-url="{{ day_url }}">
+  <div class="drv-cal-day__title">📅 {{ date_display }}</div>
+  {% if is_today %}
+  <p class="drv-cal-day__hint">Inclut vos courses actives du jour.</p>
+  {% endif %}
+
+  {% if not orders %}
+  <div class="drv-cal-day__empty">Aucune course ce jour</div>
+  {% endif %}
+
+  {% for o in orders %}
+  <div class="drv-cal-day__order drv-cal-day__order--{{ o.status }}">
+    <div class="drv-cal-day__route">{{ o.pickup_display|default:o.pickup }} → {{ o.destination_display|default:o.destination }}</div>
+    <div class="drv-cal-day__meta">
+      {% if o.time %}⏰ {{ o.time|slice:":5" }}{% endif %}
+      · 👤 {{ o.client_name }}
+      {% if o.price %} · ${{ o.price }}{% endif %}
+    </div>
+    <div class="drv-cal-day__footer">
+      <span class="drv-cal-day__badge drv-cal-day__badge--{{ o.status }}">
+        {% if o.status == 'completed' %}Terminé
+        {% elif o.status == 'cancelled' %}Annulé
+        {% else %}{{ o.client_status_label|default:o.status_display }}{% endif %}
+      </span>
+      <button type="button" class="daxi-cal-detail-btn"
+              data-order-detail-url="/htmx/driver/calendar/order/{{ o.id }}/"
+              onclick="event.stopPropagation(); openDriverCalendarOrderDetail(this);">
+        <i class="ri-eye-line"></i> Voir détails
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>

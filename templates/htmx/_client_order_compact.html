@@ -1,0 +1,109 @@
+
+{% include "htmx/_order_map_snippet.html" with map_scope="client" show_map_actions=True %}
+<div id="co-{{ o.id }}"
+     class="daxi-oc-card{% if o.sos_triggered %} daxi-oc-card--sos{% endif %}"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-payment-status="{{ o.payment_status|default:'pending' }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0 }}"
+     data-timing="{% if o.is_later %}later{% else %}now{% endif %}"
+     {% if o.sos_triggered %}style="border:2px solid #ef4444;box-shadow:0 0 24px rgba(239,68,68,.35);background:linear-gradient(135deg,rgba(69,10,10,.25),rgba(15,23,42,.95));"{% endif %}>
+
+  <div class="daxi-oc-accent daxi-oc-accent--{{ o.status }}{% if o.is_later and o.status != 'in_progress' %} daxi-oc-accent--scheduled{% endif %}"></div>
+
+  <div class="daxi-oc-inner">
+    {% include "htmx/_order_status_pipeline.html" %}
+    
+    <div class="daxi-oc-head">
+      <div class="daxi-oc-head-left">
+        {% include "htmx/_order_client_status_badge.html" %}
+        {% if o.is_later %}
+        <span class="daxi-oc-timing daxi-oc-timing--later">
+          <i class="ri-calendar-schedule-line"></i>
+          <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong>
+        </span>
+        {% else %}
+        <span class="daxi-oc-timing daxi-oc-timing--now"><i class="ri-flashlight-fill"></i> <strong data-translate="timing_now">Maintenant</strong></span>
+        {% endif %}
+      </div>
+      <div class="daxi-oc-price">
+        {% if o.total_price or o.price %}
+        <span class="daxi-oc-price-val">${{ o.total_price|default:o.price|floatformat:2 }}</span>
+        {% else %}<span class="daxi-oc-price-pending">—</span>{% endif %}
+        {% if o.trip_type %}
+        {% if o.trip_type == 'round_trip' or o.trip_type == 'aller-retour' or o.trip_type == 'aller retour' %}
+        <span class="daxi-oc-price-sub" data-translate="trip_round_trip">Aller retour</span>
+        {% else %}
+        <span class="daxi-oc-price-sub" data-translate="trip_one_way">Aller simple</span>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--pickup"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="label_departure">Départ</span>
+          <span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup|default:"Non défini" }}</span>
+        </div>
+      </div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--dest"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="label_arrival">Arrivée</span>
+          <span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination|default:"Non définie" }}</span>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="daxi-oc-meta">
+      <span class="daxi-oc-chip"><i class="ri-time-line"></i> {{ o.created_display }}</span>
+      {% if o.distance_km %}<span class="daxi-oc-chip"><i class="ri-route-line"></i> {{ o.distance_km }} km</span>{% endif %}
+      {% if o.duration_min %}<span class="daxi-oc-chip"><i class="ri-timer-line"></i> ~{{ o.duration_min }} min</span>{% endif %}
+      <span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers|default:1 }} <span data-translate="label_passengers_short">pers.</span></span>
+      {% if o.payment_method %}
+      <span class="daxi-oc-chip"><i class="ri-bank-card-line"></i>
+        {% if o.payment_method == 'in_person' %}<span data-translate="payment_in_person">Sur place</span>
+        {% elif o.payment_method == 'moncash' %}<span data-translate="payment_moncash">MonCash</span>
+        {% elif o.payment_method == 'card' %}<span data-translate="payment_card">Carte</span>
+        {% else %}<span data-translate="payment_in_person">{{ o.payment_method }}</span>{% endif %}
+      </span>
+      {% endif %}
+        {% if o.sos_triggered %}
+        <span class="daxi-oc-chip" style="background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.4);"><i class="ri-alarm-warning-fill"></i> <span data-translate="sos_activated">SOS activé — équipe alertée</span></span>
+        {% endif %}
+      {% if o.is_extended %}<span class="daxi-oc-chip daxi-oc-chip--ok"><i class="ri-map-pin-add-line"></i> <span data-translate="label_extended">Prolongée</span></span>{% endif %}
+      {% if o.is_paused %}<span class="daxi-oc-chip" style="background:rgba(251,191,36,.16);color:#fbbf24;border:1px solid rgba(251,191,36,.35);"><i class="ri-pause-circle-line"></i> <span data-translate="label_paused">Pause</span></span>{% endif %}
+      {% if o.is_later and o.scheduled_at %}<span class="daxi-oc-chip daxi-oc-chip--sched daxi-countdown" data-countdown-to="{{ o.scheduled_at }}" data-countdown-prefix=""><i class="ri-hourglass-line"></i> </span>{% elif o.hours_until and o.is_later %}<span class="daxi-oc-chip daxi-oc-chip--sched"><i class="ri-hourglass-line"></i> <span data-translate="label_in_hours">dans</span> {{ o.hours_until }}h</span>{% endif %}
+    </div>
+
+    {% include "htmx/_round_trip_wait_info.html" %}
+
+    {% if o.notes %}
+    <div class="daxi-oc-notes" style="margin:0 0 10px;padding:8px 10px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:10px;">
+      <span style="font-size:10px;font-weight:800;color:#fcd34d;text-transform:uppercase;letter-spacing:.5px;" data-translate="label_driver_note">Repère chauffeur</span>
+      <div style="font-size:12px;color:rgba(253,230,138,0.9);margin-top:4px;font-style:italic;">💬 {{ o.notes }}</div>
+    </div>
+    {% endif %}
+
+    
+
+    
+    {% include "htmx/_client_order_driver_block.html" %}
+
+    {% if o.is_later and o.status != 'completed' and o.status != 'cancelled' %}
+    <div class="daxi-oc-gps-banner">
+      <span><i class="ri-map-pin-user-line"></i> <span data-translate="gps_at_departure">Position GPS au départ du trajet</span></span>
+      <button type="button" class="daxi-oc-gps-btn" onclick="refreshGpsForOrder('{{ o.id }}')" data-translate="gps_update_btn">Mettre à jour</button>
+      <span id="gps-refresh-status-{{ o.id }}" class="daxi-oc-gps-status"></span>
+    </div>
+    {% endif %}
+
+    
+    {% include "htmx/_client_order_actions.html" %}
+  </div>
+</div>

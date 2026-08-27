@@ -1,0 +1,47 @@
+{
+  "appId": "com.daxipro.daxi",
+  "appName": "Daxi",
+  "webDir": "www",
+  "server": {
+    "url": "https://daxipro.com",
+    "cleartext": false,
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "hostname": "daxipro.com",
+    "allowNavigation": [
+      "daxipro.com",
+      "*.daxipro.com",
+      "*.up.railway.app",
+      "*.railway.app"
+    ]
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 6000,
+      "launchAutoHide": true,
+      "backgroundColor": "#070B14",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": false,
+      "splashImmersive": false,
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DEFAULT",
+      "overlaysWebView": false
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#070B14",
+    "overrideUserAgent": "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36 DaxiAndroid/1.6.0 Capacitor"
+  },
+  "ios": {
+    "backgroundColor": "#070B14",
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  }
+}

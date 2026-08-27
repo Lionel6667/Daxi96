@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAXI — Paiement</title>
+  {% include "partials/daxi_favicon.html" %}
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--daxi-bg, #0b1220); color: var(--daxi-text-secondary, #e2e8f0); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .box { max-width: 360px; padding: 24px; border-radius: 16px; border: 1px solid var(--daxi-border, rgba(148,163,184,.2)); background: var(--daxi-surface, rgba(15,23,42,.9)); }
+    h1 { font-size: 18px; margin: 0 0 8px; color: {% if paid %}#4ade80{% else %}#fbbf24{% endif %}; }
+    p { font-size: 13px; color: var(--daxi-text-muted, #94a3b8); line-height: 1.45; margin: 0; }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+</head>
+<body class="pay-page">
+  <header class="daxi-mini-nav">
+    <span class="daxi-mini-nav__brand"><i class="ri-taxi-line"></i> DAXI</span>
+    <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+  </header>
+  <div class="box">
+    <h1>{% if paid %}Paiement reçu{% else %}Information{% endif %}</h1>
+    <p>{% if message %}{{ message }}{% elif paid %}Merci — votre course est confirmée.{% else %}Statut de la commande {{ order.ref_code }}.{% endif %}</p>
+  </div>
+</body>
+</html>

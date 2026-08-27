@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Commandes - Julmin Taxis Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+        }
+
+        .tab-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ====================== SECTION 1: COMMANDES EN ATTENTE ====================== */
+        .pending-orders-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pending-count-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .order-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            border-left-color: #764ba2;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .order-id {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        .order-status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-new {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .order-info {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .order-info-label {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .order-info-value {
+            color: #1f2937;
+            margin-top: 2px;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        /* ====================== SECTION 2: COMMANDES D'AUJOURD'HUI ====================== */
+        .today-orders-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input {
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        /* ====================== SECTION 3: CALENDRIER PLANIFIÉ ====================== */
+        .calendar-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .calendar-nav-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .current-month {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 700;
+            color: #6b7280;
+            padding: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .calendar-day:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .calendar-day.has-orders {
+            background: linear-gradient(135deg, #fef3c7 0%, #fef08a 100%);
+            border-color: #f59e0b;
+        }
+
+        .calendar-day.today {
+            background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+            border-color: #10b981;
+            font-weight: 700;
+        }
+
+        .calendar-day-number {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        .calendar-day-count {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .calendar-day.has-orders .calendar-day-count {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+        }
+
+        /* Modal pour afficher les détails des commandes planifiées */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+
+        /* ====================== SECTION 4: MAP TEMPS RÉEL ====================== */
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        #realtime-map {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .live-counter {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .live-counter i {
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ====================== SECTION 5: ADMIN FUNCTIONS ====================== */
+        .admin-functions-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .function-group {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .function-group:last-child {
+            border-bottom: none;
+        }
+
+        .function-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .status-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-item-title {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .status-item-description {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* ====================== RESPONSIVE ====================== */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .orders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-grid {
+                gap: 5px;
+            }
+
+            .calendar-day {
+                min-height: 80px;
+                font-size: 12px;
+            }
+
+            .calendar-day-number {
+                font-size: 14px;
+            }
+
+            .tab-navigation {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            color: #d1d5db;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-text {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 4px solid #f3f4f6;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            border-left: 4px solid #10b981;
+            color: #10b981;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .modal-scheduled-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .scheduled-order-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .scheduled-order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .scheduled-order-time {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .scheduled-order-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            background: #e0e7ff;
+            color: #667eea;
+        }
+
+        .reassign-driver-modal {
+            display: none;
+        }
+
+        .driver-selector {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .driver-option {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .driver-option:hover {
+            background: #f3f4f6;
+        }
+
+        .driver-option.selected {
+            background: #e0e7ff;
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1><i class="fas fa-taxi"></i> Gestion des Commandes</h1>
+                <p style="opacity: 0.9; margin-top: 5px;">Administration Julmin Taxis</p>
+            </div>
+            <div class="header-actions">
+                <div style="background: rgba(255, 255, 255, 0.2); padding: 10px 16px; border-radius: 8px;">
+                    <span id="current-date" style="font-weight: 600;"></span>
+                </div>
+                <button class="logout-btn" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <!-- TAB NAVIGATION -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="pending-orders">
+                <i class="fas fa-hourglass-start"></i>
+                <span>Commandes en attente</span>
+                <span class="pending-count-badge" id="pending-count">0</span>
+            </button>
+            <button class="tab-btn" data-tab="today-orders">
+                <i class="fas fa-calendar-day"></i>
+                <span>Aujourd'hui</span>
+            </button>
+            <button class="tab-btn" data-tab="scheduled-calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendrier planifié</span>
+            </button>
+            <button class="tab-btn" data-tab="realtime-map">
+                <i class="fas fa-map-location-dot"></i>
+                <span>Carte en direct</span>
+            </button>
+            <button class="tab-btn" data-tab="admin-functions">
+                <i class="fas fa-sliders-h"></i>
+                <span>Fonctions Admin</span>
+            </button>
+        </div>
+
+        <!-- SECTION 1: COMMANDES EN ATTENTE -->
+        <div id="pending-orders" class="tab-content active">
+            <div class="pending-orders-container">
+                <h2 class="section-title">
+                    <i class="fas fa-list-check"></i>
+                    Commandes en attente
+                </h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Commandes sans prix proposé ni chauffeur assigné</p>
+                
+                <div id="pending-orders-list" class="orders-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                        <div class="empty-state-text">Aucune commande en attente</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: COMMANDES D'AUJOURD'HUI -->
+        <div id="today-orders" class="tab-content">
+            <div class="today-orders-container">
+                <h2 class="section-title">
+                    <i class="fas fa-sun"></i>
+                    Commandes d'aujourd'hui
+                </h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Toutes les commandes de la journée (non terminées)</p>
+                
+                <div class="filters">
+                    <input type="text" class="filter-input" placeholder="🔍 Rechercher par client, adresse..." id="today-search">
+                    <select class="filter-input" id="today-status-filter">
+                        <option value="">Tous les statuts</option>
+                        <option value="Non assignée">Non assignée</option>
+                        <option value="Chauffeur en route">Chauffeur en route</option>
+                        <option value="Chauffeur arrivé">Chauffeur arrivé</option>
+                        <option value="En course">En course</option>
+                    </select>
+                </div>
+
+                <div id="today-orders-list" class="orders-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="empty-state-text">Aucune commande aujourd'hui</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: CALENDRIER PLANIFIÉ -->
+        <div id="scheduled-calendar" class="tab-content">
+            <div class="calendar-container">
+                <h2 class="section-title" style="margin-bottom: 20px;">
+                    <i class="fas fa-calendar-check"></i>
+                    Calendrier des réservations
+                </h2>
+
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" id="prev-month">
+                        <i class="fas fa-chevron-left"></i> Mois précédent
+                    </button>
+                    <div class="current-month" id="current-month">Décembre 2025</div>
+                    <button class="calendar-nav-btn" id="next-month">
+                        Mois suivant <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar will be generated by JavaScript -->
+                </div>
+
+                <div style="padding: 20px; background: #f9fafb; border-radius: 10px; border-left: 4px solid #667eea;">
+                    <p style="color: #6b7280; font-size: 14px;">
+                        <strong>📌 NB :</strong> Si vous voulez faire ce trajet immédiatement, contactez l'administration via WhatsApp. 
+                        Les réservations planifiées sont basées uniquement sur l'adresse et l'heure choisies.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: CARTE EN DIRECT -->
+        <div id="realtime-map" class="tab-content">
+            <div class="map-container">
+                <h2 class="section-title">
+                    <i class="fas fa-map"></i>
+                    Suivi en temps réel des chauffeurs
+                </h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Visualisez les chauffeurs en mission et leur position</p>
+                
+                <div id="realtime-map"></div>
+                <div class="live-counter">
+                    <i class="fas fa-spinner"></i>
+                    <span id="active-trips-count">0 courses en cours</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: FONCTIONS ADMIN -->
+        <div id="admin-functions" class="tab-content">
+            <div class="admin-functions-container">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    Fonctions administrateur
+                </h2>
+
+                <!-- Trajets en cours -->
+                <div class="function-group">
+                    <h3 class="function-title">
+                        <i class="fas fa-road"></i>
+                        Trajets en cours
+                    </h3>
+                    <div id="active-trips-list" class="orders-grid">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                            <div class="empty-state-text">Aucun trajet en cours</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commandes modifiées/annulées -->
+                <div class="function-group">
+                    <h3 class="function-title">
+                        <i class="fas fa-history"></i>
+                        Commandes modifiées / annulées
+                    </h3>
+                    <div id="modified-orders-list" class="orders-grid">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                            <div class="empty-state-text">Aucune modification enregistrée</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historique client -->
+                <div class="function-group">
+                    <h3 class="function-title">
+                        <i class="fas fa-users"></i>
+                        Historique client
+                    </h3>
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" class="filter-input" placeholder="Rechercher un client..." id="client-search" style="width: 100%; max-width: 400px;">
+                    </div>
+                    <div id="client-history-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-search"></i></div>
+                            <div class="empty-state-text">Recherchez un client pour voir son historique</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statuts chauffeur -->
+                <div class="function-group">
+                    <h3 class="function-title">
+                        <i class="fas fa-user-tie"></i>
+                        Statuts chauffeur
+                    </h3>
+                    <div class="status-list">
+                        <div class="status-item">
+                            <div class="status-item-title">✓ Accepte</div>
+                            <div class="status-item-description">Chauffeur accepte la course</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-item-title">🚗 En route</div>
+                            <div class="status-item-description">Chauffeur en direction du client</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-item-title">✋ Arrivé</div>
+                            <div class="status-item-description">Chauffeur est arrivé au point de départ</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-item-title">⏱️ En course</div>
+                            <div class="status-item-description">Course en progression</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-item-title">✔️ Terminée</div>
+                            <div class="status-item-description">Course complétée avec succès</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POUR AFFICHER LES COMMANDES PLANIFIÉES -->
+    <div id="scheduled-orders-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-date-title">Commandes prévues</h3>
+                <button class="modal-close" onclick="document.getElementById('scheduled-orders-modal').classList.remove('active');">&times;</button>
+            </div>
+            <div id="modal-orders-list" class="modal-scheduled-list">
+                <!-- Orders will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POUR RÉASSIGNER UN CHAUFFEUR -->
+    <div id="reassign-driver-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Réassigner un chauffeur</h3>
+                <button class="modal-close" onclick="document.getElementById('reassign-driver-modal').classList.remove('active');">&times;</button>
+            </div>
+            <div id="driver-selector-list" class="driver-selector">
+                <!-- Drivers will be populated here -->
+            </div>
+            <button class="btn btn-primary" onclick="confirmDriverAssignment();" style="width: 100%;">
+                <i class="fas fa-check"></i> Confirmer l'assignation
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://julmin-taxis-default-rtdb.firebaseio.com",
+            apiKey: "AIzaSyCdGFcwfzj8b5eJXcmrS0LGRIxnTXZ6zac",
+            authDomain: "julmin-taxis.firebaseapp.com",
+            projectId: "julmin-taxis",
+            storageBucket: "julmin-taxis.appspot.com",
+            messagingSenderId: "392925120550",
+            appId: "1:392925120550:web:2935808aab4ead6d7d7ee7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ===== GLOBAL VARIABLES =====
+        let currentTab = 'pending-orders';
+        let allOrders = [];
+        let allDrivers = [];
+        let currentCalendarDate = new Date();
+        let currentlySelectedDriver = null;
+        let currentReassignOrderId = null;
+
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                switchTab(tabName);
+            });
+        });
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Activate selected button
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            currentTab = tabName;
+
+            // Load data specific to each tab
+            if (tabName === 'pending-orders') loadPendingOrders();
+            if (tabName === 'today-orders') loadTodayOrders();
+            if (tabName === 'scheduled-calendar') generateCalendar();
+            if (tabName === 'realtime-map') initializeRealtimeMap();
+        }
+
+        // ===== CURRENT DATE DISPLAY =====
+        function updateCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date().toLocaleDateString('fr-FR', options);
+            document.getElementById('current-date').textContent = today.charAt(0).toUpperCase() + today.slice(1);
+        }
+        updateCurrentDate();
+
+        // ===== LOAD ORDERS FROM FIREBASE =====
+        function loadAllOrders() {
+            database.ref('commande').on('value', snapshot => {
+                allOrders = [];
+                snapshot.forEach(childSnapshot => {
+                    const order = childSnapshot.val();
+                    order.id = childSnapshot.key;
+                    allOrders.push(order);
+                });
+
+                // Update pending orders count
+                updatePendingCount();
+                
+                // Refresh current tab
+                if (currentTab === 'pending-orders') loadPendingOrders();
+                if (currentTab === 'today-orders') loadTodayOrders();
+            });
+        }
+
+        function loadAllDrivers() {
+            database.ref('drivers').on('value', snapshot => {
+                allDrivers = [];
+                snapshot.forEach(childSnapshot => {
+                    const driver = childSnapshot.val();
+                    driver.id = childSnapshot.key;
+                    allDrivers.push(driver);
+                });
+            });
+        }
+
+        // ===== SECTION 1: PENDING ORDERS =====
+        function loadPendingOrders() {
+            const pendingOrders = allOrders.filter(order => 
+                !order.proposedPrice && !order.driverAssigned
+            );
+
+            const container = document.getElementById('pending-orders-list');
+            
+            if (pendingOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-state-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="empty-state-text">Aucune commande en attente</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Commande #${order.id.substring(0, 8)}</div>
+                        <span class="order-status-badge status-new">Nouvelle</span>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">📍 Départ</div>
+                        <div class="order-info-value">${order.pickup || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">🎯 Destination</div>
+                        <div class="order-info-value">${order.destination || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">👤 Client</div>
+                        <div class="order-info-value">${order.passengerName || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">📞 Téléphone</div>
+                        <div class="order-info-value">${order.passengerPhone || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">👥 Passagers</div>
+                        <div class="order-info-value">${order.passengerCount || 1}</div>
+                    </div>
+
+                    <div class="order-actions">
+                        <button class="btn btn-primary" onclick="proposePrice('${order.id}')">
+                            <i class="fas fa-tag"></i> Proposer prix
+                        </button>
+                        <button class="btn btn-secondary" onclick="assignDriver('${order.id}')">
+                            <i class="fas fa-user-check"></i> Assigner
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updatePendingCount() {
+            const pending = allOrders.filter(order => !order.proposedPrice && !order.driverAssigned).length;
+            document.getElementById('pending-count').textContent = pending;
+        }
+
+        // ===== SECTION 2: TODAY ORDERS =====
+        function loadTodayOrders() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayOrders = allOrders.filter(order => {
+                if (order.status === 'Terminée') return false;
+                
+                const orderDate = new Date(order.scheduledDate || order.createdDate || 0);
+                orderDate.setHours(0, 0, 0, 0);
+                
+                return orderDate.getTime() === today.getTime();
+            });
+
+            const container = document.getElementById('today-orders-list');
+            
+            if (todayOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                        <div class="empty-state-text">Aucune commande pour aujourd'hui</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = todayOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">Commande #${order.id.substring(0, 8)}</div>
+                        <span class="order-status-badge status-pending">${order.status || 'En attente'}</span>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">📍 De</div>
+                        <div class="order-info-value">${order.pickup || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">🎯 À</div>
+                        <div class="order-info-value">${order.destination || 'Non spécifié'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">💰 Prix</div>
+                        <div class="order-info-value">${order.proposedPrice ? '$' + order.proposedPrice : 'En attente'}</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="order-info-label">🚗 Chauffeur</div>
+                        <div class="order-info-value">${order.driverName || 'Non assigné'}</div>
+                    </div>
+
+                    <div class="order-actions">
+                        <button class="btn btn-primary" onclick="editOrder('${order.id}')">
+                            <i class="fas fa-edit"></i> Modifier
+                        </button>
+                        <button class="btn btn-secondary" onclick="reassignDriver('${order.id}')">
+                            <i class="fas fa-exchange"></i> Réassigner
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== SECTION 3: CALENDAR =====
+        function generateCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            // Update header
+            const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            document.getElementById('current-month').textContent = `${monthNames[month]} ${year}`;
+
+            // Generate calendar grid
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            let html = '';
+
+            // Day headers
+            const dayHeaders = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+            dayHeaders.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Previous month days
+            for (let i = firstDay - 1; i > 0; i--) {
+                html += `<div class="calendar-day" style="opacity: 0.3;"></div>`;
+            }
+
+            // Current month days
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = date.toISOString().split('T')[0];
+
+                // Count orders for this date
+                const ordersForDate = allOrders.filter(order => {
+                    const orderDate = new Date(order.scheduledDate || order.createdDate || 0);
+                    return orderDate.toISOString().split('T')[0] === dateStr;
+                }).length;
+
+                const isToday = date.getTime() === today.getTime();
+                const hasOrders = ordersForDate > 0;
+
+                html += `
+                    <div class="calendar-day ${isToday ? 'today' : ''} ${hasOrders ? 'has-orders' : ''}" 
+                         onclick="showScheduledOrders('${dateStr}')">
+                        <div class="calendar-day-number">${day}</div>
+                        ${hasOrders ? `<div class="calendar-day-count">${ordersForDate} ${ordersForDate === 1 ? 'commande' : 'commandes'}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            // Next month days
+            const totalCells = html.split('calendar-day').length - 1;
+            const remainingCells = 35 - totalCells + 7; // 5 rows x 7 days = 35
+            for (let i = 0; i < remainingCells; i++) {
+                html += `<div class="calendar-day" style="opacity: 0.3;"></div>`;
+            }
+
+            document.getElementById('calendar-grid').innerHTML = html;
+        }
+
+        function showScheduledOrders(dateStr) {
+            const ordersForDate = allOrders.filter(order => {
+                const orderDate = new Date(order.scheduledDate || order.createdDate || 0);
+                return orderDate.toISOString().split('T')[0] === dateStr;
+            });
+
+            if (ordersForDate.length === 0) {
+                showNotification('Aucune commande pour cette date', 'error');
+                return;
+            }
+
+            const date = new Date(dateStr + 'T00:00:00');
+            const dateFormatted = date.toLocaleDateString('fr-FR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+            document.getElementById('modal-date-title').textContent = `Commandes du ${dateFormatted}`;
+
+            const modalOrdersList = document.getElementById('modal-orders-list');
+            modalOrdersList.innerHTML = ordersForDate.map(order => `
+                <div class="scheduled-order-item">
+                    <div class="scheduled-order-header">
+                        <div>
+                            <div class="scheduled-order-time">${order.scheduledTime || 'Heure non spécifiée'}</div>
+                            <div style="font-size: 14px; color: #1f2937; margin-top: 5px;">
+                                <strong>${order.passengerName || 'Client'}</strong>
+                            </div>
+                        </div>
+                        <span class="scheduled-order-status">${order.status || 'Réservée'}</span>
+                    </div>
+                    
+                    <div style="font-size: 13px; color: #6b7280; line-height: 1.6;">
+                        <div><strong>Départ:</strong> ${order.pickup || 'Non spécifié'}</div>
+                        <div><strong>Destination:</strong> ${order.destination || 'Non spécifié'}</div>
+                        <div><strong>Téléphone:</strong> ${order.passengerPhone || 'Non spécifié'}</div>
+                        <div><strong>Numéro de course:</strong> #${order.id.substring(0, 8)}</div>
+                        <div><strong>Prix:</strong> ${order.proposedPrice ? '$' + order.proposedPrice : 'En attente'}</div>
+                        <div><strong>Chauffeur:</strong> ${order.driverName || 'Non assigné'}</div>
+                    </div>
+
+                    <div class="order-actions" style="margin-top: 15px;">
+                        <button class="btn btn-secondary" onclick="reassignDriver('${order.id}')" style="flex: 1;">
+                            <i class="fas fa-exchange"></i> Réassigner
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('scheduled-orders-modal').classList.add('active');
+        }
+
+        // ===== SECTION 4: REALTIME MAP =====
+        let realtimeMapInstance = null;
+
+        function initializeRealtimeMap() {
+            if (realtimeMapInstance) {
+                realtimeMapInstance.invalidateSize();
+                return;
+            }
+
+            realtimeMapInstance = L.map('realtime-map').setView([19.0, -72.5], 7); // Haiti center
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(realtimeMapInstance);
+
+            updateRealtimeMap();
+        }
+
+        function updateRealtimeMap() {
+            if (!realtimeMapInstance) return;
+
+            // Get active trips
+            database.ref('commande_confirmed').on('value', snapshot => {
+                let activeTripCount = 0;
+
+                snapshot.forEach(childSnapshot => {
+                    const trip = childSnapshot.val();
+                    if (trip.status !== 'Terminée' && trip.status !== 'finished') {
+                        activeTripCount++;
+                    }
+                });
+
+                document.getElementById('active-trips-count').textContent = 
+                    `${activeTripCount} ${activeTripCount === 1 ? 'course en cours' : 'courses en cours'}`;
+            });
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function proposePrice(orderId) {
+            const price = prompt('Entrez le prix proposé (en $):');
+            if (price && !isNaN(price)) {
+                database.ref(`commande/${orderId}/proposedPrice`).set(parseFloat(price))
+                    .then(() => {
+                        showNotification('Prix proposé avec succès', 'success');
+                        loadPendingOrders();
+                    });
+            }
+        }
+
+        function assignDriver(orderId) {
+            showDriverSelector(orderId, false);
+        }
+
+        function reassignDriver(orderId) {
+            currentReassignOrderId = orderId;
+            showDriverSelectorModal();
+            document.getElementById('reassign-driver-modal').classList.add('active');
+        }
+
+        function showDriverSelector(orderId, isReassign = false) {
+            const driverList = document.getElementById('driver-selector-list');
+            driverList.innerHTML = allDrivers.map(driver => `
+                <div class="driver-option" onclick="selectDriver(this, '${driver.id}')">
+                    <strong>${driver.firstname} ${driver.lastname}</strong>
+                    <div style="font-size: 12px; color: #6b7280;">📍 ${driver.city || 'Ville non spécifiée'}</div>
+                    <div style="font-size: 12px; color: #10b981;">⭐ Note: ${driver.rating || 'N/A'}</div>
+                </div>
+            `).join('');
+
+            currentReassignOrderId = orderId;
+        }
+
+        function showDriverSelectorModal() {
+            const driverList = document.getElementById('driver-selector-list');
+            driverList.innerHTML = allDrivers.map(driver => `
+                <div class="driver-option" onclick="selectDriver(this, '${driver.id}')">
+                    <strong>${driver.firstname} ${driver.lastname}</strong>
+                    <div style="font-size: 12px; color: #6b7280;">📍 ${driver.city || 'Ville non spécifiée'}</div>
+                    <div style="font-size: 12px; color: #10b981;">⭐ Note: ${driver.rating || 'N/A'}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectDriver(element, driverId) {
+            document.querySelectorAll('.driver-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            currentlySelectedDriver = driverId;
+        }
+
+        function confirmDriverAssignment() {
+            if (!currentlySelectedDriver || !currentReassignOrderId) {
+                showNotification('Veuillez sélectionner un chauffeur', 'error');
+                return;
+            }
+
+            const selectedDriver = allDrivers.find(d => d.id === currentlySelectedDriver);
+            database.ref(`commande/${currentReassignOrderId}`).update({
+                driverAssigned: true,
+                driverName: `${selectedDriver.firstname} ${selectedDriver.lastname}`,
+                driverId: currentlySelectedDriver
+            }).then(() => {
+                showNotification('Chauffeur assigné avec succès', 'success');
+                document.getElementById('reassign-driver-modal').classList.remove('active');
+                loadPendingOrders();
+                loadTodayOrders();
+            });
+        }
+
+        function editOrder(orderId) {
+            showNotification('Fonction à implémenter', 'error');
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+                database.ref(`commande/${orderId}`).remove()
+                    .then(() => {
+                        showNotification('Commande supprimée', 'success');
+                        loadPendingOrders();
+                    });
+            }
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // ===== LOGOUT =====
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('admin_logged_in');
+                location.reload();
+            }
+        });
+
+        // ===== CALENDAR NAVIGATION =====
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            generateCalendar();
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            generateCalendar();
+        });
+
+        // ===== CLOSE MODALS =====
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('scheduled-orders-modal');
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // ===== INITIALIZE =====
+        loadAllOrders();
+        loadAllDrivers();
+
+        // Auto-refresh every 15 seconds
+        setInterval(() => {
+            loadAllOrders();
+        }, 15000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daxi - Espace Chauffeur</title>
+    <script src="/assets/js/tailwindcss-3.4.16.js"></script>
+    <!-- Firebase replaced by Django backend - shim provides same API -->
+    <!-- firebase-shim removed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <!-- Google Maps API for navigation - handled by async loader at bottom -->
+    
+    <!-- Système de chat universel -->
+    <script src="/chat-system.js"></script>
+    
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        .hidden { display: none; }
+        .error-message { color: #d97706; font-size: 0.75rem; margin-top: 0.25rem; }
+
+        /* Language selector (match vubez2 style) */
+        .language-selector {
+            position: relative;
+            margin-right: 10px;
+        }
+
+        .language-select {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 5px 10px;
+            padding-right: 30px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+
+        .language-selector::after {
+            content: "▼";
+            font-size: 10px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .language-select:hover {
+            background-color: #e2e8f0;
+            transform: scale(1.05);
+        }
+
+        /* Badge notifications (like adm) */
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 999px;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 0 6px;
+            line-height: 1;
+        }
+
+        /* Sidebar items (lightweight match ADM) */
+        .sidebar-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 10px;
+            background: white;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f2937;
+            border: 1px solid #f3f4f6;
+        }
+
+        /* ===== Forum driver styles ===== */
+        /* ===== FORUM DRIVER — plan-detail-modal style ===== */
+        .plan-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: white;
+            z-index: 8000;
+            overflow-y: auto;
+            overflow-x: hidden;
+            animation: planEnter 0.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+            opacity: 0;
+        }
+        .plan-detail-modal.show { display: block; opacity: 1; }
+        @keyframes planEnter {
+            0%   { opacity:0; transform:scale(0.95) translateY(20px); }
+            50%  { opacity:0.8; }
+            100% { opacity:1; transform:scale(1) translateY(0); }
+        }
+        @keyframes planExit {
+            0%   { opacity:1; transform:scale(1) translateY(0); }
+            50%  { opacity:0.8; }
+            100% { opacity:0; transform:scale(0.95) translateY(20px); }
+        }
+        .plan-detail-modal.hide { animation: planExit 0.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+        .plan-hero {
+            position: relative; width: 100%; height: 320px;
+            background-size: cover; background-position: center;
+            overflow: hidden;
+        }
+        .plan-hero::before {
+            content:''; position:absolute; inset:0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%);
+            z-index:1;
+        }
+        .plan-hero-content {
+            position:absolute; bottom:0; left:0; right:0;
+            padding:32px 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white; z-index:2;
+        }
+        .plan-hero-title { font-size:28px; font-weight:700; margin-bottom:8px; }
+        .plan-hero-subtitle { font-size:14px; opacity:0.9; }
+        .plan-close-btn {
+            position:fixed; top:16px; right:16px;
+            width:46px; height:46px;
+            background:rgba(255,255,255,0.95);
+            border:none; border-radius:50%;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            z-index:8001; font-size:22px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .plan-close-btn:hover { transform:rotate(90deg) scale(1.1); }
+        .plan-detail-content { max-width:900px; margin:0 auto; padding:32px 16px; }
+        .plan-description {
+            font-size:14px; line-height:1.7; color:#374151;
+            margin-bottom:24px; padding:16px;
+            background:#f9fafb; border-radius:12px;
+            border-left:4px solid #8b5cf6;
+        }
+
+        /* Forum banner card */
+        .drv-forum-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px; padding: 24px; color: white;
+            cursor: pointer; position: relative; overflow: hidden;
+            box-shadow: 0 15px 35px rgba(102,126,234,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .drv-forum-banner:hover {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 20px 45px rgba(102,126,234,0.4);
+        }
+        .drv-forum-banner::before {
+            content:''; position:absolute; top:-50%; right:-10%;
+            width:280px; height:280px;
+            background:rgba(255,255,255,0.1); border-radius:50%;
+        }
+        .drv-forum-banner::after {
+            content:''; position:absolute; bottom:-30%; left:-10%;
+            width:220px; height:220px;
+            background:rgba(255,255,255,0.07); border-radius:50%;
+        }
+        .drv-forum-banner-inner { position:relative; z-index:2; }
+
+        /* Forum pub grid inside plan-detail-modal */
+        .forum-pub-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(290px,1fr));
+            gap:24px; margin-top:8px;
+        }
+        .forum-pub-grid .forum-pub-card {
+            background:#fff; border-radius:18px; overflow:hidden;
+            cursor:pointer; transition:transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow:0 4px 20px rgba(0,0,0,0.08);
+            display:flex; flex-direction:column;
+        }
+        .forum-pub-grid .forum-pub-card:hover {
+            transform:translateY(-6px) scale(1.01);
+            box-shadow:0 16px 40px rgba(0,0,0,0.15);
+        }
+        .forum-pub-grid .fpub-thumb {
+            height:180px; position:relative; overflow:hidden;
+            background-size:cover; background-position:center; flex-shrink:0;
+        }
+        .forum-pub-grid .fpub-thumb::after {
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+        }
+        .forum-pub-grid .fpub-date-badge {
+            position:absolute; top:12px; right:12px;
+            background:rgba(255,255,255,0.92); backdrop-filter:blur(6px);
+            color:#374151; font-size:11px; font-weight:700;
+            padding:4px 10px; border-radius:99px; z-index:2;
+        }
+        .forum-pub-grid .fpub-title-overlay {
+            position:absolute; bottom:0; left:0; right:0; z-index:2;
+            padding:14px 16px 12px; color:#fff; font-size:16px; font-weight:800;
+            line-height:1.25; text-shadow:0 2px 6px rgba(0,0,0,0.5);
+        }
+        .forum-pub-grid .fpub-body { padding:10px 14px 14px; display:flex; flex-direction:column; }
+        .forum-pub-grid .fpub-footer { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
+        .forum-pub-grid .fpub-blocks-tag {
+            display:inline-flex; align-items:center; gap:5px;
+            font-size:11px; font-weight:600; color:#6b7280;
+            background:#f3f4f6; padding:3px 10px; border-radius:99px;
+        }
+        .forum-pub-grid .fpub-open-btn {
+            display:inline-flex; align-items:center; gap:6px;
+            background:linear-gradient(135deg,#f59e0b,#d97706);
+            color:#fff; font-size:12px; font-weight:700;
+            padding:6px 14px; border-radius:99px; border:none; cursor:pointer;
+            transition:transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .forum-pub-grid .forum-pub-card:hover .fpub-open-btn {
+            transform:scale(1.06);
+            box-shadow:0 4px 14px rgba(245,158,11,0.4);
+        }
+
+        /* Forum detail overlay (centered modal) */
+        .drv-forum-detail-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 8100;
+            background: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .drv-forum-detail-modal.open { display: flex; }
+        .drv-forum-detail-inner {
+            background: #fff;
+            border-radius: 20px;
+            width: 100%; max-width: 680px;
+            max-height: 90vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .drv-detail-header {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            padding: 20px 24px;
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .drv-detail-title {
+            font-size: 17px; font-weight: 800;
+            color: #fff; flex: 1; line-height: 1.3; padding-right: 12px;
+        }
+        .drv-detail-close {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(255,255,255,0.15); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #fff; flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        .drv-detail-close:hover { background: rgba(255,255,255,0.3); }
+        .drv-detail-content { flex:1; overflow-y:auto; padding:24px; }
+
+        .sidebar-item:hover {
+            background: #f9fafb;
+            transform: translateX(-2px);
+        }
+
+        /* Driver orders sub-tabs */
+        .driver-orders-subtabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px 0;
+        }
+
+        .driver-subtab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .driver-subtab-btn.active {
+            background: rgba(245, 158, 11, 0.22);
+            border-color: rgba(245, 158, 11, 0.65);
+        }
+
+        .driver-subtab-count {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .driver-subtab-content {
+            min-height: 60px;
+        }
+
+        /* Mini calendar (driver) */
+        .driver-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .driver-calendar-weekday {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-align: center;
+            padding: 6px 0;
+        }
+
+        .driver-calendar-day {
+            position: relative;
+            aspect-ratio: 1;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .driver-calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.10);
+            border-color: #d4af37;
+        }
+
+        .driver-calendar-day.today {
+            border: 3px solid #10b981;
+            background:
+                repeating-linear-gradient(
+                    45deg,
+                    rgba(16, 185, 129, 0.10),
+                    rgba(16, 185, 129, 0.10) 8px,
+                    rgba(255, 255, 255, 0.35) 8px,
+                    rgba(255, 255, 255, 0.35) 16px
+                );
+        }
+
+        .driver-calendar-day-indicators {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .driver-calendar-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.95);
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .driver-calendar-indicator.finished {
+            color: #059669;
+        }
+
+        .driver-calendar-indicator.pending {
+            color: #d97706;
+        }
+
+        .driver-calendar-day.has-orders {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+        }
+
+        .driver-calendar-day-number {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1f2937;
+        }
+
+        .driver-calendar-day-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 10px;
+            line-height: 1;
+        }
+        .file-upload-container {
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-upload-container:hover {
+            border-color: #f59e0b;
+            background: #fff7ed;
+        }
+        .file-upload-icon {
+            font-size: 2rem;
+            color: #f59e0b;
+            margin-bottom: 0.5rem;
+        }
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin: 0 auto;
+            display: block;
+        }
+        .remove-photo-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #f59e0b;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .preview-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .request-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .request-card:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .status-onway {
+            background-color: #dbeafe;
+            color: #2563eb;
+            animation: pulse-blue 2s infinite;
+        }
+        .status-arrived {
+            background-color: #fed7aa;
+        }
+        
+        /* Navigation Map Styles */
+        .navigation-map-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            background: #000;
+            display: none;
+        }
+        
+        .navigation-map-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navigation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 10000;
+        }
+        
+        .navigation-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .navigation-distance {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .navigation-duration {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .navigation-destination {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+        
+        .navigation-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .navigation-close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .navigation-map {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .navigation-actions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10001;
+        }
+
+        .navigation-instruction {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            max-width: 280px;
+        }
+
+        .navigation-instruction-text {
+            font-size: 12px;
+            line-height: 1.2;
+            opacity: 0.95;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .navigation-instruction-distance {
+            font-size: 12px;
+            font-weight: 700;
+            opacity: 0.95;
+            flex-shrink: 0;
+        }
+        
+        .navigation-action-btn {
+            background: white;
+            color: #333;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .navigation-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .navigation-action-btn.primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .navigation-action-btn.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .recenter-btn {
+            position: absolute;
+            bottom: 120px;
+            right: 20px;
+            background: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            transition: all 0.3s ease;
+        }
+        
+        .recenter-btn:hover {
+            background: #f3f4f6;
+            transform: scale(1.1);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @media (max-width: 640px) {
+            .navigation-header {
+                padding: 12px;
+            }
+            
+            .navigation-distance {
+                font-size: 20px;
+            }
+            
+            .navigation-duration {
+                font-size: 12px;
+            }
+            
+            .navigation-actions {
+                bottom: 10px;
+                flex-direction: column;
+                width: calc(100% - 40px);
+            }
+            
+            .navigation-action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .recenter-btn {
+                bottom: 200px;
+                right: 10px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+        
+        /* Preview Map Modal Styles */
+        .preview-map-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            padding: 20px;
+        }
+        
+        .preview-map-modal.active {
+            display: flex;
+        }
+        
+        .preview-map-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .preview-map-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .preview-map-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .preview-map-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .preview-map-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .preview-map-info {
+            padding: 16px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .preview-map-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-map-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .preview-map-stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .preview-map-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .preview-map-container-inner {
+            flex: 1;
+            min-height: 400px;
+            position: relative;
+        }
+        
+        @media (max-width: 640px) {
+            .preview-map-modal {
+                padding: 0;
+            }
+            
+            .preview-map-content {
+                max-width: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            
+            .preview-map-stats {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+        
+        .status-here {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+        .status-finished {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        @keyframes pulse-blue {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes pulse-orange {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .request-card {
+            transition: all 0.3s ease;
+        }
+        .map-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .map-marker.driver {
+            background: #2563eb;
+            color: white;
+        }
+        .map-marker.client {
+            background: #f59e0b;
+            color: white;
+        }
+        .app-banner {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #1e293b;
+            padding: 12px 16px;
+            text-align: center;
+            position: relative;
+            z-index: 40;
+        }
+        .app-banner.hidden {
+            display: none;
+        }
+        .download-btn {
+            background: white;
+            color: #1e293b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-top: 8px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .close-banner {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            cursor: pointer;
+        }
+        .slow-connection-tip {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .map-marker-icon {
+            background: white;
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .map-marker-icon.driver {
+            background: #2563eb;
+            color: white;
+        }
+        .map-marker-icon.client {
+            background: #f59e0b;
+            color: #1e293b;
+        }
+        .connection-status {
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+        .connection-status i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .whatsapp-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .edit-icon {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: #f59e0b;
+            color: #1e293b;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .profile-container {
+            position: relative;
+            display: inline-block;
+        }
+        .app-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .app-modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .language-selector {
+            position: relative;
+        }
+        .notification-alert {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #f59e0b;
+            color: #1e293b;
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        .connection-testing {
+            display: flex;
+            align-items: center;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        .location-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .location-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .location-modal-btn {
+            background: #f59e0b;
+            color: #1e293b;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .connection-status-icon {
+            animation: pulse 1.5s infinite;
+        }
+        .email-verification-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .email-verification-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .verification-icon {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 16px;
+        }
+        .verification-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+        .gold-button {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        /* Loading spinner for buttons */
+        .btn-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .rounded-button {
+            border-radius: 8px;
+        }
+        .resend-otp {
+            display: block;
+            margin-top: 16px;
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .ios-instruction-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .ios-instruction-step i {
+            margin-right: 12px;
+            font-size: 20px;
+            color: #3b82f6;
+        }
+        
+        /* Chat system styles */
+        .order-chat {
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 249, 255, 0.92));
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+            margin-top: 16px;
+        }
+        .order-chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(241, 245, 249, 0.95);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .order-chat-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .chat-expand-toggle {
+            font-size: 0.75rem;
+            color: #2563eb;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .chat-expand-toggle:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+        .order-chat-messages {
+            padding: 12px;
+            overflow-y: auto;
+            background: white;
+            height: 160px;
+            max-height: 220px;
+        }
+        .order-chat-message {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(241, 245, 249, 0.5);
+            border-radius: 8px;
+        }
+        .order-chat-input {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(248, 250, 252, 0.95);
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .chat-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .order-chat-submit {
+            padding: 8px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .order-chat-submit:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+
+    
+<script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Map Container -->
+    <div id="navigation-map-container" class="navigation-map-container">
+        <div class="navigation-header">
+            <div class="navigation-info">
+                <div class="navigation-distance" id="nav-distance">-- km</div>
+                <div class="navigation-duration" id="nav-duration">-- min</div>
+                <div class="navigation-destination" id="nav-destination">Chargement...</div>
+                <div class="navigation-instruction">
+                    <div class="navigation-instruction-text" id="nav-instruction">Préparation de l'itinéraire…</div>
+                    <div class="navigation-instruction-distance" id="nav-next-distance">--</div>
+                </div>
+            </div>
+            <button class="navigation-close-btn" id="close-navigation">
+                <i class="ri-close-line ri-xl"></i>
+            </button>
+        </div>
+        <div id="navigation-map" class="navigation-map"></div>
+        <button class="recenter-btn" id="recenter-map">
+            <i class="ri-focus-3-line ri-xl"></i>
+        </button>
+        <div class="navigation-actions">
+            <button class="navigation-action-btn warning" id="nav-arrived-btn">
+                <i class="ri-map-pin-user-line"></i>
+                <span>Je suis arrivé</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Preview Map Modal -->
+    <div id="preview-map-modal" class="preview-map-modal">
+        <div class="preview-map-content">
+            <div class="preview-map-header">
+                <h3 class="preview-map-title">
+                    <i class="ri-map-pin-line mr-2"></i>
+                    Aperçu de la course
+                </h3>
+                <button class="preview-map-close" id="close-preview-map">
+                    <i class="ri-close-line ri-lg"></i>
+                </button>
+            </div>
+            <div class="preview-map-info">
+                <div class="preview-map-stats">
+                    <div class="preview-map-stat">
+                        <span class="preview-map-stat-label">Distance</span>
+                        <span class="preview-map-stat-value" id="preview-distance">-- km</span>
+                    </div>
+                    <div class="preview-map-stat">
+                        <span class="preview-map-stat-label">Temps estimé</span>
+                        <span class="preview-map-stat-value" id="preview-duration">-- min</span>
+                    </div>
+                </div>
+            </div>
+            <div id="preview-map-container" class="preview-map-container-inner"></div>
+        </div>
+    </div>
+
+    <div id="notification-alert" class="notification-alert hidden">
+        <i class="ri-alarm-warning-fill mr-2"></i>
+        <span id="notification-text">Nouvelle commande disponible!</span>
+        <button id="dismiss-notification" class="ml-4">
+            <i class="ri-close-line"></i>
+        </button>
+    </div>
+
+    <div id="app-banner" class="app-banner hidden">
+        <div class="close-banner" id="close-banner">
+            <i class="ri-close-line"></i>
+        </div>
+        <p class="font-medium">Pour une meilleure expérience, téléchargez notre application !</p>
+        <a href="#" id="download-app" class="download-btn">
+            <i class="ri-download-line mr-1"></i> Télécharger l'app
+        </a>
+    </div>
+
+    <a href="https://wa.me/50944969696" target="_blank" class="whatsapp-icon">
+        <i class="ri-whatsapp-fill text-white text-3xl"></i>
+    </a>
+
+    <div id="app-modal" class="app-modal hidden">
+        <div class="app-modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Téléchargez notre application !</h3>
+            <p class="text-gray-600 mb-6">Pour une expérience optimale, nous vous recommandons de télécharger notre application mobile.</p>
+            <div class="flex flex-col space-y-3">
+                <button id="modal-download-btn" class="w-full bg-primary text-white py-3 rounded-lg font-medium">
+                    Télécharger
+                </button>
+                <button id="modal-close-btn" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Email Verification Modal -->
+    <div id="emailVerificationModal" class="email-verification-modal">
+        <div class="email-verification-content">
+            <i class="ri-mail-check-line verification-icon"></i>
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Vérification d'email</h3>
+            <p class="text-sm text-gray-600 mb-4">Nous avons envoyé un code de vérification à votre adresse email. Veuillez le saisir ci-dessous.</p>
+            <input type="text" id="otpInput" class="verification-input" placeholder="XXXXXX" maxlength="6">
+            <button id="verifyOtpBtn" class="w-full gold-button py-3 !rounded-button font-semibold mt-2">Vérifier</button>
+            <a href="#" id="resendOtp" class="resend-otp">Renvoyer le code</a>
+        </div>
+    </div>
+
+
+    
+
+    <div id="main-interface" class="hidden" style="display:none;">
+        <!-- Header type ADM (adapté chauffeur) -->
+        <header class="fixed top-0 left-0 right-0 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white shadow-2xl border-b border-gray-700 z-50">
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/40 flex-shrink-0">
+                            <i class="ri-taxi-line text-gray-900 text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-base sm:text-lg font-bold leading-tight truncate" data-i18n="driver_space_title">Espace Chauffeur</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <button id="driver-menu-btn" type="button" class="group relative px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-600 rounded-xl font-semibold flex items-center gap-2 hover:from-amber-600 hover:to-yellow-700 transition-all duration-300 shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50">
+                                <i class="ri-menu-line text-lg"></i>
+                                <span class="hidden sm:inline" data-i18n="menu">Menu</span>
+                                <span id="driver-notification-count" class="notification-count hidden" aria-label="Notifications"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar chauffeur (menu) -->
+        <div id="driver-sidebar" style="position: fixed; top: 0; right: 0; height: 100vh; width: 350px; background: white; box-shadow: -4px 0 20px rgba(0,0,0,0.3); transform: translateX(100%); transition: transform 0.3s ease; z-index: 10000; overflow-y: auto;">
+            <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 24px; position: sticky; top: 0; z-index: 10;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                    <h2 style="color: white; font-size: 22px; font-weight: 800; margin: 0;" data-i18n="driver_menu_title">Menu Chauffeur</h2>
+                    <button id="driver-sidebar-close" type="button" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                        <i class="ri-close-line" style="font-size: 20px;"></i>
+                    </button>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255,255,255,0.2);">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div id="driver-sidebar-avatar" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #000; box-shadow: 0 4px 12px rgba(212,175,55,0.35); overflow:hidden; position: relative;">
+                            <img id="driver-profile" src="" alt="Profil" style="width:100%;height:100%;object-fit:cover;display:none;" />
+                            <span id="driver-sidebar-initials">DR</span>
+                        </div>
+                        <div style="min-width:0;">
+                            <h3 id="driver-sidebar-name" style="color: white; font-size: 16px; font-weight: 800; margin: 0; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</h3>
+                            <p style="color: #D4AF37; font-size: 13px; margin: 4px 0 0 0;" data-i18n="driver_role">Chauffeur</p>
+                        </div>
+                        <button type="button" id="edit-profile-icon" class="sidebar-item" aria-label="Edit profile" title="Modifier" style="margin-left:auto;background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.15); color: white; width: 38px; height: 38px; border-radius: 12px; display:flex; align-items:center; justify-content:center; padding: 0;">
+                            <i class="ri-edit-line" style="color:#D4AF37; font-size: 18px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px;">
+                    <div class="language-selector" data-no-translate="1" style="width:100%;">
+                        <select id="language-select" class="language-select" data-no-translate="1" style="width:100%;">
+                            <option value="ht" data-no-translate="1">Kreyòl</option>
+                            <option value="fr" data-no-translate="1" selected>Français</option>
+                            <option value="en" data-no-translate="1">English</option>
+                            <option value="es" data-no-translate="1">Español</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 20px;">
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">📦 <span data-i18n="orders">Commandes</span></h4>
+                    <button type="button" class="sidebar-item" data-driver-subtab="pending">
+                        <i class="ri-time-line" style="color:#f59e0b;"></i>
+                        <span data-i18n="tab_pending">En attente</span>
+                        <span id="drv-sidebar-pending" style="margin-left:auto;background:#fef3c7;color:#d97706;font-size:12px;font-weight:800;padding:4px 10px;border-radius:12px;">0</span>
+                    </button>
+                    <button type="button" class="sidebar-item" data-driver-subtab="ongoing">
+                        <i class="ri-route-line" style="color:#10b981;"></i>
+                        <span data-i18n="tab_ongoing">En cours</span>
+                        <span id="drv-sidebar-ongoing" style="margin-left:auto;background:#d1fae5;color:#059669;font-size:12px;font-weight:800;padding:4px 10px;border-radius:12px;">0</span>
+                    </button>
+                    <button type="button" class="sidebar-item" data-driver-subtab="today">
+                        <i class="ri-calendar-check-line" style="color:#3b82f6;"></i>
+                        <span data-i18n="tab_today">Aujourd'hui</span>
+                        <span id="drv-sidebar-today" style="margin-left:auto;background:#dbeafe;color:#2563eb;font-size:12px;font-weight:800;padding:4px 10px;border-radius:12px;">0</span>
+                    </button>
+                    <button type="button" class="sidebar-item" data-driver-subtab="calendar">
+                        <i class="ri-calendar-line" style="color:#8b5cf6;"></i>
+                        <span data-i18n="tab_calendar">Calendrier</span>
+                        <span id="drv-sidebar-calendar" style="margin-left:auto;font-size:12px;color:#6b7280;">0</span>
+                    </button>
+                    <button type="button" class="sidebar-item" data-driver-subtab="later">
+                        <i class="ri-calendar-event-line" style="color:#a855f7;"></i>
+                        <span data-i18n="tab_later">Plus tard</span>
+                        <span id="drv-sidebar-later" style="margin-left:auto;background:#ede9fe;color:#6d28d9;font-size:12px;font-weight:800;padding:4px 10px;border-radius:12px;">0</span>
+                    </button>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">⚙️ <span data-i18n="account">Compte</span></h4>
+                    <button type="button" class="sidebar-item" id="driver-sidebar-edit-profile">
+                        <i class="ri-user-settings-line" style="color:#2563eb;"></i>
+                        <span data-i18n="change_profile">Changer le profil</span>
+                        <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#9ca3af;"></i>
+                    </button>
+                    <button type="button" class="sidebar-item" id="driver-sidebar-logout" style="background:#fef2f2;">
+                        <i class="ri-logout-box-r-line" style="color:#ef4444;"></i>
+                        <span style="color:#ef4444;font-weight:700;" data-i18n="logout">Déconnexion</span>
+                        <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#ef4444;"></i>
+                    </button>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: #9ca3af; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">&#x1F4F0; Informations</h4>
+                    <button type="button" class="sidebar-item" id="driver-sidebar-forum-btn" onclick="if(window.__driverCloseSidebar) window.__driverCloseSidebar(); openDriverForum();">
+                        <i class="ri-article-line" style="color:#8b5cf6;"></i>
+                        <span>Publications &amp; Forum</span>
+                        <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#9ca3af;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="driver-sidebar-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s;"></div>
+
+        <!-- Modal Forum (plan-detail-modal style) -->
+        <div id="drvForumModal" class="plan-detail-modal" aria-hidden="true">
+            <button class="plan-close-btn" onclick="closeDriverForum()" aria-label="Fermer">&times;</button>
+            <div class="plan-hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="plan-hero-content">
+                    <h1 class="plan-hero-title">📰 Publications & Forum</h1>
+                    <p class="plan-hero-subtitle" id="drv-forum-count">Chargement des publications...</p>
+                </div>
+            </div>
+            <div class="plan-detail-content">
+                <div class="plan-description">
+                    <p>Retrouvez ici toutes les annonces et communications de l'équipe Daxi. Cliquez sur une publication pour la lire en détail.</p>
+                </div>
+                <div id="drvForumContainer"
+                     hx-get="/htmx/forum/"
+                     hx-trigger="revealed"
+                     hx-swap="innerHTML"
+                     class="forum-pub-grid">
+                    <div style="text-align:center;padding:30px;color:#9ca3af;">Chargement...</div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Forum détail (overlay centré) -->
+        <div id="drvForumDetailModal" class="drv-forum-detail-modal">
+            <div class="drv-forum-detail-inner">
+                <div class="drv-detail-header">
+                    <div class="drv-detail-title" id="drvDetailTitle">Titre</div>
+                    <button class="drv-detail-close" onclick="document.getElementById('drvForumDetailModal').classList.remove('open')">&times;</button>
+                </div>
+                <div class="drv-detail-content" id="drvDetailContent"></div>
+            </div>
+        </div>
+
+        <main class="pt-24 pb-20 px-4">
+            <section class="mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-base font-semibold text-gray-800">Statut actuel</h2>
+                        <span id="driver-status-badge"
+                              style="padding:5px 12px;border-radius:14px;font-size:11px;font-weight:700;background:#f3f4f6;color:#6b7280;">
+                            &#11044; Chargement...
+                        </span>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button hx-post="/htmx/driver/status/"
+                                hx-vals='{"status":"available"}'
+                                hx-target="#driver-status-badge"
+                                hx-swap="outerHTML"
+                                hx-on::after-request="onDriverStatusChanged('available')"
+                                style="flex:1;min-width:90px;padding:10px;background:#10b981;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                            🟢 Disponible
+                        </button>
+                        <button hx-post="/htmx/driver/status/"
+                                hx-vals='{"status":"busy"}'
+                                hx-target="#driver-status-badge"
+                                hx-swap="outerHTML"
+                                hx-on::after-request="onDriverStatusChanged('busy')"
+                                style="flex:1;min-width:90px;padding:10px;background:#f59e0b;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                            🟡 Occupé
+                        </button>
+                    </div>
+                    <!-- Show available orders even when busy -->
+                    <div id="busy-orders-toggle" style="display:none;margin-top:10px;text-align:center;">
+                        <button onclick="toggleBusyOrders()" id="busy-orders-toggle-btn"
+                                style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">
+                            👁 Voir quand même les commandes disponibles
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gestion des commandes (comme ADM, filtré chauffeur) -->
+            <section class="mb-6" id="driver-orders-manager-section">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800" id="driver-orders-manager-title" data-i18n="tab_ongoing">En cours</h2>
+                        <span id="driver-orders-total" class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full" data-no-translate="1">0</span>
+                    </div>
+
+                    <div id="driver-orders-manager-loading" class="py-6 flex items-center justify-center text-gray-500" data-no-translate="1" style="display:none;">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block" style="width:18px;height:18px;border:2px solid rgba(107,114,128,0.35);border-top-color:#6b7280;border-radius:50%;animation: spin 0.8s linear infinite;"></span>
+                            <span id="driver-orders-manager-loading-text">Chargement...</span>
+                        </div>
+                    </div>
+
+                    <!-- Contenu des sous-onglets (les boutons sont aussi dans le header, mais ici on rend les contenus) -->
+                    <div id="driver-orders-subtab-contents">
+                        <!-- Sub-tab buttons -->
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                            <button onclick="loadDriverOrders('accepted')"
+                                    style="padding:6px 12px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">
+                                &#128663; En cours
+                            </button>
+                            <button onclick="loadDriverOrders('available')"
+                                    style="padding:6px 12px;background:white;color:#374151;border:2px solid #e5e7eb;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">
+                                &#128276; Disponibles
+                            </button>
+                            <button onclick="loadDriverOrders('history')"
+                                    style="padding:6px 12px;background:white;color:#374151;border:2px solid #e5e7eb;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">
+                                &#128218; Historique
+                            </button>
+                            <button onclick="loadDriverCalendar()"
+                                    style="padding:6px 12px;background:white;color:#374151;border:2px solid #e5e7eb;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">
+                                &#128197; Calendrier
+                            </button>
+                        </div>
+                        <!-- Orders content loaded via HTMX -->
+                        <div id="driver-orders-htmx"
+                             hx-get="/htmx/driver/orders/?tab=accepted"
+                             hx-trigger="driver-refresh"
+                             hx-swap="innerHTML">
+                            <div style="text-align:center;padding:30px;color:#9ca3af;">Chargement...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6 hidden" id="requests-section">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800" data-i18n="received_requests">Commandes disponibles</h2>
+                        <span id="new-requests-count" class="bg-gray-400 text-white text-xs px-2 py-1 rounded-full">Chargement...</span>
+                    </div>
+                    
+                    <div id="connection-status" class="connection-status">
+                        <i id="connection-icon" class="ri-wifi-line connection-status-icon"></i>
+                        <div id="connection-message">
+                            <span data-i18n="testing_connection">Nous testons votre connexion...</span>
+                        </div>
+                        <span id="connection-result" class="hidden ml-2"></span>
+                        <span id="connection-warning" class="text-red-500 text-sm hidden ml-2" data-i18n="avoid_gps_commands">(Évitez les commandes nécessitant la carte GPS)</span>
+                    </div>
+                    
+                    <div class="space-y-4" id="requests-list">
+                        <div class="text-center py-8 text-gray-500" id="no-requests-message" data-i18n="no_requests">
+                            Aucune commande disponible pour le moment
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Modal calendrier (commandes par jour) -->
+            <div id="driver-calendar-orders-modal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-xl p-5 w-full max-w-3xl max-h-[85vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800" id="driver-calendar-modal-title">—</h3>
+                        <button type="button" id="driver-calendar-modal-close" class="text-gray-500 hover:text-gray-700">
+                            <i class="ri-close-line ri-lg"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4" id="driver-calendar-modal-list"></div>
+                    <div class="text-center py-8 text-gray-500 hidden" id="driver-calendar-modal-empty" data-i18n="no_orders">Aucune commande</div>
+                </div>
+            </div>
+
+            <!-- Forum Banner — visible entry point like vubez2 -->
+            <section class="mb-6" data-no-translate="1">
+                <div class="drv-forum-banner" onclick="openDriverForum()">
+                    <div class="drv-forum-banner-inner">
+                        <h3 style="font-size:20px; font-weight:800; margin-bottom:6px;">
+                            <i class="ri-newspaper-line" style="margin-right:8px;"></i>Publications &amp; Forum
+                        </h3>
+                        <p style="font-size:13px; opacity:0.88; margin-bottom:16px;">Annonces et communications de l'équipe Daxi</p>
+                        <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.2); padding:8px 16px; border-radius:12px; font-size:13px; font-weight:600; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.2);">
+                            Voir les publications <i class="ri-arrow-right-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="completed_trips">Parcours effectués</h2>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-calendar-line text-blue-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="today-trips"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="today">Aujourd'hui</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-calendar-week-line text-green-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="week-trips"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="last_7_days">7 derniers jours</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-purple-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-calendar-month-line text-purple-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="month-trips"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="this_month">Ce mois</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-orange-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-trophy-line text-orange-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="total-trips"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="total">Total</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="earnings">Gains</h2>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-money-dollar-circle-line text-blue-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="today-earnings"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="today">Aujourd'hui</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-money-dollar-circle-line text-green-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="week-earnings"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="last_7_days">7 derniers jours</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-purple-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-money-dollar-circle-line text-purple-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="month-earnings"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="this_month">Ce mois</p>
+                        </div>
+                        
+                        <div class="text-center p-4 bg-orange-50 rounded-lg">
+                            <div class="w-8 h-8 flex items-center justify-center mx-auto mb-2">
+                                <i class="ri-money-dollar-circle-line text-orange-600 ri-lg"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-800" id="total-earnings"><span class="text-sm text-gray-500">Chargement...</span></p>
+                            <p class="text-xs text-gray-600" data-i18n="total">Total</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="recent_history">Historique récent</h2>
+                    
+                    <div class="space-y-4" id="history-list">
+                        <div class="text-center py-8 text-gray-500" id="no-history-message" data-i18n="no_history">
+                            Aucun historique pour le moment
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mb-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="recent_reviews">Avis récents</h2>
+                    <div class="space-y-4" id="reviews-list">
+                        <div class="text-center py-8 text-gray-500" id="no-reviews-message" data-i18n="no_reviews">
+                            Aucun avis pour le moment
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="apk-download-section" class="mb-6 hidden">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="download_app">Télécharger l'application</h2>
+                    <p class="text-gray-600 mb-4" data-i18n="app_experience">Téléchargez l'application android Julmin Taxis pour une meilleure expérience.</p>
+                    <a href="Daxi Driver.apk" id="apk-download-btn" class="w-full bg-green-500 text-white py-3 !rounded-button font-medium text-center block">
+                        <i class="ri-download-line mr-2"></i><span data-i18n="download_apk">Télécharger l'APK</span>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- iOS Install Modal -->
+    <div id="iosInstallModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Installer l'APK du site sur votre iPhone</h3>
+                <button class="close-modal text-gray-500 hover:text-gray-700" id="closeIosModalBtn">
+                    <i class="ri-close-line ri-lg"></i>
+                </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Vous pouvez installer l'APK de notre site directement sur votre iPhone pour y accéder plus rapidement, comme une application.</p>
+            
+            <div class="ios-instruction-step">
+                <i class="ri-safari-line"></i>
+                <span>1. Ouvrez ce site dans Safari (nécessaire pour l'installation).</span>
+            </div>
+            
+            <div class="ios-instruction-step">
+                <i class="ri-share-box-line"></i>
+                <span>2. Appuyez sur le bouton Partager (icône carré avec une flèche télécharger).</span>
+            </div>
+            
+            <div class="ios-instruction-step">
+                <i class="ri-home-heart-line"></i>
+                <span>3. Sélectionnez « Installer l'APK sur l'écran d'accueil ».</span>
+            </div>
+            
+            <div class="ios-instruction-step">
+                <i class="ri-add-circle-line"></i>
+                <span>4. Appuyez sur Ajouter pour finaliser l'installation.</span>
+            </div>
+            
+            <button id="closeIosModalConfirmBtn" class="w-full gold-button py-3 !rounded-button font-semibold mt-4">
+                Fermer
+            </button>
+        </div>
+    </div>
+
+    <div id="price-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="accept_order">Accepter la commande</h3>
+            <div class="mb-4">
+                <p class="text-gray-600" data-i18n="admin_price">Prix fixé par l'administration:</p>
+                <p class="font-bold text-primary" id="admin-price">0 $</p>
+            </div>
+            <div class="flex space-x-3">
+                <button id="cancel-price" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium" data-i18n="cancel">Annuler</button>
+                <button id="accept-order" class="flex-1 bg-primary text-white py-3 rounded-lg font-medium" data-i18n="accept">Accepter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4" data-i18n="change_profile">Changer la photo de profil</h3>
+            <div id="edit-photo-container" class="file-upload-container mb-4">
+                <div class="file-upload-icon">
+                    <i class="ri-image-add-line"></i>
+                </div>
+                <p class="text-sm text-gray-600 mb-2" data-i18n="click_to_select">Cliquez pour sélectionner une nouvelle photo</p>
+                <p class="text-xs text-gray-500" data-i18n="accepted_formats">Formats acceptés: JPG, PNG, GIF (max 5MB)</p>
+                <input type="file" id="profile-edit-upload" accept="image/*" class="hidden">
+            </div>
+            <div id="edit-photo-preview" class="mt-4 hidden text-center">
+                <div class="preview-container">
+                    <img id="edit-preview-image" class="preview-image" src="" alt="Aperçu de la photo">
+                    <div class="remove-photo-btn" id="remove-edit-photo">
+                        <i class="ri-delete-bin-line"></i>
+                    </div>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-4">
+                    <button id="cancel-edit" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium" data-i18n="cancel">Annuler</button>
+                    <button id="save-edit" class="flex-1 bg-primary text-white py-3 rounded-lg font-medium" data-i18n="save">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="location-modal" class="location-modal hidden">
+        <div class="location-modal-content">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" data-i18n="location_permission">Autorisation de localisation</h3>
+            <p class="text-gray-600 mb-6" data-i18n="location_permission_message">Pour recevoir des commandes, Julmin Taxis a besoin d'accéder à votre position. Veuillez autoriser la géolocalisation dans les paramètres de votre navigateur.</p>
+            <button id="location-ok-btn" class="location-modal-btn" data-i18n="ok">J'ai compris</button>
+        </div>
+    </div>
+
+    <audio id="notification-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" preload="auto"></audio>
+
+    
+<script>
+// ===== GOOGLE MAPS (MANDATORY) =====
+window.googleMapsLoaded = false;
+window.initGoogleMaps = function() {
+    window.googleMapsLoaded = true;
+    window.dispatchEvent(new Event('googleMapsReady'));
+    initAllMapDivs();
+};
+
+function initAllMapDivs() {
+    document.querySelectorAll('[data-lat][data-lng]:not([data-map-init])').forEach(function(el) {
+        if (el.offsetParent === null) return; // skip hidden containers
+        el.dataset.mapInit = '1';
+        var lat = parseFloat(el.dataset.lat);
+        var lng = parseFloat(el.dataset.lng);
+        var dLat = parseFloat(el.dataset.destLat || 0);
+        var dLng = parseFloat(el.dataset.destLng || 0);
+        if (!lat || !lng) return;
+        var map = new google.maps.Map(el, {center:{lat:lat,lng:lng}, zoom:13, mapTypeControl:false, streetViewControl:false, fullscreenControl:false});
+        new google.maps.Marker({position:{lat:lat,lng:lng}, map:map, title:'Depart', icon:'http://maps.google.com/mapfiles/ms/icons/green-dot.png'});
+        if (dLat && dLng) {
+            new google.maps.Marker({position:{lat:dLat,lng:dLng}, map:map, title:'Dest', icon:'http://maps.google.com/mapfiles/ms/icons/red-dot.png'});
+            var ds = new google.maps.DirectionsService();
+            var dr = new google.maps.DirectionsRenderer({suppressMarkers:true});
+            dr.setMap(map);
+            ds.route({origin:{lat:lat,lng:lng}, destination:{lat:dLat,lng:dLng}, travelMode:google.maps.TravelMode.DRIVING}, function(res,status) {
+                if (status === 'OK') dr.setDirections(res);
+            });
+        }
+    });
+}
+
+(function() {
+    if (window.googleMapsInitializing) return;
+    window.googleMapsInitializing = true;
+    var s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAnJLrSxMKAvUEni2TU2_-8awj_0lg29Fc&libraries=places,geometry&loading=async&callback=initGoogleMaps';
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+})();
+
+document.addEventListener('htmx:afterSwap', function() {
+    if (window.googleMapsLoaded) initAllMapDivs();
+});
+
+// ===== GEOLOCATION (MANDATORY) =====
+var driverLocationInterval = null;
+
+function startLocationTracking() {
+    if (!navigator.geolocation) {
+        var alert = document.getElementById('notification-alert');
+        var txt = document.getElementById('notification-text');
+        if (alert && txt) { txt.textContent = 'Géolocalisation non supportée par ce navigateur.'; alert.classList.remove('hidden'); }
+        return;
+    }
+    // Test permission once on start to give immediate feedback
+    navigator.geolocation.getCurrentPosition(function() {}, function(err) {
+        if (err.code === err.PERMISSION_DENIED) {
+            var alert = document.getElementById('notification-alert');
+            var txt = document.getElementById('notification-text');
+            if (alert && txt) { txt.textContent = '⚠️ Accès à la localisation refusé. Votre position ne sera pas mise à jour.'; alert.classList.remove('hidden'); }
+        }
+    });
+    driverLocationInterval = setInterval(function() {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            fetch('/htmx/driver/location/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrfToken()},
+                body: 'lat=' + pos.coords.latitude + '&lng=' + pos.coords.longitude
+            }).catch(function(){});
+        }, function(){}, {enableHighAccuracy: true});
+    }, 15000); // every 15 seconds
+}
+
+function stopLocationTracking() {
+    if (driverLocationInterval) { clearInterval(driverLocationInterval); driverLocationInterval = null; }
+}
+
+// ===== PUSH NOTIFICATIONS (MANDATORY) =====
+var messaging = null;
+try { firebase.initializeApp({}); messaging = firebase.messaging(); } catch(e) {}
+
+if (messaging) {
+    messaging.onMessage(function(payload) {
+        var body = (payload.notification && payload.notification.body) || 'Nouvelle commande!';
+        var alert = document.getElementById('notification-alert');
+        var txt = document.getElementById('notification-text');
+        if (alert && txt) { txt.textContent = body; alert.classList.remove('hidden'); }
+        // Reload orders
+        var loader = document.getElementById('driver-orders-htmx');
+        if (loader) htmx.trigger(loader, 'driver-refresh');
+    });
+}
+
+// ===== HELPER FUNCTIONS =====
+function getCsrfToken() {
+    if (window.DJANGO_SESSION && window.DJANGO_SESSION.csrf_token) return window.DJANGO_SESSION.csrf_token;
+    var el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+}
+
+function loadDriverOrders(tab) {
+    var loader = document.getElementById('driver-orders-htmx');
+    if (!loader) return;
+    loader.setAttribute('hx-get', '/htmx/driver/orders/?tab=' + tab);
+    htmx.trigger(loader, 'driver-refresh');
+}
+
+function loadDriverCalendar() {
+    var loader = document.getElementById('driver-orders-htmx');
+    if (!loader) return;
+    loader.setAttribute('hx-get', '/htmx/driver/calendar/');
+    htmx.trigger(loader, 'driver-refresh');
+}
+
+// ── STATUS CHANGE HANDLER ────────────────────────────────────────────────────
+var _driverCurrentStatus = (window.DJANGO_SESSION && window.DJANGO_SESSION.driver_status) || 'offline';
+var _busyOrdersVisible = false;
+
+function onDriverStatusChanged(newStatus) {
+    _driverCurrentStatus = newStatus;
+    _busyOrdersVisible = false;
+    updateBusyUI();
+}
+
+function updateBusyUI() {
+    var busyToggle = document.getElementById('busy-orders-toggle');
+    var tab = document.querySelector('#driver-orders-htmx');
+    if (!busyToggle) return;
+    if (_driverCurrentStatus === 'busy') {
+        busyToggle.style.display = 'block';
+        if (!_busyOrdersVisible) {
+            var curHref = tab ? tab.getAttribute('hx-get') : '';
+            if (curHref && curHref.indexOf('tab=available') !== -1) {
+                loadDriverOrders('accepted');
+            }
+        }
+    } else {
+        busyToggle.style.display = 'none';
+    }
+}
+
+function toggleBusyOrders() {
+    _busyOrdersVisible = !_busyOrdersVisible;
+    var btn = document.getElementById('busy-orders-toggle-btn');
+    if (_busyOrdersVisible) {
+        loadDriverOrders('available');
+        if (btn) btn.textContent = '🙈 Masquer les commandes disponibles';
+    } else {
+        loadDriverOrders('accepted');
+        if (btn) btn.textContent = '👁 Voir quand même les commandes disponibles';
+    }
+}
+
+// When driver accepts an order, auto-set status to busy and reload
+document.body.addEventListener('htmx:afterRequest', function(e) {
+    var url = e.detail.requestConfig && e.detail.requestConfig.path;
+    if (url && url.indexOf('/accept/') !== -1 && e.detail.xhr && e.detail.xhr.status === 200) {
+        _driverCurrentStatus = 'busy';
+        updateBusyUI();
+        // Refresh status badge
+        fetch('/htmx/driver/status/', {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'X-CSRFToken': getCsrfToken(), 'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'status=busy'
+        }).then(function(r) { return r.text(); })
+          .then(function(html) {
+              var badge = document.getElementById('driver-status-badge');
+              if (badge) badge.outerHTML = html;
+          });
+    }
+});
+
+// Sidebar toggle
+document.addEventListener('DOMContentLoaded', function() {
+    var menuBtn = document.getElementById('driver-menu-btn');
+    var sidebar = document.getElementById('driver-sidebar');
+    var overlay = document.getElementById('driver-sidebar-overlay');
+    var closeBtn = document.getElementById('driver-sidebar-close');
+
+    // ===== Switch between login / register sections =====
+    var switchToLogin = document.getElementById('switch-to-login');
+    if (switchToLogin) {
+        switchToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            var loginSec = document.getElementById('login-section');
+            var regSec = document.getElementById('register-section');
+            if (loginSec) loginSec.classList.remove('hidden');
+            if (regSec) regSec.classList.add('hidden');
+        });
+    }
+
+    // ===== Driver registration form submit =====
+    var registerBtn = document.getElementById('register-submit-btn');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', function() {
+            var form = document.getElementById('register-form');
+            if (!form) return;
+            // Basic validation
+            var fields = ['lastname','firstname','email','phone','password'];
+            var valid = true;
+            fields.forEach(function(f) {
+                var el = form.querySelector('[name=' + f + ']');
+                var err = document.getElementById(f + '-error') || document.getElementById('register-' + f + '-error');
+                if (!el || !el.value.trim()) {
+                    valid = false;
+                    if (err) err.classList.remove('hidden');
+                } else {
+                    if (err) err.classList.add('hidden');
+                }
+            });
+            if (!valid) return;
+            var formData = new FormData(form);
+            var body = new URLSearchParams(formData).toString();
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Inscription...';
+            fetch('/htmx/driver/register/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCsrfToken()},
+                body: body
+            }).then(function(r) {
+                if (r.headers.get('HX-Refresh') === 'true') {
+                    window.location.reload();
+                    return '';
+                }
+                return r.text();
+            }).then(function(html) {
+                if (!html) return;
+                var regSec = document.getElementById('register-section');
+                if (regSec) {
+                    var msg = document.createElement('div');
+                    msg.innerHTML = html;
+                    regSec.querySelector('.bg-white').prepend(msg);
+                }
+                registerBtn.disabled = false;
+                registerBtn.textContent = "S'inscrire";
+            }).catch(function() {
+                registerBtn.disabled = false;
+                registerBtn.textContent = "S'inscrire";
+            });
+        });
+    }
+
+    function openSidebar() {
+        if (sidebar) { sidebar.style.transform = 'translateX(0)'; }
+        if (overlay) { overlay.style.display = 'block'; setTimeout(function(){ overlay.style.opacity='1'; }, 10); }
+    }
+    function closeSidebar() {
+        if (sidebar) { sidebar.style.transform = 'translateX(100%)'; }
+        if (overlay) { overlay.style.opacity='0'; setTimeout(function(){ overlay.style.display='none'; }, 300); }
+    }
+    window.__driverCloseSidebar = closeSidebar;
+
+    if (menuBtn) menuBtn.addEventListener('click', openSidebar);
+    if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+
+    // Logout
+    var logoutBtn = document.getElementById('driver-sidebar-logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            fetch('/htmx/driver/logout/', {method:'POST', headers:{'X-CSRFToken': getCsrfToken()}})
+              .then(function() { window.location.reload(); });
+        });
+    }
+
+    // Profile edit
+    var profileBtn = document.getElementById('driver-sidebar-edit-profile');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', function() {
+            closeSidebar();
+            var loader = document.getElementById('driver-orders-htmx');
+            if (loader) { loader.setAttribute('hx-get', '/htmx/driver/profile/'); htmx.trigger(loader, 'driver-refresh'); }
+        });
+    }
+
+    // Notification dismiss
+    var dismissBtn = document.getElementById('dismiss-notification');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+            var a = document.getElementById('notification-alert');
+            if (a) a.classList.add('hidden');
+        });
+    }
+
+    // HTMX: include CSRF in all requests
+    document.body.addEventListener('htmx:configRequest', function(e) {
+        e.detail.headers['X-CSRFToken'] = getCsrfToken();
+    });
+
+    // Start location tracking when on main interface
+    var main = document.getElementById('main-interface');
+    if (main && !main.classList.contains('hidden')) {
+        startLocationTracking();
+        // Initial orders load (tab=accepted by default)
+        loadDriverOrders('accepted');
+        // Load driver stats (trips & earnings)
+        loadDriverStats();
+    }
+
+    // Auto-refresh orders every 60s
+    setInterval(function() {
+        var loader = document.getElementById('driver-orders-htmx');
+        if (loader && document.getElementById('main-interface') && !document.getElementById('main-interface').classList.contains('hidden')) {
+            htmx.trigger(loader, 'driver-refresh');
+        }
+    }, 60000);
+});
+
+// openDriverForum
+function openDriverForum() {
+    var modal = document.getElementById('drvForumModal');
+    if (modal) { modal.classList.add('open'); htmx.trigger(document.getElementById('drvForumContainer'), 'revealed'); }
+}
+function closeDriverForum() {
+    var modal = document.getElementById('drvForumModal');
+    if (modal) modal.classList.remove('open');
+}
+
+function loadDriverStats() {
+    fetch('/htmx/driver/stats/', { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            function set(id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val;
+            }
+            set('today-trips',    d.today_trips  || '0');
+            set('week-trips',     d.week_trips   || '0');
+            set('month-trips',    d.month_trips  || '0');
+            set('total-trips',    d.total_trips  || '0');
+            var fmt = function(v) { return v ? parseFloat(v).toFixed(0) + ' $' : '0 $'; };
+            set('today-earnings',  fmt(d.today_earnings));
+            set('week-earnings',   fmt(d.week_earnings));
+            set('month-earnings',  fmt(d.month_earnings));
+            set('total-earnings',  fmt(d.total_earnings));
+        })
+        .catch(function() {});
+}
+</script>
+</body>
+</html>

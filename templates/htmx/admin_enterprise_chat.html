@@ -1,0 +1,38 @@
+{% load daxi_extras %}
+<div id="admin-ent-chat-inner" style="display:flex;flex-direction:column;max-height:420px;">
+  <div style="font-size:13px;font-weight:700;color:#1f2937;margin-bottom:10px;padding:0 2px;">
+    <i class="ri-chat-3-line"></i> Chat avec {{ enterprise.name }}
+  </div>
+  
+  <div id="admin-ent-msgs" style="flex:1;overflow-y:auto;padding:10px;background:#f9fafb;border-radius:10px;margin-bottom:10px;border:1px solid #e5e7eb;max-height:280px;">
+    {% if messages %}
+      {% for msg in messages %}
+      {% ifchanged msg.created_at|daxi_date_key %}
+      <div class="daxi-wa-day-sep" data-day="{{ msg.created_at|daxi_date_key }}"><span>{{ msg.created_at|daxi_chat_day }}</span></div>
+      {% endifchanged %}
+      <div style="display:flex;{% if msg.is_from_admin %}justify-content:flex-end{% else %}justify-content:flex-start{% endif %};margin-bottom:8px;">
+        <div style="max-width:75%;{% if msg.is_from_admin %}background:linear-gradient(135deg,#667eea,#764ba2);color:white{% else %}background:white;border:1px solid #e5e7eb;color:#374151{% endif %};border-radius:{% if msg.is_from_admin %}14px 4px 14px 14px{% else %}4px 14px 14px 14px{% endif %};padding:8px 12px;">
+          {% if not msg.is_from_admin %}<div style="font-size:10px;font-weight:700;color:#667eea;margin-bottom:3px;">{{ enterprise.name }}</div>{% endif %}
+          <div style="font-size:12px;line-height:1.5;">{{ msg.message }}</div>
+          <div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right;">{{ msg.created_at|date:"d/m H:i" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:20px;color:#9ca3af;font-size:12px;">Aucun message</div>
+    {% endif %}
+  </div>
+  
+  <form hx-post="/htmx/admin/enterprises/{{ enterprise.pk }}/chat/send/" hx-target="#admin-enterprise-chat-{{ enterprise.pk }}" hx-swap="innerHTML" style="display:flex;gap:6px;">
+    {% csrf_token %}
+    <input name="message" placeholder="Répondre à {{ enterprise.name }}..." autocomplete="off"
+      style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:12px;outline:none;">
+    <button type="submit" style="background:#667eea;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;">➤</button>
+  </form>
+</div>
+<script>
+(function(){
+  var el = document.getElementById('admin-ent-msgs');
+  if (el) el.scrollTop = el.scrollHeight;
+})();
+</script>

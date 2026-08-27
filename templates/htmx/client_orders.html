@@ -1,0 +1,95 @@
+{% load static %}
+<div id="client-orders-container" class="daxi-orders-list">
+
+  {% if tab == 'active' %}
+    <div class="daxi-orders-section">
+      <div class="daxi-orders-section-hdr">
+        <span class="daxi-orders-section-badge daxi-orders-section-badge--now"><i class="ri-flashlight-fill"></i> <span data-translate="now">Maintenant</span></span>
+        <span class="daxi-orders-section-count" data-i18n-count="trips" data-count="{{ now_orders|length }}">{% if now_orders|length == 1 %}1 course{% else %}{{ now_orders|length }} courses{% endif %}</span>
+      </div>
+      {% if now_orders %}
+        {% for o in now_orders %}
+        {% include "htmx/_client_order_card.html" %}
+        {% endfor %}
+      {% else %}
+        <div class="daxi-orders-empty-mini">
+          <i class="ri-taxi-line"></i>
+          <span data-translate="orders_no_immediate">Aucune course immédiate</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="daxi-orders-section">
+      <div class="daxi-orders-section-hdr">
+        <span class="daxi-orders-section-badge daxi-orders-section-badge--later"><i class="ri-calendar-schedule-line"></i> <span data-translate="later">Plus tard</span></span>
+        <span class="daxi-orders-section-count" data-i18n-count="scheduled" data-count="{{ scheduled_orders|length }}">{% if scheduled_orders|length == 1 %}1 planifiée{% else %}{{ scheduled_orders|length }} planifiées{% endif %}</span>
+      </div>
+      {% if scheduled_orders %}
+        {% for o in scheduled_orders %}
+        {% include "htmx/_client_order_card.html" %}
+        {% endfor %}
+      {% else %}
+        <div class="daxi-orders-empty-mini">
+          <i class="ri-calendar-line"></i>
+          <span data-translate="orders_no_scheduled">Aucune course planifiée</span>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    {% if orders %}
+      {% for o in orders %}
+      {% include "htmx/_client_order_card.html" %}
+      {% endfor %}
+    {% else %}
+    <div class="daxi-orders-empty">
+      <div class="daxi-orders-empty-icon">📋</div>
+      <div class="daxi-orders-empty-title" data-translate="orders_empty_history_title">Aucune course dans l'historique</div>
+      <div class="daxi-orders-empty-sub" data-translate="orders_empty_history_sub">Vos courses terminées apparaîtront ici</div>
+    </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+<script>
+function clientToggleChat(orderId, guestId) {
+  var wrap = document.getElementById('client-chat-wrap-' + orderId);
+  if (!wrap) return;
+  var isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    var badge = document.getElementById('client-chat-badge-' + orderId);
+    if (badge) badge.style.display = 'none';
+    var msgs = document.getElementById('chat-messages-' + orderId);
+    if (msgs && typeof htmx !== 'undefined') htmx.trigger(msgs, 'revealed');
+    if (window.DaxiChatComposer) DaxiChatComposer.init();
+  }
+}
+
+function refreshGpsForOrder(orderId) {
+  if (!navigator.geolocation) return;
+  var statusEl = document.getElementById('gps-refresh-status-' + orderId);
+  if (statusEl) statusEl.textContent = '…';
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    fetch('/htmx/client/orders/' + orderId + '/update-gps/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': (typeof getCsrfToken === 'function' ? getCsrfToken() : '')
+      },
+      body: 'lat=' + pos.coords.latitude + '&lng=' + pos.coords.longitude
+    }).then(function(r) { return r.text(); }).then(function() {
+      if (statusEl) statusEl.textContent = '✓ Position enregistrée';
+    }).catch(function() {
+      if (statusEl) statusEl.textContent = 'Erreur GPS';
+    });
+  }, function() {
+    if (statusEl) statusEl.textContent = 'GPS refusé';
+  }, { enableHighAccuracy: true, timeout: 12000 });
+}
+(function() {
+  if (window.DaxiAutoI18n && window.DaxiAutoI18n.apply) window.DaxiAutoI18n.apply();
+  else if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+})();
+</script>

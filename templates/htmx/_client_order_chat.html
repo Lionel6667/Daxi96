@@ -1,0 +1,5 @@
+    {% if o.status == 'driver_assigned' or o.status == 'on_way' or o.status == 'arrived' or o.status == 'in_progress' %}
+    <div id="client-chat-wrap-{{ o.id }}" style="display:none;margin-top:10px;">
+      {% include "htmx/_chat_composer.html" with order_id=o.id scope="user" title="Discussion" closable=True guest_id=o.guest_id csrf_token=csrf_token %}
+    </div>
+    {% endif %}

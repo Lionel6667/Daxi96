@@ -1,0 +1,85 @@
+{% load static %}
+<div id="price-proposal-card" data-order-id="{{ order_id }}" data-daxi-checkout-flow="1"
+     class="daxi-price-proposal">
+
+  <div class="daxi-pp-head">
+    <div class="daxi-pp-head-icon"><i class="ri-taxi-fill"></i></div>
+    <div class="daxi-pp-head-title">Confirmer votre trajet</div>
+    <div class="daxi-pp-head-sub">Prix estimé — validez pour lancer la recherche chauffeur</div>
+  </div>
+
+  <div class="daxi-pp-route">
+    <div class="daxi-pp-route-row">
+      <span class="daxi-pp-route-dot daxi-pp-route-dot--pickup"></span>
+      <div>
+        <div class="daxi-pp-route-label">Départ</div>
+        <div class="daxi-pp-route-addr">{{ pickup }}</div>
+      </div>
+    </div>
+    <div class="daxi-pp-route-line"></div>
+    <div class="daxi-pp-route-row">
+      <span class="daxi-pp-route-dot daxi-pp-route-dot--dest"></span>
+      <div>
+        <div class="daxi-pp-route-label">Destination</div>
+        <div class="daxi-pp-route-addr">{{ destination }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if distance_km or trip_type or passengers > 1 %}
+  <div class="daxi-pp-meta">
+    {% if distance_km %}
+    <span class="daxi-pp-chip"><i class="ri-route-line"></i> {{ distance_km|floatformat:1 }} km</span>
+    {% endif %}
+    {% if trip_type == 'round_trip' %}
+    <span class="daxi-pp-chip"><i class="ri-arrow-left-right-line"></i> Aller-retour (×2)</span>
+    {% else %}
+    <span class="daxi-pp-chip"><i class="ri-car-line"></i> Aller simple</span>
+    {% endif %}
+    {% if passengers > 1 %}
+    <span class="daxi-pp-chip"><i class="ri-group-line"></i> {{ passengers }} passagers</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% include "htmx/_round_trip_wait_info.html" with o=order %}
+
+  {% if auto_price %}
+  <div class="daxi-pp-price">
+    <div class="daxi-pp-price-label">Prix estimé</div>
+    <div class="daxi-pp-price-val"><span class="daxi-pp-price-cur">$</span><span class="daxi-pp-price-num">{{ auto_price|floatformat:2 }}</span></div>
+  </div>
+
+  <div class="daxi-pp-actions">
+    <input type="hidden" id="proposal-guest-id-{{ order_id }}" name="guest_id" value="{{ order.guest_id|default:'' }}">
+    {% csrf_token %}
+    <button type="button"
+      class="daxi-pp-btn daxi-pp-btn--accept"
+      data-daxi-price-action="confirm"
+      data-order-id="{{ order_id }}"
+      hx-post="/htmx/client/orders/{{ order_id }}/confirm-price/"
+      hx-target="#daxi-sheet-order-slot"
+      hx-swap="innerHTML"
+      hx-disabled-elt="this"
+      hx-include="#proposal-guest-id-{{ order_id }}, #guestIdHidden, [name=csrfmiddlewaretoken]">
+      <i class="ri-check-line"></i> Accepter
+    </button>
+    <button type="button"
+      class="daxi-pp-btn daxi-pp-btn--refuse"
+      data-daxi-price-action="refuse"
+      data-order-id="{{ order_id }}"
+      hx-post="/htmx/client/orders/{{ order_id }}/refuse-price/"
+      hx-target="#daxi-sheet-order-slot"
+      hx-swap="innerHTML"
+      hx-disabled-elt="this"
+      hx-include="#proposal-guest-id-{{ order_id }}, #guestIdHidden, [name=csrfmiddlewaretoken]">
+      <i class="ri-close-line"></i> Refuser
+    </button>
+  </div>
+  {% else %}
+  <div class="daxi-pp-wait">
+    <i class="ri-time-line"></i>
+    Commande {% firstof order.code order.ref_code order_code %} — prix en cours de calcul
+  </div>
+  {% endif %}
+</div>

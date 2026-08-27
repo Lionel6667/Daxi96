@@ -1,0 +1,9 @@
+
+{% if o.driver_car_image %}
+<button type="button"
+        class="daxi-oc-driver-car-thumb daxi-oc-party-car-thumb daxi-car-thumb-btn"
+        data-daxi-car-img="{{ o.driver_car_image }}"
+        aria-label="Voir la photo du véhicule">
+  <img src="{{ o.driver_car_image }}" alt="Véhicule">
+</button>
+{% endif %}

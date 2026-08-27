@@ -1,0 +1,40 @@
+<article class="daxi-blog-detail-htmx">
+  {% if article.cover_image %}
+  <div class="daxi-blog-detail-hero" style="background-image:url('{{ article.cover_image.url }}')"></div>
+  {% endif %}
+  <div class="daxi-blog-detail-inner">
+    {% if article.category %}
+    <span class="daxi-blog-cat" style="--cat-color:{{ article.category.color }}">{{ article.category.name }}</span>
+    {% endif %}
+    <h1>{{ article.title }}</h1>
+    <div class="daxi-blog-detail-meta">
+      {% if article.published_at %}<span>{{ article.published_at|date:"d F Y" }}</span>{% endif %}
+      <span>{{ article.reading_time_min }} min de lecture</span>
+    </div>
+    {% if article.tags.all %}
+    <div class="daxi-blog-tags">
+      {% for tag in article.tags.all %}
+      <span class="daxi-blog-tag">#{{ tag.name }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="daxi-blog-content">{{ article.content|safe }}</div>
+    <div class="daxi-blog-share">
+      <span>Partager</span>
+      <a href="https://wa.me/?text={{ article.title|urlencode }}%20{{ request.build_absolute_uri }}" target="_blank" rel="noopener"><i class="ri-whatsapp-line"></i></a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener"><i class="ri-facebook-circle-line"></i></a>
+      <a href="https://twitter.com/intent/tweet?text={{ article.title|urlencode }}&url={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener"><i class="ri-twitter-x-line"></i></a>
+    </div>
+    {% if similar %}
+    <h3 class="daxi-blog-similar-title">Articles similaires</h3>
+    <div class="daxi-blog-similar-grid">
+      {% for s in similar %}
+      <div class="daxi-blog-similar-card" onclick="openBlogArticle('{{ s.slug }}')" role="button">
+        <strong>{{ s.title }}</strong>
+        <span>{{ s.reading_time_min }} min</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</article>

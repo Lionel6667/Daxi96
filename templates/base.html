@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}DAXI - Service de Transport{% endblock %}</title>
+{% include "partials/daxi_favicon.html" %}
+<meta name="description" content="DAXI - Service de transport premium en Haïti">
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#0a84ff">
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<script>
+(function(){
+  var _warn = console.warn;
+  console.warn = function() {
+    var m = arguments[0];
+    if (m != null && String(m).indexOf('cdn.tailwindcss.com') !== -1) return;
+    if (m != null && String(m).indexOf('should not be used in production') !== -1) return;
+    return _warn.apply(console, arguments);
+  };
+})();
+</script>
+<script src="/assets/js/tailwindcss-3.4.16.js"></script>
+<script src="/static/js/api.js?v=20260727"></script>
+
+<link rel="stylesheet" href="/assets/css/remixicon.min.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;900&family=Pacifico&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --daxi-blue: #0a84ff;
+    --daxi-dark: #1a1a2e;
+    --daxi-darker: #16213e;
+    --daxi-cyan: #00d4ff;
+  }
+  * { font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  .font-pacifico { font-family: 'Pacifico', cursive !important; }
+  .font-montserrat { font-family: 'Montserrat', sans-serif !important; }
+  .bg-daxi-gradient { background: linear-gradient(135deg, var(--daxi-dark), var(--daxi-darker)); }
+  .text-daxi-cyan { color: var(--daxi-cyan); }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  .toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+  
+  .fade-in { animation: fadeIn 0.3s ease-in-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--daxi-cyan); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% block extra_css %}{% endblock %}
+<link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260803">
+<link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823c">
+<link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260734">
+<link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260734">
+<link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260734">
+<link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260823c">
+<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823q">
+<link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
+<script src="/static/js/daxi-theme.js?v=20260752" defer></script>
+<script src="/static/js/daxi-web-radar.js?v=20260823i" defer></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'daxi': { blue: '#0a84ff', dark: '#1a1a2e', darker: '#16213e', cyan: '#00d4ff' }
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body class="bg-gray-50">
+{% block body %}{% endblock %}
+
+<div class="toast-container" id="toast-container"></div>
+
+<link rel="stylesheet" href="/static/css/daxi-notifications.css?v=20250628">
+<script src="/static/js/daxi-notifications.js?v=20260823n"></script>
+<script src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
+<script src="/static/js/daxi-modal.js?v=20260820d"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

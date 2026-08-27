@@ -1,0 +1,36 @@
+# Notifications push DAXI
+
+## Android + serveur — TERMINÉ
+- Service account dans `secrets/firebase-service-account.json`
+- Même projet Firebase : `julmin-taxis` / `392925120550`
+- Test : `python manage.py test_push` (app fermée)
+
+## Web — TERMINÉ (sans clé VAPID manuelle)
+Le site utilise la **VAPID par défaut Firebase** si `FIREBASE_WEB_VAPID_KEY` est vide.
+Optionnel : Console Firebase → Project settings → Cloud Messaging → Web Push certificates → Generate key pair → coller dans `.env`.
+
+## iOS — clé APNs (à faire sur Apple, une fois)
+
+La clé APNs **ne se trouve pas dans Firebase**. Elle se crée chez Apple, puis on l’uploade dans Firebase.
+
+### Où la créer (Apple)
+1. Va sur https://developer.apple.com/account/resources/authkeys/list  
+   (compte **Apple Developer** payant requis — ~99 USD/an)
+2. Clique **+** → coche **Apple Push Notifications service (APNs)**
+3. Continue → Register → **Download** le fichier `.p8` (une seule fois !)
+4. Note : **Key ID** + ton **Team ID** (en haut à droite du compte Apple Developer)
+
+### Où l’uploader (Firebase)
+1. https://console.firebase.google.com/project/julmin-taxis/settings/cloudmessaging
+2. Section **Apple app configuration** (app iOS `com.daxipro.daxi`)
+3. Upload le `.p8` + Key ID + Team ID
+
+### Ensuite sur Mac
+```bash
+cd clients/daxi-capacitor
+npm run sync
+npx cap open ios
+```
+Pour TestFlight / App Store : dans `App.entitlements`, mets `aps-environment` = `production`.
+
+Sans compte Apple Developer, **aucune app iOS au monde** ne peut recevoir de push — ce n’est pas un manque dans le code DAXI.

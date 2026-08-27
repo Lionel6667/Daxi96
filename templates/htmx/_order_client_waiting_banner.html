@@ -1,0 +1,17 @@
+{% if o.client_waiting_title and o.status != 'completed' and o.status != 'cancelled' %}
+<div class="daxi-oc-wait-banner daxi-oc-wait-banner--{{ o.client_waiting_kind|default:'default' }}" role="status">
+  <div class="daxi-oc-wait-banner__icon" aria-hidden="true">
+    {% if o.client_waiting_kind == 'price' %}<i class="ri-price-tag-3-line"></i>
+    {% elif o.client_waiting_kind == 'payment' %}<i class="ri-bank-card-line"></i>
+    {% elif o.client_waiting_kind == 'driver' %}<i class="ri-steering-2-line"></i>
+    {% elif o.client_waiting_kind == 'active' %}<i class="ri-route-line"></i>
+    {% else %}<i class="ri-time-line"></i>{% endif %}
+  </div>
+  <div class="daxi-oc-wait-banner__body">
+    <div class="daxi-oc-wait-banner__title" data-translate="wait_{{ o.client_waiting_kind }}_title">{{ o.client_waiting_title }}</div>
+    {% if o.client_waiting_detail %}
+    <div class="daxi-oc-wait-banner__detail" data-translate="wait_{{ o.client_waiting_kind }}_detail">{{ o.client_waiting_detail }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}DAXI - Connexion{% endblock %}
+{% block body %}
+<script>
+
+  if (localStorage.getItem('daxi_access')) {
+    const user = JSON.parse(localStorage.getItem('daxi_user') || '{}');
+    if (user.is_staff) window.location.href = '/admin-dashboard/';
+    else if (user.is_driver) window.location.href = '/driver/';
+    else window.location.href = '/';
+  } else {
+    window.location.href = '/';
+  }
+</script>
+{% endblock %}

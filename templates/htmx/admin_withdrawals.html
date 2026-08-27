@@ -1,0 +1,244 @@
+<div id="admin-withdrawals-container" data-pending-total="{{ driver_stats.pending|add:enterprise_stats.pending }}">
+
+{% if success_msg %}
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;color:#166534;font-size:13px;font-weight:600;">
+  <i class="ri-check-line"></i> {{ success_msg }}
+</div>
+{% endif %}
+
+
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+  <button type="button" onclick="loadAdminWithdrawalsTab('driver','pending'); return false;"
+    style="background:{% if tab == 'driver' %}#667eea{% else %}#374151{% endif %};color:{% if tab == 'driver' %}white{% else %}#d1d5db{% endif %};border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+    <i class="ri-wallet-3-line"></i> Retraits chauffeurs
+    {% if driver_stats.pending %}<span style="background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:10px;margin-left:4px;">{{ driver_stats.pending }}</span>{% endif %}
+  </button>
+  <button type="button" onclick="loadAdminWithdrawalsTab('enterprise','pending'); return false;"
+    style="background:{% if tab == 'enterprise' %}#667eea{% else %}#374151{% endif %};color:{% if tab == 'enterprise' %}white{% else %}#d1d5db{% endif %};border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+    <i class="ri-building-line"></i> Retraits entreprises
+    {% if enterprise_stats.pending %}<span style="background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:10px;margin-left:4px;">{{ enterprise_stats.pending }}</span>{% endif %}
+  </button>
+  <button type="button" onclick="loadAdminWithdrawalsTab('commissions','all'); return false;"
+    style="background:{% if tab == 'commissions' %}#667eea{% else %}#374151{% endif %};color:{% if tab == 'commissions' %}white{% else %}#d1d5db{% endif %};border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+    <i class="ri-money-dollar-circle-line"></i> Commissions cash (MonCash)
+  </button>
+</div>
+
+{% if tab == 'driver' %}
+<div class="adm-kpi-bar">
+  <div class="adm-kpi-item adm-kpi-item--amber"><div class="adm-kpi-val">{{ driver_stats.pending|default:0 }}</div><div class="adm-kpi-lbl">En attente</div></div>
+  <div class="adm-kpi-item adm-kpi-item--green"><div class="adm-kpi-val">{{ driver_stats.paid|default:0 }}</div><div class="adm-kpi-lbl">Payés</div></div>
+  <div class="adm-kpi-item adm-kpi-item--red"><div class="adm-kpi-val">{{ driver_stats.rejected|default:0 }}</div><div class="adm-kpi-lbl">Refusés</div></div>
+</div>
+
+<div class="adm-seg-nav">
+  <div class="adm-seg-group">
+    <button type="button" class="adm-seg-btn adm-seg-btn--pending{% if status_filter == 'pending' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('driver','pending'); return false;">En attente</button>
+    <button type="button" class="adm-seg-btn adm-seg-btn--approved{% if status_filter == 'paid' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('driver','paid'); return false;">Payés</button>
+    <button type="button" class="adm-seg-btn adm-seg-btn--rejected{% if status_filter == 'rejected' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('driver','rejected'); return false;">Refusés</button>
+  </div>
+</div>
+
+{% if not driver_withdrawals %}
+<div style="text-align:center;padding:40px;color:#9ca3af;">
+  <div style="font-size:40px;margin-bottom:8px;"><i class="ri-wallet-3-line"></i></div>
+  <p>Aucune demande de retrait chauffeur{% if status_filter == 'pending' %} en attente{% endif %}.</p>
+</div>
+{% endif %}
+
+{% for w in driver_withdrawals %}
+<div id="driver-wd-{{ w.id }}" style="background:#1f2937;border-radius:14px;border:1px solid {% if w.status == 'pending' %}#f59e0b55{% elif w.status == 'paid' %}#10b98155{% else %}#ef444455{% endif %};padding:16px;margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#f9fafb;">{{ w.driver_name }}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Chauffeur · {{ w.driver_phone|default:'—' }}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">{{ w.created_at|date:"d/m/Y H:i" }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:22px;font-weight:900;color:#10b981;">{{ w.amount|floatformat:2 }} $</div>
+      <span style="display:inline-block;margin-top:4px;background:{% if w.payout_method == 'natcash' %}rgba(249,115,22,.15){% else %}rgba(239,68,68,.15){% endif %};color:{% if w.payout_method == 'natcash' %}#fb923c{% else %}#f87171{% endif %};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">
+        {{ w.payout_method_label }}
+      </span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px;background:#111827;border-radius:10px;padding:12px;">
+    <div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Numéro paiement</div>
+      <div style="font-size:14px;font-weight:700;color:#fbbf24;margin-top:2px;">{{ w.phone|default:'—' }}</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Statut</div>
+      <div style="font-size:13px;font-weight:700;margin-top:2px;color:{% if w.status == 'pending' %}#fbbf24{% elif w.status == 'paid' %}#34d399{% else %}#f87171{% endif %};">
+        {% if w.status == 'pending' %}En attente{% elif w.status == 'paid' %}Payé{% else %}Refusé{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if w.status == 'pending' %}
+  <form hx-post="/htmx/admin/withdrawals/driver/{{ w.id }}/" hx-target="#admin-withdrawals-container" hx-swap="outerHTML"
+        style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
+    {% csrf_token %}
+    <input type="hidden" name="tab" value="driver">
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    <input name="admin_note" placeholder="Note admin (optionnel)" style="flex:1;min-width:180px;border:1px solid #4b5563;border-radius:8px;padding:8px 12px;font-size:12px;background:#111827;color:#fff;">
+    <button type="submit" name="action" value="pay" hx-confirm="Confirmer le paiement de {{ w.amount|floatformat:2 }} $ via {{ w.payout_method_label }} ?"
+      style="background:#10b981;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+      <i class="ri-check-line"></i> Marquer payé
+    </button>
+    <button type="submit" name="action" value="reject" hx-confirm="Refuser cette demande ? Le solde sera remboursé au chauffeur."
+      style="background:#ef4444;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+      <i class="ri-close-line"></i> Refuser
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% elif tab == 'enterprise' %}
+<div class="adm-kpi-bar">
+  <div class="adm-kpi-item adm-kpi-item--amber"><div class="adm-kpi-val">{{ enterprise_stats.pending|default:0 }}</div><div class="adm-kpi-lbl">En attente</div></div>
+  <div class="adm-kpi-item adm-kpi-item--green"><div class="adm-kpi-val">{{ enterprise_stats.paid|default:0 }}</div><div class="adm-kpi-lbl">Payés</div></div>
+  <div class="adm-kpi-item adm-kpi-item--red"><div class="adm-kpi-val">{{ enterprise_stats.rejected|default:0 }}</div><div class="adm-kpi-lbl">Refusés</div></div>
+</div>
+
+<div class="adm-seg-nav">
+  <div class="adm-seg-group">
+    <button type="button" class="adm-seg-btn adm-seg-btn--pending{% if status_filter == 'pending' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('enterprise','pending'); return false;">En attente</button>
+    <button type="button" class="adm-seg-btn adm-seg-btn--approved{% if status_filter == 'paid' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('enterprise','paid'); return false;">Payés</button>
+    <button type="button" class="adm-seg-btn adm-seg-btn--rejected{% if status_filter == 'rejected' %} is-active{% endif %}" onclick="loadAdminWithdrawalsTab('enterprise','rejected'); return false;">Refusés</button>
+  </div>
+</div>
+
+{% if not enterprise_withdrawals %}
+<div style="text-align:center;padding:40px;color:#9ca3af;">
+  <div style="font-size:40px;margin-bottom:8px;"><i class="ri-building-line"></i></div>
+  <p>Aucune demande de retrait entreprise{% if status_filter == 'pending' %} en attente{% endif %}.</p>
+</div>
+{% endif %}
+
+{% for w in enterprise_withdrawals %}
+<div id="ent-wd-{{ w.id }}" style="background:#1f2937;border-radius:14px;border:1px solid {% if w.status == 'pending' %}#f59e0b55{% elif w.status == 'paid' %}#10b98155{% else %}#ef444455{% endif %};padding:16px;margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:15px;font-weight:700;color:#f9fafb;">{{ w.enterprise_name }}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ w.enterprise_email|default:'—' }}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">{{ w.created_at|date:"d/m/Y H:i" }}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:22px;font-weight:900;color:#10b981;">{{ w.amount|floatformat:2 }} $</div>
+      <span style="display:inline-block;margin-top:4px;background:{% if w.payout_method == 'natcash' %}rgba(249,115,22,.15){% else %}rgba(239,68,68,.15){% endif %};color:{% if w.payout_method == 'natcash' %}#fb923c{% else %}#f87171{% endif %};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;">
+        {{ w.payout_method_label }}
+      </span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px;background:#111827;border-radius:10px;padding:12px;">
+    <div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Numéro paiement</div>
+      <div style="font-size:14px;font-weight:700;color:#fbbf24;margin-top:2px;">{{ w.phone }}</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Statut</div>
+      <div style="font-size:13px;font-weight:700;margin-top:2px;color:{% if w.status == 'pending' %}#fbbf24{% elif w.status == 'paid' %}#34d399{% else %}#f87171{% endif %};">{{ w.status_label }}</div>
+    </div>
+    {% if w.paid_at %}
+    <div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Payé le</div>
+      <div style="font-size:12px;color:#d1d5db;margin-top:2px;">{{ w.paid_at|date:"d/m/Y H:i" }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% if w.admin_note %}
+  <div style="margin-top:8px;font-size:11px;color:#94a3b8;"><i class="ri-sticky-note-line"></i> {{ w.admin_note }}</div>
+  {% endif %}
+
+  {% if w.status == 'pending' %}
+  <form hx-post="/htmx/admin/withdrawals/enterprise/{{ w.id }}/" hx-target="#admin-withdrawals-container" hx-swap="outerHTML"
+        style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
+    {% csrf_token %}
+    <input type="hidden" name="tab" value="enterprise">
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    <input name="admin_note" placeholder="Note admin (optionnel)" style="flex:1;min-width:180px;border:1px solid #4b5563;border-radius:8px;padding:8px 12px;font-size:12px;background:#111827;color:#fff;">
+    <button type="submit" name="action" value="pay" hx-confirm="Confirmer le paiement de {{ w.amount|floatformat:2 }} $ ?"
+      style="background:#10b981;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+      <i class="ri-check-line"></i> Marquer payé
+    </button>
+    <button type="submit" name="action" value="reject" hx-confirm="Refuser cette demande ?"
+      style="background:#ef4444;color:white;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;">
+      <i class="ri-close-line"></i> Refuser
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% else %}
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
+  <div style="background:#1f2937;border-radius:12px;padding:12px;text-align:center;border:1px solid #374151;">
+    <div style="font-size:22px;font-weight:800;color:#f97316;">{{ commission_stats.drivers_owing|default:0 }}</div>
+    <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;">Chauffeurs avec solde dû</div>
+  </div>
+  <div style="background:#1f2937;border-radius:12px;padding:12px;text-align:center;border:1px solid #374151;">
+    <div style="font-size:22px;font-weight:800;color:#ef4444;">{{ commission_stats.total_owed|floatformat:2 }} $</div>
+    <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;">Total restant à payer</div>
+  </div>
+  <div style="background:#1f2937;border-radius:12px;padding:12px;text-align:center;border:1px solid #374151;">
+    <div style="font-size:22px;font-weight:800;color:#34d399;">{{ commission_stats.total_paid|floatformat:2 }} $</div>
+    <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;">Total déjà payé (MonCash)</div>
+  </div>
+</div>
+
+<p style="font-size:12px;color:#9ca3af;margin-bottom:14px;line-height:1.5;">
+  Sur chaque course payée en cash, le chauffeur garde sa commission et doit reverser la part admin via MonCash (déclaration sur son portefeuille).
+</p>
+
+{% if commission_rows %}
+<div style="overflow-x:auto;margin-bottom:20px;">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead>
+      <tr style="border-bottom:1px solid #374151;color:#9ca3af;text-align:left;">
+        <th style="padding:10px 8px;">Chauffeur</th>
+        <th style="padding:10px 8px;">Tél.</th>
+        <th style="padding:10px 8px;">Commission chauffeur</th>
+        <th style="padding:10px 8px;">Dû admin (total)</th>
+        <th style="padding:10px 8px;">Payé MonCash</th>
+        <th style="padding:10px 8px;">Reste à payer</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in commission_rows %}
+      <tr style="border-bottom:1px solid #1f2937;">
+        <td style="padding:10px 8px;color:#f9fafb;font-weight:600;">{{ r.driver_name }}</td>
+        <td style="padding:10px 8px;color:#d1d5db;">{{ r.driver_phone|default:'—' }}</td>
+        <td style="padding:10px 8px;color:#94a3b8;">{{ r.commission_rate|floatformat:0 }}%</td>
+        <td style="padding:10px 8px;color:#e5e7eb;">{{ r.total_due|floatformat:2 }} $</td>
+        <td style="padding:10px 8px;color:#34d399;font-weight:700;">{{ r.paid|floatformat:2 }} $</td>
+        <td style="padding:10px 8px;font-weight:800;color:{% if r.owed > 0 %}#f97316{% else %}#64748b{% endif %};">{{ r.owed|floatformat:2 }} $</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div style="text-align:center;padding:30px;color:#9ca3af;margin-bottom:20px;">Aucune commission cash enregistrée.</div>
+{% endif %}
+
+<h3 style="font-size:13px;font-weight:700;color:#d1d5db;margin-bottom:10px;"><i class="ri-history-line"></i> Derniers paiements MonCash déclarés</h3>
+{% if not moncash_payments %}
+<div style="text-align:center;padding:20px;color:#6b7280;font-size:12px;">Aucun paiement déclaré pour le moment.</div>
+{% else %}
+{% for p in moncash_payments %}
+<div style="background:#111827;border:1px solid #374151;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+  <div>
+    <div style="font-size:13px;font-weight:700;color:#f9fafb;">{{ p.driver_name }}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:2px;">{{ p.created_at|date:"d/m/Y H:i" }}</div>
+  </div>
+  <div style="font-size:16px;font-weight:900;color:#34d399;">+{{ p.amount|floatformat:2 }} $</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endif %}
+</div>

@@ -1,0 +1,47 @@
+<div id="co-{{ order.id }}" style="background:#0f172a;border-radius:16px;border:1px solid #1e293b;overflow:hidden;margin-bottom:12px;font-family:'Segoe UI',system-ui,sans-serif;">
+
+  <div style="padding:28px 20px;text-align:center;">
+    {% if payment_method == 'in_person' %}
+    <div style="font-size:48px;margin-bottom:12px;">🚗</div>
+    <div style="font-size:16px;font-weight:900;color:#10b981;margin-bottom:8px;" data-translate="pay_cash_confirmed_title">Course confirmée !</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;" data-translate="pay_cash_confirmed_msg">
+      Vous paierez le chauffeur en espèces à la fin de la course.<br>
+      Un chauffeur va vous être assigné très prochainement.
+    </div>
+    {% elif payment_method == 'moncash' %}
+    <div style="font-size:48px;margin-bottom:12px;">📱</div>
+    <div style="font-size:16px;font-weight:900;color:#10b981;margin-bottom:8px;" data-translate="pay_moncash_selected">MonCash sélectionné</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;" data-translate="pay_moncash_selected_msg">
+      Vous pourrez régler via MonCash. Un chauffeur va vous être assigné très prochainement.
+    </div>
+    {% else %}
+    <div style="font-size:48px;margin-bottom:12px;">✅</div>
+    <div style="font-size:16px;font-weight:900;color:#10b981;margin-bottom:8px;" data-translate="pay_confirmed_title">Paiement confirmé !</div>
+    <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;">
+      <span data-translate="pay_confirmed_msg">Votre paiement a été reçu avec succès.</span><br>
+      <span data-translate="pay_confirmed_driver">Un chauffeur va vous être assigné très prochainement.</span>
+    </div>
+    {% endif %}
+
+    <div style="background:#1e293b;border-radius:12px;padding:10px 16px;display:inline-block;">
+      <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;" data-translate="pay_order_label">Commande</div>
+      <div style="font-size:15px;font-weight:900;color:#f1f5f9;">{{ order.ref_code }}</div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #1e293b;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+    <div style="width:8px;height:8px;background:#10b981;border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0;"></div>
+    <span style="font-size:11px;color:#64748b;" data-translate="wait_driver_short">En attente d'un chauffeur disponible…</span>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  if (window._daxiOnSheetOrderSwap) window._daxiOnSheetOrderSwap('{{ order.id }}');
+})();
+</script>
+
+<style>
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>

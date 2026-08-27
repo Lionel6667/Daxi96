@@ -1,0 +1,273 @@
+{% load static %}
+
+<div id="drivers-container">
+
+  
+  <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+    <div style="display:flex; gap:6px;">
+      <a hx-get="/htmx/admin/drivers/?tab=confirmed" hx-target="#drivers-container" hx-swap="outerHTML"
+         style="padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:none; text-decoration:none;
+         background:{% if tab == 'confirmed' %}#667eea; color:white{% else %}#f3f4f6; color:#374151{% endif %};">
+        <i class="ri-check-line"></i> Confirmés
+      </a>
+      <a hx-get="/htmx/admin/drivers/?tab=pending" hx-target="#drivers-container" hx-swap="outerHTML"
+         style="padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:none; text-decoration:none;
+         background:{% if tab == 'pending' %}#f59e0b; color:white{% else %}#f3f4f6; color:#374151{% endif %};">
+        <i class="ri-time-line"></i> En attente
+      </a>
+      <a hx-get="/htmx/admin/drivers/?tab=blocked" hx-target="#drivers-container" hx-swap="outerHTML"
+         style="padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:none; text-decoration:none;
+         background:{% if tab == 'blocked' %}#ef4444; color:white{% else %}#f3f4f6; color:#374151{% endif %};">
+        <i class="ri-forbid-line"></i> Bloqués
+      </a>
+    </div>
+    <form hx-get="/htmx/admin/drivers/?tab={{ tab }}" hx-target="#drivers-container" hx-swap="outerHTML" style="display:flex; gap:6px; flex:1; min-width:180px;">
+      {% csrf_token %}
+      <input type="text" name="q" value="{{ search }}" placeholder="Rechercher..."
+             style="flex:1; padding:7px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:12px; outline:none;">
+      <button type="submit" style="padding:7px 12px; background:#667eea; color:white; border:none; border-radius:8px; cursor:pointer; font-size:12px;"><i class="ri-search-line"></i></button>
+    </form>
+  </div>
+
+  {% if not drivers %}
+  <div style="text-align:center; padding:40px; color:#9ca3af;">
+    <div style="font-size:40px; margin-bottom:8px; color:#9ca3af;"><i class="ri-car-line"></i></div>
+    <p>Aucun chauffeur dans cet onglet</p>
+  </div>
+  {% endif %}
+
+  {% for d in drivers %}
+  <div id="driver-card-{{ d.id }}" style="background:white; border:1px solid {% if d.is_blocked %}#fca5a5{% elif not d.is_verified %}#fcd34d{% else %}#e5e7eb{% endif %}; border-radius:12px; padding:14px; margin-bottom:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+
+      
+      <div style="display:flex; gap:12px; flex:1; min-width:200px;">
+        <div style="flex-shrink:0;">
+          {% if d.photo %}
+          <img src="{{ d.photo }}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" alt="">
+          {% else %}
+          <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:18px;">
+            {{ d.name|first|upper|default:"?" }}
+          </div>
+          {% endif %}
+        </div>
+        <div>
+          <div style="font-weight:700; font-size:14px; color:#1f2937;">
+            {{ d.name }}
+            {% if d.is_blocked %}<span style="background:#fee2e2; color:#991b1b; padding:2px 5px; border-radius:4px; font-size:10px; margin-left:4px;">BLOQUÉ</span>{% endif %}
+            {% if not d.is_verified %}<span style="background:#fef3c7; color:#92400e; padding:2px 5px; border-radius:4px; font-size:10px; margin-left:4px;">EN ATTENTE</span>{% endif %}
+          </div>
+          <div style="font-size:12px; color:#6b7280; margin-top:2px;">
+            <i class="ri-phone-line"></i> {{ d.phone|default:'—' }}
+            {% if d.email %} · <i class="ri-mail-line"></i> {{ d.email }}{% endif %}
+          </div>
+          <div style="font-size:12px; color:#6b7280; margin-top:2px;">
+            {% if d.city %}<i class="ri-map-pin-line"></i> {{ d.city }}{% endif %}
+            {% if d.vehicle %} · <i class="ri-car-line"></i> {{ d.vehicle }}{% endif %}
+            {% if d.plate %} · <i class="ri-barcode-line"></i> {{ d.plate }}{% endif %}
+          </div>
+          <div style="font-size:11px; color:#9ca3af; margin-top:3px;">
+            <i class="ri-star-line"></i> {{ d.rating|default:'N/A' }}/5
+            {% if d.completed_trips %} · {{ d.completed_trips }} courses{% endif %}
+            · Statut:
+            <span style="color:{% if d.status == 'available' %}#10b981{% elif d.status == 'busy' %}#f59e0b{% else %}#6b7280{% endif %}; font-weight:600;">
+              {% if d.status == 'available' %}<i class="ri-checkbox-circle-line"></i> En ligne{% elif d.status == 'busy' %}<i class="ri-time-line"></i> Occupé{% else %}<i class="ri-indeterminate-circle-line"></i> Hors ligne{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      
+      <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+        {% if not d.is_verified and not d.is_blocked %}
+        <button hx-post="/htmx/admin/drivers/{{ d.id }}/verify/"
+                hx-target="#driver-card-{{ d.id }}"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Approuver ce chauffeur?"
+                style="padding:6px 12px; background:#10b981; color:white; border:none; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer;">
+          <i class="ri-check-line"></i> Approuver
+        </button>
+        {% endif %}
+
+        {% if d.is_blocked %}
+        <button hx-post="/htmx/admin/drivers/{{ d.id }}/block/"
+                hx-vals='{"action":"unblock"}'
+                hx-target="#driver-card-{{ d.id }}"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                style="padding:6px 12px; background:#10b981; color:white; border:none; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer;">
+          <i class="ri-lock-unlock-line"></i> Débloquer
+        </button>
+        {% else %}
+        <button hx-post="/htmx/admin/drivers/{{ d.id }}/block/"
+                hx-vals='{"action":"block"}'
+                hx-target="#driver-card-{{ d.id }}"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Bloquer ce chauffeur?"
+                style="padding:6px 12px; background:#ef4444; color:white; border:none; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer;">
+          <i class="ri-forbid-line"></i> Bloquer
+        </button>
+        {% endif %}
+
+        <button hx-delete="/htmx/admin/drivers/{{ d.id }}/delete/"
+                hx-target="#driver-card-{{ d.id }}"
+                hx-swap="outerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-confirm="Supprimer définitivement ce chauffeur?"
+                style="padding:6px 12px; background:#f3f4f6; color:#374151; border:none; border-radius:7px; font-size:11px; font-weight:600; cursor:pointer;">
+          <i class="ri-delete-bin-line"></i> Supprimer
+        </button>
+      </div>
+
+    </div>
+
+    {% if d.latitude and d.longitude %}
+    <div style="margin-top:8px; font-size:11px; color:#9ca3af;">
+      <i class="ri-map-pin-line"></i> Position GPS: {{ d.latitude|floatformat:4 }}, {{ d.longitude|floatformat:4 }}
+    </div>
+    {% endif %}
+
+    
+    <div style="margin-top:10px; border-top:1px solid #f3f4f6; padding-top:10px;">
+      <div style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+
+        
+        <div style="flex-shrink:0;">
+          <div style="font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase; margin-bottom:4px;">Photo publique (pro)</div>
+          {% if d.vehicle_professional_photo_url or d.car_image_url %}
+          <img src="{{ d.vehicle_professional_photo_url|default:d.car_image_url }}" style="width:90px;height:64px;border-radius:8px;object-fit:cover;border:1px solid #e5e7eb;" alt="Véhicule public">
+          {% else %}
+          <div style="width:90px;height:64px;border-radius:8px;background:#f9fafb;border:2px dashed #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:24px;color:#9ca3af;"><i class="ri-car-line"></i></div>
+          {% endif %}
+        </div>
+
+        <div style="flex-shrink:0;">
+          <div style="font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase; margin-bottom:4px;">Référence chauffeur</div>
+          {% if d.vehicle_reference_photo_url %}
+          <a href="{{ d.vehicle_reference_photo_url }}" target="_blank" rel="noopener">
+            <img src="{{ d.vehicle_reference_photo_url }}" style="width:90px;height:64px;border-radius:8px;object-fit:cover;border:1px solid #fcd34d;" alt="Référence véhicule">
+          </a>
+          <a href="/htmx/admin/drivers/{{ d.id }}/vehicle-reference-download/"
+             style="display:block;margin-top:6px;padding:6px 8px;background:#f59e0b;color:#111827;border:none;border-radius:6px;font-size:10px;font-weight:700;text-align:center;text-decoration:none;">
+            ⬇ Télécharger photo
+          </a>
+          {% else %}
+          <div style="width:90px;height:64px;border-radius:8px;background:#fffbeb;border:2px dashed #fcd34d;display:flex;align-items:center;justify-content:center;font-size:11px;color:#92400e;padding:4px;text-align:center;">Aucune photo référence</div>
+          {% endif %}
+        </div>
+
+        {% if d.vehicle_reference_photo_url %}
+        <div style="flex:1;min-width:200px;max-width:320px;">
+          <div style="font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;margin-bottom:4px;">Prompt Gemini (copier)</div>
+          <textarea id="gemini-prompt-{{ d.id }}" readonly rows="8"
+                    style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #e5e7eb;border-radius:8px;font-size:10px;line-height:1.45;color:#374151;resize:vertical;background:#f9fafb;">{{ d.vehicle_gemini_prompt }}</textarea>
+          <button type="button" onclick="daxiCopyGeminiPrompt({{ d.id }})"
+                  style="margin-top:6px;padding:6px 10px;background:#8b5cf6;color:white;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;width:100%;">
+            📋 Copier le prompt
+          </button>
+          <p style="font-size:9px;color:#9ca3af;margin:6px 0 0;line-height:1.4;">
+            1. Téléchargez la photo référence · 2. Ouvrez Gemini · 3. Attachez l'image · 4. Collez le prompt · 5. Uploadez le résultat ci-dessous
+          </p>
+        </div>
+        {% endif %}
+
+        
+        <div style="flex:1; min-width:160px;">
+          <div style="font-size:12px; font-weight:700; color:#374151;">
+            {% if d.car_brand or d.car_model %}{{ d.car_brand }} {{ d.car_model }} {% if d.car_year %}({{ d.car_year }}){% endif %}{% else %}<span style="color:#9ca3af;">Véhicule non renseigné</span>{% endif %}
+          </div>
+          <div style="font-size:11px; color:#9ca3af; margin-top:2px;">
+            {% if d.car_brand %}Marque: {{ d.car_brand }}{% endif %}
+            {% if d.car_model %} · Modèle: {{ d.car_model }}{% endif %}
+            {% if d.car_year %} · Année: {{ d.car_year }}{% endif %}
+          </div>
+          
+          <div style="display:flex; gap:4px; margin-top:5px; flex-wrap:wrap;">
+            <span style="font-size:10px; padding:2px 6px; border-radius:4px; {% if d.has_license %}background:#d1fae5;color:#065f46;{% else %}background:#fee2e2;color:#991b1b;{% endif %}">Permis {% if d.has_license %}✓{% else %}✗{% endif %}</span>
+            <span style="font-size:10px; padding:2px 6px; border-radius:4px; {% if d.has_oavct %}background:#d1fae5;color:#065f46;{% else %}background:#fee2e2;color:#991b1b;{% endif %}">OAVCT {% if d.has_oavct %}✓{% else %}✗{% endif %}</span>
+            <span style="font-size:10px; padding:2px 6px; border-radius:4px; {% if d.has_dgi %}background:#d1fae5;color:#065f46;{% else %}background:#fee2e2;color:#991b1b;{% endif %}">DGI {% if d.has_dgi %}✓{% else %}✗{% endif %}</span>
+            <span style="font-size:10px; padding:2px 6px; border-radius:4px; {% if d.has_tint %}background:#d1fae5;color:#065f46;{% else %}background:#fee2e2;color:#991b1b;{% endif %}">Teinte {% if d.has_tint %}✓{% else %}✗{% endif %}</span>
+          </div>
+        </div>
+
+        
+        <form hx-post="/htmx/admin/drivers/{{ d.id }}/photo/"
+              hx-target="#photo-msg-{{ d.id }}"
+              hx-swap="innerHTML"
+              hx-encoding="multipart/form-data"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              style="display:flex; flex-direction:column; gap:5px; flex-shrink:0;">
+          <div style="font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase;">Photo profil</div>
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                 style="font-size:11px; color:#374151; max-width:160px;">
+          <button type="submit"
+                  style="padding:5px 10px; background:#667eea; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-align:center;">
+            💾 Enregistrer photo
+          </button>
+          <div id="photo-msg-{{ d.id }}" style="font-size:11px;"></div>
+        </form>
+
+        
+        <form hx-post="/htmx/admin/drivers/{{ d.id }}/car-image/"
+              hx-target="#car-img-msg-{{ d.id }}"
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              enctype="multipart/form-data"
+              style="display:flex; flex-direction:column; gap:5px; flex-shrink:0;">
+          <div style="font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase;">Photo pro (publique)</div>
+          <input type="file" name="car_image_file" accept="image/*"
+                 style="font-size:11px; color:#374151; max-width:160px;">
+          <input type="text" name="car_image_url" placeholder="ou coller une URL..."
+                 style="padding:5px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:11px; width:160px; outline:none;"
+                 value="{{ d.car_image_url|default:'' }}">
+          <button type="submit"
+                  style="padding:5px 10px; background:#667eea; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; text-align:center;">
+            💾 Enregistrer
+          </button>
+          <div id="car-img-msg-{{ d.id }}" style="font-size:11px;"></div>
+        </form>
+
+        
+        <form hx-post="/htmx/admin/drivers/{{ d.id }}/commission/"
+              hx-target="#commission-msg-{{ d.id }}"
+              hx-swap="innerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              style="display:flex; flex-direction:column; gap:5px; flex-shrink:0; margin-top:8px;">
+          <div style="font-size:10px; font-weight:600; color:#6b7280; text-transform:uppercase;">% Commission chauffeur</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="number" name="commission_rate" min="0" max="100" step="0.01"
+                   value="{{ d.commission_rate|default:'80.00' }}"
+                   style="padding:5px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; width:80px; outline:none; font-weight:700;">
+            <span style="font-size:11px; color:#9ca3af;">% pour le chauffeur</span>
+          </div>
+          <button type="submit"
+                  style="padding:5px 10px; background:#10b981; color:white; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer;">
+            💾 Enregistrer
+          </button>
+          <div id="commission-msg-{{ d.id }}" style="font-size:11px;"></div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>
+<script>
+function daxiCopyGeminiPrompt(driverId) {
+  var el = document.getElementById('gemini-prompt-' + driverId);
+  if (!el) return;
+  var text = el.value || el.textContent || '';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (typeof showToast === 'function') showToast('Prompt copié', 'success');
+    }).catch(function() { el.select(); document.execCommand('copy'); });
+  } else {
+    el.select();
+    document.execCommand('copy');
+  }
+}
+</script>

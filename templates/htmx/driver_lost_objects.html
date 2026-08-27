@@ -1,0 +1,47 @@
+<div id="driver-lost-objects-container" data-pending-count="{{ pending_count|default:0 }}">
+
+{% if pending_count %}
+<div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:12px;padding:12px;margin-bottom:14px;color:#fbbf24;font-size:12px;font-weight:800;">
+  ⚠️ {{ pending_count }} objet{{ pending_count|pluralize }} oublié{{ pending_count|pluralize }} — contactez le client en urgence
+</div>
+{% endif %}
+
+{% if not items %}
+<div style="text-align:center;padding:32px 16px;color:#6b7280;">
+  <div style="font-size:36px;margin-bottom:8px;">📦</div>
+  <p style="font-size:13px;">Aucun objet oublié à traiter.</p>
+</div>
+{% endif %}
+
+{% for item in items %}
+<div id="drv-lost-{{ item.id }}" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:14px;margin-bottom:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:900;color:#fbbf24;">Course #{{ item.order_id }}</span>
+    <span style="font-size:10px;color:#9ca3af;">{{ item.created_at|date:"d/m H:i" }}</span>
+  </div>
+  <div style="font-size:12px;color:#e5e7eb;margin-bottom:8px;line-height:1.5;">{{ item.description }}</div>
+  <div style="font-size:10px;color:#9ca3af;margin-bottom:10px;">
+    {{ item.pickup|truncatechars:50 }} → {{ item.destination|truncatechars:50 }}
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    {% if item.client_phone %}
+    <a href="tel:{{ item.client_phone }}" style="flex:1;min-width:120px;padding:10px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#34d399;border-radius:10px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;">
+      📞 Appeler {{ item.client_name|default:"client" }}
+    </a>
+    <a href="https://wa.me/{{ item.client_phone|cut:'+'|cut:' '|cut:'-' }}" target="_blank" rel="noopener"
+       style="flex:1;min-width:120px;padding:10px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#4ade80;border-radius:10px;font-size:11px;font-weight:800;text-align:center;text-decoration:none;">
+      💬 WhatsApp
+    </a>
+    {% endif %}
+    <button type="button"
+            hx-post="/htmx/driver/lost-objects/{{ item.id }}/handled/"
+            hx-target="#drv-lost-objects-content"
+            hx-swap="innerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            style="flex:1;min-width:120px;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;">
+      ✅ Traité
+    </button>
+  </div>
+</div>
+{% endfor %}
+</div>

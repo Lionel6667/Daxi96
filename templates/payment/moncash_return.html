@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Daxi — MonCash</title>
+  <link rel="icon" href="/assets/images/daxi-logo-gold.png">
+  <style>
+    body{font-family:system-ui,sans-serif;background:#030712;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .box{max-width:380px;width:100%;background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:24px;text-align:center}
+    h1{font-size:18px;margin-bottom:8px}
+    p{font-size:13px;color:#94a3b8;line-height:1.5}
+    .ok{color:#4ade80;font-size:40px;margin-bottom:12px}
+    .err{color:#f87171}
+    a{color:#f59e0b;text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="box">
+    {% if paid %}
+      <div class="ok">✅</div>
+      <h1>Paiement MonCash confirmé</h1>
+      <p>Commande {{ order.ref_code }} — votre chauffeur va être notifié.</p>
+      <p style="margin-top:16px;font-size:12px;color:#64748b">Retour à votre course…</p>
+      <script>
+      (function(){
+        var q = '?daxi_open_order={{ order.pk }}&payment=success{% if guest_id %}&guest_id={{ guest_id|escapejs }}{% endif %}';
+        setTimeout(function(){ window.location.replace('/' + q); }, 600);
+      })();
+      </script>
+    {% elif error_msg %}
+      <h1 class="err">Paiement en attente ou échoué</h1>
+      <p>{{ error_msg }}</p>
+      <p style="margin-top:16px"><a href="/">Retour à l'accueil</a></p>
+    {% else %}
+      <h1>Vérification du paiement…</h1>
+      <p>Nous confirmons votre transaction MonCash. Rechargez cette page dans quelques secondes.</p>
+      <p style="margin-top:16px"><a href="/">Retour à l'accueil</a></p>
+    {% endif %}
+  </div>
+</body>
+</html>

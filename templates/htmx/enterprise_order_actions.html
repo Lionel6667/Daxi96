@@ -1,0 +1,24 @@
+{% if o.ent_checkout_phase or o.client_can_cancel %}
+<div class="ent-oc-actions">
+  {% if o.ent_checkout_phase == 'accept_price' %}
+  <button type="button" class="ent-oc-action-btn" onclick="openEntCheckout({{ o.id }})">
+    <i class="ri-price-tag-3-line"></i> Valider le prix
+  </button>
+  {% elif o.ent_checkout_phase == 'choose_payment' %}
+  <button type="button" class="ent-oc-action-btn" onclick="openEntCheckout({{ o.id }})">
+    <i class="ri-wallet-3-line"></i> Choisir le paiement
+  </button>
+  {% elif o.ent_checkout_phase == 'await_client_pay' %}
+  <button type="button" class="ent-oc-action-btn ent-oc-action-btn--blue" onclick="openEntCheckout({{ o.id }})">
+    <i class="ri-qr-code-line"></i> Lien / QR client
+  </button>
+  {% elif o.ent_checkout_phase == 'finding_driver' %}
+  <span class="ent-oc-action-hint"><i class="ri-loader-4-line ent-spin"></i> Recherche chauffeur…</span>
+  {% endif %}
+  {% if o.client_can_cancel %}
+  <button type="button" class="ent-oc-action-btn ent-oc-action-btn--danger" onclick="entCancelOrder({{ o.id }})">
+    <i class="ri-close-circle-line"></i> Annuler
+  </button>
+  {% endif %}
+</div>
+{% endif %}

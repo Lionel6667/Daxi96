@@ -1,0 +1,259 @@
+
+#ent-plans-section {
+  margin-bottom: 48px;
+  padding-bottom: 16px;
+}
+.daxi-plans-onboard {
+  margin-top: 32px !important;
+  margin-bottom: 40px !important;
+  padding-bottom: 32px !important;
+  border-bottom: 1px solid rgba(148, 163, 184, .18) !important;
+}
+.daxi-plans-onboard .services-grid {
+  gap: 14px !important;
+}
+.ent-dash-col-right > .ent-panel:first-child {
+  margin-top: 20px;
+}
+@media (min-width: 1024px) {
+  #ent-plans-section { margin-bottom: 56px; }
+  .daxi-plans-onboard { margin-bottom: 48px !important; padding-bottom: 36px !important; }
+  .ent-dash-col-right > .ent-panel:first-child { margin-top: 48px; }
+}
+@media (max-width: 1023px) {
+  .ent-dash-col-right > .ent-panel:first-child { margin-top: 28px; }
+}
+
+
+.ent-oc-plan-stack { margin-bottom: 12px; }
+.ent-oc-plan-stack .ent-plan-oc-meta-card {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+.ent-oc-plan-stack .daxi-oc-card {
+  margin-top: 0;
+  margin-bottom: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.ent-oc-plan-stack .daxi-oc-actions { display: none !important; }
+
+
+.plan-card--p1 .plan-header { background: linear-gradient(135deg, rgba(59,130,246,.35), rgba(30,58,138,.25)) !important; }
+.plan-card--p1.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(96,165,250,.35) !important; }
+.plan-card--p2 .plan-header { background: linear-gradient(135deg, rgba(16,185,129,.32), rgba(6,95,70,.22)) !important; }
+.plan-card--p2.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(52,211,153,.35) !important; }
+.plan-card--p3 .plan-header { background: linear-gradient(135deg, rgba(245,158,11,.38), rgba(180,83,9,.22)) !important; }
+.plan-card--p3.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(251,191,36,.4) !important; }
+.plan-card--p4 .plan-header { background: linear-gradient(135deg, rgba(139,92,246,.35), rgba(76,29,149,.25)) !important; }
+.plan-card--p4.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(167,139,250,.35) !important; }
+.plan-card--p5 .plan-header { background: linear-gradient(135deg, rgba(6,182,212,.32), rgba(14,116,144,.22)) !important; }
+.plan-card--p5.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(34,211,238,.35) !important; }
+.plan-card--p6 .plan-header { background: linear-gradient(135deg, rgba(251,191,36,.4), rgba(120,53,15,.3)) !important; }
+.plan-card--p6.active { box-shadow: 0 20px 48px rgba(0,0,0,.5), 0 0 0 1px rgba(252,211,77,.45) !important; }
+
+.plan-card-icon {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.12); color: #fef3c7; font-size: 18px;
+}
+.plan-header-row { display: flex; align-items: flex-start; gap: 10px; }
+.plan-header-text { flex: 1; min-width: 0; }
+
+.daxi-plans-stage .plans-container {
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+
+.ent-plan-detail-modal {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: #0b1220; overflow-y: auto; overflow-x: hidden;
+}
+.ent-plan-detail-modal.show { display: block; }
+.ent-pd-close {
+  position: fixed; top: 14px; right: 14px; z-index: 510;
+  width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(15,23,42,.85); color: #fff; font-size: 22px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.ent-pd-hero {
+  position: relative; height: min(42vh, 320px);
+  background-size: cover; background-position: center;
+}
+.ent-pd-hero::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to top, #0b1220 0%, transparent 55%), linear-gradient(135deg, rgba(0,0,0,.4), transparent);
+}
+.ent-pd-hero-content {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+  padding: 20px 18px 22px; max-width: 720px; margin: 0 auto;
+}
+.ent-pd-hero-icon {
+  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 10px;
+  background: rgba(245,158,11,.2); color: #fbbf24;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.ent-pd-hero-content h1 { font-size: 24px; font-weight: 900; color: #fff; line-height: 1.15; }
+.ent-pd-hero-content p { font-size: 13px; color: rgba(255,255,255,.75); margin-top: 4px; }
+.ent-pd-price {
+  display: inline-block; margin-top: 10px; padding: 5px 12px; border-radius: 99px;
+  background: rgba(245,158,11,.2); border: 1px solid rgba(245,158,11,.35);
+  color: #fcd34d; font-size: 13px; font-weight: 800;
+}
+.ent-pd-body { max-width: 720px; margin: 0 auto; padding: 20px 18px 40px; color: #e2e8f0; }
+.ent-pd-desc { font-size: 14px; line-height: 1.65; color: rgba(255,255,255,.72); margin-bottom: 22px; }
+.ent-pd-section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: #fbbf24; margin-bottom: 12px; }
+.ent-pd-features { display: grid; gap: 10px; margin-bottom: 24px; }
+.ent-pd-feature {
+  display: flex; gap: 12px; padding: 12px; border-radius: 12px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(148,163,184,.14);
+}
+.ent-pd-feature-icon {
+  width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(245,158,11,.12); color: #fbbf24;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.ent-pd-feature-title { font-size: 13px; font-weight: 800; color: #f8fafc; }
+.ent-pd-feature-desc { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; line-height: 1.45; }
+.ent-pd-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px; }
+.ent-pd-gallery-img {
+  width: 100%; height: 110px; object-fit: cover; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(148,163,184,.16); transition: transform .15s;
+}
+.ent-pd-gallery-img:hover { transform: scale(1.02); }
+.ent-pd-cta {
+  padding: 18px; border-radius: 16px; text-align: center;
+  background: linear-gradient(155deg, rgba(245,158,11,.12), rgba(15,23,42,.5));
+  border: 1px solid rgba(245,158,11,.25);
+}
+.ent-pd-cta h3 { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.ent-pd-cta p { font-size: 12px; color: rgba(255,255,255,.55); margin-bottom: 14px; }
+.ent-pd-book-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer;
+  font-weight: 800; font-size: 14px; font-family: inherit;
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.ent-plan-image-viewer {
+  display: none; position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,.92); align-items: center; justify-content: center; padding: 20px;
+}
+.ent-plan-image-viewer.show { display: flex; }
+.ent-plan-image-viewer img { max-width: 100%; max-height: 90vh; border-radius: 12px; }
+.ent-plan-image-viewer button {
+  position: absolute; top: 16px; right: 16px; background: none; border: none;
+  color: #fff; font-size: 32px; cursor: pointer;
+}
+
+
+.plan-modal-overlay .plan-modal-sheet {
+  background: linear-gradient(165deg, #131f36, #0b1220) !important;
+  color: #f8fafc !important;
+  max-width: 520px !important;
+}
+.plan-modal-overlay.show { display: flex !important; align-items: flex-end; justify-content: center; }
+@media (min-width: 640px) {
+  .plan-modal-overlay.show { align-items: center; }
+  .plan-modal-overlay .plan-modal-sheet { border-radius: 20px !important; margin-bottom: 0 !important; }
+}
+.plan-modal-title { color: #f8fafc !important; }
+.plan-modal-sub { color: rgba(255,255,255,.55) !important; }
+.plan-modal-handle { background: rgba(255,255,255,.18) !important; }
+.ent-plan-steps {
+  display: flex; gap: 6px; margin-bottom: 16px;
+}
+.ent-plan-step {
+  flex: 1; text-align: center; padding: 6px 4px; border-radius: 8px;
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.4);
+  background: rgba(255,255,255,.04); border: 1px solid rgba(148,163,184,.12);
+}
+.ent-plan-step.active { color: #fbbf24; border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.1); }
+.ent-plan-step.done { color: rgba(52,211,153,.85); border-color: rgba(52,211,153,.25); background: rgba(16,185,129,.08); }
+.ent-plan-step-panel { margin-bottom: 8px; }
+.ent-plan-wizard-nav {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.ent-plan-wizard-nav button {
+  flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
+  font-weight: 800; font-size: 13px; font-family: inherit;
+}
+.ent-plan-wizard-back {
+  background: rgba(255,255,255,.06); color: rgba(255,255,255,.7);
+  border: 1px solid rgba(148,163,184,.2) !important;
+}
+.ent-plan-wizard-next {
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a;
+}
+.plan-modal-overlay .ent-submit-btn { width: 100%; margin-top: 4px; }
+.plan-modal-overlay .form-group label { color: rgba(255,255,255,.55) !important; }
+.plan-modal-overlay .form-input {
+  background: rgba(0,0,0,.28) !important; border-color: rgba(148,163,184,.2) !important;
+  color: #fff !important;
+}
+.plan-modal-overlay .form-input::placeholder { color: rgba(255,255,255,.3) !important; }
+
+
+.daxi-oc-card--plan-ville { --plan-accent: #60a5fa; }
+.daxi-oc-card--plan-airport { --plan-accent: #22d3ee; }
+.daxi-oc-card--plan-demi { --plan-accent: #34d399; }
+.daxi-oc-card--plan-journee { --plan-accent: #fbbf24; }
+.daxi-oc-card--plan-elegance { --plan-accent: #a78bfa; }
+.daxi-oc-card--plan-vip { --plan-accent: #fcd34d; }
+.daxi-oc-card--plan-ville .daxi-oc-accent,
+.daxi-oc-card--plan-airport .daxi-oc-accent,
+.daxi-oc-card--plan-demi .daxi-oc-accent,
+.daxi-oc-card--plan-journee .daxi-oc-accent,
+.daxi-oc-card--plan-elegance .daxi-oc-accent,
+.daxi-oc-card--plan-vip .daxi-oc-accent,
+.daxi-oc-card--plan-fixed .daxi-oc-accent { background: var(--plan-accent) !important; }
+
+.daxi-oc-plan-hero { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:8px; padding:10px; border-radius:12px; background:rgba(255,255,255,.04); border:1px solid rgba(148,163,184,.14); }
+.daxi-oc-plan-hero-left { display:flex; gap:10px; align-items:flex-start; min-width:0; }
+.daxi-oc-plan-hero-left > i { font-size:22px; color:#fbbf24; flex-shrink:0; margin-top:2px; }
+.daxi-oc-plan-name { font-size:13px; font-weight:900; color:#f8fafc; line-height:1.2; }
+.daxi-oc-plan-hint { font-size:10px; color:rgba(255,255,255,.5); margin-top:2px; }
+.daxi-oc-plan-price { font-size:14px; font-weight:900; color:#4ade80; flex-shrink:0; text-align:right; }
+.daxi-oc-plan-price--quote { color:#fcd34d; font-size:12px; }
+.daxi-oc-badge--plan { background:rgba(245,158,11,.12) !important; color:#fcd34d !important; border-color:rgba(245,158,11,.3) !important; }
+
+
+.drv-oc-plan-banner--ville { background:linear-gradient(135deg,rgba(59,130,246,.25),rgba(30,58,138,.15)); }
+.drv-oc-plan-banner--airport { background:linear-gradient(135deg,rgba(6,182,212,.25),rgba(14,116,144,.15)); }
+.drv-oc-plan-banner--demi { background:linear-gradient(135deg,rgba(16,185,129,.25),rgba(6,95,70,.15)); }
+.drv-oc-plan-banner--journee { background:linear-gradient(135deg,rgba(245,158,11,.28),rgba(180,83,9,.15)); }
+.drv-oc-plan-banner--elegance { background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(76,29,149,.15)); }
+.drv-oc-plan-banner--vip { background:linear-gradient(135deg,rgba(251,191,36,.32),rgba(120,53,15,.18)); }
+
+
+.adm-plan-card--ville { border:2px solid #93c5fd; background:linear-gradient(180deg,#eff6ff 0%,#fff 120px); }
+.adm-plan-card--airport { border:2px solid #67e8f9; background:linear-gradient(180deg,#ecfeff 0%,#fff 120px); }
+.adm-plan-card--demi { border:2px solid #6ee7b7; background:linear-gradient(180deg,#ecfdf5 0%,#fff 120px); }
+.adm-plan-card--journee { border:2px solid #fcd34d; background:linear-gradient(180deg,#fffbeb 0%,#fff 120px); }
+.adm-plan-card--elegance { border:2px solid #c4b5fd; background:linear-gradient(180deg,#f5f3ff 0%,#fff 120px); }
+.adm-plan-card--vip { border:2px solid #fde68a; background:linear-gradient(180deg,#fffbeb 0%,#fff 120px); }
+.adm-plan-hero { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; padding:12px; border-radius:10px; }
+.adm-plan-hero--ville { background:linear-gradient(135deg,#dbeafe,#eff6ff); }
+.adm-plan-hero--airport { background:linear-gradient(135deg,#cffafe,#ecfeff); }
+.adm-plan-hero--demi { background:linear-gradient(135deg,#d1fae5,#ecfdf5); }
+.adm-plan-hero--journee { background:linear-gradient(135deg,#fef3c7,#fffbeb); }
+.adm-plan-hero--elegance { background:linear-gradient(135deg,#ede9fe,#f5f3ff); }
+.adm-plan-hero--vip { background:linear-gradient(135deg,#fef3c7,#fffbeb); }
+.adm-plan-kicker { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:#64748b; }
+.adm-plan-title { font-size:18px; font-weight:900; margin-top:2px; color:#1e293b; }
+.adm-plan-sub { font-size:11px; color:#64748b; margin-top:4px; }
+.adm-plan-price { font-size:24px; font-weight:900; color:#b45309; }
+.adm-plan-price-lbl { font-size:10px; font-weight:700; color:#92400e; }
+.adm-plan-status { padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700; background:#f1f5f9; color:#475569; }
+.adm-plan-route, .adm-plan-itinerary { background:#f9fafb; border-radius:8px; padding:12px; margin-bottom:12px; font-size:13px; }
+.adm-plan-route span, .adm-plan-itinerary-lbl { display:block; font-size:11px; color:#6b7280; margin-bottom:4px; }
+.adm-plan-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.adm-plan-chips span { padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; }
+.adm-plan-notes { margin-bottom:12px; padding:8px 10px; background:#fffbeb; border-radius:8px; border-left:3px solid #f59e0b; font-size:12px; color:#78350f; }
+.adm-plan-occasion { margin-bottom:10px; padding:8px 10px; background:#f5f3ff; border-radius:8px; font-size:12px; color:#5b21b6; }
+.adm-plan-field { margin-bottom:10px; padding:8px 10px; background:#f8fafc; border-radius:8px; font-size:12px; }
+.adm-plan-field span { display:block; font-size:10px; color:#64748b; text-transform:uppercase; font-weight:700; }

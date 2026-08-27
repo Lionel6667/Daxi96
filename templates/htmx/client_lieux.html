@@ -1,0 +1,52 @@
+{% load static %}
+<div class="daxi-lieux" id="daxi-lieux-root">
+  <header class="daxi-lieux-hero">
+    <p class="daxi-lieux-kicker">À visiter</p>
+    <h2>Des adresses qui donnent envie</h2>
+    <p>Restaurants, hôtels, marchés et adresses locales choisies par DAXI — commande un taxi d’un geste.</p>
+  </header>
+
+  <form class="daxi-lieux-toolbar" onsubmit="if(window._daxiLoadLieux){_daxiLoadLieux(this.q.value, this.getAttribute('data-cat')||'');} return false;">
+    <input type="search" name="q" value="{{ q }}" placeholder="Rechercher un lieu, un quartier…" class="daxi-lieux-search" oninput="if(window._daxiLieuxSearchTimer){clearTimeout(window._daxiLieuxSearchTimer);}window._daxiLieuxSearchTimer=setTimeout(function(){if(window._daxiLoadLieux)window._daxiLoadLieux(document.querySelector('.daxi-lieux-search').value, window._daxiLieuxCat||'');},280);">
+  </form>
+
+  <div class="daxi-lieux-cats" role="tablist">
+    <button type="button" class="daxi-lieux-chip{% if not active_cat %} is-on{% endif %}" data-cat="" onclick="window._daxiLoadLieux && _daxiLoadLieux(document.querySelector('.daxi-lieux-search').value,'')"><i class="ri-map-pin-2-fill"></i> Tout</button>
+    {% for c in categories %}
+    <button type="button" class="daxi-lieux-chip{% if active_cat == c.slug %} is-on{% endif %}" data-cat="{{ c.slug }}" style="--chip:{{ c.color }}" onclick="window._daxiLoadLieux && _daxiLoadLieux(document.querySelector('.daxi-lieux-search').value,'{{ c.slug }}')">
+      <i class="{{ c.icon }}"></i> {{ c.name }}
+    </button>
+    {% endfor %}
+  </div>
+
+  {% if places %}
+  <div class="daxi-lieux-grid">
+    {% for p in places %}
+    <article class="daxi-lieux-card{% if p.featured %} is-featured{% endif %}" onclick="window._daxiOpenLieu && _daxiOpenLieu({{ p.id }})">
+      <div class="daxi-lieux-card__media" style="{% if p.cover_url %}background-image:url('{{ p.cover_url }}'){% endif %}">
+        {% if p.category %}
+        <span class="daxi-lieux-card__tag" style="background:{{ p.category.color }}">
+          <i class="{{ p.category.icon }}"></i> {{ p.category.name }}
+        </span>
+        {% endif %}
+        {% if p.featured %}<span class="daxi-lieux-card__feat">Coup de cœur</span>{% endif %}
+      </div>
+      <div class="daxi-lieux-card__body">
+        <h3>{{ p.name }}</h3>
+        {% if p.address %}<p class="daxi-lieux-card__addr"><i class="ri-map-pin-2-line"></i> {{ p.address }}</p>{% endif %}
+        {% if p.hours %}<p class="daxi-lieux-card__hours"><i class="ri-time-line"></i> {{ p.hours }}</p>{% endif %}
+        {% if p.description %}<p class="daxi-lieux-card__desc">{{ p.description|truncatechars:110 }}</p>{% endif %}
+        <button type="button" class="daxi-lieux-card__book" onclick="event.stopPropagation(); window._daxiBookLieu && _daxiBookLieu('{% if p.address %}{{ p.name|escapejs }} — {{ p.address|escapejs }}{% else %}{{ p.name|escapejs }}{% endif %}', {% if p.latitude %}{{ p.latitude }}{% else %}null{% endif %}, {% if p.longitude %}{{ p.longitude }}{% else %}null{% endif %})">
+          <i class="ri-taxi-fill"></i> Y aller en taxi
+        </button>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="daxi-lieux-empty">
+    <i class="ri-compass-3-line"></i>
+    <p>Aucun lieu pour le moment. Reviens bientôt — l’équipe DAXI en ajoute chaque semaine.</p>
+  </div>
+  {% endif %}
+</div>

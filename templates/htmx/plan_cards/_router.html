@@ -1,0 +1,15 @@
+{% if o.service_plan_key == 'ville-a-ville' %}
+{% include "htmx/plan_cards/_ville.html" %}
+{% elif o.service_plan_key == 'accueil-aeroport-cap' %}
+{% include "htmx/plan_cards/_airport.html" %}
+{% elif o.service_plan_key == 'demi-journee' %}
+{% include "htmx/plan_cards/_demi_journee.html" %}
+{% elif o.service_plan_key == 'journee-complete' or o.service_plan_key == 'journee' %}
+{% include "htmx/plan_cards/_journee_complete.html" %}
+{% elif o.service_plan_key == 'elegance-night' %}
+{% include "htmx/plan_cards/_elegance_night.html" %}
+{% elif o.service_plan_key == 'business-vip' %}
+{% include "htmx/plan_cards/_business_vip.html" %}
+{% elif o.is_service_plan %}
+{% include "htmx/plan_cards/_fixed.html" %}
+{% endif %}

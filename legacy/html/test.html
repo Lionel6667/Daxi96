@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h3>Test connexion PHP ➜ HTML local (via proxy)</h3>
+
+<button onclick="test()">Tester</button>
+
+<p id="result"></p>
+
+<script>
+function test() {
+    fetch("https://daxipro.42web.io/phpscript/proxy.php")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("result").innerText =
+                "Réponse : " + JSON.stringify(data);
+        })
+        .catch(err => {
+            document.getElementById("result").innerText =
+                "Erreur : " + err;
+        });
+}
+</script>
+
+</body>
+</html>
+je vais upload les fichiers html sur le domaine  https://daxipro.42web.io et les fichier php dans https://daxipro.42web.io/phpscript/ ils y sont tous, alors dans les fichiers html remplace les adressent php pour qu'ils les recuperent dans phpscript, pas la peine de ajouter tout le url vu qu'ils seront dans le meme domaine.  les pages html a modifier sont vubez2.html, driver..html, adm.html

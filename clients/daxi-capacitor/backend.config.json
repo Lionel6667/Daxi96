@@ -1,0 +1,9 @@
+{
+  "DAXI_API_ENV": "development",
+  "DAXI_API_BASE_URL_DEVELOPMENT": "https://repacking-shorts-vocalist.ngrok-free.dev",
+  "DAXI_API_BASE_URL_PRODUCTION": "",
+  "DAXI_API_ALLOW_HTTP": false,
+  "DAXI_API_DEBUG_LOGS": true,
+  "useNgrokFileForDev": true,
+  "comment": "Source unique DAXI_API_BASE_URL. PRODUCTION vide jusqu'au backend officiel. ngrok-url.txt peut overlay le DEV au build uniquement."
+}

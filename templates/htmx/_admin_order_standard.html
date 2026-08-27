@@ -1,0 +1,88 @@
+{% load static daxi_extras %}
+<div class="order-card adm-std-card adm-std-card--{% if o.trip_type == 'round_trip' %}roundtrip{% else %}oneway{% endif %}" id="order-card-{{ o.id }}"
+     style="margin-bottom:20px; border:2px solid {% if o.trip_type == 'round_trip' %}#a78bfa{% else %}#60a5fa{% endif %}; border-radius:12px; padding:16px;">
+
+  <div class="adm-plan-hero adm-plan-hero--{% if o.trip_type == 'round_trip' %}roundtrip{% else %}oneway{% endif %}" style="margin:-4px -4px 12px;">
+    <div>
+      <div class="adm-plan-kicker"><i class="{% if o.trip_type == 'round_trip' %}ri-arrow-left-right-line{% else %}ri-car-line{% endif %}"></i> {% if o.trip_type == 'round_trip' %}Aller-retour{% else %}Aller simple{% endif %}</div>
+      <div class="adm-plan-title">Course {% if o.trip_type == 'round_trip' %}aller-retour{% else %}aller simple{% endif %}</div>
+      <div class="adm-plan-sub">Commande #{{ o.id }}</div>
+    </div>
+    {% if o.price %}
+    <div class="adm-plan-price-wrap"><div class="adm-plan-price">{{ o.price|daxi_price }}</div></div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span class="adm-order-status-badge adm-order-status-badge--{{ o.status }}">
+      {% if o.status == 'pending' %}<i class="ri-add-circle-line"></i> Nouvelle — en attente chauffeur
+      {% elif o.status == 'price_confirmed' %}<i class="ri-check-line"></i> Prix calculé — assigner chauffeur
+      {% elif o.status == 'driver_assigned' %}<i class="ri-car-line"></i> Chauffeur assigné
+      {% elif o.status == 'on_way' %}<i class="ri-route-line"></i> En route
+      {% elif o.status == 'arrived' %}<i class="ri-map-pin-line"></i> Arrivé
+      {% elif o.status == 'in_progress' %}{% if o.round_trip_phase == 'return' %}<i class="ri-arrow-go-back-line"></i> Retour en cours{% elif o.trip_type == 'round_trip' %}<i class="ri-steering-2-line"></i> Aller en cours{% else %}<i class="ri-loader-4-line"></i> En cours{% endif %}
+      {% elif o.status == 'waiting_return' %}<i class="ri-hourglass-line"></i> Attente retour
+      {% elif o.status == 'completed' %}<i class="ri-check-double-line"></i> Terminé
+      {% elif o.status == 'cancelled' %}<i class="ri-close-circle-line"></i> Annulé
+      {% else %}{{ o.status_display }}{% endif %}
+    </span>
+    <div style="text-align:right;">
+      <div style="font-size:11px; color:#6b7280;">{{ o.created_display }}</div>
+      {% if o.is_later %}
+      <div style="font-size:10px; color:#92400e; font-weight:600;"><i class="ri-calendar-line"></i> Programmé{% if o.date_display %} · {{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}</div>
+      {% else %}
+      <div style="font-size:10px; color:#10b981; font-weight:600;"><i class="ri-flashlight-line"></i> Maintenant</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+    {% if o.trip_type == 'round_trip' %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#ede9fe; color:#5b21b6;">↔ Aller-retour</span>
+    {% elif o.trip_type %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#e0f2fe; color:#0369a1;">→ Aller simple</span>
+    {% endif %}
+    {% if o.passengers > 1 %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#f3e8ff; color:#6b21a8;"><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>
+    {% endif %}
+    {% if o.is_paused %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#ffedd5; color:#9a3412;"><i class="ri-pause-line"></i> Pause en cours</span>
+    {% elif o.pause_price %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#ffedd5; color:#9a3412;"><i class="ri-time-line"></i> Attente {{ o.pause_price|daxi_price }}</span>
+    {% endif %}
+    {% if o.price %}
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#dcfce7; color:#166534;"><i class="ri-money-dollar-circle-line"></i> {{ o.price|daxi_price }}</span>
+    {% endif %}
+  </div>
+
+  {% include "htmx/_round_trip_wait_info.html" %}
+
+  <div class="adm-order-route-box">
+    <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:8px;">
+      <span style="font-size:16px; color:#10b981;"><i class="ri-map-pin-line"></i></span>
+      <div>
+        <div style="font-size:11px; color:#6b7280;">Départ</div>
+        <div style="font-weight:600; font-size:13px; color:#1f2937;">{{ o.pickup_display|default:o.pickup }}</div>
+      </div>
+    </div>
+    <div style="border-left:2px dashed #d1d5db; height:10px; margin-left:8px;"></div>
+    <div style="display:flex; align-items:flex-start; gap:8px;">
+      <span style="font-size:16px; color:#ef4444;"><i class="ri-flag-line"></i></span>
+      <div>
+        <div style="font-size:11px; color:#6b7280;">Destination</div>
+        <div style="font-weight:600; font-size:13px; color:#1f2937;">{{ o.destination_display|default:o.destination }}</div>
+      </div>
+    </div>
+    {% if o.notes %}
+    <div class="adm-order-notes">
+      <div class="adm-order-notes__label">Repère chauffeur</div>
+      <div class="adm-order-notes__text"><i class="ri-chat-3-line"></i> {{ o.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+  {% include "htmx/_order_party_admin.html" %}
+
+  {% include "htmx/_admin_order_details.html" %}
+</div>

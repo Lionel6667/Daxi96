@@ -1,0 +1,68 @@
+
+.daxi-web-radar,
+#daxi-web-radar {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070b14;
+  pointer-events: auto;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+.daxi-web-radar.is-dismissed,
+#daxi-web-radar.is-dismissed {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+[data-theme="light"] .daxi-web-radar,
+[data-theme="light"] #daxi-web-radar {
+  background: #f0f4f9;
+}
+.daxi-gps-boot__stage {
+  position: relative;
+  width: min(200px, 52vw);
+  height: min(200px, 52vw);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.daxi-gps-boot__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(251, 191, 36, 0.28);
+  animation: daxiGpsBootPulse 2.2s ease-out infinite;
+}
+.daxi-gps-boot__ring.r2 {
+  inset: 14%;
+  animation-delay: 0.35s;
+  border-color: rgba(34, 211, 238, 0.32);
+}
+.daxi-gps-boot__ring.r3 {
+  inset: 28%;
+  animation-delay: 0.7s;
+  border-color: rgba(251, 191, 36, 0.18);
+}
+.daxi-gps-boot__dot {
+  position: relative;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.18);
+}
+@keyframes daxiGpsBootPulse {
+  0% { transform: scale(0.78); opacity: 0.15; }
+  45% { transform: scale(1); opacity: 0.85; }
+  100% { transform: scale(1.12); opacity: 0; }
+}
+html.daxi-native-shell .daxi-web-radar,
+html.daxi-native-shell #daxi-web-radar,
+html.daxi-intro-playing .daxi-web-radar,
+html.daxi-intro-playing #daxi-web-radar {
+  display: none !important;
+}

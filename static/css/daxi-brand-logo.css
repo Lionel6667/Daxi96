@@ -1,0 +1,75 @@
+
+.daxi-brand-logo {
+  height: auto;
+  max-width: 180px;
+  width: min(160px, 42vw);
+  object-fit: contain;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.daxi-brand-logo--dark { display: none; }
+[data-theme="light"] .daxi-brand-logo--gold { display: none; }
+[data-theme="light"] .daxi-brand-logo--dark { display: block; }
+
+img[src*="daxi-logo-gold"],
+img[src*="daxi-logo-dark"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  object-fit: contain;
+}
+
+.admin-topbar .daxi-header-brand,
+.ent-topbar .daxi-header-brand {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+}
+.admin-topbar .navbar-logo {
+  height: 44px !important;
+  width: auto !important;
+  max-width: 120px !important;
+}
+@media (max-width: 640px) {
+  .admin-topbar .navbar-logo {
+    height: 36px !important;
+    max-width: 100px !important;
+  }
+}
+.ent-topbar .navbar-logo,
+.ent-logo .navbar-logo {
+  height: 34px !important;
+  width: auto !important;
+  max-width: 120px !important;
+}
+.ent-logo img.daxi-brand-logo--dark,
+.ent-topbar img.daxi-brand-logo--dark {
+  display: none !important;
+}
+[data-theme="light"] .ent-logo img.daxi-brand-logo--gold,
+[data-theme="light"] .ent-topbar img.daxi-brand-logo--gold {
+  display: none !important;
+}
+[data-theme="light"] .ent-logo img.daxi-brand-logo--dark,
+[data-theme="light"] .ent-topbar img.daxi-brand-logo--dark {
+  display: block !important;
+}
+
+.admin-sidebar-logo {
+  height: 40px;
+  width: auto;
+  max-width: 150px;
+}
+.admin-boot-logo-wrap .daxi-brand-logo {
+  width: min(150px, 40vw);
+  animation: daxiBrandBootPulse 1.5s ease-in-out infinite;
+}
+@keyframes daxiBrandBootPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.85; }
+}
+
+.ent-logo .daxi-brand-logo:not(.navbar-logo) {
+  height: 32px;
+  width: auto;
+  max-width: 120px;
+}

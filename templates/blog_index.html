@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog Daxi — Actualités, conseils & découvertes</title>
+  {% include "partials/daxi_favicon.html" %}
+  <meta name="description" content="Le blog Daxi : actualités, promotions, conseils voyage, sécurité, tourisme et guides pratiques en Haïti.">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <style>
+    body { margin:0; font-family:system-ui,sans-serif; background:#070b14; color:#e2e8f0; }
+    .blog-page-header { padding:32px 20px 12px; max-width:1100px; margin:0 auto; }
+    .blog-page-header h1 { margin:0; font-size:32px; }
+    .blog-page-header p { color:#94a3b8; margin:8px 0 0; }
+    .blog-page-header a { color:#f59e0b; text-decoration:none; font-size:14px; display:inline-flex; align-items:center; gap:4px; margin-bottom:16px; }
+    #blogPageContainer { max-width:1100px; margin:0 auto; padding:0 20px 60px; }
+    .daxi-blog-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+    .daxi-blog-card { background:#0f172a; border-radius:16px; overflow:hidden; cursor:pointer; border:1px solid rgba(148,163,184,0.1); transition:transform .2s, box-shadow .2s; }
+    .daxi-blog-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.35); }
+    .daxi-blog-card-cover { height:160px; background-size:cover; background-position:center; }
+    .daxi-blog-card-cover--empty { background:linear-gradient(135deg,#1e293b,#334155); }
+    .daxi-blog-card-body { padding:16px; }
+    .daxi-blog-card-body h3 { margin:8px 0; font-size:17px; line-height:1.3; }
+    .daxi-blog-card-body p { margin:0; font-size:13px; color:#94a3b8; line-height:1.5; }
+    .daxi-blog-cat { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--cat-color,#a5b4fc); }
+    .daxi-blog-meta { display:flex; gap:12px; margin-top:12px; font-size:11px; color:#64748b; }
+    .daxi-blog-search-bar { display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
+    .daxi-blog-search-bar input, .daxi-blog-search-bar select { flex:1; min-width:180px; padding:12px 14px; border-radius:12px; border:1px solid rgba(148,163,184,0.2); background:#0f172a; color:#e2e8f0; }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+</head>
+<body class="blog-page">
+  <header class="blog-page-header">
+    <div class="blog-page-header-top">
+      <a href="/"><i class="ri-arrow-left-line"></i> Retour à Daxi</a>
+      <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+    </div>
+    <h1>Blog Daxi</h1>
+    <p>Actualités, conseils, tourisme et tout ce qui compte pour vos déplacements.</p>
+  </header>
+  <div id="blogPageContainer" hx-get="/htmx/blog/" hx-trigger="load" hx-swap="innerHTML">
+    <p style="text-align:center;color:#64748b;padding:40px;">Chargement…</p>
+  </div>
+  <script>
+    function openBlogArticle(slug) { window.location.href = '/blog/' + slug + '/'; }
+    document.body.addEventListener('click', function(e) {
+      var card = e.target.closest('.daxi-blog-card');
+      if (!card) return;
+      var onclick = card.getAttribute('onclick');
+      if (onclick) return;
+    });
+  </script>
+</body>
+</html>

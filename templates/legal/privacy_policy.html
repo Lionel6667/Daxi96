@@ -1,0 +1,117 @@
+{% extends "legal/base_legal.html" %}
+{% block title %}Politique de confidentialité — DAXI{% endblock %}
+{% block legal_title %}Politique de confidentialité{% endblock %}
+{% block legal_content %}
+<p class="legal-updated">Dernière mise à jour : 2 août 2026</p>
+
+<p>
+  La présente politique décrit comment <strong>DAXI</strong> (exploité par Daxi Pro, site
+  <a href="https://daxipro.com">daxipro.com</a>) collecte, utilise et protège vos données
+  personnelles lorsque vous utilisez notre service de transport, notre site web, l'application
+  Android DAXI et nos canaux de communication (notamment WhatsApp).
+</p>
+
+<h2>1. Responsable du traitement</h2>
+<p>
+  <strong>DAXI / Daxi Pro</strong><br>
+  E-mail : <a href="mailto:info@daxipro.com">info@daxipro.com</a><br>
+  Site : <a href="https://daxipro.com">https://daxipro.com</a>
+</p>
+
+<h2>2. Données collectées</h2>
+<ul>
+  <li><strong>Identité et contact</strong> : nom, prénom, numéro de téléphone, adresse e-mail.</li>
+  <li><strong>Compte et réservations</strong> : historique de courses, adresses de départ/destination, préférences, statuts de commande.</li>
+  <li><strong>Identifiant invité (guest_id)</strong> : identifiant technique persistant sur votre appareil pour associer vos commandes lorsque vous n'êtes pas connecté. Il peut être généré localement hors ligne puis réconcilié avec le serveur.</li>
+  <li><strong>Localisation</strong> :
+    <ul>
+      <li><em>Client</em> : position GPS lorsque vous l'autorisez (carte, prise en charge, suivi de course). Nous utilisons la localisation précise (GPS) et, le cas échéant, approximative. Nous ne demandons pas la localisation en arrière-plan (ACCESS_BACKGROUND_LOCATION).</li>
+      <li><em>Chauffeur</em> : position pendant les courses actives pour le suivi et la sécurité.</li>
+    </ul>
+  </li>
+  <li><strong>Notifications push (FCM)</strong> : token Firebase Cloud Messaging pour vous envoyer des alertes de course (statut, messages, rappels). La permission est demandée au moment prévu par l'application, pas systématiquement au premier lancement.</li>
+  <li><strong>Paiements</strong> : montants, moyens de paiement, références de transaction (nous ne stockons pas les numéros complets de carte bancaire).</li>
+  <li><strong>Communications</strong> : messages via WhatsApp, notifications push, assistance client, chat in-app.</li>
+  <li><strong>Documents chauffeur</strong> : pièces d'identité, permis, documents du véhicule (chauffeurs uniquement).</li>
+  <li><strong>Données techniques</strong> : modèle d'appareil, version de l'application, logs de diagnostic, cookies de session nécessaires au fonctionnement, cache hors ligne (IndexedDB, stockage local Android).</li>
+  <li><strong>Cartographie</strong> : lorsque Google Maps est disponible, des requêtes peuvent être adressées à Google (clé API, tuiles, géocodage). En mode hors ligne, l'application peut utiliser des cartes MBTiles locales sans transmettre votre position à Google.</li>
+</ul>
+
+<h2>3. Finalités</h2>
+<ul>
+  <li>Créer et gérer votre compte.</li>
+  <li>Traiter, assigner et suivre vos courses (y compris synchronisation hors ligne).</li>
+  <li>Assurer la sécurité des passagers et des chauffeurs.</li>
+  <li>Envoyer des notifications liées au service (statut de course, OTP, reçus).</li>
+  <li>Traiter les paiements et la facturation.</li>
+  <li>Améliorer le service et le support client.</li>
+  <li>Respecter nos obligations légales.</li>
+</ul>
+
+<h2>4. Bases légales</h2>
+<p>
+  Le traitement repose sur l'exécution du contrat de transport, votre consentement lorsque requis
+  (ex. localisation, notifications push), et nos intérêts légitimes (sécurité, prévention de la fraude).
+</p>
+
+<h2>5. Partage avec des tiers</h2>
+<p>Nous pouvons partager certaines données avec :</p>
+<ul>
+  <li><strong>Chauffeurs partenaires</strong> : informations nécessaires à la course.</li>
+  <li><strong>Prestataires techniques</strong> : hébergement, cartographie (Google Maps), messagerie, paiements.</li>
+  <li><strong>Google / Firebase</strong> : notifications push (FCM), cartographie si activée.</li>
+  <li><strong>Meta / WhatsApp</strong> : pour l'envoi de messages transactionnels via WhatsApp Business.</li>
+  <li><strong>Autorités</strong> : si la loi l'exige ou en cas d'urgence (SOS).</li>
+</ul>
+<p>Nous ne vendons pas vos données personnelles.</p>
+
+<h2>6. Stockage local et hors ligne</h2>
+<p>
+  L'application Android peut conserver localement (sur votre appareil) : identifiant invité, session
+  utilisateur (sans mot de passe en clair), cache de commandes, file d'attente des actions hors ligne
+  (outbox), tuiles cartographiques MBTiles, et jeton FCM. Ces données servent au fonctionnement hors
+  ligne et sont synchronisées avec nos serveurs lorsque la connexion est rétablie.
+</p>
+
+<h2>7. Conservation</h2>
+<p>
+  Les données sont conservées pendant la durée nécessaire à la fourniture du service, puis archivées
+  ou supprimées conformément aux obligations légales et comptables applicables en Haïti.
+</p>
+
+<h2>8. Vos droits</h2>
+<p>Vous pouvez demander :</p>
+<ul>
+  <li>l'accès à vos données ;</li>
+  <li>la rectification de données inexactes ;</li>
+  <li>la suppression de vos données (voir page dédiée et Paramètres → Supprimer mon compte dans l'app) ;</li>
+  <li>la limitation ou l'opposition à certains traitements.</li>
+</ul>
+<p>
+  Pour exercer vos droits : <a href="mailto:info@daxipro.com">info@daxipro.com</a>.
+  Consultez aussi notre page
+  <a href="{{ deletion_url }}">Suppression des données utilisateur</a>.
+</p>
+
+<h2>9. Sécurité</h2>
+<p>
+  Nous mettons en œuvre des mesures techniques et organisationnelles raisonnables pour protéger
+  vos données contre l'accès non autorisé, la perte ou l'altération. Les communications avec nos
+  serveurs en production utilisent HTTPS (TLS). Les WebSockets utilisent WSS.
+</p>
+
+<h2>10. Mineurs</h2>
+<p>
+  Le service n'est pas destiné aux personnes de moins de 18 ans sans autorisation parentale.
+</p>
+
+<h2>11. Modifications</h2>
+<p>
+  Cette politique peut être mise à jour. La date en tête de page indique la dernière révision.
+</p>
+
+<h2>12. Contact</h2>
+<p>
+  Questions sur la confidentialité : <a href="mailto:info@daxipro.com">info@daxipro.com</a>
+</p>
+{% endblock %}

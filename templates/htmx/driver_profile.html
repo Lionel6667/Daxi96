@@ -1,0 +1,104 @@
+{% load static %}
+
+<div id="driver-data"
+     data-email="{{ driver.email|default:'' }}"
+     data-phone="{{ driver.phone|default:'' }}"
+     data-city="{{ driver.city|default:'' }}"
+     data-rating="{{ driver.rating|default:'' }}"
+     data-car-brand="{{ driver.car_brand|default:'' }}"
+     data-car-model="{{ driver.car_model|default:'' }}"
+     data-car-year="{{ driver.car_year|default:'' }}"
+     data-plate="{{ driver.plate|default:'' }}"
+     data-vehicle="{{ driver.vehicle|default:'' }}"
+     data-car-img-url="{{ driver.public_vehicle_image_url|default:'' }}"
+     data-driving_license="{% if driver.driving_license %}true{% else %}false{% endif %}"
+     data-oavct_insurance="{% if driver.oavct_insurance %}true{% else %}false{% endif %}"
+     data-dgi_card="{% if driver.dgi_card %}true{% else %}false{% endif %}"
+     data-tint_permit="{% if driver.tint_permit %}true{% else %}false{% endif %}"
+     data-nav-pref-mode="{{ driver.nav_pref_mode|default:'ask' }}"
+     data-nav-pref-app="{{ driver.nav_pref_app|default:'google' }}"
+     style="display:none;"></div>
+
+<div id="driver-profile-container" style="max-width:500px;margin:0 auto;">
+
+  
+  <div style="background:linear-gradient(135deg,#111827,#1f2937);border-radius:16px;padding:20px;color:#fff;text-align:center;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);">
+    {% if driver.photo %}
+    <img src="{{ driver.photo.url }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(245,158,11,.6);margin-bottom:10px;" alt="">
+    {% else %}
+    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#000;margin:0 auto 10px;">{{ driver.firstname|first|upper }}</div>
+    {% endif %}
+    <div style="font-size:18px;font-weight:800;">{{ driver.firstname }} {{ driver.lastname }}</div>
+    <div style="font-size:12px;color:#9ca3af;margin-top:4px;">
+      {% if driver.phone %}📞 {{ driver.phone }}{% endif %}
+      {% if driver.city %} · 📍 {{ driver.city }}{% endif %}
+    </div>
+    <div style="margin-top:12px;display:flex;justify-content:center;gap:20px;">
+      <div><div style="font-size:20px;font-weight:900;color:#f59e0b;">{{ driver.completed_trips|default:0 }}</div><div style="font-size:10px;color:#9ca3af;">Courses</div></div>
+      {% if driver.rating %}<div><div style="font-size:20px;font-weight:900;color:#fbbf24;">{{ driver.rating }}</div><div style="font-size:10px;color:#9ca3af;">Note/5</div></div>{% endif %}
+      <div><div style="font-size:18px;">{% if driver.is_verified %}✅{% else %}⏳{% endif %}</div><div style="font-size:10px;color:#9ca3af;">{% if driver.is_verified %}Vérifié{% else %}En attente{% endif %}</div></div>
+    </div>
+  </div>
+
+  
+  {% if driver.car_brand or driver.vehicle or driver.public_vehicle_image_url %}
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:16px;display:flex;gap:12px;align-items:center;">
+    {% if driver.public_vehicle_image_url %}
+    <img src="{{ driver.public_vehicle_image_url }}" style="width:80px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;" alt="">
+    {% else %}
+    <div style="width:80px;height:56px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ri-car-line" style="font-size:24px;color:#4b5563;"></i></div>
+    {% endif %}
+    <div>
+      <div style="font-size:14px;font-weight:800;color:#fff;">{{ driver.car_brand|default:'' }} {{ driver.car_model|default:'' }} {% if driver.car_year %}({{ driver.car_year }}){% endif %}</div>
+      {% if driver.plate %}<div style="font-size:11px;color:#9ca3af;background:rgba(255,255,255,.06);display:inline-block;padding:2px 8px;border-radius:6px;margin-top:4px;">{{ driver.plate }}</div>{% endif %}
+      {% if driver.vehicle %}<div style="font-size:11px;color:#6b7280;margin-top:4px;">{{ driver.vehicle }}</div>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;">
+    <div style="font-size:10px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Documents</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <span style="font-size:13px;font-weight:600;color:#d1d5db;">Permis de conduire</span>
+      {% if driver.driving_license %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(16,185,129,.15);color:#10b981;">✓ Uploadé</span>
+      {% else %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(239,68,68,.1);color:#f87171;">Manquant</span>{% endif %}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <span style="font-size:13px;font-weight:600;color:#d1d5db;">Assurance OAVCT</span>
+      {% if driver.oavct_insurance %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(16,185,129,.15);color:#10b981;">✓ Uploadé</span>
+      {% else %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(239,68,68,.1);color:#f87171;">Manquant</span>{% endif %}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <span style="font-size:13px;font-weight:600;color:#d1d5db;">Carte DGI</span>
+      {% if driver.dgi_card %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(16,185,129,.15);color:#10b981;">✓ Uploadé</span>
+      {% else %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(239,68,68,.1);color:#f87171;">Manquant</span>{% endif %}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+      <span style="font-size:13px;font-weight:600;color:#d1d5db;">Autorisation teinte</span>
+      {% if driver.tint_permit %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(16,185,129,.15);color:#10b981;">✓ Uploadé</span>
+      {% else %}<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;background:rgba(239,68,68,.1);color:#f87171;">Manquant</span>{% endif %}
+    </div>
+  </div>
+
+  
+  {% if reviews %}
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-top:16px;">
+    <div style="font-size:10px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Avis clients</div>
+    {% for r in reviews %}
+    <div style="padding:10px 0;{% if not forloop.last %}border-bottom:1px solid rgba(255,255,255,.04);{% endif %}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:700;color:#d1d5db;">{{ r.reviewer_name|default:'Anonyme' }}</span>
+        <span style="color:#f59e0b;font-size:12px;">{% for i in "12345"|make_list %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+      </div>
+      {% if r.comment %}<p style="font-size:12px;color:#9ca3af;margin:0;">{{ r.comment }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>

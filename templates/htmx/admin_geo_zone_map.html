@@ -1,0 +1,10 @@
+<div class="geo-preview-map-wrap" style="height:280px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1);">
+  <div id="geo-preview-map-{{ zone.id }}" class="w-full h-full" data-zone-id="{{ zone.id }}" data-zone-name="{{ zone.name|escape }}"></div>
+</div>
+<script>
+(function() {
+  if (typeof adminGeoInitPreviewMap === 'function') {
+    adminGeoInitPreviewMap({{ zone.id }}, document.getElementById('geo-preview-map-{{ zone.id }}'));
+  }
+})();
+</script>

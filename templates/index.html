@@ -1,0 +1,2582 @@
+{% extends "base.html" %}
+{% block title %}DAXI - Réservez votre transport{% endblock %}
+
+{% block extra_css %}
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+<style>
+  .hero-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+  .card-glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+  .btn-primary { background: linear-gradient(135deg, #0a84ff, #0057cc); transition: all 0.3s; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(10,132,255,0.4); }
+  .btn-cyan { background: linear-gradient(135deg, #00d4ff, #0099cc); transition: all 0.3s; }
+  .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,212,255,0.4); }
+  .status-pending { background: #fef3c7; color: #92400e; }
+  .status-price_proposed { background: #dbeafe; color: #1e40af; }
+  .status-price_confirmed { background: #ede9fe; color: #5b21b6; }
+  .status-driver_assigned { background: #f3e8ff; color: #6b21a8; }
+  .status-on_way { background: #ffedd5; color: #9a3412; }
+  .status-arrived { background: #ccfbf1; color: #0f5132; }
+  .status-in_progress { background: #cffafe; color: #0c4a6e; }
+  .status-completed { background: #dcfce7; color: #14532d; }
+  .status-cancelled { background: #fee2e2; color: #991b1b; }
+  .tab-active { background: linear-gradient(135deg, #0a84ff, #00d4ff); color: #fff; }
+  .section-slide { animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  #map-container { height: 200px; border-radius: 12px; overflow: hidden; }
+  .chat-bubble-user { background: linear-gradient(135deg, #0a84ff, #0057cc); border-radius: 18px 18px 4px 18px; }
+  .chat-bubble-bot { background: rgba(255,255,255,0.1); border-radius: 18px 18px 18px 4px; border: 1px solid rgba(255,255,255,0.15); }
+  .nav-item { transition: all 0.2s; }
+  .nav-item.active { color: #00d4ff; }
+  .notification-badge { background: #ef4444; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; color: white; position: absolute; top: -4px; right: -4px; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div id="app" class="min-h-screen bg-gray-950 text-white">
+
+  
+  <div id="auth-screen" class="min-h-screen hero-bg flex flex-col">
+    
+    <div class="p-6 text-center">
+      <h1 class="font-pacifico text-5xl text-daxi-cyan tracking-widest">DAXI</h1>
+      <p class="text-gray-400 text-sm mt-1">Service de Transport Premium</p>
+    </div>
+
+    
+    <div id="auth-container" class="flex-1 flex flex-col items-center justify-center px-6 pb-10">
+      
+      <div class="flex gap-2 mb-6">
+        <button onclick="setLang('fr')" class="lang-btn px-3 py-1 rounded-full text-xs font-bold border border-daxi-cyan text-daxi-cyan" data-lang="fr">FR</button>
+        <button onclick="setLang('en')" class="lang-btn px-3 py-1 rounded-full text-xs border border-white/20 text-gray-400" data-lang="en">EN</button>
+        <button onclick="setLang('ht')" class="lang-btn px-3 py-1 rounded-full text-xs border border-white/20 text-gray-400" data-lang="ht">HT</button>
+        <button onclick="setLang('es')" class="lang-btn px-3 py-1 rounded-full text-xs border border-white/20 text-gray-400" data-lang="es">ES</button>
+      </div>
+
+      
+      <div class="flex gap-2 mb-6 bg-white/5 rounded-2xl p-1 w-full max-w-sm">
+        <button onclick="showAuthMode('login')" id="tab-login" class="tab-active flex-1 py-2 rounded-xl text-sm font-semibold transition-all">Connexion</button>
+        <button onclick="showAuthMode('register')" id="tab-register" class="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-400 transition-all">Inscription</button>
+        <button onclick="showAuthMode('guest')" id="tab-guest" class="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-400 transition-all">Invité</button>
+      </div>
+
+      
+      <div id="form-login" class="w-full max-w-sm space-y-4">
+        <input id="login-email" type="email" placeholder="Email" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="login-password" type="password" placeholder="Mot de passe" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <div class="text-right">
+          <button onclick="showAuthMode('forgot')" class="text-xs text-daxi-cyan hover:underline">Mot de passe oublié ?</button>
+        </div>
+        <button onclick="handleLogin()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2">
+          <span id="login-btn-text">Se connecter</span>
+          <div id="login-spinner" class="spinner hidden"></div>
+        </button>
+        <button onclick="showAuthMode('guest')" class="w-full py-3 rounded-2xl font-semibold text-gray-400 border border-white/10 text-sm">
+          Continuer sans compte
+        </button>
+      </div>
+
+      
+      <div id="form-register" class="w-full max-w-sm space-y-3 hidden">
+        <div class="grid grid-cols-2 gap-3">
+          <input id="reg-firstname" type="text" placeholder="Prénom" class="bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+          <input id="reg-lastname" type="text" placeholder="Nom" class="bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        </div>
+        <input id="reg-email" type="email" placeholder="Email" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="reg-phone" type="tel" placeholder="Téléphone" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="reg-password" type="password" placeholder="Mot de passe (min. 6 car.)" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="reg-password2" type="password" placeholder="Confirmer le mot de passe" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <button onclick="handleRegister()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2">
+          <span id="reg-btn-text">Créer un compte</span>
+          <div id="reg-spinner" class="spinner hidden"></div>
+        </button>
+      </div>
+
+      
+      <div id="form-otp" class="w-full max-w-sm space-y-4 hidden text-center">
+        <div class="text-4xl">📧</div>
+        <h3 class="font-bold text-xl">Vérifiez votre email</h3>
+        <p class="text-gray-400 text-sm" id="otp-email-hint">Un code à 6 chiffres a été envoyé à votre email.</p>
+        <div class="flex gap-2 justify-center">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+          <input type="text" maxlength="1" class="otp-input w-12 h-14 text-center text-xl font-bold bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-daxi-cyan">
+        </div>
+        <button onclick="handleVerifyOTP()" class="btn-cyan w-full py-3 rounded-2xl font-bold text-white">Vérifier</button>
+        <button onclick="handleResendOTP()" class="text-sm text-daxi-cyan hover:underline">Renvoyer le code</button>
+      </div>
+
+      
+      <div id="form-forgot" class="w-full max-w-sm space-y-4 hidden">
+        <h3 class="font-bold text-xl text-center">Mot de passe oublié</h3>
+        <input id="forgot-email" type="email" placeholder="Votre email" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <button onclick="handleForgotPassword()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white">Envoyer le code</button>
+        <button onclick="showAuthMode('login')" class="text-sm text-gray-400 hover:text-white w-full text-center">← Retour à la connexion</button>
+      </div>
+
+      
+      <div id="form-reset" class="w-full max-w-sm space-y-4 hidden">
+        <h3 class="font-bold text-xl text-center">Nouveau mot de passe</h3>
+        <input id="reset-code" type="text" maxlength="6" placeholder="Code de réinitialisation" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 text-center text-xl tracking-widest focus:outline-none focus:border-daxi-cyan">
+        <input id="reset-password" type="password" placeholder="Nouveau mot de passe" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="reset-password2" type="password" placeholder="Confirmer le mot de passe" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <button onclick="handleResetPassword()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white">Réinitialiser</button>
+      </div>
+
+      
+      <div id="form-guest" class="w-full max-w-sm space-y-4 hidden">
+        <h3 class="font-bold text-xl text-center">Continuer comme invité</h3>
+        <p class="text-gray-400 text-sm text-center">Réservez une course sans créer de compte.</p>
+        <input id="guest-name" type="text" placeholder="Votre nom complet" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="guest-email" type="email" placeholder="Email (pour recevoir la confirmation)" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <input id="guest-phone" type="tel" placeholder="Téléphone" class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-daxi-cyan">
+        <button onclick="handleGuestEntry()" class="btn-cyan w-full py-3 rounded-2xl font-bold text-white">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="main-app" class="hidden min-h-screen bg-gray-950 flex flex-col">
+
+    
+    <header class="bg-daxi-gradient px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-lg">
+      <div class="flex items-center gap-3">
+        <img id="header-avatar" src="https://ui-avatars.com/api/?name=U&background=0a84ff&color=fff&size=36" class="w-9 h-9 rounded-full object-cover">
+        <div>
+          <div class="font-bold text-sm text-white" id="header-name">Utilisateur</div>
+          <div class="text-xs text-daxi-cyan" id="header-status">En ligne</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="showSection('notifications')" class="relative text-gray-300 hover:text-white">
+          <i class="ri-notification-3-line text-xl"></i>
+          <span id="notif-badge" class="notification-badge hidden">0</span>
+        </button>
+        <button onclick="toggleProfileMenu()" class="text-gray-300 hover:text-white">
+          <i class="ri-menu-3-line text-xl"></i>
+        </button>
+      </div>
+    </header>
+
+    
+    <div id="profile-menu" class="hidden absolute top-16 right-4 z-50 bg-gray-800 rounded-2xl shadow-2xl p-2 w-56 border border-white/10">
+      <div class="px-3 py-2 border-b border-white/10 mb-1">
+        <div class="font-semibold text-sm" id="menu-name">Utilisateur</div>
+        <div class="text-xs text-gray-400" id="menu-email"></div>
+      </div>
+      <button onclick="showSection('profile'); toggleProfileMenu()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center gap-2"><i class="ri-user-line"></i> Mon profil</button>
+      <button onclick="showSection('my-orders'); toggleProfileMenu()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center gap-2"><i class="ri-car-line"></i> Mes courses</button>
+      <button onclick="showSection('assistance'); toggleProfileMenu()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-sm flex items-center gap-2"><i class="ri-customer-service-2-line"></i> Assistance</button>
+      <button onclick="handleLogout()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-red-500/20 text-sm text-red-400 flex items-center gap-2 mt-1"><i class="ri-logout-box-line"></i> Déconnexion</button>
+    </div>
+
+    
+    <main class="flex-1 overflow-y-auto pb-20">
+
+      
+      <section id="section-home" class="section-slide p-4 space-y-4">
+        
+        <div class="bg-daxi-gradient rounded-3xl p-6 text-white relative overflow-hidden">
+          <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/5"></div>
+          <div class="absolute -right-4 bottom-0 w-20 h-20 rounded-full bg-daxi-cyan/10"></div>
+          <p class="text-sm text-gray-300 font-montserrat uppercase tracking-widest">Bienvenue chez</p>
+          <h2 class="font-pacifico text-4xl text-daxi-cyan mt-1">DAXI</h2>
+          <p class="text-gray-300 text-sm mt-2" id="welcome-msg">Où allez-vous aujourd'hui ?</p>
+          <button onclick="showSection('booking')" class="btn-cyan mt-4 px-6 py-3 rounded-2xl font-bold text-white text-sm">
+            <i class="ri-taxi-line mr-2"></i>Réserver maintenant
+          </button>
+        </div>
+
+        
+        <div id="user-stats" class="grid grid-cols-3 gap-3 hidden">
+          <div class="bg-gray-800 rounded-2xl p-3 text-center">
+            <div class="text-2xl font-bold text-daxi-cyan" id="stat-trips">0</div>
+            <div class="text-xs text-gray-400 mt-1">Courses</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-3 text-center">
+            <div class="text-2xl font-bold text-daxi-cyan" id="stat-pending">0</div>
+            <div class="text-xs text-gray-400 mt-1">En attente</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-3 text-center">
+            <div class="text-2xl font-bold text-daxi-cyan" id="stat-saved">0</div>
+            <div class="text-xs text-gray-400 mt-1">Favoris</div>
+          </div>
+        </div>
+
+        
+        <div id="active-order-banner" class="hidden bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-4 cursor-pointer" onclick="showSection('track-order')">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-blue-100 font-semibold uppercase tracking-wide">Course active</p>
+              <p class="font-bold text-white mt-1" id="active-order-status">En attente</p>
+              <p class="text-sm text-blue-100 mt-1" id="active-order-route"></p>
+            </div>
+            <div class="text-3xl">🚕</div>
+          </div>
+        </div>
+
+        
+        <div>
+          <h3 class="font-bold text-white mb-3 flex items-center gap-2"><i class="ri-map-pin-line text-daxi-cyan"></i> Destinations populaires</h3>
+          <div id="attractions-grid" class="grid grid-cols-2 gap-3">
+            <div class="bg-gray-800 rounded-2xl h-28 animate-pulse"></div>
+            <div class="bg-gray-800 rounded-2xl h-28 animate-pulse"></div>
+          </div>
+        </div>
+
+        
+        <div>
+          <h3 class="font-bold text-white mb-3 flex items-center gap-2"><i class="ri-car-line text-daxi-cyan"></i> Nos services</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-gray-800 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl">🚗</div>
+              <div><div class="font-semibold text-sm">Économique</div><div class="text-xs text-gray-400">Confort & budget</div></div>
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-xl">✨</div>
+              <div><div class="font-semibold text-sm">Premium</div><div class="text-xs text-gray-400">Luxe & confort</div></div>
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-xl">🚙</div>
+              <div><div class="font-semibold text-sm">SUV</div><div class="text-xs text-gray-400">Espace & style</div></div>
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-xl">🚐</div>
+              <div><div class="font-semibold text-sm">Van</div><div class="text-xs text-gray-400">Groupes & familles</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="section-booking" class="section-slide hidden p-4 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Réserver une course</h2>
+        </div>
+
+        
+        <div class="flex gap-2 mb-4">
+          <div id="step-1-dot" class="flex-1 h-1.5 rounded-full bg-daxi-cyan"></div>
+          <div id="step-2-dot" class="flex-1 h-1.5 rounded-full bg-gray-700"></div>
+          <div id="step-3-dot" class="flex-1 h-1.5 rounded-full bg-gray-700"></div>
+        </div>
+
+        
+        <div id="booking-step-1">
+          <div class="bg-gray-800 rounded-3xl p-5 space-y-4">
+            <div class="relative">
+              <div class="absolute left-4 top-3.5 w-3 h-3 rounded-full bg-green-400 border-2 border-green-300"></div>
+              <input id="book-pickup" type="text" placeholder="📍 Lieu de départ" class="w-full pl-10 pr-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan" autocomplete="off">
+              <div id="pickup-suggestions" class="hidden absolute z-10 w-full bg-gray-700 rounded-xl mt-1 shadow-xl max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="relative">
+              <div class="absolute left-4 top-3.5 w-3 h-3 rounded-full bg-red-400 border-2 border-red-300"></div>
+              <input id="book-destination" type="text" placeholder="🏁 Destination" class="w-full pl-10 pr-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan" autocomplete="off">
+              <div id="destination-suggestions" class="hidden absolute z-10 w-full bg-gray-700 rounded-xl mt-1 shadow-xl max-h-40 overflow-y-auto"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Date</label>
+                <input id="book-date" type="date" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Heure</label>
+                <input id="book-time" type="time" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-2 block">Type de véhicule</label>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="vehicle-type-card flex items-center gap-2 bg-gray-700 rounded-xl p-3 cursor-pointer hover:bg-gray-600 transition-all" data-type="economy">
+                  <input type="radio" name="vehicle-type" value="economy" class="hidden" checked>
+                  <span class="text-xl">🚗</span>
+                  <div><div class="text-sm font-semibold">Économique</div><div class="text-xs text-gray-400">~3–7 $</div></div>
+                </label>
+                <label class="vehicle-type-card flex items-center gap-2 bg-gray-700 rounded-xl p-3 cursor-pointer hover:bg-gray-600 transition-all" data-type="premium">
+                  <input type="radio" name="vehicle-type" value="premium" class="hidden">
+                  <span class="text-xl">✨</span>
+                  <div><div class="text-sm font-semibold">Premium</div><div class="text-xs text-gray-400">~7–12 $</div></div>
+                </label>
+                <label class="vehicle-type-card flex items-center gap-2 bg-gray-700 rounded-xl p-3 cursor-pointer hover:bg-gray-600 transition-all" data-type="suv">
+                  <input type="radio" name="vehicle-type" value="suv" class="hidden">
+                  <span class="text-xl">🚙</span>
+                  <div><div class="text-sm font-semibold">SUV</div><div class="text-xs text-gray-400">~9–15 $</div></div>
+                </label>
+                <label class="vehicle-type-card flex items-center gap-2 bg-gray-700 rounded-xl p-3 cursor-pointer hover:bg-gray-600 transition-all" data-type="van">
+                  <input type="radio" name="vehicle-type" value="van" class="hidden">
+                  <span class="text-xl">🚐</span>
+                  <div><div class="text-sm font-semibold">Van</div><div class="text-xs text-gray-400">~11–17 $</div></div>
+                </label>
+              </div>
+            </div>
+            <textarea id="book-notes" placeholder="Notes supplémentaires (optionnel)..." rows="2" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan resize-none text-sm"></textarea>
+
+            
+            <div>
+              <label class="text-xs text-gray-400 mb-2 block">Type de réservation</label>
+              <div class="flex gap-2">
+                <button type="button" onclick="setBookingType('now')" id="btn-type-now"
+                  class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-daxi-cyan bg-daxi-cyan/10 text-daxi-cyan">
+                  🚕 Maintenant
+                </button>
+                <button type="button" onclick="setBookingType('later')" id="btn-type-later"
+                  class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-gray-600 text-gray-400">
+                  📅 Plus tard
+                </button>
+              </div>
+            </div>
+            
+            <div id="gps-capture-block" class="hidden bg-indigo-900/30 border border-indigo-500/30 rounded-2xl p-3">
+              <div class="text-xs text-indigo-300 mb-2">📍 Votre position GPS sera enregistrée pour cette course planifiée.</div>
+              <button type="button" onclick="captureBookingGps()" class="w-full py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold">
+                Capturer ma position GPS maintenant
+              </button>
+              <div id="booking-gps-status" class="text-xs text-indigo-300 mt-1 min-h-4 text-center"></div>
+              <input type="hidden" id="book-client-gps-lat">
+              <input type="hidden" id="book-client-gps-lng">
+            </div>
+            <input type="hidden" id="book-is-later" value="false">
+          </div>
+          <button onclick="goToBookingStep2()" class="btn-primary w-full py-4 rounded-2xl font-bold text-white mt-4 text-lg">
+            Continuer <i class="ri-arrow-right-line ml-2"></i>
+          </button>
+        </div>
+
+        
+        <div id="booking-step-2" class="hidden">
+          <div class="bg-gray-800 rounded-3xl p-5 space-y-4">
+            <h3 class="font-bold text-lg">Vos informations</h3>
+            <input id="book-name" type="text" placeholder="Nom complet" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+            <input id="book-email" type="email" placeholder="Email" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+            <input id="book-phone" type="tel" placeholder="Téléphone" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button onclick="goToBookingStep(1)" class="flex-1 py-4 rounded-2xl font-bold bg-gray-700 text-white">← Retour</button>
+            <button onclick="goToBookingStep3()" class="flex-1 btn-primary py-4 rounded-2xl font-bold text-white">Confirmer →</button>
+          </div>
+        </div>
+
+        
+        <div id="booking-step-3" class="hidden">
+          <div class="bg-gray-800 rounded-3xl p-5 space-y-3">
+            <h3 class="font-bold text-lg mb-4">Récapitulatif</h3>
+            <div class="flex justify-between items-start py-2 border-b border-white/10">
+              <span class="text-gray-400 text-sm">Départ</span>
+              <span class="font-semibold text-right text-sm max-w-xs" id="review-pickup">-</span>
+            </div>
+            <div class="flex justify-between items-start py-2 border-b border-white/10">
+              <span class="text-gray-400 text-sm">Destination</span>
+              <span class="font-semibold text-right text-sm max-w-xs" id="review-destination">-</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-white/10">
+              <span class="text-gray-400 text-sm">Date & Heure</span>
+              <span class="font-semibold text-sm" id="review-datetime">-</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-white/10">
+              <span class="text-gray-400 text-sm">Véhicule</span>
+              <span class="font-semibold text-sm" id="review-vehicle">-</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-gray-400 text-sm">Contact</span>
+              <span class="font-semibold text-sm" id="review-contact">-</span>
+            </div>
+            <div class="bg-blue-500/10 rounded-2xl p-4 mt-2">
+              <p class="text-xs text-blue-300 text-center">Le prix vous sera communiqué par nos agents. Vous recevrez une confirmation par email.</p>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-4">
+            <button onclick="goToBookingStep(2)" id="back-to-step2-btn" class="flex-1 py-4 rounded-2xl font-bold bg-gray-700 text-white">← Retour</button>
+            <button onclick="submitBooking()" class="flex-1 btn-cyan py-4 rounded-2xl font-bold text-white flex items-center justify-center gap-2">
+              <span id="book-btn-text">Envoyer</span>
+              <div id="book-spinner" class="spinner hidden"></div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="section-my-orders" class="section-slide hidden p-4">
+        <div class="flex items-center gap-3 mb-4">
+          <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Mes courses</h2>
+        </div>
+        
+        <div class="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
+          <button onclick="filterOrders('all')" class="order-filter-btn tab-active whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold" data-filter="all">Toutes</button>
+          <button onclick="filterOrders('pending')" class="order-filter-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 bg-gray-800" data-filter="pending">En attente</button>
+          <button onclick="filterOrders('active')" class="order-filter-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 bg-gray-800" data-filter="active">Active</button>
+          <button onclick="filterOrders('completed')" class="order-filter-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold text-gray-400 bg-gray-800" data-filter="completed">Terminée</button>
+        </div>
+        <div id="orders-list" class="space-y-3">
+          <div class="text-center text-gray-400 py-8">
+            <i class="ri-loader-4-line text-4xl animate-spin"></i>
+            <p class="mt-2 text-sm">Chargement...</p>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="section-track-order" class="section-slide hidden p-4">
+        <div class="flex items-center gap-3 mb-4">
+          <button onclick="showSection('my-orders')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Suivi de course</h2>
+        </div>
+
+        
+        <div id="later-order-banner" class="hidden mb-4 bg-gradient-to-r from-indigo-900 to-purple-900 border border-indigo-500/40 rounded-2xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="text-3xl">📅</div>
+            <div>
+              <div class="font-bold text-white text-sm" id="later-scheduled-time">Course planifiée</div>
+              <div class="text-indigo-300 text-xs mt-0.5" id="later-countdown">Dans --</div>
+            </div>
+          </div>
+          <div class="mt-3 text-xs text-indigo-200">La carte et le chauffeur apparaîtront 1 heure avant le départ.</div>
+          <button onclick="refreshClientGps()" class="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white text-xs font-bold transition-all">
+            📡 Mettre à jour ma position GPS
+          </button>
+          <div id="gps-update-status" class="text-xs text-indigo-300 mt-1 text-center min-h-4"></div>
+        </div>
+
+        
+        <div id="track-map-wrapper" class="relative mb-4 hidden" style="border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+
+          
+          <div id="client-map" style="width:100%;height:300px;display:block;"></div>
+
+          
+          <div id="map-eta-pill" class="hidden absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white" style="background:rgba(10,10,20,0.82);backdrop-filter:blur(8px);box-shadow:0 2px 12px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            <span id="map-dist-pill">-- km</span>
+            <span class="text-gray-400">·</span>
+            <span id="map-eta-pill-val">-- min</span>
+          </div>
+
+          
+          <div id="map-intro-overlay" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4" style="background:rgba(5,5,15,0.88);backdrop-filter:blur(6px);">
+            <div id="intro-stats-block" class="text-center space-y-1">
+              <div class="text-5xl font-black text-white tracking-tight" id="intro-distance">--</div>
+              <div class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Distance</div>
+              <div class="mt-3 text-3xl font-black text-daxi-cyan" id="intro-eta">--</div>
+              <div class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Arrivée estimée</div>
+            </div>
+            <button onclick="startMapIntro()" class="mt-2 flex items-center gap-2 px-7 py-3 rounded-2xl font-bold text-white text-sm" style="background:linear-gradient(135deg,#06b6d4,#0a84ff);box-shadow:0 0 24px rgba(6,182,212,0.4);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+              Voir la carte
+            </button>
+          </div>
+
+          
+          <button onclick="tmRecenter()" id="map-recenter-btn" class="hidden absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(10,10,20,0.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 2px 12px rgba(0,0,0,0.4);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          </button>
+        </div>
+
+        
+        <div id="track-order-card" class="bg-gray-800 rounded-3xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-lg">Course #<span id="track-order-id">-</span></h3>
+            <span id="track-status-badge" class="px-3 py-1 rounded-full text-xs font-bold status-pending">En attente</span>
+          </div>
+
+          
+          <div id="track-live-bar" class="hidden flex gap-3">
+            <div class="flex-1 bg-gray-700 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Distance</div>
+              <div class="font-black text-daxi-cyan" id="track-dist-val">--</div>
+            </div>
+            <div class="flex-1 bg-gray-700 rounded-xl p-3 text-center">
+              <div class="text-xs text-gray-400 mb-1">Arrivée dans</div>
+              <div class="font-black text-daxi-cyan" id="track-eta-val">--</div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-start gap-3">
+              <div class="w-3 h-3 rounded-full bg-green-400 mt-1 flex-shrink-0"></div>
+              <div><div class="text-xs text-gray-400">Départ</div><div class="font-semibold text-sm" id="track-pickup">-</div></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-3 h-3 rounded-full bg-red-400 mt-1 flex-shrink-0"></div>
+              <div><div class="text-xs text-gray-400">Destination</div><div class="font-semibold text-sm" id="track-destination">-</div></div>
+            </div>
+          </div>
+
+          
+          <div id="track-price-section" class="bg-gray-700 rounded-2xl p-4 hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-gray-300">Prix proposé</span>
+              <span class="font-bold text-xl text-daxi-cyan" id="track-price">-</span>
+            </div>
+            <div id="price-confirm-btns" class="flex gap-3">
+              <button onclick="confirmOrderPrice()" class="flex-1 btn-cyan py-2 rounded-xl font-bold text-white text-sm">✓ Accepter</button>
+              <button onclick="rejectOrderPrice()" class="flex-1 py-2 rounded-xl font-bold text-red-400 bg-red-500/10 text-sm">✕ Refuser</button>
+            </div>
+            <div id="price-confirmed-msg" class="hidden text-center text-green-400 font-semibold text-sm">✓ Prix confirmé !</div>
+          </div>
+
+          
+          <div id="track-driver-section" class="hidden">
+            <div class="bg-gray-700 rounded-2xl overflow-hidden">
+              
+              <div class="flex items-center gap-4 p-4 cursor-pointer" onclick="toggleDriverDetails()">
+                <div class="relative">
+                  <img id="track-driver-photo" src="https://ui-avatars.com/api/?name=D&background=0a84ff&color=fff" class="w-14 h-14 rounded-full object-cover">
+                  <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-700"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="font-bold text-white" id="track-driver-name">-</div>
+                  <div class="text-sm text-gray-400" id="track-driver-vehicle">-</div>
+                  
+                  <div class="flex gap-1 mt-1 flex-wrap" id="track-driver-badges">
+                    <span class="text-xs bg-green-900/50 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full">✔ Permis vérifié</span>
+                    <span class="text-xs bg-blue-900/50 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full">✔ Assuré</span>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                  <a id="track-driver-call" href="#" class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <i class="ri-phone-line text-white"></i>
+                  </a>
+                  <i id="driver-chevron" class="ri-arrow-down-s-line text-gray-400 text-xl transition-transform"></i>
+                </div>
+              </div>
+              
+              <div id="driver-details-collapse" class="hidden border-t border-gray-600 p-4 space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-400">Note</span>
+                  <span class="font-bold text-yellow-400" id="track-driver-rating">-</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-400">Plaque</span>
+                  <span class="font-bold text-white" id="track-driver-plate">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+          <div id="client-proximity-btns" class="hidden space-y-2">
+            <button id="btn-with-driver" onclick="clientConfirmWithDriver()" class="hidden w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl font-bold text-white text-sm">
+              ✅ Je suis avec le chauffeur
+            </button>
+            <button id="btn-client-arrived" onclick="clientConfirmArrived()" class="hidden w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl font-bold text-white text-sm">
+              🏁 Je suis arrivé(e)
+            </button>
+          </div>
+
+          
+          <div id="track-chat-section" class="hidden">
+            <button onclick="showSection('order-chat')" class="w-full py-3 bg-daxi-cyan/10 border border-daxi-cyan/30 rounded-2xl text-daxi-cyan font-semibold text-sm flex items-center justify-center gap-2">
+              <i class="ri-message-3-line"></i> Envoyer un message au chauffeur
+            </button>
+          </div>
+
+          
+          <div id="track-rate-section" class="hidden">
+            <h4 class="font-semibold mb-3">Notez votre chauffeur</h4>
+            <div class="flex gap-2 justify-center mb-3">
+              <button onclick="setRating(1)" class="rating-star text-3xl">⭐</button>
+              <button onclick="setRating(2)" class="rating-star text-3xl">⭐</button>
+              <button onclick="setRating(3)" class="rating-star text-3xl">⭐</button>
+              <button onclick="setRating(4)" class="rating-star text-3xl">⭐</button>
+              <button onclick="setRating(5)" class="rating-star text-3xl">⭐</button>
+            </div>
+            <textarea id="rating-comment" placeholder="Commentaire optionnel..." rows="2" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none resize-none text-sm mb-3"></textarea>
+            <button onclick="submitRating()" class="btn-cyan w-full py-3 rounded-2xl font-bold text-white text-sm">Envoyer l'avis</button>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="section-order-chat" class="section-slide hidden flex flex-col h-screen">
+        <div class="flex items-center gap-3 p-4 bg-daxi-gradient">
+          <button onclick="showSection('track-order')" class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold">Messages</h2>
+        </div>
+        <div id="order-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-900"></div>
+        <div class="p-4 bg-gray-800 flex gap-3">
+          <input id="order-chat-input" type="text" placeholder="Message..." class="flex-1 px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+          <button onclick="sendOrderMessage()" class="btn-cyan w-12 h-12 rounded-2xl flex items-center justify-center">
+            <i class="ri-send-plane-line"></i>
+          </button>
+        </div>
+      </section>
+
+      
+      <section id="section-profile" class="section-slide hidden p-4 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Mon profil</h2>
+        </div>
+        <div class="text-center py-4">
+          <div class="relative inline-block">
+            <img id="profile-avatar" src="https://ui-avatars.com/api/?name=U&background=0a84ff&color=fff&size=80" class="w-20 h-20 rounded-full object-cover">
+            <label class="absolute -bottom-1 -right-1 w-7 h-7 bg-daxi-cyan rounded-full flex items-center justify-center cursor-pointer">
+              <i class="ri-camera-line text-sm text-white"></i>
+              <input type="file" accept="image/*" class="hidden" onchange="uploadProfilePhoto(event)">
+            </label>
+          </div>
+          <h3 class="font-bold text-lg mt-3" id="profile-name">-</h3>
+          <p class="text-gray-400 text-sm" id="profile-email">-</p>
+        </div>
+        <div class="bg-gray-800 rounded-3xl p-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Prénom</label>
+              <input id="edit-firstname" type="text" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm">
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 block mb-1">Nom</label>
+              <input id="edit-lastname" type="text" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Téléphone</label>
+            <input id="edit-phone" type="tel" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Ville</label>
+            <input id="edit-city" type="text" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 block mb-1">Langue</label>
+            <select id="edit-language" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm">
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+              <option value="ht">Kreyòl Ayisyen</option>
+              <option value="es">Español</option>
+            </select>
+          </div>
+          <button onclick="saveProfile()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white">Sauvegarder</button>
+        </div>
+        <div class="bg-gray-800 rounded-3xl p-5">
+          <h4 class="font-bold mb-4">Sécurité</h4>
+          <button onclick="showSection('change-password')" class="w-full text-left flex items-center justify-between py-3 border-b border-white/10">
+            <span class="text-sm flex items-center gap-2"><i class="ri-lock-line text-daxi-cyan"></i> Changer le mot de passe</span>
+            <i class="ri-arrow-right-s-line text-gray-400"></i>
+          </button>
+        </div>
+      </section>
+
+      
+      <section id="section-change-password" class="section-slide hidden p-4 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <button onclick="showSection('profile')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Changer le mot de passe</h2>
+        </div>
+        <div class="bg-gray-800 rounded-3xl p-5 space-y-4">
+          <input id="cp-old" type="password" placeholder="Mot de passe actuel" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+          <input id="cp-new" type="password" placeholder="Nouveau mot de passe" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+          <input id="cp-confirm" type="password" placeholder="Confirmer le nouveau" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+          <button onclick="changePassword()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white">Confirmer</button>
+        </div>
+      </section>
+
+      
+      <section id="section-notifications" class="section-slide hidden p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+              <i class="ri-arrow-left-line"></i>
+            </button>
+            <h2 class="font-bold text-xl">Notifications</h2>
+          </div>
+          <button onclick="markAllNotificationsRead()" class="text-xs text-daxi-cyan hover:underline">Tout lire</button>
+        </div>
+        <div id="notifications-list" class="space-y-2">
+          <div class="text-center text-gray-400 py-8 text-sm">Aucune notification</div>
+        </div>
+      </section>
+
+      
+      <section id="section-vip-whatsapp" class="section-slide hidden p-4 pb-24 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <button onclick="showSection('assistance')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Service VIP / Business</h2>
+        </div>
+        <div class="bg-gradient-to-br from-green-900/60 to-emerald-900/60 border border-green-500/30 rounded-3xl p-5">
+          <div class="text-4xl mb-2">💎</div>
+          <div class="font-bold text-lg text-white mb-1">Contrat & Service Premium</div>
+          <div class="text-sm text-green-200 mb-4">Abonnement mensuel, transferts aéroport, gestion d'équipe — remplissez le formulaire et envoyez via WhatsApp.</div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Point de départ habituel</label>
+              <input id="vip-depart" type="text" placeholder="Ex: Pétion-Ville, Delmas..." class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Fréquence d'utilisation</label>
+              <select id="vip-frequence" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Sélectionner...</option>
+                <option>Quotidien (5j/sem)</option>
+                <option>Quotidien (7j/sem)</option>
+                <option>Plusieurs fois par semaine</option>
+                <option>Hebdomadaire</option>
+                <option>Ponctuel / Événement</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Type d'abonnement souhaité</label>
+              <select id="vip-abonnement" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Sélectionner...</option>
+                <option>Business Standard</option>
+                <option>Business Premium</option>
+                <option>VIP Exécutif</option>
+                <option>Transfert aéroport</option>
+                <option>Contrat entreprise</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Destinations principales</label>
+              <input id="vip-destinations" type="text" placeholder="Ex: Aéroport, bureau centre-ville..." class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Nombre de passagers habituel</label>
+              <input id="vip-passagers" type="number" min="1" max="15" placeholder="Ex: 3" class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Besoins spécifiques</label>
+              <textarea id="vip-besoins" rows="3" placeholder="Climatisation, WiFi, coffre spacieux, confidentialité, etc." class="w-full px-4 py-3 bg-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+            </div>
+          </div>
+          <div id="vip-validation-msg" class="text-red-400 text-xs mt-2 hidden">Veuillez remplir tous les champs obligatoires.</div>
+          <button onclick="sendVipWhatsapp()" class="mt-4 w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 shadow-lg shadow-green-500/30">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Envoyer via WhatsApp
+          </button>
+        </div>
+      </section>
+
+      
+      <section id="section-chatbot" class="section-slide hidden flex flex-col" style="height:calc(100vh - 4rem)">
+        <div class="flex items-center gap-3 p-4 bg-daxi-gradient">
+          <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-daxi-cyan flex items-center justify-center text-sm">🤖</div>
+            <div>
+              <div class="font-bold text-sm">Assistant DAXI</div>
+              <div class="text-xs text-green-400">En ligne</div>
+            </div>
+          </div>
+        </div>
+        <div id="chatbot-messages" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-900">
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-daxi-cyan flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+            <div class="chat-bubble-bot px-4 py-3 max-w-xs">
+              <p class="text-sm text-white">Bonjour ! Je suis l'assistant DAXI. Comment puis-je vous aider aujourd'hui ? 🚕</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="px-4 py-2 bg-gray-800 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button onclick="sendQuickReply('Réserver une course')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-gray-700 text-sm text-gray-300 hover:bg-daxi-cyan hover:text-white transition-all">🚕 Réserver</button>
+          <button onclick="sendQuickReply('Quels sont vos tarifs ?')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-gray-700 text-sm text-gray-300 hover:bg-daxi-cyan hover:text-white transition-all">💰 Tarifs</button>
+          <button onclick="sendQuickReply('Suivre ma commande')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-gray-700 text-sm text-gray-300 hover:bg-daxi-cyan hover:text-white transition-all">📍 Suivi</button>
+          <button onclick="sendQuickReply('Parler à un agent')" class="whitespace-nowrap px-3 py-1.5 rounded-full bg-gray-700 text-sm text-gray-300 hover:bg-daxi-cyan hover:text-white transition-all">👤 Agent</button>
+        </div>
+        <div class="p-4 bg-gray-800 flex gap-3">
+          <input id="chatbot-input" type="text" placeholder="Votre message..." class="flex-1 px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan" onkeypress="if(event.key==='Enter')sendChatMessage()">
+          <button onclick="sendChatMessage()" class="btn-cyan w-12 h-12 rounded-2xl flex items-center justify-center">
+            <i class="ri-send-plane-line"></i>
+          </button>
+        </div>
+      </section>
+
+      
+      <section id="section-forum" class="section-slide hidden p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-xl">Forum communauté</h2>
+          <button onclick="showSection('create-post')" class="btn-cyan px-4 py-2 rounded-xl text-sm font-bold text-white">+ Post</button>
+        </div>
+        <div id="forum-posts-list" class="space-y-4">
+          <div class="text-center text-gray-400 py-8 text-sm"><i class="ri-loader-4-line text-2xl animate-spin"></i></div>
+        </div>
+      </section>
+
+      
+      <section id="section-create-post" class="section-slide hidden p-4">
+        <div class="flex items-center gap-3 mb-4">
+          <button onclick="showSection('forum')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Nouveau post</h2>
+        </div>
+        <div class="bg-gray-800 rounded-3xl p-5 space-y-4">
+          <textarea id="post-content" placeholder="Partagez votre expérience..." rows="5" class="w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan resize-none"></textarea>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 px-4 py-3 bg-gray-700 rounded-2xl cursor-pointer hover:bg-gray-600">
+              <i class="ri-image-line text-daxi-cyan"></i>
+              <span class="text-sm">Photo</span>
+              <input type="file" accept="image/*" class="hidden" id="post-image-input" onchange="previewPostImage(event)">
+            </label>
+            <img id="post-image-preview" class="hidden w-16 h-16 rounded-xl object-cover">
+          </div>
+          <button onclick="createForumPost()" class="btn-primary w-full py-3 rounded-2xl font-bold text-white">Publier</button>
+        </div>
+      </section>
+
+      
+      <section id="section-assistance" class="section-slide hidden p-4 space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <button onclick="showSection('home')" class="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center">
+            <i class="ri-arrow-left-line"></i>
+          </button>
+          <h2 class="font-bold text-xl">Assistance</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="showSection('chatbot')" class="bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl p-5 text-left">
+            <div class="text-3xl mb-2">🤖</div>
+            <div class="font-bold text-sm">Chatbot IA</div>
+            <div class="text-xs text-blue-100">Disponible 24h/24</div>
+          </button>
+          <a href="mailto:info@daxipro.com" class="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-5 text-left">
+            <div class="text-3xl mb-2">📧</div>
+            <div class="font-bold text-sm">Email</div>
+            <div class="text-xs text-purple-100">info@daxipro.com</div>
+          </a>
+          <a href="tel:+509" class="bg-gradient-to-br from-green-600 to-teal-600 rounded-2xl p-5 text-left">
+            <div class="text-3xl mb-2">📞</div>
+            <div class="font-bold text-sm">Téléphone</div>
+            <div class="text-xs text-green-100">Appeler DAXI</div>
+          </a>
+          <button onclick="showSection('vip-whatsapp')" class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-left">
+            <div class="text-3xl mb-2">💎</div>
+            <div class="font-bold text-sm">Service VIP</div>
+            <div class="text-xs text-green-100">Business / Premium</div>
+          </button>
+        </div>
+        
+        <div class="bg-gray-800 rounded-3xl p-5">
+          <h3 class="font-bold mb-4">Questions fréquentes</h3>
+          <div class="space-y-3">
+            <div class="faq-item border border-white/10 rounded-2xl overflow-hidden">
+              <button onclick="toggleFAQ(this)" class="w-full text-left px-4 py-3 flex items-center justify-between text-sm font-semibold">
+                Comment réserver une course ? <i class="ri-arrow-down-s-line"></i>
+              </button>
+              <div class="faq-answer hidden px-4 pb-3 text-sm text-gray-400">Cliquez sur "Réserver maintenant" depuis l'accueil, renseignez votre départ et destination, choisissez votre type de véhicule et envoyez votre demande. Nos agents vous contacteront rapidement.</div>
+            </div>
+            <div class="faq-item border border-white/10 rounded-2xl overflow-hidden">
+              <button onclick="toggleFAQ(this)" class="w-full text-left px-4 py-3 flex items-center justify-between text-sm font-semibold">
+                Comment se passe le paiement ? <i class="ri-arrow-down-s-line"></i>
+              </button>
+              <div class="faq-answer hidden px-4 pb-3 text-sm text-gray-400">Le paiement s'effectue en espèces directement au chauffeur à la fin de votre course. Un prix vous sera proposé avant la confirmation.</div>
+            </div>
+            <div class="faq-item border border-white/10 rounded-2xl overflow-hidden">
+              <button onclick="toggleFAQ(this)" class="w-full text-left px-4 py-3 flex items-center justify-between text-sm font-semibold">
+                Comment annuler une course ? <i class="ri-arrow-down-s-line"></i>
+              </button>
+              <div class="faq-answer hidden px-4 pb-3 text-sm text-gray-400">Vous pouvez contacter notre chatbot ou équipe support. Si le chauffeur n'est pas encore en route, l'annulation est gratuite.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    
+    <nav class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-white/10 px-2 py-2 z-40">
+      <div class="flex items-center justify-around max-w-lg mx-auto">
+        <button onclick="showSection('home')" class="nav-item flex flex-col items-center gap-1 px-3 py-1 rounded-xl" data-section="home">
+          <i class="ri-home-5-line text-xl"></i>
+          <span class="text-xs">Accueil</span>
+        </button>
+        <button onclick="showSection('booking')" class="nav-item flex flex-col items-center gap-1 px-3 py-1 rounded-xl" data-section="booking">
+          <i class="ri-taxi-line text-xl"></i>
+          <span class="text-xs">Réserver</span>
+        </button>
+        <button onclick="showSection('my-orders')" class="nav-item flex flex-col items-center gap-1 px-3 py-1 rounded-xl" data-section="my-orders">
+          <i class="ri-history-line text-xl"></i>
+          <span class="text-xs">Courses</span>
+        </button>
+        <button onclick="showSection('forum')" class="nav-item flex flex-col items-center gap-1 px-3 py-1 rounded-xl" data-section="forum">
+          <i class="ri-community-line text-xl"></i>
+          <span class="text-xs">Forum</span>
+        </button>
+        <button onclick="showSection('chatbot')" class="nav-item flex flex-col items-center gap-1 px-3 py-1 rounded-xl" data-section="chatbot">
+          <i class="ri-robot-line text-xl"></i>
+          <span class="text-xs">Assistant</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  
+  <div id="gm-loader"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+const APP = {
+  user: null,
+  guestInfo: null,
+  currentSection: 'home',
+  currentOrderId: null,
+  chatSessionId: null,
+  currentRating: 0,
+  language: localStorage.getItem('daxi_lang') || 'fr',
+  mapsLoaded: false,
+  map: null,
+  orderWS: null,
+};
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+  if (Auth.isLoggedIn()) {
+    try {
+      APP.user = await AuthAPI.getProfile();
+      Auth.setUser(APP.user);
+      enterApp();
+    } catch {
+      Auth.clearTokens();
+      showAuthScreen();
+    }
+  } else {
+    showAuthScreen();
+  }
+  initOTPInputs();
+  initBookingForm();
+  loadNotificationCount();
+  setInterval(loadNotificationCount, 60000);
+});
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('main-app').classList.add('hidden');
+}
+
+function enterApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  const user = APP.user || Auth.getUser();
+  if (user) {
+    const name = (user.first_name || '') + ' ' + (user.last_name || '') || user.username;
+    document.getElementById('header-name').textContent = name.trim() || 'Utilisateur';
+    document.getElementById('menu-name').textContent = name.trim();
+    document.getElementById('menu-email').textContent = user.email || '';
+    if (user.photo_url) {
+      document.getElementById('header-avatar').src = user.photo_url;
+    }
+
+    if (user.completed_trips > 0) {
+      document.getElementById('user-stats').classList.remove('hidden');
+      document.getElementById('stat-trips').textContent = user.completed_trips;
+    }
+  }
+  showSection('home');
+  loadAttractions();
+  loadActiveOrder();
+  connectUserWebSocket();
+}
+
+
+let pendingEmail = '';
+
+function showAuthMode(mode) {
+  ['login','register','otp','forgot','reset','guest'].forEach(m => {
+    document.getElementById('form-'+m).classList.add('hidden');
+  });
+  document.getElementById('form-'+mode)?.classList.remove('hidden');
+  ['login','register','guest'].forEach(t => {
+    const btn = document.getElementById('tab-'+t);
+    if (btn) btn.classList.remove(...'tab-active text-white'.split(' '));
+    if (btn) btn.classList.add('text-gray-400');
+  });
+  const activeTab = document.getElementById('tab-'+mode);
+  if (activeTab) { activeTab.classList.add('tab-active'); activeTab.classList.remove('text-gray-400'); }
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) return showToast('Email et mot de passe requis', 'warning');
+  setLoading('login', true);
+  try {
+    const res = await AuthAPI.login(email, password);
+    APP.user = res.user;
+    enterApp();
+    showToast('Connexion réussie !');
+  } catch (e) {
+    showToast(e.detail || e.non_field_errors?.[0] || 'Identifiants incorrects', 'error');
+  }
+  setLoading('login', false);
+}
+
+async function handleRegister() {
+  const data = {
+    first_name: document.getElementById('reg-firstname').value.trim(),
+    last_name: document.getElementById('reg-lastname').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    phone: document.getElementById('reg-phone').value.trim(),
+    password: document.getElementById('reg-password').value,
+    password_confirm: document.getElementById('reg-password2').value,
+    username: document.getElementById('reg-email').value.trim(),
+    language: APP.language,
+  };
+  if (!data.first_name || !data.email || !data.password) return showToast('Champs obligatoires manquants', 'warning');
+  if (data.password !== data.password_confirm) return showToast('Mots de passe différents', 'error');
+  setLoading('reg', true);
+  try {
+    await AuthAPI.register(data);
+    pendingEmail = data.email;
+    document.getElementById('otp-email-hint').textContent = `Code envoyé à ${data.email}`;
+    showAuthMode('otp');
+    showToast('Compte créé ! Vérifiez votre email.');
+  } catch (e) {
+    const msg = e.email?.[0] || e.detail || 'Erreur lors de l\'inscription';
+    showToast(msg, 'error');
+  }
+  setLoading('reg', false);
+}
+
+async function handleVerifyOTP() {
+  const code = [...document.querySelectorAll('.otp-input')].map(i => i.value).join('');
+  if (code.length !== 6) return showToast('Code complet requis (6 chiffres)', 'warning');
+  try {
+    const res = await AuthAPI.verifyOTP(pendingEmail, code);
+    APP.user = res.user;
+    enterApp();
+    showToast('Email vérifié ! Bienvenue sur DAXI !');
+  } catch {
+    showToast('Code invalide ou expiré', 'error');
+  }
+}
+
+async function handleResendOTP() {
+  if (!pendingEmail) return;
+  try {
+    await AuthAPI.resendOTP(pendingEmail);
+    showToast('Nouveau code envoyé !');
+  } catch { showToast('Erreur lors de l\'envoi', 'error'); }
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) return showToast('Email requis', 'warning');
+  try {
+    await AuthAPI.forgotPassword(email);
+    pendingEmail = email;
+    showAuthMode('reset');
+    showToast('Code de réinitialisation envoyé !');
+  } catch { showToast('Erreur', 'error'); }
+}
+
+async function handleResetPassword() {
+  const code = document.getElementById('reset-code').value.trim();
+  const pw = document.getElementById('reset-password').value;
+  const pw2 = document.getElementById('reset-password2').value;
+  if (pw !== pw2) return showToast('Mots de passe différents', 'error');
+  if (!code || !pw) return showToast('Tous les champs sont requis', 'warning');
+  try {
+    await AuthAPI.resetPassword(pendingEmail, code, pw);
+    showAuthMode('login');
+    showToast('Mot de passe réinitialisé ! Connectez-vous.');
+  } catch { showToast('Code invalide ou expiré', 'error'); }
+}
+
+function handleGuestEntry() {
+  const name = document.getElementById('guest-name').value.trim();
+  const email = document.getElementById('guest-email').value.trim();
+  const phone = document.getElementById('guest-phone').value.trim();
+  if (!name || !email) return showToast('Nom et email requis', 'warning');
+  APP.guestInfo = { name, email, phone };
+  enterApp();
+}
+
+async function handleLogout() {
+  await AuthAPI.logout();
+  APP.user = null;
+  APP.guestInfo = null;
+  if (APP.orderWS) APP.orderWS.close();
+  showAuthScreen();
+  showToast('Déconnecté avec succès');
+}
+
+
+function showSection(section) {
+  document.querySelectorAll('[id^="section-"]').forEach(el => el.classList.add('hidden'));
+  const target = document.getElementById('section-'+section);
+  if (target) {
+    target.classList.remove('hidden');
+    target.classList.remove('section-slide');
+    void target.offsetWidth; 
+    target.classList.add('section-slide');
+  }
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.classList.remove('active', 'text-daxi-cyan');
+    btn.classList.add('text-gray-400');
+  });
+  const activeNav = document.querySelector(`.nav-item[data-section="${section}"]`);
+  if (activeNav) { activeNav.classList.add('active', 'text-daxi-cyan'); activeNav.classList.remove('text-gray-400'); }
+  APP.currentSection = section;
+
+  if (section !== 'track-order') stopRealTimePolling();
+
+  if (section === 'track-order' && TM.map) {
+    requestAnimationFrame(() => { TM.map.resize(); });
+  }
+
+  if (section === 'my-orders') loadMyOrders();
+  if (section === 'forum') loadForumPosts();
+  if (section === 'notifications') loadNotifications();
+  if (section === 'profile') loadProfile();
+}
+
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  menu.classList.toggle('hidden');
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && !e.target.closest('[onclick="toggleProfileMenu()"]')) {
+      menu.classList.add('hidden');
+    }
+  }, { once: true });
+}
+
+
+function initBookingForm() {
+
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 30);
+  document.getElementById('book-date').value = now.toISOString().split('T')[0];
+  document.getElementById('book-time').value = now.toTimeString().slice(0,5);
+
+  document.querySelectorAll('.vehicle-type-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.vehicle-type-card').forEach(c => c.classList.remove('ring-2','ring-daxi-cyan'));
+      card.classList.add('ring-2','ring-daxi-cyan');
+      card.querySelector('input').checked = true;
+    });
+  });
+  document.querySelectorAll('.vehicle-type-card')[0]?.classList.add('ring-2','ring-daxi-cyan');
+
+  setupPlacesAutocomplete('book-pickup', 'pickup-suggestions');
+  setupPlacesAutocomplete('book-destination', 'destination-suggestions');
+}
+
+function setupPlacesAutocomplete(inputId, suggestionsId) {
+  const input = document.getElementById(inputId);
+  const suggestions = document.getElementById(suggestionsId);
+
+  const commonPlaces = [
+    'Port-au-Prince', 'Pétion-Ville', 'Tabarre', 'Delmas', 'Croix-des-Bouquets',
+    'Cité Soleil', 'Carrefour', 'Kenscoff', 'Jacmel', 'Cap-Haïtien',
+    'Aéroport International de Port-au-Prince', 'Marché de Fer', 'Champs de Mars',
+    'Centre Ville', 'Bourdon', 'Musseau', 'Laboule', 'Thomassin', 'Fermathe',
+  ];
+  input.addEventListener('input', () => {
+    const val = input.value.trim().toLowerCase();
+    if (val.length < 2) { suggestions.classList.add('hidden'); return; }
+    const matches = commonPlaces.filter(p => p.toLowerCase().includes(val));
+    if (matches.length) {
+      suggestions.innerHTML = matches.map(p => `<div class="px-4 py-2 hover:bg-white/20 cursor-pointer text-sm text-white" onclick="selectPlace('${inputId}','${suggestionsId}','${p}')">${p}</div>`).join('');
+      suggestions.classList.remove('hidden');
+    } else { suggestions.classList.add('hidden'); }
+  });
+}
+
+function selectPlace(inputId, suggestionsId, place) {
+  document.getElementById(inputId).value = place;
+  document.getElementById(suggestionsId).classList.add('hidden');
+}
+
+function goToBookingStep2() {
+  const pickup = document.getElementById('book-pickup').value.trim();
+  const dest = document.getElementById('book-destination').value.trim();
+  const date = document.getElementById('book-date').value;
+  const time = document.getElementById('book-time').value;
+  if (!pickup || !dest) return showToast('Départ et destination requis', 'warning');
+  if (!date || !time) return showToast('Date et heure requises', 'warning');
+
+  const user = APP.user || Auth.getUser();
+  if (user) {
+    goToBookingStep3();
+  } else if (APP.guestInfo) {
+    goToBookingStep3();
+  } else {
+    goToBookingStep(2);
+  }
+}
+
+function goToBookingStep3() {
+  if (!APP.user && !Auth.isLoggedIn() && !APP.guestInfo) {
+    const name = document.getElementById('book-name').value.trim();
+    const email = document.getElementById('book-email').value.trim();
+    if (!name || !email) return showToast('Nom et email requis', 'warning');
+  }
+
+  document.getElementById('review-pickup').textContent = document.getElementById('book-pickup').value;
+  document.getElementById('review-destination').textContent = document.getElementById('book-destination').value;
+  const date = document.getElementById('book-date').value;
+  const time = document.getElementById('book-time').value;
+  document.getElementById('review-datetime').textContent = `${date} à ${time}`;
+  const vehicleType = document.querySelector('input[name="vehicle-type"]:checked')?.value || 'economy';
+  const vehicleLabels = {economy:'Économique',premium:'Premium',suv:'SUV',van:'Van'};
+  document.getElementById('review-vehicle').textContent = vehicleLabels[vehicleType] || vehicleType;
+  const user = APP.user || Auth.getUser();
+  if (user) {
+    document.getElementById('review-contact').textContent = user.email;
+    document.getElementById('back-to-step2-btn').onclick = () => goToBookingStep(1);
+  } else if (APP.guestInfo) {
+    document.getElementById('review-contact').textContent = APP.guestInfo.email;
+    document.getElementById('back-to-step2-btn').onclick = () => goToBookingStep(1);
+  } else {
+    document.getElementById('review-contact').textContent = document.getElementById('book-email').value;
+    document.getElementById('back-to-step2-btn').onclick = () => goToBookingStep(2);
+  }
+  goToBookingStep(3);
+}
+
+function goToBookingStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('booking-step-'+i).classList.toggle('hidden', i !== n);
+    document.getElementById('step-'+i+'-dot').classList.toggle('bg-daxi-cyan', i <= n);
+    document.getElementById('step-'+i+'-dot').classList.toggle('bg-gray-700', i > n);
+  });
+}
+
+async function submitBooking() {
+  const user = APP.user || Auth.getUser();
+  let clientName, clientEmail, clientPhone;
+  if (user) {
+    clientName = (user.first_name || '') + ' ' + (user.last_name || '') || user.username;
+    clientEmail = user.email;
+    clientPhone = user.phone || '';
+  } else if (APP.guestInfo) {
+    clientName = APP.guestInfo.name;
+    clientEmail = APP.guestInfo.email;
+    clientPhone = APP.guestInfo.phone || '';
+  } else {
+    clientName = document.getElementById('book-name').value.trim();
+    clientEmail = document.getElementById('book-email').value.trim();
+    clientPhone = document.getElementById('book-phone').value.trim();
+  }
+  const data = {
+    client_name: clientName,
+    client_email: clientEmail,
+    client_phone: clientPhone,
+    pickup: document.getElementById('book-pickup').value.trim(),
+    destination: document.getElementById('book-destination').value.trim(),
+    date: document.getElementById('book-date').value,
+    time: document.getElementById('book-time').value,
+    vehicle_type: document.querySelector('input[name="vehicle-type"]:checked')?.value || 'economy',
+    notes: document.getElementById('book-notes').value.trim(),
+    guest_id: localStorage.getItem('daxi_guest_id') || generateGuestId(),
+    is_later: document.getElementById('book-is-later')?.value === 'true' ? 'true' : 'false',
+    client_gps_lat: document.getElementById('book-client-gps-lat')?.value || '',
+    client_gps_lng: document.getElementById('book-client-gps-lng')?.value || '',
+  };
+  setLoading('book', true);
+  try {
+    const res = await OrdersAPI.create(data);
+    APP.currentOrderId = res.order.id;
+    showToast('🎉 Commande envoyée ! Nous vous contacterons bientôt.', 'success');
+    showSection('track-order');
+    loadOrderDetails(APP.currentOrderId);
+
+    document.getElementById('book-pickup').value = '';
+    document.getElementById('book-destination').value = '';
+    document.getElementById('book-notes').value = '';
+    goToBookingStep(1);
+  } catch (e) {
+    showToast(e.detail || 'Erreur lors de la réservation', 'error');
+  }
+  setLoading('book', false);
+}
+
+
+let allOrders = [];
+
+async function loadMyOrders() {
+  const container = document.getElementById('orders-list');
+  container.innerHTML = '<div class="text-center py-8"><i class="ri-loader-4-line text-3xl animate-spin text-gray-400"></i></div>';
+  try {
+    if (!Auth.isLoggedIn()) {
+      container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Connectez-vous pour voir vos courses.</div>';
+      return;
+    }
+    allOrders = await OrdersAPI.getMyOrders();
+    renderOrders(allOrders);
+  } catch {
+    container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Erreur de chargement.</div>';
+  }
+}
+
+function filterOrders(filter) {
+  document.querySelectorAll('.order-filter-btn').forEach(btn => {
+    btn.classList.remove('tab-active');
+    btn.classList.add('text-gray-400','bg-gray-800');
+  });
+  document.querySelector(`.order-filter-btn[data-filter="${filter}"]`)?.classList.add('tab-active');
+  const activeStatuses = ['price_proposed','price_confirmed','driver_assigned','on_way','arrived','in_progress'];
+  const filtered = allOrders.filter(o => {
+    if (filter === 'all') return true;
+    if (filter === 'pending') return o.status === 'pending';
+    if (filter === 'active') return activeStatuses.includes(o.status);
+    if (filter === 'completed') return ['completed','cancelled'].includes(o.status);
+    return true;
+  });
+  renderOrders(filtered);
+}
+
+function renderOrders(orders) {
+  const container = document.getElementById('orders-list');
+  if (!orders.length) {
+    container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Aucune course trouvée.</div>';
+    return;
+  }
+  container.innerHTML = orders.map(order => `
+    <div class="bg-gray-800 rounded-2xl p-4 cursor-pointer hover:bg-gray-700 transition-all" onclick="openOrder(${order.id})">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <span class="text-xs text-gray-400">#${order.id}</span>
+          <div class="font-bold text-sm mt-1">${order.pickup}</div>
+          <div class="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+            <i class="ri-arrow-right-line"></i> ${order.destination}
+          </div>
+        </div>
+        <div class="px-2 py-1 rounded-full text-xs font-bold status-${order.status}">${order.status_display || order.status}</div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-gray-400">
+        <span><i class="ri-calendar-line mr-1"></i>${order.date} ${order.time?.slice(0,5) || ''}</span>
+        ${order.price ? `<span class="font-bold text-daxi-cyan">${order.price} $</span>` : '<span>Prix à définir</span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openOrder(orderId) {
+  APP.currentOrderId = orderId;
+  showSection('track-order');
+  loadOrderDetails(orderId);
+}
+
+async function loadOrderDetails(orderId) {
+
+  if (TM.currentOrderId !== orderId) {
+    TM.lastDriverLat = null; TM.lastDriverLng = null;
+    TM.driverCurrent = null; TM.driverTarget = null;
+    TM.lastRouteKey = null;
+    TM.introShown = false; TM.intro3dDone = false;
+    TM.pendingData = null;
+    TM.markersAdded = { driver: false, pickup: false, dest: false };
+
+    const ov = document.getElementById('map-intro-overlay');
+    if (ov) { ov.style.display = ''; ov.style.opacity = '1'; }
+    document.getElementById('map-eta-pill')?.classList.add('hidden');
+    document.getElementById('map-recenter-btn')?.classList.add('hidden');
+  }
+  TM.currentOrderId = orderId;
+  try {
+    const order = await OrdersAPI.getOrder(orderId);
+
+    document.getElementById('track-order-id').textContent = order.id;
+    document.getElementById('track-pickup').textContent = order.pickup;
+    document.getElementById('track-destination').textContent = order.destination;
+    const statusBadge = document.getElementById('track-status-badge');
+    statusBadge.textContent = order.status_display || order.status;
+    statusBadge.className = `px-3 py-1 rounded-full text-xs font-bold status-${order.status}`;
+
+
+    updateLaterBanner(order);
+
+
+    if (order.status === 'price_proposed' && !order.price_confirmed) {
+      document.getElementById('track-price-section').classList.remove('hidden');
+      document.getElementById('track-price').textContent = `${order.price} $`;
+      document.getElementById('price-confirm-btns').classList.remove('hidden');
+      document.getElementById('price-confirmed-msg').classList.add('hidden');
+    } else if (order.price && order.price_confirmed) {
+      document.getElementById('track-price-section').classList.remove('hidden');
+      document.getElementById('track-price').textContent = `${order.price} $`;
+      document.getElementById('price-confirm-btns').classList.add('hidden');
+      document.getElementById('price-confirmed-msg').classList.remove('hidden');
+    } else {
+      document.getElementById('track-price-section').classList.add('hidden');
+    }
+
+
+    if (order.driver_name) {
+      document.getElementById('track-driver-section').classList.remove('hidden');
+      document.getElementById('track-driver-name').textContent = order.driver_name;
+      const plate = order.driver_plate || order.plate || '';
+      const vehicle = [order.driver_vehicle, order.car_brand, order.car_model].filter(Boolean).join(' ');
+      document.getElementById('track-driver-vehicle').textContent = `${vehicle || '—'}${plate ? ' · ' + plate : ''}`;
+      document.getElementById('track-driver-rating').textContent = order.driver_rating ? `⭐ ${order.driver_rating}/5` : '⭐ -';
+      document.getElementById('track-driver-plate').textContent = plate || '—';
+      if (order.driver_photo) document.getElementById('track-driver-photo').src = order.driver_photo;
+      if (order.driver_phone) document.getElementById('track-driver-call').href = `tel:${order.driver_phone}`;
+
+      const badgesEl = document.getElementById('track-driver-badges');
+      if (badgesEl) {
+        if (!order.driver_is_verified) {
+          badgesEl.innerHTML = '<span class="text-xs bg-gray-700 text-gray-400 border border-gray-600 px-2 py-0.5 rounded-full">⏳ Vérification en cours</span>';
+        } 
+      }
+      document.getElementById('track-chat-section').classList.remove('hidden');
+    } else {
+      document.getElementById('track-driver-section').classList.add('hidden');
+      document.getElementById('track-chat-section').classList.add('hidden');
+    }
+
+
+    const ratingSection = document.getElementById('track-rate-section');
+    if (order.status === 'completed' && order.driver) {
+      ratingSection.classList.remove('hidden');
+    } else {
+      ratingSection.classList.add('hidden');
+    }
+
+
+    const mapWrapper = document.getElementById('track-map-wrapper');
+    const isLaterLocked = order.is_later && mapWrapper?.classList.contains('hidden');
+    if (!isLaterLocked) {
+      mapWrapper?.classList.remove('hidden');
+      if (!TM.map) {
+
+        setTimeout(() => { initTrackingMap(); }, 80);
+      } else {
+        TM.map.resize();
+      }
+    }
+
+
+    const isActive = !['completed', 'cancelled'].includes(order.status);
+    if (isActive) {
+      connectOrderWebSocket(orderId);
+      if (!isLaterLocked) startRealTimePolling(orderId);
+    } else {
+      stopRealTimePolling();
+    }
+
+
+    updateActiveOrderBanner(order);
+  } catch (e) {
+    showToast('Erreur de chargement de la commande', 'error');
+  }
+}
+
+async function loadActiveOrder() {
+  if (!Auth.isLoggedIn()) return;
+  try {
+    const orders = await OrdersAPI.getMyOrders();
+    const active = orders.find(o => !['completed','cancelled'].includes(o.status));
+    if (active) {
+      updateActiveOrderBanner(active);
+      APP.currentOrderId = active.id;
+    }
+  } catch {}
+}
+
+function updateActiveOrderBanner(order) {
+  const banner = document.getElementById('active-order-banner');
+  if (!['completed','cancelled'].includes(order.status)) {
+    banner.classList.remove('hidden');
+    document.getElementById('active-order-status').textContent = order.status_display || order.status;
+    document.getElementById('active-order-route').textContent = `${order.pickup} → ${order.destination}`;
+    APP.currentOrderId = order.id;
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+async function confirmOrderPrice() {
+  if (!APP.currentOrderId) return;
+  try {
+    await OrdersAPI.confirmPrice(APP.currentOrderId);
+    showToast('Prix accepté !', 'success');
+    document.getElementById('price-confirm-btns').classList.add('hidden');
+    document.getElementById('price-confirmed-msg').classList.remove('hidden');
+  } catch { showToast('Erreur', 'error'); }
+}
+
+async function rejectOrderPrice() {
+  if (!APP.currentOrderId) return;
+  if (confirm('Refuser ce prix ?')) {
+    try {
+      await OrdersAPI.updateStatus(APP.currentOrderId, 'cancelled');
+      showToast('Course annulée.', 'info');
+      showSection('my-orders');
+    } catch { showToast('Erreur', 'error'); }
+  }
+}
+
+
+async function loadOrderChat() {
+  if (!APP.currentOrderId) return;
+  const msgs = await OrdersAPI.getMessages(APP.currentOrderId);
+  const container = document.getElementById('order-chat-messages');
+  const user = APP.user || Auth.getUser();
+  container.innerHTML = msgs.map(msg => {
+    const isMe = msg.sender_type === 'user';
+    return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} gap-2">
+      ${!isMe ? `<div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs flex-shrink-0">🚕</div>` : ''}
+      <div class="${isMe ? 'chat-bubble-user' : 'chat-bubble-bot'} px-4 py-2 max-w-xs">
+        <p class="text-sm text-white">${escapeHtml(msg.content)}</p>
+        <p class="text-xs text-white/50 mt-1">${new Date(msg.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p>
+      </div>
+    </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendOrderMessage() {
+  const input = document.getElementById('order-chat-input');
+  const content = input.value.trim();
+  if (!content || !APP.currentOrderId) return;
+  input.value = '';
+  try {
+    await OrdersAPI.sendMessage(APP.currentOrderId, content, 'user');
+    loadOrderChat();
+  } catch { showToast('Erreur d\'envoi', 'error'); }
+}
+
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatbot-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+  appendChatMessage('user', message);
+  appendChatThinking();
+  try {
+    const res = await ChatbotAPI.sendMessage(message, APP.chatSessionId, APP.language);
+    APP.chatSessionId = res.session_id;
+    removeChatThinking();
+    appendChatMessage('assistant', res.response);
+    if (res.escalated) {
+      appendSystemMessage('🔔 Votre demande a été transmise à un agent DAXI.');
+    }
+  } catch {
+    removeChatThinking();
+    appendChatMessage('assistant', 'Désolé, une erreur est survenue. Veuillez réessayer.');
+  }
+}
+
+function sendQuickReply(text) {
+  document.getElementById('chatbot-input').value = text;
+  sendChatMessage();
+}
+
+function appendChatMessage(role, content) {
+  const container = document.getElementById('chatbot-messages');
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 fade-in`;
+  div.innerHTML = `
+    ${!isUser ? `<div class="w-8 h-8 rounded-full bg-daxi-cyan flex items-center justify-center text-sm flex-shrink-0">🤖</div>` : ''}
+    <div class="${isUser ? 'chat-bubble-user' : 'chat-bubble-bot'} px-4 py-3 max-w-xs">
+      <p class="text-sm text-white">${escapeHtml(content)}</p>
+    </div>
+  `;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendChatThinking() {
+  const container = document.getElementById('chatbot-messages');
+  const div = document.createElement('div');
+  div.id = 'chat-thinking';
+  div.className = 'flex justify-start gap-2';
+  div.innerHTML = `<div class="w-8 h-8 rounded-full bg-daxi-cyan flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+    <div class="chat-bubble-bot px-4 py-3"><div class="flex gap-1"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.15s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:.3s"></div></div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeChatThinking() {
+  document.getElementById('chat-thinking')?.remove();
+}
+
+function appendSystemMessage(text) {
+  const container = document.getElementById('chatbot-messages');
+  const div = document.createElement('div');
+  div.className = 'text-center py-2';
+  div.innerHTML = `<span class="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">${text}</span>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+
+async function loadProfile() {
+  try {
+    const user = await AuthAPI.getProfile();
+    APP.user = user;
+    document.getElementById('profile-name').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('edit-firstname').value = user.first_name || '';
+    document.getElementById('edit-lastname').value = user.last_name || '';
+    document.getElementById('edit-phone').value = user.phone || '';
+    document.getElementById('edit-city').value = user.city || '';
+    document.getElementById('edit-language').value = user.language || 'fr';
+    if (user.photo_url) document.getElementById('profile-avatar').src = user.photo_url;
+  } catch {}
+}
+
+async function saveProfile() {
+  const data = {
+    first_name: document.getElementById('edit-firstname').value.trim(),
+    last_name: document.getElementById('edit-lastname').value.trim(),
+    phone: document.getElementById('edit-phone').value.trim(),
+    city: document.getElementById('edit-city').value.trim(),
+    language: document.getElementById('edit-language').value,
+  };
+  try {
+    await AuthAPI.updateProfile(data);
+    APP.user = { ...APP.user, ...data };
+    Auth.setUser(APP.user);
+    APP.language = data.language;
+    localStorage.setItem('daxi_lang', data.language);
+    showToast('Profil mis à jour !');
+    loadProfile();
+  } catch { showToast('Erreur de mise à jour', 'error'); }
+}
+
+async function changePassword() {
+  const oldPw = document.getElementById('cp-old').value;
+  const newPw = document.getElementById('cp-new').value;
+  const conf = document.getElementById('cp-confirm').value;
+  if (newPw !== conf) return showToast('Mots de passe différents', 'error');
+  if (newPw.length < 6) return showToast('Minimum 6 caractères', 'warning');
+  try {
+    await AuthAPI.changePassword(oldPw, newPw);
+    showToast('Mot de passe changé !');
+    document.getElementById('cp-old').value = '';
+    document.getElementById('cp-new').value = '';
+    document.getElementById('cp-confirm').value = '';
+    showSection('profile');
+  } catch (e) { showToast(e.old_password?.[0] || 'Erreur', 'error'); }
+}
+
+
+async function loadForumPosts() {
+  const container = document.getElementById('forum-posts-list');
+  try {
+    const posts = await ForumAPI.getPosts();
+    if (!posts.length) {
+      container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Aucun post pour le moment.</div>';
+      return;
+    }
+    container.innerHTML = posts.map(post => `
+      <div class="bg-gray-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center font-bold text-sm">
+            ${post.author_photo ? `<img src="${post.author_photo}" class="w-10 h-10 rounded-full object-cover">` : post.author_name[0].toUpperCase()}
+          </div>
+          <div>
+            <div class="font-semibold text-sm">${escapeHtml(post.author_name)}</div>
+            <div class="text-xs text-gray-400">${formatDateTime(post.created_at)}</div>
+          </div>
+        </div>
+        <p class="text-sm text-gray-100">${escapeHtml(post.content)}</p>
+        ${post.image_url ? `<img src="${post.image_url}" class="w-full rounded-xl object-cover max-h-48">` : ''}
+        <div class="flex items-center gap-4 pt-2 border-t border-white/10">
+          <button onclick="likePost(${post.id}, this)" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-400 transition-colors" data-post-id="${post.id}">
+            <i class="ri-heart-${post.is_liked ? 'fill text-red-400' : 'line'}"></i>
+            <span>${post.likes_count}</span>
+          </button>
+          <button onclick="toggleComments(${post.id})" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-daxi-cyan transition-colors">
+            <i class="ri-chat-1-line"></i>
+            <span>${post.comments_count}</span>
+          </button>
+        </div>
+        <div id="comments-${post.id}" class="hidden"></div>
+      </div>
+    `).join('');
+  } catch {
+    container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Erreur de chargement.</div>';
+  }
+}
+
+async function likePost(postId, btn) {
+  if (!Auth.isLoggedIn()) return showToast('Connectez-vous pour liker', 'warning');
+  try {
+    const res = await ForumAPI.likePost(postId);
+    const icon = btn.querySelector('i');
+    icon.className = `ri-heart-${res.liked ? 'fill text-red-400' : 'line'}`;
+    btn.querySelector('span').textContent = res.likes_count;
+  } catch {}
+}
+
+async function toggleComments(postId) {
+  const container = document.getElementById('comments-'+postId);
+  if (container.classList.contains('hidden')) {
+    container.classList.remove('hidden');
+    const comments = await ForumAPI.getComments(postId);
+    container.innerHTML = `
+      <div class="space-y-2 mb-3">
+        ${comments.map(c => `<div class="flex gap-2"><span class="font-semibold text-xs text-daxi-cyan">${escapeHtml(c.author_name)}:</span><span class="text-xs text-gray-300">${escapeHtml(c.content)}</span></div>`).join('') || '<p class="text-xs text-gray-400">Aucun commentaire.</p>'}
+      </div>
+      ${Auth.isLoggedIn() ? `<div class="flex gap-2"><input type="text" placeholder="Commenter..." id="comment-input-${postId}" class="flex-1 px-3 py-2 bg-gray-700 rounded-xl text-white text-xs placeholder-gray-400 focus:outline-none"><button onclick="addComment(${postId})" class="px-3 py-2 btn-cyan rounded-xl text-xs font-bold text-white">Envoyer</button></div>` : ''}
+    `;
+  } else {
+    container.classList.add('hidden');
+  }
+}
+
+async function addComment(postId) {
+  const input = document.getElementById('comment-input-'+postId);
+  const content = input.value.trim();
+  if (!content) return;
+  try {
+    await ForumAPI.addComment(postId, content);
+    input.value = '';
+    toggleComments(postId);
+    setTimeout(() => toggleComments(postId), 100);
+    showToast('Commentaire ajouté !');
+  } catch { showToast('Erreur', 'error'); }
+}
+
+async function createForumPost() {
+  if (!Auth.isLoggedIn()) return showToast('Connectez-vous pour poster', 'warning');
+  const content = document.getElementById('post-content').value.trim();
+  if (!content) return showToast('Contenu requis', 'warning');
+  const imageFile = document.getElementById('post-image-input').files[0];
+  try {
+    await ForumAPI.createPost(content, imageFile);
+    showToast('Post publié !');
+    document.getElementById('post-content').value = '';
+    document.getElementById('post-image-input').value = '';
+    document.getElementById('post-image-preview').classList.add('hidden');
+    showSection('forum');
+  } catch { showToast('Erreur', 'error'); }
+}
+
+function previewPostImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const preview = document.getElementById('post-image-preview');
+    preview.src = ev.target.result;
+    preview.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+
+async function loadNotifications() {
+  const container = document.getElementById('notifications-list');
+  try {
+    const notifs = await NotificationsAPI.getAll();
+    if (!notifs.length) {
+      container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">Aucune notification.</div>';
+      return;
+    }
+    container.innerHTML = notifs.map(n => `
+      <div class="bg-gray-800 rounded-2xl p-4 flex items-start gap-3 ${n.is_read ? 'opacity-60' : ''}" onclick="markNotifRead(${n.id}, this)">
+        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-xl flex-shrink-0">🔔</div>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">${escapeHtml(n.title)}</div>
+          <div class="text-xs text-gray-400 mt-0.5">${escapeHtml(n.message)}</div>
+          <div class="text-xs text-gray-500 mt-1">${formatDateTime(n.created_at)}</div>
+        </div>
+        ${!n.is_read ? '<div class="w-2 h-2 bg-daxi-cyan rounded-full flex-shrink-0 mt-1"></div>' : ''}
+      </div>
+    `).join('');
+  } catch {}
+}
+
+async function loadNotificationCount() {
+  if (!Auth.isLoggedIn()) return;
+  try {
+    const res = await NotificationsAPI.getUnreadCount();
+    const badge = document.getElementById('notif-badge');
+    if (res.unread_count > 0) {
+      badge.textContent = res.unread_count > 9 ? '9+' : res.unread_count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch {}
+}
+
+async function markNotifRead(id, el) {
+  await NotificationsAPI.markRead(id).catch(()=>{});
+  el.classList.add('opacity-60');
+  el.querySelector('.w-2.h-2')?.remove();
+  loadNotificationCount();
+}
+
+async function markAllNotificationsRead() {
+  await NotificationsAPI.markAllRead().catch(()=>{});
+  loadNotifications();
+  loadNotificationCount();
+}
+
+
+function setRating(n) {
+  APP.currentRating = n;
+  document.querySelectorAll('.rating-star').forEach((star, i) => {
+    star.style.opacity = i < n ? '1' : '0.3';
+  });
+}
+
+async function submitRating() {
+  if (!APP.currentRating) return showToast('Sélectionnez une note', 'warning');
+  const comment = document.getElementById('rating-comment').value.trim();
+  const order = await OrdersAPI.getOrder(APP.currentOrderId).catch(()=>null);
+  if (!order?.driver) return;
+  try {
+    await DriversAPI.submitReview(order.driver, APP.currentRating, comment, APP.currentOrderId);
+    showToast('Merci pour votre avis !');
+    document.getElementById('track-rate-section').classList.add('hidden');
+  } catch (e) {
+    showToast(e.detail || 'Erreur', 'error');
+  }
+}
+
+
+async function loadAttractions() {
+  try {
+    const attractions = await ForumAPI.getAttractions();
+    const grid = document.getElementById('attractions-grid');
+    if (!attractions.length) {
+      grid.innerHTML = '<div class="col-span-2 text-center text-gray-400 text-sm py-4">Bientôt disponible</div>';
+      return;
+    }
+    grid.innerHTML = attractions.slice(0,4).map(a => `
+      <div class="relative bg-gray-800 rounded-2xl overflow-hidden h-28 cursor-pointer">
+        ${a.image_url ? `<img src="${a.image_url}" class="absolute inset-0 w-full h-full object-cover">` : ''}
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+        <div class="absolute bottom-2 left-3 right-3">
+          <div class="font-bold text-xs text-white">${escapeHtml(a.name)}</div>
+          <div class="text-xs text-gray-300">${escapeHtml(a.location)}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+
+const MAPBOX_TOKEN = window.MAPBOX_ACCESS_TOKEN || '{{ mapbox_token|default:"" }}';
+
+const MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v12';
+
+
+const TM = {
+  map: null,
+  ready: false,
+  introShown: false,
+  intro3dDone: false,
+
+
+  markers: { driver: null, pickup: null, dest: null },
+
+
+  driverCurrent: null,   
+  driverTarget: null,    
+  lerpAF: null,          
+
+
+  lastDriverLat: null,
+  lastDriverLng: null,
+
+
+  pollingTimer: null,
+  currentOrderId: null,
+
+
+  routeFetchTimer: null,
+  lastRouteKey: null,
+
+
+  pendingData: null,
+  lastTrackingData: null,
+
+
+  markersAdded: { driver: false, pickup: false, dest: false },
+};
+
+
+function _makeDriverEl() {
+  if (window.DaxiMapMarkers && DaxiMapMarkers.driverMapboxElement) {
+    return DaxiMapMarkers.driverMapboxElement({ size: 32, color: '#f59e0b' });
+  }
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'width:18px;height:18px;border-radius:50%;background:#f59e0b;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.35);';
+  return wrap;
+}
+
+function _makePickupEl() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = [
+    'width:18px;height:18px;border-radius:50%;',
+    'background:#3b82f6;',
+    'border:3px solid white;',
+    'box-shadow:0 0 0 4px rgba(59,130,246,0.3),0 3px 10px rgba(0,0,0,0.4);',
+  ].join('');
+  return wrap;
+}
+
+function _makeDestEl() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;width:32px;height:38px;';
+  wrap.innerHTML = `<svg width="32" height="38" viewBox="0 0 32 38" fill="none">
+    <path d="M16 0C9.37 0 4 5.37 4 12c0 9 12 26 12 26S28 21 28 12C28 5.37 22.63 0 16 0z" fill="#ef4444"/>
+    <path d="M16 0C9.37 0 4 5.37 4 12c0 9 12 26 12 26S28 21 28 12C28 5.37 22.63 0 16 0z" fill="url(#pin-grad)" opacity="0.4"/>
+    <circle cx="16" cy="12" r="5" fill="white"/>
+    <defs><radialGradient id="pin-grad" cx="30%" cy="20%"><stop offset="0%" stop-color="white" stop-opacity="0.6"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient></defs>
+  </svg>`;
+  return wrap;
+}
+
+
+function initTrackingMap() {
+  if (TM.map) return;
+  if (!window.mapboxgl) return;
+
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+
+  TM.map = new mapboxgl.Map({
+    container: 'client-map',
+    style: MAPBOX_STYLE,
+    center: [-72.3388, 18.5392],
+    zoom: 13,
+    pitch: 0,
+    bearing: 0,
+    antialias: true,
+
+    attributionControl: false,
+  });
+
+
+  if (!document.getElementById('tm-styles')) {
+    const s = document.createElement('style');
+    s.id = 'tm-styles';
+    s.textContent = `
+      @keyframes tm-pulse {
+        0%   { transform:scale(1);   opacity:0.8; }
+        70%  { transform:scale(1.7); opacity:0;   }
+        100% { transform:scale(1.7); opacity:0;   }
+      }
+      #client-map canvas { border-radius:0 !important; }
+      #client-map .mapboxgl-ctrl-bottom-right { bottom: 50px !important; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  TM.map.on('load', () => {
+    TM.ready = true;
+
+
+    if (TM.pendingData) {
+      const d = TM.pendingData;
+      TM.pendingData = null;
+      updateTrackingFromData(d);
+    }
+
+
+    const emptyLine = { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } };
+    TM.map.addSource('route-driver', { type: 'geojson', data: emptyLine });
+    TM.map.addSource('route-trip',   { type: 'geojson', data: emptyLine });
+
+
+    TM.map.addLayer({ id: 'route-driver-shadow', type: 'line', source: 'route-driver',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#000', 'line-width': 8, 'line-opacity': 0.25, 'line-blur': 4 }
+    });
+    TM.map.addLayer({ id: 'route-driver-layer', type: 'line', source: 'route-driver',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#22c55e', 'line-width': 5, 'line-opacity': 1 }
+    });
+
+
+    TM.map.addLayer({ id: 'route-trip-shadow', type: 'line', source: 'route-trip',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#000', 'line-width': 8, 'line-opacity': 0.2, 'line-blur': 4 }
+    });
+    TM.map.addLayer({ id: 'route-trip-layer', type: 'line', source: 'route-trip',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#a78bfa', 'line-width': 4, 'line-opacity': 0.85,
+               'line-dasharray': [0, 2] }
+    });
+  });
+
+
+  TM.map.on('dragstart', () => {
+    document.getElementById('map-recenter-btn')?.classList.remove('hidden');
+  });
+}
+
+
+function _getMarker(type) {
+  if (TM.markers[type]) return TM.markers[type];
+  const el = type === 'driver' ? _makeDriverEl()
+           : type === 'pickup' ? _makePickupEl()
+           :                     _makeDestEl();
+  TM.markers[type] = new mapboxgl.Marker({ element: el, anchor: type === 'dest' ? 'bottom' : 'center' });
+  return TM.markers[type];
+}
+
+function _addMarker(type, lng, lat) {
+  const m = _getMarker(type);
+  m.setLngLat([lng, lat]);
+  if (!TM.markersAdded[type]) { m.addTo(TM.map); TM.markersAdded[type] = true; }
+}
+
+function _removeMarker(type) {
+  TM.markers[type]?.remove();
+  TM.markersAdded[type] = false;
+  TM.markers[type] = null;
+}
+
+
+function _lerpTo(marker, from, to, duration) {
+  if (TM.lerpAF) cancelAnimationFrame(TM.lerpAF);
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; 
+    const lng = from.lng + (to.lng - from.lng) * ease;
+    const lat = from.lat + (to.lat - from.lat) * ease;
+    marker.setLngLat([lng, lat]);
+    if (t < 1) TM.lerpAF = requestAnimationFrame(step);
+    else { TM.driverCurrent = to; TM.lerpAF = null; }
+  }
+  TM.lerpAF = requestAnimationFrame(step);
+}
+
+
+async function _fetchRoute(from, to) {
+
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/`
+    + `${from[0]},${from[1]};${to[0]},${to[1]}`
+    + `?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    return d.routes?.[0] || null;
+  } catch { return null; }
+}
+
+async function _updateRoutes(dLng, dLat, pLng, pLat, dstLng, dstLat, status) {
+  if (!TM.ready) return;
+  const driverStatuses = ['driver_assigned', 'on_way', 'arrived'];
+  const inTrip = status === 'in_progress';
+
+  const routeKey = `${dLat},${dLng}|${pLat},${pLng}|${dstLat},${dstLng}|${status}`;
+  if (routeKey === TM.lastRouteKey) return;
+  TM.lastRouteKey = routeKey;
+
+  if (driverStatuses.includes(status) && dLat && pLat) {
+
+    const route = await _fetchRoute([dLng, dLat], [pLng, pLat]);
+    if (route) {
+      TM.map.getSource('route-driver')?.setData({ type: 'Feature', geometry: route.geometry });
+      TM.map.getSource('route-trip')?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: [] } });
+
+      const km   = (route.distance / 1000).toFixed(1);
+      const mins = Math.round(route.duration / 60);
+      _updateEtaUI(km, mins);
+    }
+  } else if (inTrip && pLat && dstLat) {
+
+    const route = await _fetchRoute([pLng, pLat], [dstLng, dstLat]);
+    if (route) {
+      TM.map.getSource('route-trip')?.setData({ type: 'Feature', geometry: route.geometry });
+      TM.map.getSource('route-driver')?.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: [] } });
+      const km   = (route.distance / 1000).toFixed(1);
+      const mins = Math.round(route.duration / 60);
+      _updateEtaUI(km, mins);
+    }
+  } else if (!dLat && pLat && dstLat) {
+
+    const route = await _fetchRoute([pLng, pLat], [dstLng, dstLat]);
+    if (route) {
+      TM.map.getSource('route-trip')?.setData({ type: 'Feature', geometry: route.geometry });
+    }
+  }
+}
+
+function _updateEtaUI(km, mins) {
+
+  const introDistEl = document.getElementById('intro-distance');
+  const introEtaEl  = document.getElementById('intro-eta');
+  if (introDistEl) introDistEl.textContent = `${km} km`;
+  if (introEtaEl)  introEtaEl.textContent  = `${mins} min`;
+
+  const distVal = document.getElementById('track-dist-val');
+  const etaVal  = document.getElementById('track-eta-val');
+  if (distVal) distVal.textContent = `${km} km`;
+  if (etaVal)  etaVal.textContent  = `${mins} min`;
+  document.getElementById('track-live-bar')?.classList.remove('hidden');
+
+  const pillDist = document.getElementById('map-dist-pill');
+  const pillEta  = document.getElementById('map-eta-pill-val');
+  if (pillDist) pillDist.textContent = `${km} km`;
+  if (pillEta)  pillEta.textContent  = `${mins} min`;
+}
+
+
+function _fitToCoords(coordsArr, padding = 80) {
+  const valid = coordsArr.filter(c => c && c[0] && c[1]);
+  if (!valid.length) return;
+  if (valid.length === 1) {
+    TM.map.flyTo({ center: valid[0], zoom: 15, duration: 900 });
+    return;
+  }
+  const bounds = valid.reduce(
+    (b, c) => b.extend(c),
+    new mapboxgl.LngLatBounds(valid[0], valid[0])
+  );
+  TM.map.fitBounds(bounds, { padding, maxZoom: 16, duration: 1000 });
+}
+
+
+async function updateTrackingFromData(data) {
+  if (!TM.map || !TM.ready) { TM.pendingData = data; return; }
+  TM.lastTrackingData = { ...(TM.lastTrackingData || {}), ...data };
+
+  const dLat = parseFloat(data.driver_lat ?? data.lat ?? data.latitude) || 0;
+  const dLng = parseFloat(data.driver_lng ?? data.lng ?? data.longitude) || 0;
+
+
+  const pLat = parseFloat(data.client_lat ?? data.pickup_lat) || 0;
+  const pLng = parseFloat(data.client_lng ?? data.pickup_lng) || 0;
+
+  const dstLat = parseFloat(data.destination_lat ?? data.dest_lat) || 0;
+  const dstLng = parseFloat(data.destination_lng ?? data.dest_lng) || 0;
+  const status  = data.status || '';
+
+  const driverAccepted = ['driver_assigned','on_way','arrived','in_progress'].includes(status);
+  const inTrip = status === 'in_progress';
+
+
+  if (driverAccepted && dLat && dLng) {
+
+    const newPos = { lng: dLng, lat: dLat };
+    const moved  = Math.abs(dLat - (TM.lastDriverLat||0)) > 0.000045
+                || Math.abs(dLng - (TM.lastDriverLng||0)) > 0.000045;
+
+    if (moved) {
+      const m = _getMarker('driver');
+      if (!TM.driverCurrent) {
+
+        _addMarker('driver', dLng, dLat);
+        TM.driverCurrent = newPos;
+      } else {
+        if (!TM.markersAdded.driver) { m.addTo(TM.map); TM.markersAdded.driver = true; }
+        _lerpTo(m, TM.driverCurrent, newPos, 1800); 
+      }
+      TM.lastDriverLat = dLat;
+      TM.lastDriverLng = dLng;
+    }
+
+    if (inTrip) {
+
+      _removeMarker('driver');
+      if (pLat) _addMarker('pickup', pLng, pLat);
+      if (dstLat) _addMarker('dest', dstLng, dstLat);
+    } else {
+
+      if (pLat) _addMarker('pickup', pLng, pLat);
+      _removeMarker('dest');
+    }
+  } else {
+
+    _removeMarker('driver');
+    if (pLat) _addMarker('pickup', pLng, pLat);
+    if (dstLat) _addMarker('dest', dstLng, dstLat);
+  }
+
+
+  await _updateRoutes(dLng, dLat, pLng, pLat, dstLng, dstLat, status);
+
+
+  if (!TM.intro3dDone) {
+    const coords = driverAccepted && dLat
+      ? [[dLng, dLat], pLat ? [pLng, pLat] : null]
+      : [pLat ? [pLng, pLat] : null, dstLat ? [dstLng, dstLat] : null];
+    _fitToCoords(coords.filter(Boolean));
+  }
+
+
+  _updateProximityButtons(dLat, dLng, pLat, pLng, dstLat, dstLng, status);
+
+
+  if (TM.introShown) {
+    const pill = document.getElementById('map-eta-pill');
+    pill?.classList.remove('hidden');
+  }
+}
+
+
+function _updateProximityButtons(dLat, dLng, pLat, pLng, dstLat, dstLng, status) {
+  if (!dLat || !pLat) return;
+  const distToPickup = _haversineM(dLat, dLng, pLat, pLng);
+  const block  = document.getElementById('client-proximity-btns');
+  const btnWith = document.getElementById('btn-with-driver');
+  const btnArv  = document.getElementById('btn-client-arrived');
+
+  if (distToPickup <= 50 && status === 'arrived') {
+    block?.classList.remove('hidden');
+    btnWith?.classList.remove('hidden');
+  }
+  if (dstLat) {
+    const distToDest = _haversineM(dLat, dLng, dstLat, dstLng);
+    if (distToDest <= 500 && status === 'in_progress') {
+      block?.classList.remove('hidden');
+      btnArv?.classList.remove('hidden');
+    }
+  }
+}
+
+function _haversineM(lat1, lon1, lat2, lon2) {
+  const R = 6371000, d2r = Math.PI/180;
+  const dLat = (lat2-lat1)*d2r, dLon = (lon2-lon1)*d2r;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+
+function startMapIntro() {
+  TM.introShown = true;
+  const overlay = document.getElementById('map-intro-overlay');
+
+
+  overlay.style.transition = 'opacity 0.6s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => { overlay.style.display = 'none'; }, 650);
+
+
+  document.getElementById('map-recenter-btn')?.classList.remove('hidden');
+
+
+  const center = TM.map.getCenter();
+  TM.map.flyTo({ zoom: TM.map.getZoom() - 0.8, duration: 700, easing: t => t });
+
+
+  setTimeout(() => {
+    _trigger3D();
+  }, 5000);
+}
+
+function _trigger3D() {
+  if (TM.intro3dDone) return;
+  TM.intro3dDone = true;
+
+
+  const dLat = TM.lastDriverLat, dLng = TM.lastDriverLng;
+  const center = (dLat && dLng)
+    ? [dLng, dLat]
+    : (TM.markers.pickup && TM.markersAdded.pickup)
+    ? TM.markers.pickup.getLngLat().toArray()
+    : TM.map.getCenter().toArray();
+
+  TM.map.flyTo({
+    center,
+    zoom: 15.5,
+    pitch: 60,
+    bearing: -25,
+    duration: 2200,
+    easing: t => t < 0.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1, 
+  });
+
+
+  setTimeout(() => {
+    document.getElementById('map-eta-pill')?.classList.remove('hidden');
+  }, 1200);
+}
+
+
+function tmRecenter() {
+  document.getElementById('map-recenter-btn')?.classList.add('hidden');
+  const dLat = TM.lastDriverLat, dLng = TM.lastDriverLng;
+  if (dLat && dLng) {
+    TM.map.flyTo({ center: [dLng, dLat], zoom: 15.5, pitch: TM.intro3dDone ? 60 : 0, duration: 900 });
+  } else if (TM.markers.pickup) {
+    const lnglat = TM.markers.pickup.getLngLat();
+    TM.map.flyTo({ center: lnglat, zoom: 14, duration: 900 });
+  }
+}
+
+
+async function _fetchTrackingData(orderId) {
+  try {
+    const r = await fetch(`/htmx/order/${orderId}/track/`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+function startRealTimePolling(orderId) {
+  TM.currentOrderId = orderId;
+  stopRealTimePolling();
+
+
+  _fetchTrackingData(orderId).then(data => {
+    if (data) updateTrackingFromData(data);
+  });
+
+  const POLL_MS = 3000;
+  TM.pollingTimer = setInterval(async () => {
+
+    if (document.getElementById('section-track-order')?.classList.contains('hidden')) return;
+    const data = await _fetchTrackingData(orderId);
+    if (!data) return;
+    await updateTrackingFromData(data);
+    if (['completed', 'cancelled'].includes(data.status)) stopRealTimePolling();
+  }, POLL_MS);
+}
+
+function stopRealTimePolling() {
+  if (TM.pollingTimer) { clearInterval(TM.pollingTimer); TM.pollingTimer = null; }
+}
+
+
+function toggleDriverDetails() {
+  const collapse = document.getElementById('driver-details-collapse');
+  const chevron  = document.getElementById('driver-chevron');
+  const isHidden = collapse.classList.contains('hidden');
+  collapse.classList.toggle('hidden', !isHidden);
+  if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+}
+
+function updateLaterBanner(order) {
+  const banner     = document.getElementById('later-order-banner');
+  const mapWrapper = document.getElementById('track-map-wrapper');
+  if (!order.is_later && !order.scheduled_at) {
+    banner?.classList.add('hidden');
+    mapWrapper?.classList.remove('hidden');
+    return;
+  }
+  const schedDt  = order.scheduled_at ? new Date(order.scheduled_at) : null;
+  const diffHours = schedDt ? (schedDt - new Date()) / 3600000 : 0;
+  if (order.is_later && diffHours > 1) {
+    banner?.classList.remove('hidden');
+    mapWrapper?.classList.add('hidden');
+    if (schedDt) {
+      document.getElementById('later-scheduled-time').textContent =
+        schedDt.toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+      const h = Math.floor(diffHours), m = Math.round((diffHours - h) * 60);
+      document.getElementById('later-countdown').textContent =
+        h > 0 ? `Dans ${h}h${m > 0 ? m+'min' : ''}` : `Dans ${m} min`;
+    }
+  } else {
+    banner?.classList.add('hidden');
+    mapWrapper?.classList.remove('hidden');
+  }
+}
+
+async function refreshClientGps() {
+  const statusEl = document.getElementById('gps-update-status');
+  if (!navigator.geolocation) { if (statusEl) statusEl.textContent = 'GPS non disponible'; return; }
+  if (statusEl) statusEl.textContent = '📡 Localisation en cours...';
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    if (!TM.currentOrderId) return;
+    try {
+      const fd = new FormData();
+      fd.append('lat', latitude); fd.append('lng', longitude);
+      const r = await fetch(`/htmx/client/orders/${TM.currentOrderId}/update-gps/`, {
+        method: 'POST', body: fd, headers: { 'X-CSRFToken': getCsrfToken() },
+      });
+      if (statusEl) statusEl.textContent = r.ok ? '✅ Position mise à jour !' : '❌ Erreur';
+    } catch { if (statusEl) statusEl.textContent = '❌ Erreur réseau'; }
+  }, () => { if (statusEl) statusEl.textContent = '❌ Position refusée'; });
+}
+
+
+function setBookingType(type) {
+  const isLater = type === 'later';
+  document.getElementById('book-is-later').value = isLater ? 'true' : 'false';
+  document.getElementById('btn-type-now').className = `flex-1 py-2.5 rounded-xl text-sm font-bold border-2 ${!isLater ? 'border-daxi-cyan bg-daxi-cyan/10 text-daxi-cyan' : 'border-gray-600 text-gray-400'}`;
+  document.getElementById('btn-type-later').className = `flex-1 py-2.5 rounded-xl text-sm font-bold border-2 ${isLater ? 'border-daxi-cyan bg-daxi-cyan/10 text-daxi-cyan' : 'border-gray-600 text-gray-400'}`;
+  document.getElementById('gps-capture-block')?.classList.toggle('hidden', !isLater);
+}
+
+function captureBookingGps() {
+  const statusEl = document.getElementById('booking-gps-status');
+  if (!navigator.geolocation) { if (statusEl) statusEl.textContent = 'GPS non disponible'; return; }
+  if (statusEl) statusEl.textContent = '📡 En cours...';
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const { latitude, longitude } = pos.coords;
+    document.getElementById('book-client-gps-lat').value = latitude;
+    document.getElementById('book-client-gps-lng').value = longitude;
+    if (statusEl) statusEl.textContent = `✅ ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  }, () => { if (statusEl) statusEl.textContent = '❌ Refusé'; });
+}
+
+
+function sendVipWhatsapp() {
+  const get = (id) => document.getElementById(id)?.value?.trim() || '';
+  const depart = get('vip-depart');
+  const frequence = get('vip-frequence');
+  const abonnement = get('vip-abonnement');
+  const destinations = get('vip-destinations');
+  const passagers = get('vip-passagers');
+  const besoins = get('vip-besoins');
+  const validMsg = document.getElementById('vip-validation-msg');
+  if (!depart || !frequence || !abonnement || !destinations || !passagers) {
+    validMsg?.classList.remove('hidden'); return;
+  }
+  validMsg?.classList.add('hidden');
+  const msg = `Bonjour, je souhaite un service Business/VIP DAXI :\n\n- Point de départ : ${depart}\n- Fréquence : ${frequence}\n- Abonnement : ${abonnement}\n- Destinations : ${destinations}\n- Passagers : ${passagers}\n${besoins ? `- Besoins : ${besoins}\n` : ''}\nMerci.`;
+  const phone = '50947000000'; 
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+
+function connectOrderWebSocket(orderId) {
+  if (APP.orderWS) APP.orderWS.close();
+  APP.orderWS = new WSManager(`/ws/orders/${orderId}/`, {
+    onMessage: (data) => {
+      if (data.event === 'status_changed') {
+        loadOrderDetails(orderId);
+        showToast(`Statut mis à jour: ${data.data?.status_display || data.data?.status || ''}`);
+      } else if (data.event === 'new_message') {
+        if (APP.currentSection === 'order-chat') loadOrderChat();
+      } else if (data.event === 'driver_location') {
+        updateDriverMapLocation(data.data);
+      } else if (data.event === 'price_proposed') {
+        loadOrderDetails(orderId);
+        showToast('💰 Un prix vous a été proposé !');
+      } else if (data.event === 'coords_set') {
+
+        startRealTimePolling(orderId);
+        loadOrderDetails(orderId);
+        if (data.data?.price) showToast(`Position définie — Prix: ${data.data.price} $`);
+      } else if (data.event === 'now_transition') {
+        showToast('🕐 Votre course planifiée commence bientôt !');
+        loadOrderDetails(orderId);
+        updateLaterBanner({ is_later: false });
+      } else if (data.event === 'gps_reminder') {
+        showToast('📍 Mettez à jour votre GPS pour votre course planifiée !', 'warning');
+      }
+    }
+  });
+}
+
+function connectUserWebSocket() {
+  if (!Auth.isLoggedIn()) return;
+  new WSManager('/ws/user/', {
+    onMessage: (data) => {
+      if (data.event === 'order_status') {
+        loadNotificationCount();
+        showToast(`Course #${data.data?.id || ''}: ${data.data?.status_display || data.data?.status || ''}`);
+      }
+    }
+  });
+}
+
+function updateDriverMapLocation(data) {
+  if (!data) return;
+  const base = TM.lastTrackingData || {};
+  const merged = {
+    ...base,
+    ...data,
+    driver_lat: data.driver_lat ?? data.lat ?? data.latitude ?? base.driver_lat,
+    driver_lng: data.driver_lng ?? data.lng ?? data.longitude ?? base.driver_lng,
+  };
+  if (TM.map && TM.ready) updateTrackingFromData(merged);
+  else TM.pendingData = merged;
+}
+
+function clientConfirmWithDriver() {
+  if (!TM.currentOrderId) return;
+  fetch(`/htmx/client/orders/${TM.currentOrderId}/confirm-with-driver/`, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() } })
+    .then(() => { showToast('Confirmation envoyée !'); document.getElementById('btn-with-driver')?.classList.add('hidden'); })
+    .catch(() => showToast('Erreur', 'error'));
+}
+
+function clientConfirmArrived() {
+  if (!TM.currentOrderId) return;
+  showToast('✅ Merci ! Course terminée.');
+  document.getElementById('btn-client-arrived')?.classList.add('hidden');
+}
+
+
+function setLoading(btn, loading) {
+  const spinner = document.getElementById(btn+'-spinner');
+  const text = document.getElementById(btn+'-btn-text');
+  if (spinner) spinner.classList.toggle('hidden', !loading);
+  if (text) text.classList.toggle('hidden', loading);
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function formatDateTime(str) {
+  if (!str) return '';
+  return new Date(str).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function initOTPInputs() {
+  document.querySelectorAll('.otp-input').forEach((input, i, inputs) => {
+    input.addEventListener('input', () => {
+      if (input.value.length === 1 && inputs[i+1]) inputs[i+1].focus();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && inputs[i-1]) inputs[i-1].focus();
+    });
+    input.addEventListener('paste', (e) => {
+      const pasted = e.clipboardData.getData('text').replace(/\D/g,'');
+      if (pasted.length === 6) {
+        [...inputs].forEach((inp, j) => inp.value = pasted[j] || '');
+        e.preventDefault();
+      }
+    });
+  });
+}
+
+function toggleFAQ(btn) {
+  const answer = btn.nextElementSibling;
+  const icon = btn.querySelector('i');
+  answer.classList.toggle('hidden');
+  icon.className = answer.classList.contains('hidden') ? 'ri-arrow-down-s-line' : 'ri-arrow-up-s-line';
+}
+
+function setLang(lang) {
+  APP.language = lang;
+  localStorage.setItem('daxi_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    const active = btn.dataset.lang === lang;
+    btn.className = `lang-btn px-3 py-1 rounded-full text-xs font-bold border ${active ? 'border-daxi-cyan text-daxi-cyan' : 'border-white/20 text-gray-400'}`;
+  });
+}
+
+async function uploadProfilePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('photo', file);
+  try {
+    const res = await apiRequest('PATCH', '/api/auth/profile/', fd);
+    if (res.photo_url) document.getElementById('profile-avatar').src = res.photo_url;
+    showToast('Photo mise à jour !');
+  } catch { showToast('Erreur upload', 'error'); }
+}
+
+
+const origShowSection = showSection;
+</script>
+{% endblock %}

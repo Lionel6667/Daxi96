@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commandes - Julmin Taxis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        .order-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .order-map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            touch-action: none;
+        }
+        @media (max-width: 768px) {
+            .order-map {
+                height: 250px;
+            }
+        }
+        .driver-marker {
+            background-color: #2563eb;
+            border-radius: 50%;
+            color: white;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .client-marker {
+            background-color: #ef4444;
+            border-radius: 50%;
+            color: white;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .driver-info {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 200px;
+        }
+        .driver-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .driver-status.available {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .driver-status.busy {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        .assign-driver-btn {
+            margin-top: 8px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .assign-driver-btn:hover {
+            background-color: #1d4ed8;
+        }
+        .notification-bell {
+            position: relative;
+        }
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        #price-modal {
+            z-index: 2000;
+        }
+        .price-status {
+            display: inline-flex;
+            align-items: center;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .price-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .price-confirmed {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .delete-order-btn {
+            margin-left: 8px;
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .order-scroll-container {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .drivers-list-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .map-container {
+            height: 500px;
+            width: 100%;
+        }
+        .assigned-driver-list {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+        .assigned-driver-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .assigned-driver-item i {
+            margin-right: 8px;
+            color: #10b981;
+        }
+        .driver-marker-container {
+            position: relative;
+            display: inline-block;
+        }
+        .assign-driver-icon {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 1000;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .assign-driver-icon:hover {
+            background: #dc2626;
+        }
+        .assign-driver-icon.assigned {
+            background: #10B981;
+        }
+        .assign-driver-icon.assigned i.fa-check {
+            animation: scaleCheck 0.5s ease;
+        }
+        @keyframes scaleCheck {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .notification-success {
+            background-color: #10b981;
+        }
+        .notification-error {
+            background-color: #ef4444;
+        }
+        body {
+            background-color: #f9fafb;
+        }
+    </style>
+    <script>
+        // 🔒 PRODUCTION: Disable ALL console output + uncaught errors
+        const DEBUG = false;
+        if (!DEBUG) {
+            const noop = () => {};
+            console.log = noop;
+            console.warn = noop;
+            console.error = noop;
+            console.debug = noop;
+            console.info = noop;
+            console.trace = noop;
+            console.assert = noop;
+            
+            // Block all uncaught errors and rejections
+            window.onerror = () => true;
+            window.onunhandledrejection = (event) => {
+                event.preventDefault();
+                return true;
+            };
+            
+            try { window.reportError = noop; } catch (e) {}
+        }
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ef4444',
+                        secondary: '#fca5a5',
+                        dark: '#1f2937'
+                    }
+                }
+            }
+        };
+        
+        const firebaseConfig = {
+            databaseURL: "https://julmin-taxis-default-rtdb.firebaseio.com",
+            apiKey: "AIzaSyCdGFcwfzj8b5eJXcmrS0LGRIxnTXZ6zac",
+            authDomain: "julmin-taxis.firebaseapp.com",
+            projectId: "julmin-taxis",
+            storageBucket: "julmin-taxis.appspot.com",
+            messagingSenderId: "392925120550",
+            appId: "1:392925120550:web:2935808aab4ead6d7d7ee7",
+            measurementId: "G-H7SBNVWQ06"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <section id="login-section" class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div class="bg-white rounded-lg shadow-sm p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Connexion Administrateur</h2>
+            <p class="text-gray-600 text-center mb-8">Accès sécurisé au tableau de commandes</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                    <input type="password" id="admin-password" name="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden">Veuillez entrer votre mot de passe</div>
+                </div>
+                
+                <button id="admin-login-btn" class="w-full bg-primary text-white px-4 py-3 rounded-lg font-medium">
+                    Se connecter
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <div id="main-interface" class="hidden">
+        <header class="bg-primary text-white">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold">Commandes Julmin Taxis</h1>
+                        <p class="text-white/80 text-sm sm:text-base">Gestion des commandes en temps réel</p>
+                    </div>
+                    <div>
+                        <button id="logout-btn" class="bg-white text-primary px-4 py-2 rounded-lg font-medium flex items-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Déconnexion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <main class="container mx-auto px-4 py-8">
+                <!-- Section des commandes -->
+                <div id="orders-section" class="active">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                            <h2 class="text-xl font-bold text-gray-800">Commandes en attente</h2>
+                            <div class="flex items-center gap-3">
+                                <div class="notification-bell">
+                                    <i class="fas fa-list text-xl text-gray-600"></i>
+                                    <span id="notification-count" class="notification-count hidden">0</span>
+                                </div>
+                                <button id="clear-notifications" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium flex items-center">
+                                    <i class="fas fa-times mr-2"></i> Effacer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="order-scroll-container" id="orders-list">
+                            <div class="text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                <p class="mt-3 text-gray-600">Chargement des commandes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="price-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Définir le prix</h3>
+            <input type="number" id="price-input" placeholder="Prix en HTG" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4">
+            <div class="flex space-x-3">
+                <button id="price-cancel" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium">Annuler</button>
+                <button id="price-submit" class="flex-1 bg-primary text-white py-3 rounded-lg font-medium">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notification-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" preload="auto"></audio>
+
+    <script>
+        const ADMIN_PASSWORD = "t";
+        let drivers = {};
+        let currentOrderKey = null;
+        let currentPrice = 0;
+        let driversListener = null;
+        let mapMarkers = {};
+        let notificationCount = 0;
+
+        function startDriversListener() {
+            if (driversListener) {
+                driversListener();
+            }
+            
+            const driversRef = database.ref('drivers');
+            driversListener = driversRef.on('value', async (snapshot) => {
+                drivers = snapshot.val() || {};
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        function loadOrders() {
+            const ordersRef = database.ref('commande');
+            const unconfirmedRef = database.ref('commande_unconfirmed');
+            const ordersContainer = document.getElementById('orders-list');
+            
+            ordersContainer.innerHTML = '';
+            
+            let confirmedOrders = {};
+            let unconfirmedOrders = {};
+            
+            const updateOrdersList = () => {
+                const allOrders = {...confirmedOrders, ...unconfirmedOrders};
+                ordersContainer.innerHTML = '';
+                
+                if (Object.keys(allOrders).length === 0) {
+                    ordersContainer.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-box-open text-gray-300 text-5xl mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-700">Aucune commande en attente</h3>
+                            <p class="text-gray-500 mt-1">Toutes les commandes ont été traitées.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                Object.entries(allOrders).forEach(([key, order]) => {
+                    order.source = confirmedOrders[key] ? 'commande' : 'commande_unconfirmed';
+                    const orderCard = createOrderCard(order, key);
+                    ordersContainer.appendChild(orderCard);
+                });
+            };
+            
+            unconfirmedRef.on('value', (snapshot) => {
+                unconfirmedOrders = snapshot.val() || {};
+                updateOrdersList();
+            });
+            
+            ordersRef.on('value', (snapshot) => {
+                confirmedOrders = snapshot.val() || {};
+                updateOrdersList();
+            });
+        }
+        
+        function createOrderCard(order, key) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="font-bold">Commande #${key.substring(0, 6)}</h3>
+                        <p class="text-sm text-gray-500">${new Date(order.timestamp).toLocaleString('fr-FR')}</p>
+                    </div>
+                    <div class="flex">
+                        ${!order.price ? `
+                            <button class="set-price-btn bg-primary text-white px-3 py-1 rounded-lg" data-key="${key}">
+                                <i class="fas fa-dollar-sign mr-1"></i> Fixer prix
+                            </button>
+                        ` : ''}
+                        <button class="delete-order-btn" data-key="${key}" data-source="${order.source || 'commande'}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                        <div class="w-4 h-4 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400 text-xs"></i>
+                        </div>
+                        <span class="ml-2">${order.clientName || 'Client'}</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                        <div class="w-4 h-4 flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-green-500 text-xs"></i>
+                        </div>
+                        <span class="ml-2">${order.pickup || 'Point de départ non spécifié'}</span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600 mb-2">
+                        <div class="w-4 h-4 flex items-center justify-center">
+                            <i class="fas fa-flag-checkered text-primary text-xs"></i>
+                        </div>
+                        <span class="ml-2">${order.destination || 'Destination non spécifiée'}</span>
+                    </div>
+                    ${order.notes ? `<div class="bg-gray-50 rounded p-3 mt-2">
+                        <p class="text-sm">${order.notes}</p>
+                    </div>` : ''}
+                </div>
+                
+                <div class="mb-3">
+                    ${order.price ? `
+                        <div class="font-medium">Prix fixé: ${order.price} HTG</div>
+                        <div class="price-status ${order.priceConfirmed ? 'price-confirmed' : 'price-pending'}">
+                            <i class="fas ${order.priceConfirmed ? 'fa-check-circle' : 'fa-clock'} mr-2"></i>
+                            ${order.priceConfirmed ? 'Prix confirmé par le client' : 'En attente de confirmation client'}
+                        </div>
+                    ` : `
+                        <div class="price-status price-pending">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Prix non encore fixé
+                        </div>
+                    `}
+                </div>
+                
+                <div class="order-map" id="map-${key}"></div>
+                
+                ${order.assignedDrivers && order.assignedDrivers.length > 0 ? `
+                    <div class="mt-4">
+                        <h4 class="font-medium mb-2">Chauffeurs assignés</h4>
+                        <div class="assigned-driver-list" id="assigned-drivers-${key}">
+                            ${order.assignedDrivers.map(driver => `
+                                <div class="assigned-driver-item">
+                                    <i class="fas fa-user"></i>
+                                    ${driver.name} (${driver.phone}) - ${new Date(driver.timestamp).toLocaleTimeString('fr-FR')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+            
+            setTimeout(() => {
+                loadOrderMap(key, order);
+            }, 100);
+            
+            return card;
+        }
+        
+        function loadOrderMap(key, order) {
+            const mapElement = document.getElementById(`map-${key}`);
+            if (!mapElement) return;
+            
+            // Nettoyer les anciens marqueurs
+            if (mapMarkers[key]) {
+                mapMarkers[key].forEach(marker => marker.remove());
+                delete mapMarkers[key];
+            }
+            
+            mapMarkers[key] = [];
+            
+            const map = L.map(mapElement).setView([19.639994, -72.044276], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+            mapMarkers[key].push(map);
+            
+            if (order.latitude && order.longitude) {
+                const clientMarker = L.marker([order.latitude, order.longitude], {
+                    icon: L.divIcon({
+                        html: '<div class="client-marker"><i class="fas fa-user"></i></div>',
+                        className: 'dummy',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    })
+                }).addTo(map);
+                mapMarkers[key].push(clientMarker);
+                
+                clientMarker.bindPopup(`
+                    <div class="driver-info">
+                        <strong>Client:</strong> ${order.clientName || 'Non spécifié'}<br>
+                        <strong>Destination:</strong> ${order.destination || 'Non spécifié'}
+                    </div>
+                `);
+            }
+            
+            const availableDrivers = Object.values(drivers).filter(driver => 
+                driver.status === 'available' && driver.latitude && driver.longitude
+            );
+            
+            availableDrivers.forEach(driver => {
+                const markerContainer = document.createElement('div');
+                markerContainer.className = 'driver-marker-container';
+                
+                const driverPhoto = document.createElement('div');
+                driverPhoto.className = 'driver-photo-marker';
+                driverPhoto.style.backgroundImage = `url(${driver.photoURL})`;
+                
+                const assignButton = document.createElement('div');
+                assignButton.className = 'assign-driver-icon';
+                assignButton.dataset.driver = driver.id;
+                assignButton.dataset.order = key;
+                assignButton.innerHTML = '+';
+                
+                markerContainer.appendChild(driverPhoto);
+                markerContainer.appendChild(assignButton);
+                
+                const driverMarker = L.marker([driver.latitude, driver.longitude], {
+                    icon: L.divIcon({
+                        html: markerContainer.outerHTML,
+                        className: 'dummy',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    })
+                }).addTo(map);
+                mapMarkers[key].push(driverMarker);
+                
+                driverMarker.bindPopup(`
+                    <div class="driver-info">
+                        <strong>Chauffeur:</strong> ${driver.firstname} ${driver.lastname}<br>
+                        <strong>Statut:</strong> ${driver.status === 'available' ? 'Disponible' : 'Occupé'}<br>
+                        <strong>Téléphone:</strong> ${driver.phone}<br>
+                        <strong>Note:</strong> ${driver.rating || '0'}/5
+                    </div>
+                `);
+            });
+        }
+        
+        function setupOrderNotifications() {
+            const ordersRef = database.ref('commande');
+            const unconfirmedRef = database.ref('commande_unconfirmed');
+            
+            const updateNotificationCount = () => {
+                ordersRef.once('value').then(ordersSnapshot => {
+                    const ordersCount = ordersSnapshot.exists() ? ordersSnapshot.numChildren() : 0;
+                    unconfirmedRef.once('value').then(unconfirmedSnapshot => {
+                        const unconfirmedCount = unconfirmedSnapshot.exists() ? unconfirmedSnapshot.numChildren() : 0;
+                        notificationCount = ordersCount + unconfirmedCount;
+                        document.getElementById('notification-count').textContent = notificationCount;
+                        if (notificationCount > 0) {
+                            document.getElementById('notification-count').classList.remove('hidden');
+                        } else {
+                            document.getElementById('notification-count').classList.add('hidden');
+                        }
+                    });
+                });
+            };
+            
+            ordersRef.on('child_added', (snapshot) => {
+                updateNotificationCount();
+                const sound = document.getElementById('notification-sound');
+                if (sound) {
+                    sound.play().catch(e => console.error("Erreur son notification:", e));
+                }
+            });
+            
+            ordersRef.on('child_removed', updateNotificationCount);
+            unconfirmedRef.on('child_added', updateNotificationCount);
+            unconfirmedRef.on('child_removed', updateNotificationCount);
+            
+            updateNotificationCount();
+        }
+        
+        function assignDriverToOrder(orderKey, driverId) {
+            const driver = drivers[driverId];
+            if (!driver) {
+                showNotification("Chauffeur introuvable", 'error');
+                return;
+            }
+
+            const driverName = `${driver.firstname} ${driver.lastname}`;
+            const driverPhone = driver.phone;
+
+            const unconfirmedRef = database.ref(`commande_unconfirmed/${orderKey}`);
+
+            unconfirmedRef.once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    showNotification("Commande introuvable", 'error');
+                    return;
+                }
+
+                const order = snapshot.val();
+
+                if (!order.assignedDrivers) {
+                    order.assignedDrivers = [];
+                }
+
+                // Vérifier si le chauffeur est déjà assigné (par numéro de téléphone)
+                const alreadyAssigned = order.assignedDrivers.some(assigned => assigned.phone === driverPhone);
+                if (alreadyAssigned) {
+                    showNotification("Ce chauffeur est déjà assigné à cette commande", 'info');
+                    return;
+                }
+
+                // Ajouter le nouveau chauffeur à la liste
+                order.assignedDrivers.push({
+                    phone: driverPhone,
+                    name: driverName,
+                    timestamp: Date.now()
+                });
+
+                // Mettre à jour la commande
+                unconfirmedRef.update({ assignedDrivers: order.assignedDrivers })
+                    .then(() => {
+                        // Mettre à jour l'interface utilisateur
+                        const assignIcon = document.querySelector(`.assign-driver-icon[data-order="${orderKey}"][data-driver="${driverId}"]`);
+                        if (assignIcon) {
+                            assignIcon.classList.add('assigned');
+                            assignIcon.innerHTML = '<i class="fas fa-check"></i>';
+                            
+                            setTimeout(() => {
+                                assignIcon.innerHTML = `<a href="https://wa.me/${driverPhone}?text=${encodeURIComponent('Bonjour, une course vous est assignée. Consultez l\'application pour plus de détails.')}" target="_blank" style="color: white;"><i class="fab fa-whatsapp"></i></a>`;
+                            }, 2000);
+                        }
+                        
+                        showNotification(`Commande assignée à ${driverName} (${driverPhone})`, 'success');
+                        loadOrders(); // Recharger la liste des commandes
+                    })
+                    .catch(error => {
+                        console.error("Erreur lors de la mise à jour de la commande:", error);
+                        showNotification("Erreur lors de l'assignation de la commande", 'error');
+                    });
+            }).catch(error => {
+                console.error("Erreur récupération commande:", error);
+                showNotification("Erreur lors de la récupération de la commande", 'error');
+            });
+        }
+        
+        function setOrderPrice(orderKey) {
+            currentOrderKey = orderKey;
+            document.getElementById('price-input').value = '';
+            document.getElementById('price-modal').classList.remove('hidden');
+        }
+        
+        function saveOrderPrice() {
+            const price = document.getElementById('price-input').value;
+            if (!price) {
+                showNotification("Veuillez entrer un prix valide", 'error');
+                return;
+            }
+            
+            currentPrice = parseFloat(price);
+            const orderRef = database.ref(`commande/${currentOrderKey}`);
+            
+            orderRef.update({ 
+                price: currentPrice,
+                priceConfirmed: false
+            })
+            .then(() => {
+                const unconfirmedRef = database.ref(`commande_unconfirmed/${currentOrderKey}`);
+                
+                orderRef.once('value').then(snapshot => {
+                    const orderData = snapshot.val();
+                    unconfirmedRef.set(orderData)
+                        .then(() => {
+                            orderRef.remove()
+                                .then(() => {
+                                    document.getElementById('price-modal').classList.add('hidden');
+                                    showNotification("Prix défini et commande déplacée en attente de confirmation client.", 'success');
+                                });
+                        });
+                });
+            })
+            .catch(error => {
+                console.error("Erreur mise à jour prix:", error);
+                showNotification("Erreur lors de la mise à jour du prix", 'error');
+            });
+        }
+        
+        function deleteOrder(orderKey, source) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer cette commande ?")) {
+                const orderRef = database.ref(`${source}/${orderKey}`);
+                orderRef.remove()
+                    .then(() => {
+                        showNotification("Commande supprimée avec succès", 'success');
+                    })
+                    .catch(error => {
+                        console.error("Erreur suppression commande:", error);
+                        showNotification("Erreur lors de la suppression", 'error');
+                    });
+            }
+        }
+        
+        function setupTransferedOrdersListener() {
+            const transferedRef = database.ref('commande_transfered');
+            transferedRef.on('child_changed', (snapshot) => {
+                const order = snapshot.val();
+                if (order.accepted) {
+                    const driverName = order.assignedDrivers?.[order.assignedDrivers.length-1]?.name || 'Chauffeur';
+                    showNotification(`${driverName} a accepté la commande #${snapshot.key.substring(0,6)}`, 'success');
+                    
+                    setTimeout(() => {
+                        const notifications = document.querySelectorAll('.notification');
+                        notifications.forEach(notification => {
+                            if (notification.textContent.includes('accepté')) {
+                                notification.remove();
+                            }
+                        });
+                    }, 5000);
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationSound = document.getElementById('notification-sound');
+            
+            document.getElementById('admin-login-btn').addEventListener('click', function() {
+                const password = document.getElementById('admin-password').value;
+                const errorElement = document.getElementById('login-password-error');
+                
+                if (!password) {
+                    errorElement.textContent = 'Veuillez entrer votre mot de passe';
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                if (password !== ADMIN_PASSWORD) {
+                    errorElement.textContent = 'Mot de passe incorrect';
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('main-interface').classList.remove('hidden');
+                loadOrders();
+                setupOrderNotifications();
+                startDriversListener();
+                setupTransferedOrdersListener();
+            });
+            
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                document.getElementById('main-interface').classList.add('hidden');
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('admin-password').value = '';
+                
+                if (driversListener) {
+                    driversListener();
+                    driversListener = null;
+                }
+            });
+            
+            document.getElementById('clear-notifications').addEventListener('click', function() {
+                notificationCount = 0;
+                document.getElementById('notification-count').classList.add('hidden');
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.assign-driver-icon') && !e.target.closest('a')) {
+                    const icon = e.target.closest('.assign-driver-icon');
+                    const driverId = icon.dataset.driver;
+                    const orderKey = icon.dataset.order;
+                    assignDriverToOrder(orderKey, driverId);
+                }
+                
+                if (e.target.closest('.set-price-btn')) {
+                    const orderKey = e.target.closest('.set-price-btn').dataset.key;
+                    setOrderPrice(orderKey);
+                }
+                
+                if (e.target.closest('.delete-order-btn')) {
+                    const btn = e.target.closest('.delete-order-btn');
+                    const orderKey = btn.dataset.key;
+                    const source = btn.dataset.source;
+                    deleteOrder(orderKey, source);
+                }
+            });
+            
+            document.getElementById('price-cancel').addEventListener('click', function() {
+                document.getElementById('price-modal').classList.add('hidden');
+            });
+            
+            document.getElementById('price-submit').addEventListener('click', saveOrderPrice);
+        });
+    </script>
+</body>
+</html>

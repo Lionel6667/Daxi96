@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notifications System - Daxi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        .modern-notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            z-index: 9999;
+            display: flex;
+            gap: 12px;
+            opacity: 0;
+            transform: translateX(500px);
+            transition: all 0.3s ease;
+        }
+
+        .modern-notification-toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .modern-notification-toast.toast-dismissing {
+            opacity: 0;
+            transform: translateX(500px);
+        }
+
+        .toast-icon-wrapper {
+            min-width: 48px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .toast-icon-wrapper.toast-price {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .toast-icon-wrapper.toast-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .toast-icon-wrapper.toast-info {
+            background: #dbeafe;
+            color: #0284c7;
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+        }
+
+        .toast-time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #4b5563;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .toast-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .toast-action-accept, .toast-action-reject {
+            flex: 1;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toast-action-accept {
+            background: #10b981;
+            color: white;
+        }
+
+        .toast-action-accept:hover {
+            background: #059669;
+        }
+
+        .toast-action-reject {
+            background: #ef4444;
+            color: white;
+        }
+
+        .toast-action-reject:hover {
+            background: #dc2626;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-close:hover {
+            color: #6b7280;
+        }
+
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .test-button:hover {
+            background: #2563eb;
+        }
+
+        .test-button.price-offer {
+            background: #f59e0b;
+        }
+
+        .test-button.price-offer:hover {
+            background: #d97706;
+        }
+
+        .test-button.driver-onway {
+            background: #06b6d4;
+        }
+
+        .test-button.driver-onway:hover {
+            background: #0891b2;
+        }
+
+        .test-button.driver-arrived {
+            background: #8b5cf6;
+        }
+
+        .test-button.driver-arrived:hover {
+            background: #7c3aed;
+        }
+
+        .test-button.trip-finished {
+            background: #10b981;
+        }
+
+        .test-button.trip-finished:hover {
+            background: #059669;
+        }
+
+        .log-output {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #1f2937;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 4px 0;
+            padding: 4px;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.info {
+            color: #3b82f6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .status-badge.ok {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-badge.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-badge.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="test-container">
+        <h1 style="font-size: 28px; font-weight: 700; margin-bottom: 24px; color: #1f2937;">🧪 Test du Système de Notifications - Daxi</h1>
+
+        <!-- Status Section -->
+        <div class="test-section">
+            <h2>État du Système</h2>
+            <div id="status-container"></div>
+        </div>
+
+        <!-- Simulation Section -->
+        <div class="test-section">
+            <h2>1️⃣ Simulation des Notifications</h2>
+            <p style="margin: 0 0 16px 0; color: #6b7280;">Cliquez sur un bouton pour simuler une notification de ce type:</p>
+
+            <div>
+                <button class="test-button price-offer" onclick="testPriceOfferNotification()">
+                    💰 Test: Offre de Prix
+                </button>
+                <button class="test-button driver-onway" onclick="testDriverOnwayNotification()">
+                    🚗 Test: Chauffeur en Route
+                </button>
+                <button class="test-button driver-arrived" onclick="testDriverArrivedNotification()">
+                    📍 Test: Chauffeur Arrivé
+                </button>
+                <button class="test-button trip-finished" onclick="testTripFinishedNotification()">
+                    ✅ Test: Course Terminée
+                </button>
+            </div>
+
+            <div id="simulation-log" class="log-output"></div>
+        </div>
+
+        <!-- Cache Testing Section -->
+        <div class="test-section">
+            <h2>2️⃣ Test du Cache de Prix</h2>
+            <p style="margin: 0 0 16px 0; color: #6b7280;">Vérifie que le cache détecte correctement les changements de prix:</p>
+
+            <button class="test-button" onclick="testCacheDetection()">
+                🔍 Tester la Détection de Changement Prix
+            </button>
+
+            <div id="cache-log" class="log-output"></div>
+        </div>
+
+        <!-- Price Accept/Reject Section -->
+        <div class="test-section">
+            <h2>3️⃣ Test Acceptation/Refus de Prix</h2>
+            <p style="margin: 0 0 16px 0; color: #6b7280;">Test des boutons d'action dans la notification:</p>
+
+            <button class="test-button" onclick="testPriceOfferWithActions()">
+                ✋ Test: Offre de Prix avec Boutons
+            </button>
+
+            <div id="action-log" class="log-output"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="test-section">
+            <h2>📊 Résultats des Tests</h2>
+            <div id="results-container" style="color: #6b7280;">En attente de tests...</div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            priceOfferDisplayed: false,
+            cacheDetected: false,
+            actionsClickable: false,
+            multipleNotifications: false
+        };
+
+        function addLog(logId, message, type = 'info') {
+            const log = document.getElementById(logId);
+            if (!log) return;
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateStatus() {
+            const container = document.getElementById('status-container');
+            container.innerHTML = `
+                <div class="status-badge ok">✅ Système Prêt</div>
+                <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 13px;">
+                    Les fonctions de notification sont disponibles.<br>
+                    Le système affiche les toasts in-app et détecte les changements de prix.
+                </p>
+            `;
+        }
+
+        // Simulation: Offre de Prix
+        function testPriceOfferNotification() {
+            addLog('simulation-log', 'Démarrage: Simulation d\'offre de prix...', 'info');
+            
+            const orderId = 'order-' + Date.now();
+            const notificationData = {
+                type: 'price_offer',
+                price: 150,
+                destination: 'Pétionville',
+                driverName: 'Jean Dupont',
+                title: '💰 Nouveau prix proposé',
+                body: 'Un chauffeur propose 150$ pour votre trajet vers Pétionville',
+                tag: 'price-offer',
+                data: {
+                    orderId: orderId,
+                    type: 'price_offer',
+                    price: 150,
+                    destination: 'Pétionville'
+                }
+            };
+
+            showModernNotificationToast(notificationData.title, notificationData.body, {
+                data: notificationData.data,
+                tag: notificationData.tag,
+                type: notificationData.type
+            });
+
+            addLog('simulation-log', '✅ Notification d\'offre de prix affichée', 'success');
+            addLog('simulation-log', `   - Commande ID: ${orderId}`, 'info');
+            addLog('simulation-log', '   - Boutons Accepter/Refuser visibles: OUI', 'success');
+            testResults.priceOfferDisplayed = true;
+            updateResults();
+        }
+
+        // Simulation: Chauffeur en Route
+        function testDriverOnwayNotification() {
+            addLog('simulation-log', 'Démarrage: Simulation chauffeur en route...', 'info');
+            
+            const notificationData = {
+                type: 'driver_onway',
+                driverName: 'Jean Dupont',
+                title: '🚗 Chauffeur en route',
+                body: 'Jean Dupont est en route vers vous!',
+                tag: 'driver-onway',
+                data: {
+                    orderId: 'order-12345',
+                    type: 'driver_onway'
+                }
+            };
+
+            showModernNotificationToast(notificationData.title, notificationData.body, {
+                data: notificationData.data,
+                tag: notificationData.tag,
+                type: notificationData.type
+            });
+
+            addLog('simulation-log', '✅ Notification chauffeur en route affichée', 'success');
+            addLog('simulation-log', '   - Pas de boutons d\'action (comportement correct)', 'success');
+            testResults.multipleNotifications = true;
+            updateResults();
+        }
+
+        // Simulation: Chauffeur Arrivé
+        function testDriverArrivedNotification() {
+            addLog('simulation-log', 'Démarrage: Simulation chauffeur arrivé...', 'info');
+            
+            const notificationData = {
+                type: 'driver_arrived',
+                driverName: 'Jean Dupont',
+                title: '📍 Chauffeur arrivé',
+                body: 'Jean Dupont est arrivé au point de rendez-vous!',
+                tag: 'driver-arrived',
+                data: {
+                    orderId: 'order-12345',
+                    type: 'driver_arrived'
+                }
+            };
+
+            showModernNotificationToast(notificationData.title, notificationData.body, {
+                data: notificationData.data,
+                tag: notificationData.tag,
+                type: notificationData.type
+            });
+
+            addLog('simulation-log', '✅ Notification chauffeur arrivé affichée', 'success');
+            addLog('simulation-log', '   - Pas de boutons d\'action (comportement correct)', 'success');
+            updateResults();
+        }
+
+        // Simulation: Course Terminée
+        function testTripFinishedNotification() {
+            addLog('simulation-log', 'Démarrage: Simulation course terminée...', 'info');
+            
+            const notificationData = {
+                type: 'trip_finished',
+                driverName: 'Jean Dupont',
+                title: '✅ Course terminée',
+                body: 'Merci d\'avoir voyagé avec Jean Dupont! N\'oubliez pas de laisser un avis.',
+                tag: 'trip-finished',
+                data: {
+                    orderId: 'order-12345',
+                    type: 'trip_finished'
+                }
+            };
+
+            showModernNotificationToast(notificationData.title, notificationData.body, {
+                data: notificationData.data,
+                tag: notificationData.tag,
+                type: notificationData.type
+            });
+
+            addLog('simulation-log', '✅ Notification course terminée affichée', 'success');
+            addLog('simulation-log', '   - Pas de boutons d\'action (comportement correct)', 'success');
+            updateResults();
+        }
+
+        // Test: Détection de Changement dans le Cache
+        function testCacheDetection() {
+            addLog('cache-log', 'Démarrage: Test du cache de détection de prix...', 'info');
+            
+            const cache = new Map();
+            const orderId = 'test-order-123';
+            
+            // Simulation 1: Première fois (pas encore en cache)
+            addLog('cache-log', `Étape 1: Initialisation du cache pour ${orderId}`, 'info');
+            const previous1 = cache.has(orderId) ? cache.get(orderId) : null;
+            const current1 = 150;
+            addLog('cache-log', `   - Valeur précédente: ${previous1}`, 'info');
+            addLog('cache-log', `   - Valeur actuelle: ${current1}`, 'info');
+            
+            if (current1 !== null && current1 !== previous1) {
+                addLog('cache-log', '   ✅ CHANGEMENT DÉTECTÉ → Notification envoyée', 'success');
+                cache.set(orderId, current1);
+            } else {
+                addLog('cache-log', '   ❌ Pas de changement détecté', 'error');
+            }
+            
+            // Simulation 2: Même valeur (pas de changement)
+            addLog('cache-log', `Étape 2: Même prix proposé (${current1}$)...`, 'info');
+            const previous2 = cache.has(orderId) ? cache.get(orderId) : null;
+            const current2 = 150;
+            addLog('cache-log', `   - Valeur précédente: ${previous2}`, 'info');
+            addLog('cache-log', `   - Valeur actuelle: ${current2}`, 'info');
+            
+            if (current2 !== null && current2 !== previous2) {
+                addLog('cache-log', '   ✅ CHANGEMENT DÉTECTÉ → Notification envoyée', 'success');
+            } else {
+                addLog('cache-log', '   ✅ Pas de changement → Pas de notification (correct!)', 'success');
+                testResults.cacheDetected = true;
+            }
+            
+            // Simulation 3: Nouveau prix (changement)
+            addLog('cache-log', `Étape 3: Nouveau prix proposé (175$)...`, 'info');
+            const previous3 = cache.has(orderId) ? cache.get(orderId) : null;
+            const current3 = 175;
+            addLog('cache-log', `   - Valeur précédente: ${previous3}`, 'info');
+            addLog('cache-log', `   - Valeur actuelle: ${current3}`, 'info');
+            
+            if (current3 !== null && current3 !== previous3) {
+                addLog('cache-log', '   ✅ CHANGEMENT DÉTECTÉ → Notification envoyée', 'success');
+                cache.set(orderId, current3);
+            } else {
+                addLog('cache-log', '   ❌ Changement non détecté', 'error');
+            }
+            
+            addLog('cache-log', '✅ Test du cache terminé avec succès', 'success');
+            updateResults();
+        }
+
+        // Test: Offre de Prix avec Actions
+        function testPriceOfferWithActions() {
+            addLog('action-log', 'Démarrage: Test d\'acceptation/refus de prix...', 'info');
+            
+            const orderId = 'action-order-' + Date.now();
+            const price = 200;
+            
+            addLog('action-log', `Affichage notification avec prix: ${price}$`, 'info');
+            addLog('action-log', `   - Order ID: ${orderId}`, 'info');
+            
+            const notificationData = {
+                type: 'price_offer',
+                price: price,
+                destination: 'Centre-Ville',
+                driverName: 'Marie Dupont',
+                title: '💰 Nouveau prix proposé',
+                body: `Un chauffeur propose ${price}$ pour votre trajet vers Centre-Ville`,
+                tag: 'price-offer',
+                data: {
+                    orderId: orderId,
+                    type: 'price_offer',
+                    price: price,
+                    destination: 'Centre-Ville'
+                }
+            };
+
+            showModernNotificationToast(notificationData.title, notificationData.body, {
+                data: notificationData.data,
+                tag: notificationData.tag,
+                type: notificationData.type
+            });
+
+            addLog('action-log', '✅ Notification affichée avec boutons', 'success');
+            addLog('action-log', '   - Bouton "Accepter": Disponible', 'success');
+            addLog('action-log', '   - Bouton "Refuser": Disponible', 'success');
+            
+            // Simulated click handler
+            setTimeout(() => {
+                addLog('action-log', 'Note: Les boutons utilisent le gestionnaire global handlePriceActions()', 'info');
+                addLog('action-log', '   - Accepter → Move to commande_unconfirmed + Mark priceConfirmed', 'info');
+                addLog('action-log', '   - Refuser → Delete order from all tables', 'info');
+                testResults.actionsClickable = true;
+                updateResults();
+            }, 500);
+        }
+
+        function updateResults() {
+            const container = document.getElementById('results-container');
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">';
+            
+            const tests = [
+                { key: 'priceOfferDisplayed', label: 'Affichage Offre Prix', emoji: '💰' },
+                { key: 'cacheDetected', label: 'Détection Cache', emoji: '🔍' },
+                { key: 'actionsClickable', label: 'Actions Cliquables', emoji: '👆' },
+                { key: 'multipleNotifications', label: 'Notifications Multiples', emoji: '🔔' }
+            ];
+            
+            tests.forEach(test => {
+                const passed = testResults[test.key];
+                const status = passed ? '✅ OK' : '⏳ En Attente';
+                const color = passed ? '#10b981' : '#f59e0b';
+                html += `
+                    <div style="padding: 12px; background: ${color}20; border: 1px solid ${color}; border-radius: 6px;">
+                        <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${test.emoji} ${test.label}</div>
+                        <div style="font-size: 12px; color: #6b7280;">${status}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Initialize
+        updateStatus();
+        updateResults();
+    </script>
+
+    <!-- Importer les styles et fonctions de vubez2.html -->
+    <script>
+        // Copie simplifié de la fonction showModernNotificationToast de vubez2.html pour le test
+        function showModernNotificationToast(title, message, options = {}) {
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwOUKXh8LVpHwU7k9r0yXkqBSp+zPLaizsKElyz6+ukVhMJR6Hh8rppHgU1ktny1YY3CBdqvPHmn1APDlGn4/C2ah4FO5LZ88p6LAUV');
+                audio.volume = 0.4;
+                audio.play().catch(() => {});
+            } catch (e) {
+                console.log('Son non disponible');
+            }
+
+            const existingToast = document.querySelector('.modern-notification-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'modern-notification-toast';
+
+            let iconSvg = '';
+            let colorClass = 'toast-info';
+
+            const lowerTitle = (title || '').toLowerCase();
+            if (lowerTitle.includes('prix') || lowerTitle.includes('price')) {
+                colorClass = 'toast-price';
+                iconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v12m4-10a4 4 0 0 0-4-2 4 4 0 0 0 0 8 4 4 0 0 1 0 8 4 4 0 0 1-4-2"/>
+                </svg>`;
+            } else if (lowerTitle.includes('chauffeur') || lowerTitle.includes('driver')) {
+                colorClass = 'toast-info';
+                iconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6c2-1 4-1 5 0m-10 0c1 0 3 1 5 0M8 12h8M8 16h8"/>
+                </svg>`;
+            } else if (lowerTitle.includes('terminé') || lowerTitle.includes('finished')) {
+                colorClass = 'toast-success';
+                iconSvg = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>`;
+            }
+
+            let actionsHtml = '';
+            if (options && options.type === 'price_offer' && options.data && options.data.orderId) {
+                const orderId = String(options.data.orderId);
+                const priceVal = options.data.price || '';
+                actionsHtml = `
+                    <div class="toast-actions">
+                        <button class="toast-action-accept" data-action="accept-price" data-order-id="${orderId}" onclick="handleTestAction('accept', '${orderId}', '${priceVal}')">
+                            ✅ Accepter ${priceVal ? priceVal + ' $' : ''}
+                        </button>
+                        <button class="toast-action-reject" data-action="reject-price" data-order-id="${orderId}" onclick="handleTestAction('reject', '${orderId}')">
+                            ❌ Refuser
+                        </button>
+                    </div>
+                `;
+            }
+
+            toast.innerHTML = `
+                <div class="toast-icon-wrapper ${colorClass}">
+                    <div class="toast-icon">
+                        ${iconSvg}
+                    </div>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-header">
+                        <span class="toast-title">${title || 'Notification'}</span>
+                        <span class="toast-time">À l'instant</span>
+                    </div>
+                    <p class="toast-message">${message || ''}</p>
+                    ${actionsHtml}
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            `;
+
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            toast.addEventListener('click', (e) => {
+                if (e.target.closest('.toast-close')) return;
+                if (e.target.closest('.toast-action-accept') || e.target.closest('.toast-action-reject')) {
+                    setTimeout(() => {
+                        try { toast.remove(); } catch (_) { }
+                    }, 300);
+                    return;
+                }
+                toast.classList.add('toast-dismissing');
+                setTimeout(() => {
+                    try { toast.remove(); } catch (_) { }
+                }, 220);
+            });
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.add('toast-dismissing');
+                    setTimeout(() => {
+                        try { toast.remove(); } catch (_) { }
+                    }, 220);
+                }
+            }, 7000);
+        }
+
+        function handleTestAction(action, orderId, price) {
+            const logId = 'action-log';
+            if (action === 'accept') {
+                addLog(logId, `✅ ACTION: Acceptation du prix ${price}$ pour ${orderId}`, 'success');
+                addLog(logId, '   - Simulation: Commande déplacée vers commande_unconfirmed', 'info');
+                addLog(logId, '   - Simulation: priceConfirmed marqué comme true', 'info');
+            } else if (action === 'reject') {
+                addLog(logId, `❌ ACTION: Refus du prix pour ${orderId}`, 'error');
+                addLog(logId, '   - Simulation: Commande supprimée de toutes les tables', 'info');
+            }
+        }
+    </script>
+</body>
+</html>

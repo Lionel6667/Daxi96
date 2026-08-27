@@ -1,0 +1,53 @@
+
+<div data-no-translate>
+{% if o.status == 'cancelled' %}
+<div class="daxi-oc-pipeline daxi-oc-pipeline--cancelled" role="status">
+  <span class="daxi-oc-pipeline-cancel"><i class="ri-close-circle-line"></i> Commande annulée</span>
+</div>
+{% else %}
+{% if o.is_round_trip or o.trip_type == 'round_trip' or o.trip_type == 'aller-retour' %}
+{% include "htmx/_order_status_pipeline_roundtrip.html" %}
+{% elif o.is_service_plan or o.is_plan_order %}
+{% include "htmx/_order_status_pipeline_plan.html" %}
+{% else %}
+{% with idx=o.status_pipeline_index|default_if_none:-1 %}
+<div class="daxi-oc-pipeline daxi-oc-pipeline--{{ o.status }}{% if pipeline_compact %} daxi-oc-pipeline--compact{% endif %}" role="list" aria-label="Progression de la commande" data-pipeline-index="{{ idx }}">
+  <div class="daxi-oc-pipe-step {% if idx == 0 %}is-current{% elif idx|add:0 > 0 %}is-done{% endif %}" title="Demande reçue">
+    <span class="daxi-oc-pipe-dot"><i class="ri-file-list-line"></i></span>
+    <span class="daxi-oc-pipe-label">Demande</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 1 %}is-current{% elif idx|add:0 > 1 %}is-done{% endif %}" title="Prix proposé">
+    <span class="daxi-oc-pipe-dot"><i class="ri-price-tag-3-line"></i></span>
+    <span class="daxi-oc-pipe-label">Devis</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 2 %}is-current{% elif idx|add:0 > 2 %}is-done{% endif %}" title="Prix confirmé">
+    <span class="daxi-oc-pipe-dot"><i class="ri-check-line"></i></span>
+    <span class="daxi-oc-pipe-label">Confirmé</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 3 %}is-current{% elif idx|add:0 > 3 %}is-done{% endif %}" title="Chauffeur assigné">
+    <span class="daxi-oc-pipe-dot"><i class="ri-user-star-line"></i></span>
+    <span class="daxi-oc-pipe-label">Assigné</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 4 %}is-current{% elif idx|add:0 > 4 %}is-done{% endif %}" title="En route">
+    <span class="daxi-oc-pipe-dot"><i class="ri-route-line"></i></span>
+    <span class="daxi-oc-pipe-label">En route</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 5 %}is-current{% elif idx|add:0 > 5 %}is-done{% endif %}" title="Sur place">
+    <span class="daxi-oc-pipe-dot"><i class="ri-map-pin-line"></i></span>
+    <span class="daxi-oc-pipe-label">Sur place</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 6 %}is-current{% elif idx|add:0 > 6 %}is-done{% endif %}" title="Course en cours">
+    <span class="daxi-oc-pipe-dot"><i class="ri-steering-2-line"></i></span>
+    <span class="daxi-oc-pipe-label">En cours</span>
+  </div>
+  <div class="daxi-oc-pipe-step {% if idx == 7 %}is-current{% elif idx|add:0 > 7 %}is-done{% endif %}" title="Terminé">
+    <span class="daxi-oc-pipe-dot"><i class="ri-check-double-line"></i></span>
+    <span class="daxi-oc-pipe-label">Terminé</span>
+  </div>
+</div>
+{% endwith %}
+{% endif %}
+{% include "htmx/_round_trip_phase_banner.html" %}
+{% include "htmx/_order_client_waiting_banner.html" %}
+{% endif %}
+</div>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DAXI — Test WhatsApp</title>
+  <style>
+    :root { --bg:#0f1419; --card:#1a2332; --border:#2d3a4f; --text:#e7ecf3; --muted:#8b9cb3; --ok:#22c55e; --err:#ef4444; --warn:#f59e0b; --accent:#3b82f6; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:var(--bg); color:var(--text); font-size:13px; line-height:1.5; }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+    h1 { font-size:1.25rem; margin:0 0 4px; font-family: system-ui, sans-serif; }
+    .sub { color:var(--muted); margin-bottom:20px; font-family: system-ui, sans-serif; font-size:14px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+    .card h2 { margin:0 0 12px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-family: system-ui, sans-serif; }
+    label { display:block; margin-bottom:6px; color:var(--muted); font-family: system-ui, sans-serif; font-size:12px; }
+    input, select { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#0d1117; color:var(--text); font:inherit; margin-bottom:12px; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:640px) { .row { grid-template-columns:1fr; } }
+    button { background:var(--accent); color:#fff; border:none; padding:12px 20px; border-radius:8px; font-weight:700; cursor:pointer; font-family: system-ui, sans-serif; }
+    button:hover { filter:brightness(1.1); }
+    pre { margin:0; white-space:pre-wrap; word-break:break-word; max-height:320px; overflow:auto; background:#0d1117; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:12px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; }
+    .badge-ok { background:#14532d; color:var(--ok); }
+    .badge-err { background:#450a0a; color:var(--err); }
+    .meta { font-family: system-ui, sans-serif; font-size:12px; color:var(--muted); margin-top:8px; }
+    .meta code { color:var(--text); }
+    .poll { font-size:11px; color:var(--muted); margin-top:8px; }
+    .result-banner { padding:12px; border-radius:8px; margin-bottom:12px; font-family: system-ui, sans-serif; }
+    .result-ok { background:#14532d33; border:1px solid var(--ok); }
+    .result-err { background:#450a0a33; border:1px solid var(--err); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Test WhatsApp DAXI</h1>
+  <p class="sub">Envoi template + logs API Meta + webhooks. Phone ID: <code>{{ phone_id }}</code></p>
+
+  <div class="card">
+    <h2>Envoyer un template</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="send">
+      <div class="row">
+        <div>
+          <label>Numero destinataire (WhatsApp)</label>
+          <input type="text" name="phone" value="{{ phone }}" placeholder="50940615883">
+        </div>
+        <div>
+          <label>Template</label>
+          <select name="template">
+            {% for key, meta in templates.items %}
+            <option value="{{ key }}" {% if tpl_key == key %}selected{% endif %}>{{ meta.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button type="submit">Envoyer maintenant</button>
+    </form>
+    <p class="meta">Webhook Meta (test) : <code>{{ webhook_url }}</code></p>
+    <p class="meta">Verify token : <code>{{ verify_token }}</code></p>
+    {% if code_verification_expired %}
+    <div class="result-banner result-err" style="margin-top:12px">
+      BLOCAGE: code_verification_status = EXPIRED sur +50955969696.
+      Re-verifiez le numero dans WhatsApp Manager avant de tester la livraison.
+    </div>
+    {% endif %}
+    <div class="result-banner result-ok" style="margin-top:12px">
+      Copiez ces valeurs dans WhatsApp Manager → Configuration → Webhook.
+    </div>
+    <form method="post" style="margin-top:12px">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="ping_webhook">
+      <button type="submit" style="background:#374151">Tester webhook ngrok</button>
+    </form>
+    {% if verify_local_json %}
+    <label style="margin-top:10px">Test webhook ngrok</label>
+    <pre>{{ verify_local_json }}</pre>
+    {% endif %}
+  </div>
+
+  {% if send_result %}
+  <div class="card">
+    <h2>Dernier envoi</h2>
+    {% if send_result.response.ok %}
+    <div class="result-banner result-ok">
+      HTTP {{ send_result.response.http_status }} — Meta a accepte
+      {% if msg_status %} (message_status: {{ msg_status }}){% endif %}
+      {% if wamid %} — wamid: {{ wamid }}{% endif %}
+    </div>
+    {% else %}
+    <div class="result-banner result-err">
+      HTTP {{ send_result.response.http_status }} — Echec API
+      {% if api_error %} — {{ api_error }}{% endif %}
+    </div>
+    {% endif %}
+    <label>Requete POST /messages</label>
+    <pre id="last-request">{{ send_request_json }}</pre>
+    <label style="margin-top:12px">Reponse Meta ({{ send_result.response.elapsed_ms }} ms)</label>
+    <pre id="last-response">{{ send_result_json }}</pre>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Statut numero business (GET phone_id)</h2>
+    <pre id="phone-status">{{ phone_status_json }}</pre>
+  </div>
+
+  <div class="card">
+    <h2>Webhooks bruts (tout POST /webhook/)</h2>
+    <p class="poll">Si vide apres envoi Meta → URL webhook incorrecte ou ngrok bloque les serveurs Meta.</p>
+    <pre id="raw-webhook-log">{{ raw_webhook_log_json }}</pre>
+  </div>
+
+  <div class="card">
+    <h2>Statuts livraison (sent / delivered / failed)</h2>
+    <p class="poll">Rafraichissement auto toutes les 4s.</p>
+    <pre id="delivery-log">{{ delivery_log_json }}</pre>
+  </div>
+
+  <div class="card">
+    <h2>Historique envois (cette page)</h2>
+    <pre id="send-history">{{ send_history_json }}</pre>
+  </div>
+</div>
+
+<script>
+(function() {
+  var pollUrl = '/test-whatsapp/logs/';
+  var deliveryEl = document.getElementById('delivery-log');
+  var rawEl = document.getElementById('raw-webhook-log');
+  var historyEl = document.getElementById('send-history');
+  if (!deliveryEl) return;
+
+  function pretty(obj) {
+    try { return JSON.stringify(obj, null, 2); } catch (e) { return String(obj); }
+  }
+
+  function refresh() {
+    fetch(pollUrl, { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.delivery_log) deliveryEl.textContent = pretty(data.delivery_log);
+        if (data.raw_webhook_log && rawEl) rawEl.textContent = pretty(data.raw_webhook_log);
+        if (data.send_history && historyEl) historyEl.textContent = pretty(data.send_history);
+      })
+      .catch(function() {});
+  }
+
+  setInterval(refresh, 4000);
+  {% if send_result %}refresh();{% endif %}
+})();
+</script>
+</body>
+</html>

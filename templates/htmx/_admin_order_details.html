@@ -1,0 +1,89 @@
+{% load daxi_extras %}
+  <div id="order-details-{{ o.id }}" class="adm-order-details-panel" hidden>
+
+    <div class="adm-detail-row">
+      <span class="adm-detail-label"><i class="ri-user-line"></i> Client</span>
+      <span class="adm-detail-value">{{ o.client_name }}</span>
+    </div>
+    <div class="adm-detail-row">
+      <span class="adm-detail-label"><i class="ri-phone-line"></i> Téléphone</span>
+      <span class="adm-detail-value adm-detail-value--{% if o.contact_unlocked %}ok{% else %}locked{% endif %}">
+        {{ o.client_phone|default:'Non fourni' }}
+        {% if not o.contact_unlocked %}<span class="adm-detail-hint"> (débloqué à {{ o.unlock_time }})</span>{% endif %}
+      </span>
+    </div>
+    {% if o.price %}
+    <div class="adm-price-banner adm-price-banner--{% if o.is_service_plan %}plan{% else %}calc{% endif %}">
+      <div class="adm-price-banner__label">
+        {% if o.is_service_plan %}<i class="ri-vip-crown-line"></i> Forfait plan{% else %}<i class="ri-money-dollar-circle-line"></i> Prix calculé{% endif %}
+      </div>
+      <div class="adm-price-banner__amount">{{ o.price|daxi_price }}</div>
+    </div>
+    {% endif %}
+
+    {% if o.driver_name %}
+    <div class="adm-detail-row">
+      <span class="adm-detail-label"><i class="ri-car-line"></i> Chauffeur</span>
+      <span class="adm-detail-value">{{ o.driver_name }}</span>
+    </div>
+    {% endif %}
+
+    {% include "htmx/_order_map_snippet.html" with map_scope="admin" show_map_actions=True %}
+
+    {% include "htmx/_admin_order_coords_section.html" %}
+
+    <div class="adm-order-chat-wrap">
+      {% include "htmx/_chat_composer.html" with order_id=o.id scope="admin" title="Discussion" csrf_token=csrf_token %}
+    </div>
+
+    <div class="adm-order-actions">
+      {% if o.status == 'pending' or o.status == 'price_confirmed' %}
+      {% if not o.price and not o.is_service_plan %}
+      <button type="button" onclick="openProposePrice('{{ o.id }}', '')" class="adm-action-btn adm-action-btn--price">
+        <i class="ri-price-tag-3-line"></i> Fixer un prix
+      </button>
+      {% endif %}
+      {% endif %}
+
+      {% if not o.driver_id and o.status != 'completed' and o.status != 'cancelled' %}
+      <button type="button"
+              hx-get="/htmx/admin/drivers/available/?order_id={{ o.id }}"
+              hx-target="#assign-modal-content-{{ o.id }}"
+              hx-swap="innerHTML"
+              onclick="document.getElementById('assign-modal-{{ o.id }}').style.display='flex'"
+              class="adm-action-btn adm-action-btn--assign">
+        <i class="ri-user-add-line"></i> Assigner chauffeur
+      </button>
+      {% endif %}
+
+      {% if o.status != 'completed' and o.status != 'cancelled' %}
+      <button type="button"
+              data-admin-cancel-order="{{ o.id }}"
+              data-order-status="{{ o.status }}"
+              data-order-driver="{% if o.driver_id or o.driver_name %}1{% else %}0{% endif %}"
+              data-order-payment-method="{{ o.payment_method|default:'' }}"
+              data-order-payment-status="{{ o.payment_status|default:'pending' }}"
+              class="adm-action-btn adm-action-btn--refuse adm-action-btn--full">
+        <i class="ri-close-circle-line"></i> Annuler
+      </button>
+      {% endif %}
+    </div>
+
+    <div id="assign-modal-{{ o.id }}" class="adm-assign-modal">
+      <div class="adm-assign-modal__dialog">
+        <div class="adm-assign-modal__head">
+          <h3>Choisir un chauffeur</h3>
+          <button type="button" onclick="document.getElementById('assign-modal-{{ o.id }}').style.display='none'" class="adm-assign-modal__close"><i class="ri-close-line"></i></button>
+        </div>
+        <div id="assign-modal-content-{{ o.id }}">
+          <p class="adm-assign-modal__loading">Chargement des chauffeurs...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <button type="button" class="daxi-oc-expand-btn" id="voir-plus-btn-{{ o.id }}" aria-expanded="false"
+    onclick="DaxiOrderExpand.toggle('{{ o.id }}')">
+    <i class="ri-arrow-down-s-line"></i> <span class="daxi-oc-expand-label">Voir plus</span>
+  </button>

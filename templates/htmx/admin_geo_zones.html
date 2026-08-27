@@ -1,0 +1,154 @@
+{% load static %}
+
+<div class="geo-admin-wrap space-y-6" id="geo-admin-root">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h3 class="text-lg font-bold text-white">Zones couvertes par DAXI</h3>
+      <p class="text-sm text-gray-400 mt-1">Sélectionnez les départements et communes desservis · données offline pour l'app</p>
+    </div>
+    <button type="button" onclick="loadAdminGeoZones(true)" class="px-4 py-2 rounded-xl bg-daxi-cyan/20 border border-daxi-cyan/40 text-daxi-cyan text-sm font-semibold">
+      <i class="ri-restart-line"></i> Actualiser
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-gray-800/80 rounded-xl p-4 border border-white/5">
+      <div class="text-2xl font-bold text-daxi-cyan">{{ departments|length }}</div>
+      <div class="text-xs text-gray-400">Départements</div>
+    </div>
+    <div class="bg-gray-800/80 rounded-xl p-4 border border-white/5">
+      <div class="text-2xl font-bold text-emerald-400" id="geo-stat-available">{{ departments_available|default:0 }}</div>
+      <div class="text-xs text-gray-400">Zones prêtes</div>
+    </div>
+    <div class="bg-gray-800/80 rounded-xl p-4 border border-white/5">
+      <div class="text-2xl font-bold text-amber-400" id="geo-stat-places">—</div>
+      <div class="text-xs text-gray-400">Lieux publiés</div>
+    </div>
+    <div class="bg-gray-800/80 rounded-xl p-4 border border-white/5">
+      <div class="text-2xl font-bold text-violet-400" id="geo-stat-roads">—</div>
+      <div class="text-xs text-gray-400">Routes publiées</div>
+    </div>
+  </div>
+
+  {% if active_jobs %}
+  <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4" id="geo-active-jobs-banner">
+    <div class="text-sm font-bold text-amber-300 mb-2"><i class="ri-download-cloud-2-line"></i> Imports en cours</div>
+    {% for job in active_jobs %}
+    <div class="flex items-center justify-between gap-2 text-xs text-amber-100/80 mb-1" data-geo-job-banner="{{ job.pk }}" data-geo-zone-id="{{ job.zone_id }}">
+      <span>{{ job.zone.name }} — {{ job.get_stage_display }} ({{ job.progress_pct|floatformat:0 }}%)</span>
+      <button type="button" onclick="adminGeoCancelJob({{ job.pk }})" class="text-red-300 hover:text-red-200 underline shrink-0">Annuler</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4" id="geo-dept-grid">
+    {% for d in departments %}
+    <div class="geo-dept-card bg-gray-800 rounded-2xl border border-white/10 overflow-hidden {% if not d.is_active %}opacity-90{% endif %}" data-dept-slug="{{ d.slug }}" data-dept-name="{{ d.name }}" data-zone-id="{{ d.zone_id|default:'' }}" data-active-job-id="{{ d.active_job_id|default:'' }}">
+      <div class="p-5">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div class="min-w-0">
+            <h4 class="font-bold text-white text-base">{{ d.name }}</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">{{ d.cities_hint }}</p>
+          </div>
+          <span class="geo-status-badge geo-status-{{ d.geo_status }} text-xs font-bold px-2.5 py-1 rounded-full shrink-0">{{ d.geo_status_display }}</span>
+        </div>
+
+        {% if d.is_active %}
+        <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+          <div class="bg-black/20 rounded-lg px-3 py-2"><span class="text-gray-500">Lieux</span><div class="font-bold text-white">{{ d.place_count }}</div></div>
+          <div class="bg-black/20 rounded-lg px-3 py-2"><span class="text-gray-500">Routes</span><div class="font-bold text-white">{{ d.road_count }}</div></div>
+          <div class="bg-black/20 rounded-lg px-3 py-2"><span class="text-gray-500">Taille</span><div class="font-bold text-white">{{ d.file_size_mb }} Mo</div></div>
+          <div class="bg-black/20 rounded-lg px-3 py-2"><span class="text-gray-500">MAJ</span><div class="font-bold text-white">{{ d.last_download_display }}</div></div>
+        </div>
+
+        {% if d.cities %}
+        <details class="mb-4 group">
+          <summary class="text-[11px] font-semibold text-gray-400 cursor-pointer list-none flex items-center justify-between gap-2 mb-1">
+            <span>Communes ({{ d.city_count }})</span>
+            <i class="ri-arrow-down-s-line group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <div class="space-y-1 max-h-56 overflow-y-auto mt-1 pr-1">
+            {% for city in d.cities %}
+            <div class="flex items-center justify-between gap-2 text-[11px] bg-black/15 rounded-lg px-2 py-1.5" data-city-slug="{{ city.slug }}" data-city-zone-id="{{ city.zone_id|default:'' }}" data-city-job-id="{{ city.active_job_id|default:'' }}">
+              <span class="text-gray-300 truncate">{{ city.name }}</span>
+              <span class="geo-status-badge geo-status-{{ city.geo_status }} text-[10px] px-1.5 py-0.5 rounded-full shrink-0">{{ city.geo_status_display }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+        {% else %}
+        <p class="text-xs text-gray-500 mb-4">Département non couvert — activez puis choisissez les villes à télécharger.</p>
+        {% endif %}
+
+        <div class="flex flex-wrap gap-2">
+          {% if not d.is_active %}
+          <button type="button" onclick="adminGeoOpenDownloadModal('{{ d.slug }}', '{{ d.name|escapejs }}', true)" class="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold">
+            <i class="ri-map-pin-add-line"></i> Activer &amp; télécharger
+          </button>
+          {% elif d.active_job_id %}
+          <button type="button" onclick="adminGeoWatchJob({{ d.active_job_id }})" class="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+            <i class="ri-loader-4-line animate-spin"></i> Voir progression
+          </button>
+          <button type="button" onclick="adminGeoCancelJob({{ d.active_job_id }})" class="px-3 py-2.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20">
+            <i class="ri-stop-circle-line"></i> Annuler
+          </button>
+          {% else %}
+          <button type="button" onclick="adminGeoOpenDownloadModal('{{ d.slug }}', '{{ d.name|escapejs }}', false)" class="flex-1 min-w-[140px] px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold">
+            <i class="ri-download-2-line"></i> Préparer données app
+          </button>
+          {% endif %}
+
+          {% if d.is_active %}
+          <button type="button" onclick="adminGeoDeactivateDepartment('{{ d.slug }}')" class="px-3 py-2.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20" title="Retirer de la couverture">
+            <i class="ri-close-circle-line"></i> Désactiver
+          </button>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if d.zone_id %}
+      <div class="geo-zone-progress hidden border-t border-white/5 p-4 bg-black/20" id="geo-zone-progress-{{ d.zone_id }}"></div>
+      {% endif %}
+      {% for city in d.cities %}
+        {% if city.zone_id %}
+      <div class="geo-zone-progress hidden border-t border-white/5 p-4 bg-black/20" id="geo-zone-progress-{{ city.zone_id }}"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+
+<div id="geo-download-modal" class="modal-overlay hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
+  <div class="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl">
+    <div class="flex items-center justify-between p-4 border-b border-white/10">
+      <h4 class="font-bold text-white text-sm" id="geo-download-modal-title">Télécharger OSM</h4>
+      <button type="button" onclick="adminGeoCloseDownloadModal()" class="text-gray-400 hover:text-white"><i class="ri-close-line text-xl"></i></button>
+    </div>
+    <div class="p-4 overflow-y-auto flex-1 space-y-3" id="geo-download-modal-body">
+      <p class="text-xs text-gray-400">Chargement des villes…</p>
+    </div>
+    <div class="p-4 border-t border-white/10 flex gap-2">
+      <button type="button" onclick="adminGeoCloseDownloadModal()" class="flex-1 px-3 py-2.5 rounded-xl bg-gray-700 text-gray-200 text-xs font-bold">Annuler</button>
+      <button type="button" onclick="adminGeoSubmitDownloadModal()" class="flex-1 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-bold" id="geo-download-modal-submit">
+        <i class="ri-download-2-line"></i> Lancer
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.geo-status-available { background: rgba(16,185,129,.2); color: #6ee7b7; }
+.geo-status-downloading, .geo-status-processing { background: rgba(245,158,11,.2); color: #fcd34d; }
+.geo-status-not_downloaded, .geo-status-none { background: rgba(107,114,128,.25); color: #d1d5db; }
+.geo-status-update_needed { background: rgba(59,130,246,.2); color: #93c5fd; }
+.geo-status-error { background: rgba(239,68,68,.2); color: #fca5a5; }
+.geo-progress-bar { height: 10px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.geo-progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#10b981,#06b6d4); transition: width .4s ease; }
+.geo-logs-box { max-height: 160px; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 10px; line-height: 1.5; }
+.geo-city-check:checked + span { color: #6ee7b7; }
+</style>

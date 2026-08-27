@@ -1,0 +1,59 @@
+{% load static daxi_extras %}
+<div class="order-card order-card--plan" id="order-card-{{ o.id }}"
+     style="margin-bottom:20px; border:2px solid #f59e0b; border-radius:12px; padding:16px; background:linear-gradient(180deg,#fffbeb 0%,#ffffff 120px); box-shadow:0 2px 8px rgba(245,158,11,0.12);">
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:10px;border:1px solid #fcd34d;">
+    <div>
+      <div style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.5px;">Forfait plan</div>
+      <div style="font-size:18px;font-weight:900;color:#78350f;margin-top:2px;">{{ o.service_plan_display|default:o.service_plan }}</div>
+      <div style="font-size:11px;color:#92400e;margin-top:4px;">{{ o.service_plan_hint }}</div>
+    </div>
+    {% if o.price %}
+    <div style="text-align:right;">
+      <div style="font-size:24px;font-weight:900;color:#b45309;">{{ o.price|daxi_price }}</div>
+      <div style="font-size:10px;font-weight:700;color:#92400e;">Prix fixe</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span style="padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700; background:#fef3c7; color:#92400e;">
+      {{ o.status_display }}
+    </span>
+    <div style="text-align:right;">
+      <div style="font-size:11px; color:#6b7280;">{{ o.created_display }}</div>
+      {% if o.date_display or o.time %}
+      <div style="font-size:10px; color:#92400e; font-weight:600;"><i class="ri-calendar-line"></i> {% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+    <span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#fef3c7; color:#92400e;"><i class="ri-vip-crown-line"></i> Forfait</span>
+    {% if o.passengers %}<span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#f3e8ff; color:#6b21a8;"><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>{% endif %}
+    {% if o.vehicle_type and o.vehicle_type != 'economy' %}<span style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; background:#e0f2fe; color:#0369a1;"><i class="ri-car-line"></i> {{ o.vehicle_type }}</span>{% endif %}
+  </div>
+
+  {% if o.plan_itinerary %}
+  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:800;color:#c2410c;text-transform:uppercase;margin-bottom:6px;">Itinéraire planifié</div>
+    <div style="font-size:13px;font-weight:600;color:#7c2d12;line-height:1.5;">{{ o.plan_itinerary }}</div>
+  </div>
+  {% else %}
+  <div style="background:#f9fafb; border-radius:8px; padding:12px; margin-bottom:12px;">
+    <div style="font-size:11px; color:#6b7280;">Prise en charge</div>
+    <div style="font-weight:600; font-size:13px; color:#1f2937; margin-bottom:8px;">{{ o.pickup_display|default:o.pickup }}</div>
+    <div style="font-size:11px; color:#6b7280;">Fin prévue</div>
+    <div style="font-weight:600; font-size:13px; color:#1f2937;">{{ o.destination_display|default:o.destination }}</div>
+  </div>
+  {% endif %}
+
+  {% if o.notes and '[ITINÉRAIRE]' not in o.notes %}
+  <div style="margin-bottom:12px;padding:8px 10px;background:#fffbeb;border-radius:8px;border-left:3px solid #f59e0b;font-size:12px;color:#78350f;">{{ o.notes }}</div>
+  {% endif %}
+
+  {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+  {% include "htmx/_order_party_admin.html" %}
+
+  {% include "htmx/_admin_order_details.html" %}
+</div>

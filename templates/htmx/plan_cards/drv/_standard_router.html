@@ -1,0 +1,5 @@
+{% if o.trip_type == 'round_trip' %}
+{% include "htmx/plan_cards/drv/_round_trip.html" %}
+{% else %}
+{% include "htmx/plan_cards/drv/_one_way.html" %}
+{% endif %}

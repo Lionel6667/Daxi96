@@ -1,0 +1,172 @@
+.daxi-lieux { padding: 2px 0 32px; color: var(--daxi-text, #f8fafc); }
+.daxi-lieux-hero {
+  margin: 0 0 18px; padding: 22px 18px 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(245,158,11,.28), transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(16,185,129,.16), transparent 50%),
+    var(--daxi-surface, #111c30);
+  border: 1px solid var(--daxi-border, rgba(148,163,184,.16));
+}
+.daxi-lieux-kicker {
+  display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .16em;
+  text-transform: uppercase; color: #c27803; margin: 0 0 8px;
+}
+.daxi-lieux-hero h2 {
+  margin: 0 0 8px; font-size: clamp(22px, 6vw, 30px); font-weight: 900; letter-spacing: -.03em;
+  line-height: 1.12; color: var(--daxi-text, #f8fafc);
+}
+.daxi-lieux-hero p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--daxi-text-muted, #94a3b8); }
+.daxi-lieux-search {
+  width: 100%; padding: 13px 16px; border-radius: 16px; border: 1px solid var(--daxi-border, rgba(148,163,184,.2));
+  background: var(--daxi-input-bg, rgba(255,255,255,.06)); color: var(--daxi-text, #f8fafc);
+  font-size: 14px; margin-bottom: 12px;
+}
+.daxi-lieux-cats {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 14px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.daxi-lieux-cats::-webkit-scrollbar { display: none; }
+.daxi-lieux-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--daxi-border, rgba(148,163,184,.22));
+  background: var(--daxi-surface, rgba(15,23,42,.7)); color: var(--daxi-text, #e2e8f0);
+  border-radius: 999px; padding: 8px 13px; font-size: 12px; font-weight: 800; cursor: pointer;
+}
+.daxi-lieux-chip.is-on,
+[data-theme="light"] .daxi-lieux-chip.is-on,
+html[data-theme="light"] .daxi-lieux-chip.is-on {
+  background: var(--chip, #c27803) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+.daxi-lieux-card__book {
+  margin-top: 10px; width: 100%; padding: 10px 12px; border: none; border-radius: 12px;
+  background: #000; color: #fff; font-size: 12px; font-weight: 800; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.daxi-lieux-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 640px) {
+  .daxi-lieux-grid { grid-template-columns: 1fr 1fr; }
+  .daxi-lieux-card.is-featured { grid-column: 1 / -1; }
+}
+.daxi-lieux-card {
+  border-radius: 22px; overflow: hidden; cursor: pointer;
+  background: var(--daxi-surface, #111c30);
+  border: 1px solid var(--daxi-border, rgba(148,163,184,.16));
+  box-shadow: var(--daxi-card-shadow, 0 16px 40px rgba(0,0,0,.28));
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.daxi-lieux-card:active { transform: scale(.98); }
+@media (hover:hover) {
+  .daxi-lieux-card:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(16,42,67,.16); }
+}
+.daxi-lieux-card__media {
+  height: 188px; background: #1e293b center/cover no-repeat;
+  position: relative;
+}
+.daxi-lieux-card__media::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,.62) 100%);
+}
+.daxi-lieux-card.is-featured .daxi-lieux-card__media { height: 240px; }
+.daxi-lieux-card__tag {
+  position: absolute; left: 12px; bottom: 12px; z-index: 1;
+  color: #fff; font-size: 11px; font-weight: 800; border-radius: 999px;
+  padding: 5px 10px; display: inline-flex; align-items: center; gap: 5px;
+}
+.daxi-lieux-card__feat {
+  position: absolute; top: 12px; right: 12px; z-index: 1; background: #f59e0b; color: #111;
+  font-size: 10px; font-weight: 900; padding: 4px 8px; border-radius: 999px;
+}
+.daxi-lieux-card__body { padding: 14px 14px 16px; }
+.daxi-lieux-card__body h3 {
+  margin: 0 0 6px; font-size: 17px; font-weight: 900; color: var(--daxi-text, #f8fafc);
+}
+.daxi-lieux-card__addr, .daxi-lieux-card__hours, .daxi-lieux-card__desc {
+  margin: 0 0 4px; font-size: 12px; color: var(--daxi-text-muted, #94a3b8); line-height: 1.45;
+}
+.daxi-lieux-empty { text-align: center; padding: 40px 12px; color: var(--daxi-text-muted, #94a3b8); }
+.daxi-lieux-empty i { font-size: 36px; display: block; margin-bottom: 10px; color: #c27803; }
+
+.daxi-lieu-detail__hero {
+  height: min(48vw, 300px); min-height: 210px; border-radius: 22px; background: #1e293b center/cover no-repeat;
+  position: relative; margin-bottom: 16px;
+}
+.daxi-lieu-detail__hero::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.5) 100%);
+}
+.daxi-lieu-detail__back {
+  position: absolute; top: 12px; left: 12px; width: 38px; height: 38px; border: none;
+  border-radius: 50%; background: rgba(255,255,255,.92); color: #111; cursor: pointer; z-index: 1;
+}
+.daxi-lieu-detail__hero .daxi-lieux-card__tag { left: 12px; bottom: 12px; }
+.daxi-lieu-detail__body h2 { margin: 0 0 8px; font-size: 24px; font-weight: 900; color: var(--daxi-text, #f8fafc); }
+.daxi-lieu-detail__partner { font-size: 12px; font-weight: 800; color: #c27803; margin: 0 0 8px; }
+.daxi-lieu-detail__meta { margin: 0 0 6px; font-size: 13px; color: var(--daxi-text-secondary, #e2e8f0); }
+.daxi-lieu-detail__desc { margin: 12px 0 16px; font-size: 14px; line-height: 1.6; color: var(--daxi-text, #e2e8f0); }
+.daxi-lieu-gallery {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 18px;
+}
+@media (max-width: 420px) { .daxi-lieu-gallery { grid-template-columns: repeat(2, 1fr); } }
+.daxi-lieu-gallery__item {
+  padding: 0; border: none; border-radius: 12px; overflow: hidden; height: 84px; cursor: pointer;
+}
+.daxi-lieu-gallery__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.daxi-lieu-book {
+  width: 100%; padding: 15px; border: none; border-radius: 16px; cursor: pointer;
+  font-weight: 900; font-size: 15px; color: #000;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.daxi-lieux-lb {
+  position: fixed; inset: 0; z-index: 5600; background: rgba(0,0,0,.88);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.daxi-lieux-lb img { max-width: 100%; max-height: 88vh; border-radius: 12px; }
+
+.lx-admin-grid { display: grid; gap: 12px; }
+.lx-admin-card {
+  background: rgba(15,23,42,.7); border: 1px solid rgba(148,163,184,.16);
+  border-radius: 16px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;
+}
+.lx-admin-card img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+.lx-admin-form { display: grid; gap: 10px; max-width: 720px; }
+.lx-admin-form input, .lx-admin-form textarea, .lx-admin-form select {
+  width: 100%; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,.2);
+  background: #0f172a; color: #f8fafc;
+}
+.lx-admin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) {
+  .lx-admin-row { grid-template-columns: 1fr; }
+  .lx-admin-card { flex-direction: column; }
+  .lx-admin-card img { width: 100%; height: 140px; }
+}
+
+[data-theme="light"] .daxi-lieux-hero {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(245,158,11,.18), transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(16,185,129,.1), transparent 50%),
+    #ffffff;
+}
+[data-theme="light"] .daxi-lieux-card,
+[data-theme="light"] .daxi-lieux-chip:not(.is-on) {
+  background: #ffffff;
+  border-color: #D9E2EC;
+  color: #102A43;
+}
+[data-theme="light"] .daxi-lieux-card__body h3,
+[data-theme="light"] .daxi-lieu-detail__body h2 { color: #102A43; }
+[data-theme="light"] .daxi-lieux-card__addr,
+[data-theme="light"] .daxi-lieux-card__hours,
+[data-theme="light"] .daxi-lieux-card__desc,
+[data-theme="light"] .daxi-lieu-detail__meta,
+[data-theme="light"] .daxi-lieu-detail__desc { color: #3E4C59; }
+[data-theme="light"] .lx-admin-card,
+[data-theme="light"] .lx-admin-form input,
+[data-theme="light"] .lx-admin-form textarea,
+[data-theme="light"] .lx-admin-form select {
+  background: #ffffff;
+  color: #102A43;
+  border-color: #D9E2EC;
+}

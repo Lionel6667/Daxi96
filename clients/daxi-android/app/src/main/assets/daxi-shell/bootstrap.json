@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "version": 1,
+  "generated_at": "bundled",
+  "user": { "authenticated": false, "email": "", "name": "" },
+  "guest_id": "",
+  "orders": [],
+  "drivers": [],
+  "service_plans": [
+    {"slug": "ville-a-ville", "title": "Course Ville à Ville", "price": "Dynamique"},
+    {"slug": "demi-journee", "title": "Demi-Journée", "price": "70$"},
+    {"slug": "journee-complete", "title": "Journée Complète", "price": "140$"}
+  ],
+  "departments": [],
+  "map": {
+    "name": "Haïti",
+    "bounds": {"north": 20.15, "south": 18.0, "west": -74.8, "east": -71.6},
+    "center": {"lat": 19.5, "lng": -72.3},
+    "default_zoom": 9,
+    "offline_tile_template": "",
+    "prefetch_zoom_min": 8,
+    "prefetch_zoom_max": 11
+  },
+  "offline_rules": {
+    "read_only_offline": true,
+    "writes_require_online": ["order_create", "register", "chat_send"]
+  }
+}

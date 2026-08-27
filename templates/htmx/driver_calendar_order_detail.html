@@ -1,0 +1,85 @@
+{% load daxi_extras %}
+<div class="daxi-cal-order-detail">
+  <div class="daxi-cal-order-detail__head">
+    <span class="daxi-cal-order-detail__id">Course #{{ o.id }}</span>
+    <span class="daxi-cal-order-detail__badge daxi-cal-order-detail__badge--{{ o.status }}">
+      {{ o.client_status_label|default:o.status_display }}
+    </span>
+  </div>
+
+  <div class="daxi-cal-order-detail__grid">
+    <div class="daxi-cal-order-detail__row daxi-cal-order-detail__row--full">
+      <span class="daxi-cal-order-detail__label"><i class="ri-map-pin-line"></i> Départ</span>
+      <span class="daxi-cal-order-detail__value">{{ o.pickup_display|default:o.pickup }}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row daxi-cal-order-detail__row--full">
+      <span class="daxi-cal-order-detail__label"><i class="ri-flag-line"></i> Destination</span>
+      <span class="daxi-cal-order-detail__value">{{ o.destination_display|default:o.destination }}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-user-line"></i> Client</span>
+      <span class="daxi-cal-order-detail__value">{{ o.client_name }}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-phone-line"></i> Téléphone</span>
+      <span class="daxi-cal-order-detail__value">{{ o.client_phone_display|default:o.client_phone|default:"—" }}</span>
+    </div>
+    {% if o.client_email %}
+    <div class="daxi-cal-order-detail__row daxi-cal-order-detail__row--full">
+      <span class="daxi-cal-order-detail__label"><i class="ri-mail-line"></i> Email</span>
+      <span class="daxi-cal-order-detail__value">{{ o.client_email }}</span>
+    </div>
+    {% endif %}
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-calendar-line"></i> Date</span>
+      <span class="daxi-cal-order-detail__value">{{ o.date_display|default:"—" }}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-time-line"></i> Heure</span>
+      <span class="daxi-cal-order-detail__value">{% if o.time %}{{ o.time|slice:":5" }}{% else %}—{% endif %}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-route-line"></i> Trajet</span>
+      <span class="daxi-cal-order-detail__value">{% if o.trip_type == 'round_trip' %}Aller-retour{% else %}Aller simple{% endif %}</span>
+    </div>
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-group-line"></i> Passagers</span>
+      <span class="daxi-cal-order-detail__value">{{ o.passengers|default:1 }}</span>
+    </div>
+    {% if o.price %}
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-money-dollar-circle-line"></i> Prix</span>
+      <span class="daxi-cal-order-detail__value daxi-cal-order-detail__value--price">${{ o.price }}</span>
+    </div>
+    {% endif %}
+    {% if o.payment_method %}
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-bank-card-line"></i> Paiement</span>
+      <span class="daxi-cal-order-detail__value">{{ o.payment_method }}{% if o.payment_status %} · {{ o.payment_status }}{% endif %}</span>
+    </div>
+    {% endif %}
+    {% if o.distance_km %}
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-road-map-line"></i> Distance</span>
+      <span class="daxi-cal-order-detail__value">~{{ o.distance_km }} km</span>
+    </div>
+    {% endif %}
+    {% if o.duration_min %}
+    <div class="daxi-cal-order-detail__row">
+      <span class="daxi-cal-order-detail__label"><i class="ri-timer-line"></i> Durée est.</span>
+      <span class="daxi-cal-order-detail__value">~{{ o.duration_min }} min</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if o.notes %}
+  <div class="daxi-cal-order-detail__notes">
+    <span class="daxi-cal-order-detail__label"><i class="ri-sticky-note-line"></i> Notes</span>
+    <p>{{ o.notes }}</p>
+  </div>
+  {% endif %}
+
+  {% if o.is_later %}
+  <p class="daxi-cal-order-detail__hint"><i class="ri-calendar-schedule-line"></i> Course programmée</p>
+  {% endif %}
+</div>

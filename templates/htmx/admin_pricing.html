@@ -1,0 +1,78 @@
+<div id="pricing-config-panel" class="bg-gray-800 rounded-2xl p-6 space-y-5 max-w-2xl">
+  {% if success_msg %}
+  <div class="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-2xl text-sm font-semibold">
+    <i class="ri-check-line"></i> {{ success_msg }}
+  </div>
+  {% endif %}
+  <div>
+    <h3 class="font-bold text-lg">Configuration tarifaire</h3>
+    <p class="text-sm text-gray-400 mt-1">Tarifs de base en {{ config.currency|default:"USD" }} ($) — utilisés par le moteur de calcul automatique.</p>
+  </div>
+
+  <form id="pricing-config-form" class="space-y-4"
+        hx-post="/htmx/admin/pricing/"
+        hx-target="#pricing-config-panel"
+        hx-swap="outerHTML">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Prix de base par km ($)</label>
+        <input name="base_price_per_km" type="number" step="0.01" min="0.01"
+               value="{{ config.base_price_per_km }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Prix minimum ($)</label>
+        <input name="minimum_price" type="number" step="0.01" min="0.01"
+               value="{{ config.minimum_price }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Multiplicateur aller-retour</label>
+        <input name="round_trip_multiplier" type="number" step="0.1" min="1" max="5"
+               value="{{ config.round_trip_multiplier }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+        <p class="text-xs text-gray-500 mt-1">Défaut: 2.0 (double du trajet simple)</p>
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Attente AR par 30 min ($)</label>
+        <input name="wait_price_per_30min" type="number" step="0.01" min="0"
+               value="{{ config.wait_price_per_30min }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Pause chauffeur par 5 min ($)</label>
+        <input name="pause_price_per_5min" type="number" step="0.01" min="0"
+               value="{{ config.pause_price_per_5min }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+        <p class="text-xs text-gray-500 mt-1">Arrêt imprévu en cours de course</p>
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Majoration passager suppl. (%)</label>
+        <input name="passenger_price_percent" type="number" step="0.1" min="0" max="100"
+               value="{{ config.passenger_price_percent }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      </div>
+      <div>
+        <label class="text-xs text-gray-400 block mb-1">Multiplicateur global</label>
+        <input name="global_multiplier" type="number" step="0.01" min="0.1" max="5"
+               value="{{ config.global_multiplier }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-400 block mb-1">Commission chauffeur (%)</label>
+        <input name="default_driver_commission_rate" type="number" step="0.01" min="0" max="100"
+               value="{{ config.default_driver_commission_rate }}"
+               class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+        <p class="text-xs text-gray-500 mt-1">Part chauffeur sur chaque course — le reste va à l'admin (ex: 80% chauffeur, 20% admin). Appliqué à tous les chauffeurs.</p>
+      </div>
+    </div>
+    <div>
+      <label class="text-xs text-gray-400 block mb-1">Notes</label>
+      <textarea name="notes" rows="2"
+                class="w-full px-4 py-2.5 bg-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-daxi-cyan">{{ config.notes }}</textarea>
+    </div>
+    <button type="submit" class="px-6 py-3 bg-daxi-cyan rounded-xl font-bold text-white hover:opacity-90">
+      Enregistrer la configuration
+    </button>
+  </form>
+</div>

@@ -1,0 +1,82 @@
+
+{% include "htmx/_order_map_snippet.html" with map_scope="client" show_map_actions=True %}
+<div id="co-{{ o.id }}"
+     class="daxi-oc-card daxi-oc-card--plan daxi-oc-card--plan-airport"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-payment-status="{{ o.payment_status|default:'pending' }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0 }}"
+     data-timing="later">
+
+  <div class="daxi-oc-accent daxi-oc-accent--plan"></div>
+  <div class="daxi-oc-inner">
+    <div class="daxi-oc-plan-hero">
+      <div class="daxi-oc-plan-hero-left">
+        <i class="ri-flight-land-line"></i>
+        <div>
+          <div class="daxi-oc-plan-name" data-translate="plan_airport_title">Accueil Aéroport</div>
+          <div class="daxi-oc-plan-hint" data-translate="dpw_plan_airport_hint">Panneau nominatif · 1 h avant atterrissage</div>
+        </div>
+      </div>
+      {% if o.total_price or o.price %}
+      <div class="daxi-oc-plan-price">${{ o.total_price|default:o.price|floatformat:2 }}</div>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_order_status_pipeline.html" %}
+
+    <div class="daxi-oc-head">
+      {% include "htmx/_order_client_status_badge.html" %}
+      <span class="daxi-oc-badge daxi-oc-badge--plan"><i class="ri-plane-line"></i> CAP</span>
+      <span class="daxi-oc-timing daxi-oc-timing--later">
+        <i class="ri-calendar-schedule-line"></i>
+        <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong>
+      </span>
+    </div>
+
+    {% if o.plan_sign_name %}
+    <div class="daxi-oc-plan-field">
+      <span class="daxi-oc-plan-field-lbl" data-translate="dpw_sign_label">Nom sur le panneau</span>
+      <span class="daxi-oc-plan-field-val">{{ o.plan_sign_name }}</span>
+    </div>
+    {% endif %}
+    {% if o.plan_landing_at %}
+    <div class="daxi-oc-plan-field">
+      <span class="daxi-oc-plan-field-lbl" data-translate="dpw_landing_at">Atterrissage prévu</span>
+      <span class="daxi-oc-plan-field-val">{{ o.plan_landing_at }}</span>
+    </div>
+    {% endif %}
+
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--pickup"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="dpw_airport_pickup">Prise en charge</span>
+          <span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup }}</span>
+        </div>
+      </div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--dest"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label" data-translate="dpw_where_going">Où vous allez</span>
+          <span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="daxi-oc-meta">
+      {% if o.passengers %}<span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers }} <span data-translate="label_passengers_short">pers.</span></span>{% endif %}
+      {% if o.payment_method %}
+      <span class="daxi-oc-chip"><i class="ri-bank-card-line"></i>
+        {% if o.payment_method == 'in_person' %}<span data-translate="payment_in_person">Sur place</span>
+        {% elif o.payment_method == 'moncash' %}<span data-translate="payment_moncash">MonCash</span>
+        {% elif o.payment_method == 'card' %}<span data-translate="payment_card">Carte</span>{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_client_order_driver_block.html" %}
+    {% include "htmx/_client_order_actions.html" %}
+  </div>
+</div>

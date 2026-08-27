@@ -1,0 +1,19 @@
+{% load daxi_extras %}
+{% if o.trip_type == 'round_trip' or o.trip_type == 'aller-retour' or o.trip_type == 'aller retour' %}
+  {% if o.round_trip_wait_minutes or o.round_trip_allow_driver_other_rides %}
+  <div class="daxi-rt-wait-info">
+    {% if o.round_trip_wait_minutes %}
+    <div class="daxi-rt-wait-info__row">
+      <span class="daxi-rt-wait-info__label"><i class="ri-time-line"></i> Attente au retour (aller-retour)</span>
+      <span class="daxi-rt-wait-info__value">{{ o.round_trip_wait_minutes|daxi_wait_duration }}</span>
+    </div>
+    {% endif %}
+    {% if o.round_trip_allow_driver_other_rides %}
+    <div class="daxi-rt-wait-info__allow">
+      <i class="ri-checkbox-circle-line"></i>
+      Autoriser le chauffeur à prendre d'autres courses durant l'attente
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+{% endif %}

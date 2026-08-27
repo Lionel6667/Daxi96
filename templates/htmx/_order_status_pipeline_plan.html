@@ -1,0 +1,8 @@
+
+{% if o.plan_pipeline_variant == 'duration' %}
+{% include "htmx/_order_status_pipeline_plan_duration.html" %}
+{% elif o.plan_pipeline_variant == 'premium' %}
+{% include "htmx/_order_status_pipeline_plan_premium.html" %}
+{% else %}
+{% include "htmx/_order_status_pipeline_plan_transport.html" %}
+{% endif %}

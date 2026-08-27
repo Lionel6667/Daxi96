@@ -1,0 +1,8 @@
+{% load static %}
+
+<span id="driver-status-badge"
+      style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:13px; font-weight:700;
+      background:{% if status == 'available' %}#d1fae5; color:#065f46{% elif status == 'busy' %}#fef3c7; color:#92400e{% else %}#f3f4f6; color:#6b7280{% endif %};">
+  {% if status == 'available' %}🟢{% elif status == 'busy' %}🟡{% else %}⚫{% endif %}
+  {{ label }}
+</span>

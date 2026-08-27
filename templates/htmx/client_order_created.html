@@ -1,0 +1,56 @@
+{% load static %}
+
+<div style="background:linear-gradient(135deg,#10b981,#059669); border-radius:16px; padding:20px; text-align:center; color:white; margin:8px 0;">
+  <div style="font-size:40px; margin-bottom:10px;">✅</div>
+  <div style="font-size:18px; font-weight:800; margin-bottom:6px;">Course créée!</div>
+  {% if auto_price %}
+  <div style="font-size:13px; opacity:0.9; margin-bottom:10px;">Prix calculé automatiquement.</div>
+  <div style="background:rgba(255,255,255,0.2); border-radius:10px; padding:10px; display:inline-block; margin-bottom:12px;">
+    <span style="font-size:28px; font-weight:800;">${{ auto_price|floatformat:2 }}</span>
+  </div>
+  {% else %}
+  <div style="font-size:13px; opacity:0.9; margin-bottom:12px;">Votre demande a été envoyée. Un chauffeur sera bientôt assigné.</div>
+  {% endif %}
+
+  <div style="background:rgba(255,255,255,0.15); border-radius:10px; padding:12px; text-align:left; margin-bottom:12px;">
+    <div style="font-size:12px; opacity:0.85;">📍 {{ order.pickup_display|default:order.pickup }}</div>
+    <div style="border-left:2px dashed rgba(255,255,255,0.4); height:6px; margin-left:5px;"></div>
+    <div style="font-size:12px; opacity:0.85; margin-top:4px;">🎯 {{ order.destination_display|default:order.destination }}</div>
+  </div>
+
+  <div style="font-size:11px; opacity:0.7;">
+    Commande {{ order.ref_code }} · {{ order.created_display }}
+  </div>
+</div>
+
+<script>
+(function(){
+  var guestId = localStorage.getItem('daxi_guest_id') || '';
+  var isAuth = window.DJANGO_SESSION && window.DJANGO_SESSION.is_authenticated;
+
+  var ordersContainer = document.getElementById('client-orders-htmx');
+  if (ordersContainer && window.htmx) {
+    var url = '/htmx/client/orders/?tab=active' + ((!isAuth && guestId) ? '&guest_id=' + encodeURIComponent(guestId) : '');
+    htmx.ajax('GET', url, {target: '#client-orders-htmx', swap: 'innerHTML'});
+  }
+
+  setTimeout(function() {
+    var sec = document.getElementById('all-pending-requests');
+    if (sec) {
+      sec.style.display = '';
+      sec.classList.add('show-heading');
+      var clientHtmx = document.getElementById('client-orders-htmx');
+      if (clientHtmx) clientHtmx.style.display = '';
+    }
+    var target = document.getElementById('all-pending-requests');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    setTimeout(function() {
+      var resp = document.getElementById('booking-response');
+      if (resp) resp.innerHTML = '';
+    }, 3000);
+  }, 400);
+})();
+</script>

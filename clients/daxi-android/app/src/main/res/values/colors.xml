@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="daxi_bg_dialog">#0A1628</color>
+    <color name="daxi_gold">#F59E0B</color>
+    <color name="daxi_gold_dark">#D97706</color>
+    <color name="daxi_text_primary">#F8FAFC</color>
+    <color name="daxi_text_secondary">#94A3B8</color>
+    <color name="daxi_btn_outline">#334155</color>
+</resources>

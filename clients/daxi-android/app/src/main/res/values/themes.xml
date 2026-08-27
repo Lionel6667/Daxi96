@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Daxi" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#F59E0B</item>
+        <item name="colorPrimaryVariant">#D97706</item>
+        <item name="android:statusBarColor">#070B14</item>
+        <item name="android:navigationBarColor">#070B14</item>
+        <item name="android:windowBackground">#070B14</item>
+    </style>
+
+    <style name="Theme.Daxi.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimAmount">0.72</item>
+    </style>
+
+    <style name="Widget.Daxi.Dialog.Primary" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">#0F172A</item>
+        <item name="android:textStyle">bold</item>
+        <item name="backgroundTint">@color/daxi_gold</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Widget.Daxi.Dialog.Secondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textColor">@color/daxi_text_primary</item>
+        <item name="strokeColor">@color/daxi_btn_outline</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Widget.Daxi.Dialog.Tertiary" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/daxi_text_secondary</item>
+    </style>
+</resources>

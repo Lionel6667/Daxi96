@@ -1,0 +1,189 @@
+
+
+
+[data-theme="light"] #drv-panel {
+  background: var(--daxi-surface) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #drv-panel > div:first-child {
+  background: var(--daxi-surface-2) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #drv-panel-title { color: var(--daxi-text) !important; }
+[data-theme="light"] #drv-panel button[onclick="closeDrvPanel()"] {
+  background: var(--daxi-surface-3) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] #drv-panel-stats > div > div {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #drv-panel-stats [style*="text-transform:uppercase"] {
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #drv-panel-orders > div:first-child {
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #sb-tab-accepted,
+[data-theme="light"] #sb-tab-available,
+[data-theme="light"] #sb-tab-history {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #sb-tab-accepted[style*="rgba(16,185,129"] {
+  background: rgba(5, 150, 105, 0.12) !important;
+  border-color: rgba(5, 150, 105, 0.35) !important;
+  color: #047857 !important;
+}
+
+[data-theme="light"] #drv-sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f4f9 100%) !important;
+  border-right-color: var(--daxi-border) !important;
+  box-shadow: 8px 0 32px rgba(16, 42, 67, 0.12) !important;
+}
+[data-theme="light"] .dsb-hero {
+  background: transparent !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .dsb-close {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border: none !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] .dsb-name,
+[data-theme="light"] .dsb-item-title { color: var(--daxi-text) !important; }
+[data-theme="light"] .dsb-item-meta { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .dsb-item {
+  background: transparent !important;
+  border: none !important;
+  color: var(--daxi-text) !important;
+  box-shadow: none !important;
+}
+[data-theme="light"] .dsb-item:hover {
+  background: rgba(15, 23, 42, 0.04) !important;
+}
+[data-theme="light"] .dsb-status-wrap { border-bottom-color: var(--daxi-border) !important; }
+[data-theme="light"] .dsb-status-pill--available { background: rgba(16, 185, 129, 0.12) !important; color: #059669 !important; border-color: rgba(16, 185, 129, 0.35) !important; }
+[data-theme="light"] .dsb-status-pill--busy { background: rgba(245, 158, 11, 0.14) !important; color: #d97706 !important; border-color: rgba(245, 158, 11, 0.35) !important; }
+[data-theme="light"] .dsb-status-hint { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .dsb-footer { border-top-color: var(--daxi-border) !important; }
+
+[data-theme="light"] #orders-drawer,
+[data-theme="light"] #chat-panel,
+[data-theme="light"] #profile-modal-inner {
+  background: var(--daxi-surface) !important;
+  color: var(--daxi-text) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .veh-premium-hero {
+  background: linear-gradient(160deg, rgba(29, 111, 212, 0.12) 0%, rgba(194, 120, 3, 0.08) 45%, var(--daxi-surface-2) 100%) !important;
+  border-bottom-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .veh-premium-title,
+[data-theme="light"] .veh-spec-val,
+[data-theme="light"] #drv-car-plate-txt { color: var(--daxi-text) !important; }
+[data-theme="light"] .veh-spec {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .veh-spec-lbl { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] .drv-oc {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-oc-addr,
+[data-theme="light"] .drv-oc-proximity-val { color: var(--daxi-text) !important; }
+[data-theme="light"] .drv-oc-lbl,
+[data-theme="light"] .drv-oc-chip { color: var(--daxi-text-secondary) !important; }
+[data-theme="light"] .drv-oc-chip {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-oc-expand,
+[data-theme="light"] .drv-oc-details {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+
+[data-theme="light"] .drv-wlt-hero--credit {
+  background: linear-gradient(145deg, #ecfdf5 0%, #f0fdf4 55%, #ffffff 100%) !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
+}
+[data-theme="light"] .drv-wlt-hero--debit {
+  background: linear-gradient(145deg, #fff7ed 0%, #fffbeb 55%, #ffffff 100%) !important;
+  border-color: rgba(234, 88, 12, 0.3) !important;
+}
+[data-theme="light"] .drv-wlt-input {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] .drv-wlt-tx {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-wlt-tx-type { color: var(--daxi-text) !important; }
+[data-theme="light"] .drv-wlt-tx-note,
+[data-theme="light"] .drv-wlt-tx-date,
+[data-theme="light"] .drv-wlt-hist-title,
+[data-theme="light"] .drv-wlt-comm-text { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] .drv-wlt-moncash {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] .drv-wlt-comm {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+
+
+[data-theme="light"] #admin-app .field-help-popover {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+  box-shadow: var(--daxi-card-shadow) !important;
+}
+[data-theme="light"] #admin-app .field-help-btn {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-muted) !important;
+}
+[data-theme="light"] #admin-app .forum-create-box {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #admin-app .forum-create-box textarea {
+  background: var(--daxi-input-bg) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text) !important;
+}
+[data-theme="light"] #admin-app #admin-live-map-wrap {
+  background: var(--daxi-surface-2) !important;
+  border-color: var(--daxi-border) !important;
+}
+[data-theme="light"] #admin-app .live-map-footer {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.97) 70%, transparent) !important;
+}
+[data-theme="light"] #admin-app .live-map-legend-bottom span,
+[data-theme="light"] #admin-app .live-map-chip {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}
+[data-theme="light"] #admin-app .live-map-status { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #admin-app .admin-table .cell-route .route-main { color: var(--daxi-text) !important; }
+[data-theme="light"] #admin-app .admin-table .cell-route .route-sub { color: var(--daxi-text-muted) !important; }
+[data-theme="light"] #admin-app .admin-table .cell-muted { color: var(--daxi-text-muted) !important; }
+
+
+[data-theme="light"] #admin-app .adm-oc-card,
+[data-theme="light"] #admin-app [class*="adm-plan-card"],
+[data-theme="light"] #admin-app .daxi-oc-card {
+  background: var(--daxi-surface) !important;
+  border-color: var(--daxi-border) !important;
+  color: var(--daxi-text-secondary) !important;
+}

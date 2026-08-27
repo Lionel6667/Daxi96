@@ -1,0 +1,132 @@
+{% load static %}
+<div class="ent-checkout" data-order-id="{{ order_id }}" data-phase="{{ phase }}" data-pay-url="{{ client_pay_url }}">
+
+  {% if phase == 'accept_price' %}
+  <div class="ent-checkout-head">
+    <i class="ri-price-tag-3-line"></i>
+    <h3>Valider le prix</h3>
+    <p>Confirmez le tarif avant de choisir le paiement.</p>
+  </div>
+  <div class="ent-checkout-price">
+    <span class="ent-checkout-price-label">Montant</span>
+    <span class="ent-checkout-price-val">${{ order.price|floatformat:2 }}</span>
+  </div>
+  <div class="ent-checkout-route">
+    <div><strong>Départ</strong> — {{ order.pickup_display|default:order.pickup }}</div>
+    <div><strong>Arrivée</strong> — {{ order.destination_display|default:order.destination }}</div>
+  </div>
+  <div class="ent-checkout-actions">
+    {% csrf_token %}
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--gold"
+      hx-post="/htmx/enterprise/orders/{{ order_id }}/confirm-price/"
+      hx-target="#ent-checkout-body"
+      hx-swap="innerHTML"
+      hx-include="[name=csrfmiddlewaretoken]"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      hx-on::after-swap="entInitCheckoutBody(document.getElementById('ent-checkout-body'))">
+      <i class="ri-check-line"></i> Accepter le prix
+    </button>
+    {% if can_cancel %}
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--danger" onclick="entCancelOrder({{ order_id }})">
+      <i class="ri-close-circle-line"></i> Annuler la commande
+    </button>
+    {% endif %}
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost" onclick="closeEntCheckoutModal()">Plus tard</button>
+  </div>
+
+  {% elif phase == 'choose_payment' %}
+  <div class="ent-checkout-head">
+    <i class="ri-wallet-3-line"></i>
+    <h3>Finaliser la commande</h3>
+    <p>Commande {% firstof order.code order.ref_code order_code %} · <strong>${{ order.price|floatformat:2 }}</strong></p>
+  </div>
+
+  <div class="ent-checkout-section">
+    <div class="ent-checkout-section-title">Qui paie ?</div>
+    <label class="ent-checkout-opt"><input type="radio" name="ent-payer" value="self" checked> Je paie maintenant</label>
+    <label class="ent-checkout-opt"><input type="radio" name="ent-payer" value="client"> Le client paie (lien / QR)</label>
+    <label class="ent-checkout-opt"><input type="radio" name="ent-payer" value="driver"> Le client paie le chauffeur</label>
+  </div>
+
+  <div class="ent-checkout-section" id="ent-pay-method-section">
+    <div class="ent-checkout-section-title">Moyen de paiement</div>
+    <label class="ent-checkout-opt"><input type="radio" name="ent-method" value="moncash" checked>
+      <img src="{% static 'payments/moncash-badge.png' %}?v=20260827b" alt="" style="height:28px;width:auto;max-width:110px;object-fit:contain;background:#fff;border-radius:6px;padding:3px 5px;vertical-align:middle;margin-right:6px;">
+      MonCash
+    </label>
+    <label class="ent-checkout-opt"><input type="radio" name="ent-method" value="card"> Carte bancaire</label>
+  </div>
+
+  <div class="ent-checkout-contract">
+    <label><input type="checkbox" id="ent-contract-check"> J'accepte le contrat de transport DAXI.</label>
+    <button type="button" class="ent-checkout-link" onclick="entOpenContractModal()">Voir le contrat</button>
+  </div>
+
+  <div class="ent-checkout-actions">
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--gold" id="ent-checkout-submit-btn" disabled onclick="entSubmitCheckout({{ order_id }})">
+      <i class="ri-arrow-right-line"></i> Continuer
+    </button>
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost"
+      hx-post="/htmx/enterprise/orders/{{ order_id }}/checkout/back/"
+      hx-target="#ent-checkout-body"
+      hx-swap="innerHTML"
+      hx-on::after-swap="entInitCheckoutBody(document.getElementById('ent-checkout-body'))">
+      <i class="ri-arrow-left-line"></i> Retour
+    </button>
+    {% if can_cancel %}
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--danger" onclick="entCancelOrder({{ order_id }})">
+      <i class="ri-close-circle-line"></i> Annuler la commande
+    </button>
+    {% endif %}
+  </div>
+
+  {% elif phase == 'await_client_pay' %}
+  <div class="ent-checkout-head">
+    <i class="ri-qr-code-line"></i>
+    <h3>Lien de paiement client</h3>
+    <p>Envoyez ce lien au client. Dès qu'il paie, la commande sera confirmée ici.</p>
+  </div>
+  {% if client_pay_url %}
+  <div class="ent-checkout-qr-wrap">
+    <div id="ent-client-pay-qr"></div>
+  </div>
+  <input type="text" class="ent-checkout-link-field" id="ent-client-pay-url" value="{{ client_pay_url }}" readonly onclick="this.select()">
+  <div class="ent-checkout-actions">
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--gold" onclick="entCopyClientPayLink()"><i class="ri-file-copy-line"></i> Copier le lien</button>
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost"
+      hx-post="/htmx/enterprise/orders/{{ order_id }}/checkout/back/"
+      hx-target="#ent-checkout-body"
+      hx-swap="innerHTML"
+      hx-on::after-swap="entInitCheckoutBody(document.getElementById('ent-checkout-body'))">
+      <i class="ri-arrow-left-line"></i> Retour
+    </button>
+    <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost" onclick="closeEntCheckoutModal()">Fermer</button>
+  </div>
+  {% else %}
+  <div class="ent-checkout-error">
+    <i class="ri-error-warning-line"></i> Impossible de générer le lien. Revenez en arrière et réessayez.
+  </div>
+  <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost"
+    hx-post="/htmx/enterprise/orders/{{ order_id }}/checkout/back/"
+    hx-target="#ent-checkout-body"
+    hx-swap="innerHTML"
+    hx-on::after-swap="entInitCheckoutBody(document.getElementById('ent-checkout-body'))">
+    <i class="ri-arrow-left-line"></i> Retour
+  </button>
+  {% endif %}
+
+  {% elif phase == 'finding_driver' %}
+  <div class="ent-checkout-head ent-checkout-head--ok">
+    <i class="ri-checkbox-circle-line"></i>
+    <h3>Commande confirmée</h3>
+    <p>Recherche de chauffeur en cours…</p>
+  </div>
+  <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost" onclick="closeEntCheckoutModal(); if(window.loadOrders) loadOrders(window._currentTab||'active');">Fermer</button>
+
+  {% else %}
+  <div class="ent-checkout-head">
+    <p>Aucune action requise pour cette commande.</p>
+  </div>
+  <button type="button" class="ent-checkout-btn ent-checkout-btn--ghost" onclick="closeEntCheckoutModal()">Fermer</button>
+  {% endif %}
+</div>

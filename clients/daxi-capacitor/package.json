@@ -1,0 +1,31 @@
+{
+  "name": "daxi-capacitor",
+  "version": "1.6.0",
+  "private": true,
+  "description": "DAXI — UI HTML/CSS/JS + Capacitor + services natifs iOS/Android",
+  "scripts": {
+    "bundle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/bundle-www.ps1",
+    "build:bridge": "esbuild capacitor-src/main.js --bundle --format=iife --outfile=www/js/daxi-capacitor.js --platform=browser",
+    "sync": "npm run bundle && npx cap sync",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/clipboard": "^6.0.3",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/geolocation": "^6.1.1",
+    "@capacitor/haptics": "^6.0.3",
+    "@capacitor/ios": "^6.2.1",
+    "@capacitor/local-notifications": "^6.1.3",
+    "@capacitor/network": "^6.0.4",
+    "@capacitor/preferences": "^6.0.4",
+    "@capacitor/push-notifications": "^6.0.5",
+    "@capacitor/share": "^6.0.4",
+    "@capacitor/splash-screen": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3",
+    "esbuild": "^0.28.2"
+  }
+}

@@ -1,0 +1,160 @@
+{% load static %}
+
+<style>
+.drv-wlt{font-family:'Outfit',system-ui,sans-serif;padding:16px;max-width:480px;margin:0 auto;}
+.drv-wlt-hero{position:relative;border-radius:22px;padding:22px 20px;margin-bottom:14px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+.drv-wlt-hero--credit{background:linear-gradient(145deg,#052e16 0%,#0f172a 55%,#111827 100%);border-color:rgba(16,185,129,.25);}
+.drv-wlt-hero--debit{background:linear-gradient(145deg,#2d1b00 0%,#1c1208 55%,#0f172a 100%);border-color:rgba(249,115,22,.25);}
+.drv-wlt-hero::before{content:'';position:absolute;top:-30%;right:-20%;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%);pointer-events:none;}
+.drv-wlt-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.drv-wlt-label--green{color:#4ade80;}
+.drv-wlt-label--orange{color:#fb923c;}
+.drv-wlt-amt{font-size:clamp(28px,8vw,36px);font-weight:900;line-height:1;letter-spacing:-1px;}
+.drv-wlt-amt--green{color:#10b981;}
+.drv-wlt-amt--orange{color:#f97316;}
+.drv-wlt-amt span{font-size:16px;font-weight:600;opacity:.75;}
+.drv-wlt-hint{font-size:10px;margin-top:8px;line-height:1.45;opacity:.75;}
+.drv-wlt-hint--green{color:#166534;}
+.drv-wlt-hint--orange{color:#78350f;}
+.drv-wlt-section{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08);}
+.drv-wlt-form{display:flex;flex-direction:column;gap:8px;}
+.drv-wlt-input{width:100%;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px 13px;color:#f8fafc;font-size:12px;outline:none;font-family:inherit;}
+.drv-wlt-input:focus{border-color:rgba(16,185,129,.45);}
+.drv-wlt-row{display:flex;gap:8px;align-items:center;}
+.drv-wlt-btn{border:none;border-radius:12px;padding:11px 16px;font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.drv-wlt-btn--green{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.drv-wlt-btn--orange{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;width:100%;padding:13px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.drv-wlt-btn:disabled{opacity:.55;cursor:default;}
+.drv-wlt-moncash{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;margin:12px 0;}
+.drv-wlt-moncash img{height:28px;width:auto;flex-shrink:0;}
+.drv-wlt-moncash-num{font-size:17px;font-weight:900;color:#fbbf24;letter-spacing:.3px;word-break:break-all;}
+.drv-wlt-comm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.drv-wlt-comm-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#000;flex-shrink:0;}
+.drv-wlt-comm-text{font-size:11px;color:#94a3b8;line-height:1.55;}
+.drv-wlt-hist-title{font-size:11px;font-weight:800;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.drv-wlt-tx{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.drv-wlt-tx-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.drv-wlt-tx-icon--up{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.2);color:#10b981;}
+.drv-wlt-tx-icon--down{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);color:#ef4444;}
+.drv-wlt-tx-body{flex:1;min-width:0;}
+.drv-wlt-tx-type{font-size:11px;font-weight:700;color:#e2e8f0;}
+.drv-wlt-tx-note{font-size:9px;color:#475569;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.drv-wlt-tx-date{font-size:9px;color:#334155;margin-top:2px;}
+.drv-wlt-tx-amt{text-align:right;flex-shrink:0;font-size:14px;font-weight:900;}
+.drv-wlt-tx-amt--pos{color:#10b981;}
+.drv-wlt-tx-amt--neg{color:#ef4444;}
+.drv-wlt-pending{margin-top:12px;background:rgba(16,185,129,.08);border:1px dashed rgba(16,185,129,.3);border-radius:12px;padding:10px 12px;font-size:11px;color:#4ade80;}
+.drv-wlt-warn{background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:8px 10px;font-size:11px;color:#92400e;margin-bottom:10px;}
+</style>
+
+<div id="drv-wallet-wrap" class="drv-wlt">
+
+  <div class="drv-wlt-hero drv-wlt-hero--credit">
+    <div class="drv-wlt-label drv-wlt-label--green"><i class="ri-wallet-3-line"></i> Solde en ligne — l'admin vous doit</div>
+    <div class="drv-wlt-amt drv-wlt-amt--green">{{ online_balance|floatformat:2 }} <span>$</span></div>
+    <div class="drv-wlt-hint drv-wlt-hint--green">Commissions des courses payées en ligne — pas encore retirées</div>
+    {% if cash_owed_to_admin > 0 %}
+    <div class="drv-wlt-warn" style="margin-top:10px;">
+      Vous devez {{ cash_owed_to_admin|floatformat:2 }} $ à l'admin (courses cash).
+      Montant retirable : <strong>{{ withdrawable_balance|floatformat:2 }} $</strong>.
+    </div>
+    {% endif %}
+
+    <div class="drv-wlt-section">
+      <div class="drv-wlt-label drv-wlt-label--green" style="margin-bottom:10px;">Demander un retrait</div>
+      {% if pending_withdrawal %}
+      <div class="drv-wlt-pending" style="margin-bottom:10px;">⏳ Demande en cours : <strong>{{ pending_withdrawal.note|truncatechars:60 }}</strong></div>
+      {% elif withdrawable_balance <= 0 %}
+      <div class="drv-wlt-warn">Retrait indisponible{% if cash_owed_to_admin > 0 %} — réglez d'abord votre dette cash à l'admin{% else %} — solde insuffisant{% endif %}.</div>
+      {% else %}
+      <form class="drv-wlt-form" hx-post="/htmx/driver/wallet/withdraw/"
+            hx-target="#drv-wallet-wrap" hx-swap="outerHTML">
+        {% csrf_token %}
+        <div class="drv-wlt-row" style="margin-bottom:4px;">
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.12);cursor:pointer;background:rgba(0,0,0,.2);">
+            <input type="radio" name="payout_method" value="moncash" checked style="accent-color:#ef4444;">
+            <img src="{% static 'payments/moncash-badge.png' %}?v=20260827b" alt="MonCash" style="height:28px;width:auto;max-width:110px;object-fit:contain;background:#fff;border-radius:6px;padding:3px 5px;">
+            <span style="font-size:11px;font-weight:700;color:#fff;">MonCash</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.12);cursor:pointer;background:rgba(0,0,0,.2);">
+            <input type="radio" name="payout_method" value="natcash" style="accent-color:#f97316;">
+            <img src="{% static 'payments/natcash.png' %}?v=20260826logo" alt="NatCash" style="height:24px;width:auto;max-width:72px;object-fit:contain;background:transparent;border-radius:0;">
+            <span style="font-size:11px;font-weight:700;color:#fff;">NatCash</span>
+          </label>
+        </div>
+        <input class="drv-wlt-input" name="phone" type="tel" required placeholder="Votre numéro MonCash ou NatCash">
+        <div class="drv-wlt-row">
+          <input class="drv-wlt-input" name="amount" type="number" min="1" step="0.01" max="{{ withdrawable_balance }}"
+                 placeholder="Max {{ withdrawable_balance|floatformat:2 }} $" style="flex:1;">
+          <button type="submit" class="drv-wlt-btn drv-wlt-btn--green">Envoyer</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if cash_owed_to_admin > 0 %}
+  <div class="drv-wlt-hero drv-wlt-hero--debit">
+    <div class="drv-wlt-label drv-wlt-label--orange"><i class="ri-cash-line"></i> Espèces — vous devez à l'admin</div>
+    <div class="drv-wlt-amt drv-wlt-amt--orange">{{ cash_owed_to_admin|floatformat:2 }} <span>$</span></div>
+    <div class="drv-wlt-hint drv-wlt-hint--orange" style="margin-top:8px;">
+      Commission admin sur vos courses payées en espèces — réglez via MonCash.
+    </div>
+
+    <div class="drv-wlt-section">
+      {% if moncash_configured %}
+      <form hx-post="/htmx/driver/wallet/pay-commission/" hx-target="#drv-wallet-wrap" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button type="submit" class="drv-wlt-btn drv-wlt-btn--orange">
+          <img src="{% static 'payments/moncash-badge.png' %}?v=20260827b" alt="" style="height:22px;width:auto;max-width:100px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 4px;">
+          Payer {{ cash_owed_to_admin|floatformat:2 }} $ via MonCash
+        </button>
+      </form>
+      {% else %}
+      <div class="drv-wlt-warn">MonCash temporairement indisponible — contactez le support Daxi.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="drv-wlt-comm" style="border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.06);">
+    <div class="drv-wlt-comm-icon" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;">✓</div>
+    <div class="drv-wlt-comm-text" style="color:#86efac;">
+      Aucun paiement espèces à reverser pour le moment. Votre compte est à jour.
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="drv-wlt-comm">
+    <div class="drv-wlt-comm-icon">%</div>
+    <div class="drv-wlt-comm-text">
+      Vous gardez <strong style="color:#10b981;">{{ commission_rate }}%</strong> de chaque course.<br>
+      Part admin : <strong style="color:#f97316;">{{ commission_deduction }}%</strong>
+      (espèces → MonCash, en ligne → déduit automatiquement)
+    </div>
+  </div>
+
+  <div class="drv-wlt-hist-title">Historique</div>
+
+  {% if transactions %}
+  {% for tx in transactions %}
+  <div class="drv-wlt-tx">
+    <div class="drv-wlt-tx-icon {% if tx.amount >= 0 %}drv-wlt-tx-icon--up{% else %}drv-wlt-tx-icon--down{% endif %}">
+      {% if tx.amount >= 0 %}↑{% else %}↓{% endif %}
+    </div>
+    <div class="drv-wlt-tx-body">
+      <div class="drv-wlt-tx-type">{{ tx.get_transaction_type_display }}</div>
+      {% if tx.note %}<div class="drv-wlt-tx-note">{{ tx.note }}</div>{% endif %}
+      <div class="drv-wlt-tx-date">{{ tx.created_at|date:"d/m/Y H:i" }}</div>
+    </div>
+    <div class="drv-wlt-tx-amt {% if tx.amount >= 0 %}drv-wlt-tx-amt--pos{% else %}drv-wlt-tx-amt--neg{% endif %}">
+      {% if tx.amount >= 0 %}+{% endif %}{{ tx.amount|floatformat:2 }} $
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:28px 16px;color:#475569;font-size:12px;border:1px dashed rgba(255,255,255,.08);border-radius:14px;">
+    Aucune transaction pour l'instant.
+  </div>
+  {% endif %}
+
+</div>

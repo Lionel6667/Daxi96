@@ -1,0 +1,11 @@
+{% load static %}
+{% if o.driver_name or o.status == 'driver_assigned' or o.status == 'on_way' or o.status == 'arrived' or o.status == 'in_progress' %}
+<div class="ent-oc-actions" style="margin-top:8px;">
+  <button type="button" class="ent-oc-action-btn ent-oc-action-btn--blue" onclick="entToggleOrderChat({{ o.id }})">
+    <i class="ri-chat-3-line"></i> Discussion course
+  </button>
+</div>
+<div id="ent-chat-wrap-{{ o.id }}" style="display:none;margin-top:10px;">
+  {% include "htmx/_chat_composer.html" with order_id=o.id scope="enterprise" title="Discussion course" closable=True csrf_token=csrf_token %}
+</div>
+{% endif %}

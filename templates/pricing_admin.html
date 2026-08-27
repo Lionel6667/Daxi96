@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<script>(function(){try{var p=new URLSearchParams(location.search);var t=p.get('theme');if(t!=='light'&&t!=='dark'){try{t=localStorage.getItem('daxi-theme');}catch(e){}}if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAXI — Tarification Dynamique</title>
+{% include "partials/daxi_favicon.html" %}
+{% load static %}
+
+
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}" />
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e;
+    display: flex; flex-direction: column;
+    margin: 0;
+  }
+  body.pricing-map-page { height: 100%; overflow: hidden; }
+  body.pricing-scroll-page {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  
+  .app-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .app-header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+  .app-header .badge {
+    background: #e94560; color: #fff;
+    font-size: 11px; padding: 2px 8px; border-radius: 12px;
+  }
+  .nav-tabs {
+    background: #fff;
+    border-bottom: 2px solid #e0e0e0;
+    display: flex; gap: 0; padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .nav-tab {
+    padding: 12px 20px; cursor: pointer; font-size: 13px; font-weight: 500;
+    border-bottom: 3px solid transparent; color: #666;
+    transition: all 0.2s; user-select: none;
+  }
+  .nav-tab:hover { color: #1a1a2e; }
+  .nav-tab.active { color: #e94560; border-bottom-color: #e94560; }
+
+  .tab-content { display: none; flex: 1; min-height: 0; overflow: hidden; }
+  .tab-content.active { display: flex; }
+  #tab-map.active { flex-direction: row; }
+  body.pricing-scroll-page #tab-tags.active,
+  body.pricing-scroll-page #tab-config.active {
+    display: block;
+    flex: none;
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+  body.pricing-map-page #tab-tags.active,
+  body.pricing-map-page #tab-config.active {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 0;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  
+  #map { flex: 1; min-height: 0; min-width: 0; }
+  .map-sidebar {
+    width: 320px; min-width: 0; background: #fff; overflow-y: auto; overflow-x: hidden;
+    border-left: 1px solid #e0e0e0;
+    display: flex; flex-direction: column;
+    flex-shrink: 0; height: 100%;
+  }
+  .sidebar-section { padding: 16px; border-bottom: 1px solid #f0f0f0; min-width: 0; }
+  .sidebar-section h3 { font-size: 13px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+  
+  .form-row { margin-bottom: 10px; }
+  .form-row label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 4px; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%; max-width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; outline: none; transition: border-color 0.2s;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #e94560; }
+  .form-row .color-row { display: flex; gap: 8px; align-items: center; }
+  .form-row .color-row input[type=color] { width: 40px; height: 33px; padding: 2px; cursor: pointer; border-radius: 4px; }
+
+  
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 6px; font-size: 13px;
+    font-weight: 500; cursor: pointer; border: none; transition: all 0.2s;
+  }
+  .btn-primary { background: #e94560; color: #fff; }
+  .btn-primary:hover { background: #c73652; }
+  .btn-secondary { background: #f0f0f0; color: #444; }
+  .btn-secondary:hover { background: #e0e0e0; }
+  .btn-danger { background: #ff4757; color: #fff; }
+  .btn-danger:hover { background: #e63946; }
+  .btn-success { background: #2ed573; color: #fff; }
+  .btn-success:hover { background: #20bf6b; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  
+  .tag-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 12px; font-size: 11px;
+    font-weight: 500; color: #fff; margin: 2px; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s;
+  }
+  .tag-pill.selected { border-color: rgba(0,0,0,0.3); box-shadow: 0 0 0 2px rgba(0,0,0,0.15); }
+  .tag-pill .remove { opacity: 0.7; font-size: 10px; }
+
+  
+  .zone-item {
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
+    background: #f8f9fa; border: 1px solid #e8e8e8; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .zone-item:hover { border-color: #aaa; }
+  .zone-item.active { border-color: #e94560; background: #fff5f7; }
+  .zone-item .zone-name { font-size: 13px; font-weight: 600; }
+  .zone-item .zone-meta { font-size: 11px; color: #888; margin-top: 3px; }
+  .zone-item .zone-color-dot {
+    width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+    margin-right: 6px; border: 1px solid rgba(0,0,0,0.15);
+  }
+
+  
+  .drawing-instructions {
+    background: #fffbea; border: 1px solid #ffd700; border-radius: 6px;
+    padding: 10px 12px; font-size: 12px; color: #7a6000; line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .brush-toolbar { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .brush-chip {
+    display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px;
+    border-radius:8px; border:2px solid transparent; cursor:pointer;
+    background:#f8f9fa; transition:border-color .15s, background .15s; text-align:left;
+  }
+  .brush-chip:hover { background:#f0f2f5; }
+  .brush-chip.active { border-color:#e94560; background:#fff5f7; }
+  .brush-chip-swatch {
+    width:28px; height:28px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(0,0,0,.12); box-shadow:0 1px 3px rgba(0,0,0,.15);
+  }
+  .brush-chip-swatch.eraser {
+    background:repeating-linear-gradient(45deg,#eee,#eee 4px,#ccc 4px,#ccc 8px);
+  }
+  .brush-chip-label { font-size:13px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .brush-chip-meta { font-size:11px; color:#888; flex-shrink:0; }
+  .brush-size-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#666; margin:8px 0; flex-wrap:wrap; }
+  .brush-size-row input[type=range] { flex:1; min-width:120px; }
+  .brush-preview-layer { pointer-events:none; }
+  .confirm-zone-preview { max-height:120px; overflow:auto; font-size:11px; color:#666; margin-top:8px; }
+
+  
+  .tags-tab-content { padding: 20px 20px 48px; max-width: 960px; margin: 0 auto; width: 100%; }
+  .tags-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 16px; }
+  .tag-card {
+    background: #fff; border-radius: 10px; padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #eee;
+  }
+  .tag-card .tag-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .tag-color-preview {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 2px solid rgba(0,0,0,0.1);
+  }
+  .tag-card .tag-name { font-weight: 600; font-size: 14px; }
+  .tag-card .tag-impact { font-size: 12px; color: #888; }
+  .tag-card .tag-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+  
+  .config-tab-content { padding: 20px 20px 48px; max-width: 720px; width: 100%; box-sizing: border-box; margin: 0 auto; }
+  .config-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; }
+  .config-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .config-section-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.6px; margin: 18px 0 10px; grid-column: 1 / -1; }
+  .tag-info-box {
+    background:#f0f7ff; border:1px solid #cce0ff; border-radius:8px; padding:10px 12px;
+    font-size:12px; color:#445; line-height:1.55;
+  }
+  .tag-info-box strong { color:#1a1a2e; }
+
+  @media (max-width: 768px) {
+    body.pricing-scroll-page { overflow-y: auto; height: auto; }
+    .app-header { padding: 12px 16px; flex-wrap: wrap; }
+    .app-header h1 { font-size: 16px; }
+    .nav-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 8px; flex-shrink: 0; }
+    .nav-tab { padding: 10px 14px; font-size: 12px; white-space: nowrap; touch-action: manipulation; }
+    #tab-tags.active, #tab-config.active { overflow: visible; }
+    .config-grid, .tags-grid { grid-template-columns: 1fr; }
+    .config-tab-content, .tags-tab-content { padding: 14px 14px 32px; }
+    .modal { width: 100%; max-height: 90vh; overflow-y: auto; margin: 12px; padding: 18px; }
+    .btn-group { flex-direction: column; }
+    .btn-group .btn { width: 100%; justify-content: center; min-height: 44px; }
+    .toast-container { left: 12px; right: 12px; bottom: 12px; }
+  }
+
+  
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+  .toast {
+    background: #1a1a2e; color: #fff; padding: 10px 16px; border-radius: 8px;
+    font-size: 13px; margin-top: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease;
+  }
+  .toast.success { background: #20bf6b; }
+  .toast.error { background: #ff4757; }
+  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; padding: 24px; width: 440px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  body.pricing-embed .nav-tabs { padding: 0 8px; }
+  body.pricing-embed .app-header { display: none; }
+  body.pricing-embed.pricing-scroll-page #tab-map.active {
+    flex: none;
+    height: auto;
+    min-height: 520px;
+    overflow: visible;
+  }
+
+  
+  body.pricing-mobile-map {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.pricing-mobile-map #tab-map.active {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  body.pricing-mobile-map .map-sidebar {
+    order: 1;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-left: none;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+  }
+  body.pricing-mobile-map #map {
+    order: 2;
+    width: 100%;
+    flex: none;
+    height: 48vh;
+    min-height: 240px;
+    max-height: 420px;
+  }
+  body.pricing-mobile-map .drawing-instructions {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  body.pricing-mobile-map .brush-toolbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    scroll-snap-type: x proximity;
+  }
+  body.pricing-mobile-map .brush-chip {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 148px;
+    max-width: 190px;
+    scroll-snap-align: start;
+    padding: 10px 12px;
+    touch-action: manipulation;
+  }
+  body.pricing-mobile-map .brush-chip-label {
+    font-size: 12px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+  body.pricing-mobile-map .brush-size-row {
+    flex-wrap: nowrap;
+  }
+  body.pricing-mobile-map .brush-size-row input[type=range] {
+    min-width: 0;
+    flex: 1;
+  }
+  body.pricing-mobile-map .sidebar-section {
+    padding: 12px;
+  }
+  body.pricing-mobile-map .btn-group .btn {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  body.pricing-mobile-map .brush-toolbar-hint {
+    display: block;
+    font-size: 10px;
+    color: #999;
+    margin: -4px 0 6px;
+    text-align: center;
+  }
+
+  
+  [data-theme="dark"] body {
+    background: #0b0f1a;
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .nav-tabs {
+    background: #111827;
+    border-bottom-color: #334155;
+  }
+  [data-theme="dark"] .nav-tab { color: #94a3b8; }
+  [data-theme="dark"] .nav-tab:hover { color: #e2e8f0; }
+  [data-theme="dark"] .nav-tab.active { color: #f472b6; border-bottom-color: #e94560; }
+  [data-theme="dark"] .map-sidebar {
+    background: #1e293b;
+    border-left-color: #334155;
+  }
+  [data-theme="dark"] .sidebar-section {
+    border-bottom-color: #334155;
+  }
+  [data-theme="dark"] .sidebar-section h3 { color: #94a3b8; }
+  [data-theme="dark"] .form-row label { color: #94a3b8; }
+  [data-theme="dark"] .form-row input,
+  [data-theme="dark"] .form-row select,
+  [data-theme="dark"] .form-row textarea {
+    background: #0f172a;
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .btn-secondary { background: #334155; color: #e2e8f0; }
+  [data-theme="dark"] .btn-secondary:hover { background: #475569; }
+  [data-theme="dark"] .zone-item {
+    background: #0f172a;
+    border-color: #334155;
+  }
+  [data-theme="dark"] .zone-item:hover { border-color: #64748b; }
+  [data-theme="dark"] .zone-item.active { background: #1f2937; border-color: #e94560; }
+  [data-theme="dark"] .zone-item .zone-meta { color: #94a3b8; }
+  [data-theme="dark"] .drawing-instructions {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: #fde68a;
+  }
+  [data-theme="dark"] .brush-chip {
+    background: #0f172a;
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .brush-chip:hover { background: #1e293b; }
+  [data-theme="dark"] .brush-chip.active { background: #1f2937; }
+  [data-theme="dark"] .brush-chip-meta,
+  [data-theme="dark"] .brush-size-row,
+  [data-theme="dark"] .confirm-zone-preview { color: #94a3b8; }
+  [data-theme="dark"] .tag-card,
+  [data-theme="dark"] .config-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: none;
+  }
+  [data-theme="dark"] .tag-card .tag-impact,
+  [data-theme="dark"] .config-section-title { color: #94a3b8; }
+  [data-theme="dark"] .config-card h3,
+  [data-theme="dark"] .tag-card .tag-name { color: #f1f5f9; }
+  [data-theme="dark"] .tag-info-box {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #bfdbfe;
+  }
+  [data-theme="dark"] #tag-selector {
+    background: #0f172a !important;
+    border-color: #475569 !important;
+  }
+</style>
+</head>
+<body class="pricing-map-page{% if embed %} pricing-embed{% endif %}">
+
+{% if not embed %}
+<div class="app-header">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+  <h1>DAXI — Tarification Dynamique</h1>
+  <span class="badge">Admin</span>
+</div>
+{% endif %}
+
+<div class="nav-tabs">
+  <div class="nav-tab active" data-tab="map">🗺️ Zones</div>
+  <div class="nav-tab" data-tab="tags">🏷️ Situations</div>
+  {% if not embed %}<div class="nav-tab" data-tab="config">⚙️ Configuration</div>{% endif %}
+</div>
+
+
+<div class="tab-content active" id="tab-map">
+  <div id="map"></div>
+  <div class="map-sidebar">
+
+    <div class="sidebar-section">
+      <h3>Peindre sur la carte</h3>
+      <div class="drawing-instructions">
+        ✋ Par défaut : <strong>Déplacer la carte</strong> pour naviguer. Choisissez ensuite une situation (couleur), peignez la zone, puis confirmez.
+      </div>
+      <p class="brush-toolbar-hint" style="display:none;">← Faites glisser pour voir toutes les situations →</p>
+      <div class="brush-toolbar" id="brush-toolbar">
+        <span style="font-size:11px;color:#888;width:100%;">Chargement des situations...</span>
+      </div>
+      <div class="brush-size-row">
+        <label>Taille pinceau</label>
+        <input type="range" id="brush-radius" min="40" max="200" step="10" value="90" style="flex:1;"/>
+        <span id="brush-radius-val">90m</span>
+      </div>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="openConfirmZoneModal()" id="btn-confirm-paint" disabled>
+          ✓ Confirmer la zone peinte
+        </button>
+        <button class="btn btn-secondary" onclick="clearBrushSession()">Effacer le tracé</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="zone-form-section" style="display:none;">
+      <h3>Détails de la zone</h3>
+      <div class="form-row">
+        <label>Nom de la zone *</label>
+        <input type="text" id="zone-name" placeholder="Ex: Zone centre-ville" />
+      </div>
+      <div class="form-row">
+        <label>Couleur d'affichage</label>
+        <div class="color-row">
+          <input type="color" id="zone-color" value="#3388ff" />
+          <input type="text" id="zone-color-hex" value="#3388ff" placeholder="#3388ff" style="flex:1;" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Opacité (0–1)</label>
+        <input type="range" id="zone-opacity" min="0" max="1" step="0.05" value="0.72" />
+        <span id="zone-opacity-val" style="font-size:11px;color:#888;">0.72</span>
+      </div>
+      <div class="form-row" id="zone-tag-info-row" style="display:none;">
+        <label>Paramètres de la situation</label>
+        <div class="tag-info-box" id="zone-tag-info"></div>
+      </div>
+      <div class="form-row">
+        <label>Situation associée</label>
+        <div id="tag-selector" style="display:flex;flex-wrap:wrap;gap:4px;min-height:30px;padding:6px;border:1px solid #ddd;border-radius:6px;max-width:100%;overflow:hidden;">
+          <span style="color:#aaa;font-size:12px;align-self:center;">Sélectionnez une situation...</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Notes (optionnel)</label>
+        <textarea id="zone-notes" rows="2" placeholder="Description..."></textarea>
+      </div>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-primary" onclick="saveZone()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Sauvegarder
+        </button>
+        <button class="btn btn-secondary" onclick="cancelDraw()">Annuler</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Zones actives (<span id="zone-count">0</span>)</h3>
+      <div id="zone-list"></div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="tab-content" id="tab-tags" style="display:none;">
+  <div class="tags-tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2 style="font-size:16px;font-weight:600;">Situations de route</h2>
+      <button class="btn btn-primary" onclick="openTagModal()">+ Nouvelle situation</button>
+    </div>
+    <p style="font-size:13px;color:#888;margin:8px 0 0;">Chaque situation définit couleur, impact prix, temps, message d'alerte. Créez-en autant que nécessaire — les situations par défaut sont modifiables (seule la suppression est bloquée).</p>
+    <div class="tags-grid" id="tags-grid"></div>
+  </div>
+</div>
+
+
+{% if not embed %}
+<div class="tab-content" id="tab-config" style="display:none;">
+  <div class="config-tab-content">
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:16px;">Configuration tarifaire</h2>
+    <div class="config-card">
+      <h3>Paramètres actifs</h3>
+      <div class="config-grid">
+        <div class="config-section-title">Tarifs de base</div>
+        <div class="form-row">
+          <label>Prix de base par km ($)</label>
+          <input type="number" id="cfg-base-km" step="0.01" min="0.01" value="1.50" />
+        </div>
+        <div class="form-row">
+          <label>Prix minimum ($)</label>
+          <input type="number" id="cfg-min-price" step="0.01" min="0.01" value="3.00" />
+        </div>
+        <div class="form-row">
+          <label>Multiplicateur global</label>
+          <input type="number" id="cfg-global-mult" step="0.01" min="0.1" max="5" value="1.00" />
+        </div>
+        <div class="form-row">
+          <label>Impact max par zone (%)</label>
+          <input type="number" id="cfg-max-impact" step="1" min="0" max="300" value="100" />
+        </div>
+        <div class="form-row">
+          <label>Devise</label>
+          <input type="text" id="cfg-currency" maxlength="3" value="USD" />
+        </div>
+        <div class="config-section-title">Aller-retour &amp; passagers</div>
+        <div class="form-row">
+          <label>Multiplicateur aller-retour</label>
+          <input type="number" id="cfg-round-trip" step="0.1" min="1" max="5" value="2.0" />
+        </div>
+        <div class="form-row">
+          <label>Attente AR par 30 min ($)</label>
+          <input type="number" id="cfg-wait-30" step="0.01" min="0" value="5.00" />
+        </div>
+        <div class="form-row">
+          <label>Majoration passager suppl. (%)</label>
+          <input type="number" id="cfg-passenger-pct" step="0.1" min="0" max="100" value="0" />
+        </div>
+        <div class="config-section-title">Taux de change (MonCash / Carte)</div>
+        <div class="form-row" style="grid-column:1/-1;">
+          <label>1 USD = … HTG</label>
+          <input type="number" id="cfg-usd-htg" step="0.01" min="1" value="130" />
+          <span style="font-size:11px;color:#888;display:block;margin-top:4px;">Conversion automatique pour MonCash et HatexCard. Les prix clients restent en $.</span>
+        </div>
+        <div class="config-section-title">Pause chauffeur (arrêt imprévu)</div>
+        <div class="form-row" style="grid-column:1/-1;">
+          <label>Pause chauffeur par 5 min ($)</label>
+          <input type="number" id="cfg-pause-5" step="0.01" min="0" value="2.50" />
+          <span style="font-size:11px;color:#888;display:block;margin-top:4px;">Facturé au client quand le chauffeur met la course en pause (client doit s'arrêter quelque part non prévu).</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="saveConfig()">Sauvegarder la configuration</button>
+      </div>
+      <div style="margin-top:16px;padding:12px;background:#f8f9fa;border-radius:6px;font-size:12px;color:#666;line-height:1.7;">
+        <strong>Aide :</strong><br>
+        • <strong>Prix de base par km</strong> : tarif pour chaque kilomètre sans condition spéciale.<br>
+        • <strong>Prix minimum</strong> : prix plancher même pour les très courtes distances.<br>
+        • <strong>Multiplicateur global</strong> : appliqué en dernier. 1.2 = tout +20%.<br>
+        • <strong>Pause chauffeur / 5 min</strong> : frais d'attente quand le client demande un arrêt imprévu en cours de course.<br>
+        • <strong>Attente AR / 30 min</strong> : majoration pour attente lors d'un aller-retour programmé.
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<div class="modal-overlay" id="tag-modal">
+  <div class="modal">
+    <h2 id="tag-modal-title">Nouvelle situation</h2>
+    <input type="hidden" id="tag-modal-id" value="" />
+    <div class="form-row">
+      <label>Nom *</label>
+      <input type="text" id="tag-modal-name" placeholder="Ex: Montagne, Trafic dense..." />
+    </div>
+    <div class="form-row">
+      <label>Couleur</label>
+      <div class="color-row">
+        <input type="color" id="tag-modal-color" value="#FF5733" />
+        <input type="text" id="tag-modal-color-hex" value="#FF5733" placeholder="#FF5733" style="flex:1;" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Impact sur le prix (%) *</label>
+      <input type="number" id="tag-modal-impact" step="0.5" value="15" placeholder="Ex: 15 = +15%" />
+    </div>
+    <div class="form-row">
+      <label>Multiplicateur de temps</label>
+      <input type="number" id="tag-modal-time" step="0.1" min="0.1" value="1.0" placeholder="1.0 = normal" />
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" id="tag-modal-affects-time" /> Affecte le temps de course</label>
+    </div>
+    <div class="form-row" id="tag-modal-spk-row" style="display:none;">
+      <label>Temps par km (minutes) *</label>
+      <input type="number" id="tag-modal-spk" min="0.5" max="30" step="0.1" placeholder="Ex: 2 = 2 min/km" />
+      <span style="font-size:11px;color:#888;">Ex: 2 min/km ≈ 120 secondes/km en calcul interne.</span>
+    </div>
+    <div class="form-row">
+      <label>Description (optionnel)</label>
+      <textarea id="tag-modal-desc" rows="2" placeholder="Contexte pour l'équipe admin..."></textarea>
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" id="tag-modal-danger" /> Zone dangereuse (alerte 500 m, renforcée)</label>
+    </div>
+    <div class="form-row">
+      <label><input type="checkbox" id="tag-modal-notify" /> Notifier chauffeur et client à l'approche</label>
+      <span style="font-size:11px;color:#888;display:block;margin-top:4px;">Danger : 500 m. Embouteillage, montagne, mauvaise route : 100 m. Plusieurs situations sur la même zone = un seul message, 4 s à l'écran (6 s si danger).</span>
+    </div>
+    <div class="form-row">
+      <label>Message d'alerte</label>
+      <textarea id="tag-modal-alert" rows="2" placeholder="Texte court affiché au chauffeur et au client..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeTagModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveTag()">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="confirm-zone-modal">
+  <div class="modal">
+    <h2>Confirmer cette zone ?</h2>
+    <p id="confirm-zone-tag-label" style="font-size:13px;color:#666;margin-bottom:12px;"></p>
+    <div id="confirm-zone-params" class="tag-info-box" style="margin-bottom:12px;"></div>
+    <div class="form-row">
+      <label>Nom de la zone *</label>
+      <input type="text" id="confirm-zone-name" placeholder="Ex: Embouteillage centre-ville" />
+    </div>
+    <div class="confirm-zone-preview" id="confirm-zone-preview"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirmZoneModal()">Annuler</button>
+      <button class="btn btn-success" onclick="confirmAndSaveZone()">✓ Confirmer et sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="toast-container" id="toast-container"></div>
+
+
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'vendor/turf/turf.min.js' %}"></script>
+
+<script>
+
+
+
+const API = {
+  tags: '/api/pricing/tags/',
+  zones: '/api/pricing/zones/',
+  config: '/api/pricing/config/',
+  systemConfig: '/htmx/admin/system-config/?format=json',
+  calculate: '/api/pricing/calculate/',
+};
+const API_TOKEN = '{{ api_token|escapejs }}' || new URLSearchParams(window.location.search).get('token') || '';
+const PRICING_EMBED = {{ embed|yesno:"true,false" }};
+const BRUSH_FILL_OPACITY = 0.78;
+const DEFAULT_ZONE_OPACITY = 0.72;
+
+function spkToMin(spk) {
+  const s = parseInt(spk, 10);
+  if (!s) return '';
+  return Math.round((s / 60) * 10) / 10;
+}
+function minToSpk(min) {
+  const m = parseFloat(min);
+  if (!m || m <= 0) return 0;
+  return Math.round(m * 60);
+}
+function formatMinPerKm(spk) {
+  const m = spkToMin(spk);
+  return m ? `${m} min/km` : '? min/km';
+}
+
+let tags = [];         
+let zones = [];        
+let config = null;     
+let selectedTagIds = new Set();
+let activeBrushTagId = null;
+let brushMode = 'navigate'; 
+let brushStrokes = [];   
+let brushPreviewLayer = null;
+let drawnPolygon = null;
+let editingZoneId = null;
+let zoneLayerMap = {};
+
+
+
+
+function getCsrf() {
+  const m = document.cookie.match(/csrftoken=([^;]+)/);
+  return m ? m[1] : '';
+}
+
+async function api(method, url, body = null) {
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrf(),
+    },
+    credentials: 'same-origin',
+  };
+  if (API_TOKEN) opts.headers['Authorization'] = 'Bearer ' + API_TOKEN;
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(url, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.detail || err.error || `HTTP ${resp.status}`);
+  }
+  return resp.status === 204 ? null : resp.json();
+}
+
+
+
+
+const CAP_HAITIEN = [19.7602, -72.2040];
+
+const map = L.map('map', { zoomControl: true }).setView(CAP_HAITIEN, 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+brushPreviewLayer = L.layerGroup().addTo(map);
+
+function getBrushRadiusM() {
+  return parseInt(document.getElementById('brush-radius').value, 10) || 90;
+}
+
+document.getElementById('brush-radius').addEventListener('input', (e) => {
+  document.getElementById('brush-radius-val').textContent = e.target.value + 'm';
+});
+
+function renderBrushToolbar() {
+  const el = document.getElementById('brush-toolbar');
+  let html = `<button type="button" class="brush-chip ${brushMode === 'navigate' ? 'active' : ''}" onclick="selectNavigateMode()">
+    <span class="brush-chip-swatch" style="background:#64748b;font-size:13px;line-height:28px;text-align:center;">✋</span>
+    <span class="brush-chip-label">Déplacer la carte</span>
+    <span class="brush-chip-meta">Défaut</span>
+  </button>`;
+  if (!tags.length) {
+    el.innerHTML = html + '<span style="font-size:11px;color:#888;width:100%;margin-top:4px;">Créez des situations dans l\'onglet Situations</span>';
+    return;
+  }
+  html += tags.map(t => `
+    <button type="button" class="brush-chip ${activeBrushTagId === t.id && brushMode === 'paint' ? 'active' : ''}"
+            onclick="selectBrushTag(${t.id})">
+      <span class="brush-chip-swatch" style="background:${t.color};"></span>
+      <span class="brush-chip-label">${t.name}${t.is_system ? ' <span style="font-size:10px;opacity:.7;">(défaut)</span>' : ''}</span>
+      <span class="brush-chip-meta">${t.impact_percent >= 0 ? '+' : ''}${t.impact_percent}%</span>
+    </button>
+  `).join('');
+  html += `<button type="button" class="brush-chip eraser ${brushMode === 'eraser' ? 'active' : ''}" onclick="selectEraser()">
+    <span class="brush-chip-swatch eraser"></span>
+    <span class="brush-chip-label">Gomme</span>
+    <span class="brush-chip-meta">Effacer</span>
+  </button>`;
+  el.innerHTML = html;
+}
+
+function selectNavigateMode() {
+  brushMode = 'navigate';
+  activeBrushTagId = null;
+  isPainting = false;
+  map.dragging.enable();
+  map.getContainer().style.cursor = 'grab';
+  renderBrushToolbar();
+}
+
+function selectBrushTag(id) {
+  brushMode = 'paint';
+  activeBrushTagId = id;
+  const tag = tags.find(t => t.id === id);
+  if (tag) {
+    document.getElementById('zone-color').value = tag.color;
+    document.getElementById('zone-color-hex').value = tag.color;
+  }
+  renderBrushToolbar();
+  map.getContainer().style.cursor = 'crosshair';
+}
+
+function selectEraser() {
+  brushMode = 'eraser';
+  activeBrushTagId = null;
+  renderBrushToolbar();
+  map.getContainer().style.cursor = 'cell';
+}
+
+function _redrawBrushPreview() {
+  brushPreviewLayer.clearLayers();
+  const tag = tags.find(t => t.id === activeBrushTagId);
+  const color = brushMode === 'eraser' ? '#888' : (tag ? tag.color : '#3388ff');
+  brushStrokes.forEach(s => {
+    L.circle([s.lat, s.lng], {
+      radius: s.radius,
+      color, fillColor: color, fillOpacity: brushMode === 'eraser' ? 0.15 : BRUSH_FILL_OPACITY,
+      weight: 1, interactive: false,
+    }).addTo(brushPreviewLayer);
+  });
+  document.getElementById('btn-confirm-paint').disabled = brushStrokes.length === 0 || brushMode === 'eraser';
+}
+
+function clearBrushSession() {
+  brushStrokes = [];
+  drawnPolygon = null;
+  _redrawBrushPreview();
+  document.getElementById('zone-form-section').style.display = 'none';
+}
+
+function _buildPolygonFromStrokes() {
+  if (!brushStrokes.length || typeof turf === 'undefined') return null;
+  let merged = null;
+  brushStrokes.forEach(s => {
+    const circle = turf.circle([s.lng, s.lat], s.radius / 1000, { steps: 16, units: 'kilometers' });
+    merged = merged ? turf.union(merged, circle) : circle;
+  });
+  if (!merged) return null;
+  if (merged.geometry.type === 'Polygon') {
+    return { type: 'Polygon', coordinates: merged.geometry.coordinates };
+  }
+  if (merged.geometry.type === 'MultiPolygon') {
+    let largest = merged.geometry.coordinates[0];
+    let maxArea = 0;
+    merged.geometry.coordinates.forEach(poly => {
+      const a = turf.area(turf.polygon(poly));
+      if (a > maxArea) { maxArea = a; largest = poly; }
+    });
+    return { type: 'Polygon', coordinates: largest };
+  }
+  return null;
+}
+
+let isPainting = false;
+
+function beginPaintSession(latlng) {
+  if (brushMode === 'navigate') return false;
+  if (brushMode === 'paint' && !activeBrushTagId) return false;
+  isPainting = true;
+  map.dragging.disable();
+  _addBrushPoint(latlng);
+  return true;
+}
+
+function endPaintSession() {
+  isPainting = false;
+  map.dragging.enable();
+}
+
+map.on('mousedown', (e) => {
+  beginPaintSession(e.latlng);
+});
+map.on('mousemove', (e) => {
+  if (!isPainting) return;
+  _addBrushPoint(e.latlng);
+});
+map.on('mouseup', endPaintSession);
+map.on('mouseleave', endPaintSession);
+
+map.on('touchstart', (e) => {
+  if (brushMode === 'navigate') return;
+  if (e.originalEvent.touches && e.originalEvent.touches.length > 1) return;
+  if (beginPaintSession(e.latlng)) {
+    L.DomEvent.preventDefault(e.originalEvent);
+  }
+});
+map.on('touchmove', (e) => {
+  if (!isPainting) return;
+  L.DomEvent.preventDefault(e.originalEvent);
+  _addBrushPoint(e.latlng);
+});
+map.on('touchend touchcancel', endPaintSession);
+
+function _addBrushPoint(latlng) {
+  const radius = getBrushRadiusM();
+  if (brushMode === 'eraser') {
+    brushStrokes = brushStrokes.filter(s =>
+      turf.distance(turf.point([s.lng, s.lat]), turf.point([latlng.lng, latlng.lat]), { units: 'kilometers' }) * 1000 > radius + s.radius
+    );
+  } else {
+    const minDist = radius * 0.42;
+    const tooClose = brushStrokes.some(s =>
+      turf.distance(turf.point([s.lng, s.lat]), turf.point([latlng.lng, latlng.lat]), { units: 'kilometers' }) * 1000 < minDist
+    );
+    if (!tooClose) {
+      brushStrokes.push({ lat: latlng.lat, lng: latlng.lng, radius });
+    }
+  }
+  _redrawBrushPreview();
+}
+
+function formatTagParams(tag) {
+  if (!tag) return '';
+  const parts = [
+    `<strong>${tag.name}</strong> — impact ${tag.impact_percent >= 0 ? '+' : ''}${tag.impact_percent}%`,
+    tag.affects_time
+      ? `Temps : ${formatMinPerKm(tag.seconds_per_km)}`
+      : `Temps ×${tag.time_multiplier}`,
+  ];
+  if (tag.is_danger) parts.push('⚠️ Zone dangereuse (500 m)');
+  if (tag.notify_on_approach && !tag.is_danger) parts.push('🔔 Notif 100 m');
+  if (tag.alert_message) parts.push(`Alerte : « ${tag.alert_message} »`);
+  return parts.join('<br>');
+}
+
+function updateZoneTagInfo() {
+  const row = document.getElementById('zone-tag-info-row');
+  const box = document.getElementById('zone-tag-info');
+  const ids = [...selectedTagIds];
+  if (!ids.length) {
+    row.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  const primary = tags.find(t => t.id === ids[0]);
+  row.style.display = 'block';
+  box.innerHTML = formatTagParams(primary) + (ids.length > 1 ? '<br><em>+ autres situations sélectionnées</em>' : '');
+}
+
+function openConfirmZoneModal() {
+  if (!brushStrokes.length || !activeBrushTagId) {
+    toast('Peignez d\'abord une zone avec une situation.', 'error'); return;
+  }
+  const tag = tags.find(t => t.id === activeBrushTagId);
+  if (!tag) return;
+  document.getElementById('confirm-zone-tag-label').innerHTML =
+    `<span style="display:inline-block;width:14px;height:14px;background:${tag.color};border-radius:50%;margin-right:6px;vertical-align:middle;border:1px solid rgba(0,0,0,.15);"></span><span style="vertical-align:middle;">Situation sélectionnée</span>`;
+  document.getElementById('confirm-zone-params').innerHTML = formatTagParams(tag);
+  document.getElementById('confirm-zone-name').value = tag.name + ' — ' + new Date().toLocaleDateString('fr-FR');
+  document.getElementById('confirm-zone-preview').textContent =
+    brushStrokes.length + ' points peints · rayon ~' + getBrushRadiusM() + 'm · opacité ' + DEFAULT_ZONE_OPACITY;
+  document.getElementById('confirm-zone-modal').classList.add('open');
+}
+
+function closeConfirmZoneModal() {
+  document.getElementById('confirm-zone-modal').classList.remove('open');
+}
+
+async function confirmAndSaveZone() {
+  const tag = tags.find(t => t.id === activeBrushTagId);
+  const name = document.getElementById('confirm-zone-name').value.trim();
+  if (!name) { toast('Nom requis.', 'error'); return; }
+  drawnPolygon = _buildPolygonFromStrokes();
+  if (!drawnPolygon) { toast('Impossible de construire le polygone.', 'error'); return; }
+
+  selectedTagIds = new Set([activeBrushTagId]);
+  document.getElementById('zone-name').value = name;
+  document.getElementById('zone-color').value = tag.color;
+  document.getElementById('zone-color-hex').value = tag.color;
+  document.getElementById('zone-opacity').value = DEFAULT_ZONE_OPACITY;
+  document.getElementById('zone-opacity-val').textContent = DEFAULT_ZONE_OPACITY;
+  updateZoneTagInfo();
+
+  closeConfirmZoneModal();
+  await saveZone();
+  clearBrushSession();
+}
+
+
+
+
+document.getElementById('zone-color').addEventListener('input', (e) => {
+  document.getElementById('zone-color-hex').value = e.target.value;
+});
+document.getElementById('zone-color-hex').addEventListener('change', (e) => {
+  const val = e.target.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('zone-color').value = val;
+  }
+});
+document.getElementById('zone-opacity').addEventListener('input', (e) => {
+  document.getElementById('zone-opacity-val').textContent = e.target.value;
+});
+
+
+
+
+async function loadTags() {
+  try {
+    const data = await api('GET', API.tags);
+    tags = data.results || data;
+    renderTagSelector();
+    renderBrushToolbar();
+    renderTagsGrid();
+    selectNavigateMode();
+  } catch (e) { toast('Erreur chargement tags: ' + e.message, 'error'); }
+}
+
+function renderTagSelector() {
+  const el = document.getElementById('tag-selector');
+  if (!tags.length) {
+    el.innerHTML = '<span style="color:#aaa;font-size:12px;">Aucune situation — créez-en dans l\'onglet Situations</span>';
+    return;
+  }
+  el.innerHTML = tags.map(t => `
+    <span class="tag-pill ${selectedTagIds.has(t.id) ? 'selected' : ''}"
+          style="background:${t.color};"
+          onclick="toggleTag(${t.id}, this)">
+      ${t.name}
+      <span style="font-size:10px;opacity:0.8;">${t.impact_percent >= 0 ? '+' : ''}${t.impact_percent}%</span>
+    </span>
+  `).join('');
+}
+
+function toggleTag(id, el) {
+  if (selectedTagIds.has(id)) {
+    selectedTagIds.delete(id);
+    el.classList.remove('selected');
+  } else {
+    selectedTagIds.add(id);
+    el.classList.add('selected');
+  }
+  updateZoneTagInfo();
+}
+
+
+
+
+async function loadZones() {
+  try {
+    const data = await api('GET', API.zones + '?all=1');
+    zones = data.results || data;
+    renderZoneList();
+    renderZonesOnMap();
+  } catch (e) { toast('Erreur chargement zones: ' + e.message, 'error'); }
+}
+
+function renderZoneList() {
+  const list = document.getElementById('zone-list');
+  document.getElementById('zone-count').textContent = zones.length;
+
+  if (!zones.length) {
+    list.innerHTML = '<p style="color:#aaa;font-size:12px;text-align:center;padding:12px;">Aucune zone. Dessinez-en une sur la carte.</p>';
+    return;
+  }
+
+  list.innerHTML = zones.map(z => {
+    const tagBadges = (z.tags || []).map(t =>
+      `<span style="display:inline-block;background:${t.color};color:#fff;padding:1px 6px;border-radius:10px;font-size:10px;margin:1px;">${t.name}</span>`
+    ).join('');
+    const impact = z.total_impact_percent || 0;
+    return `
+      <div class="zone-item" onclick="focusZone(${z.id})">
+        <div style="display:flex;align-items:center;">
+          <span class="zone-color-dot" style="background:${z.display_color};"></span>
+          <span class="zone-name">${z.name}</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:600;color:${impact > 0 ? '#e94560' : '#20bf6b'};">${impact > 0 ? '+' : ''}${impact.toFixed(1)}%</span>
+        </div>
+        <div class="zone-meta">${tagBadges || '<span style="color:#ccc;">Aucun tag</span>'}</div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editZone(${z.id})">✏️ Modifier</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteZone(${z.id})">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderZonesOnMap() {
+
+  Object.values(zoneLayerMap).forEach(l => map.removeLayer(l));
+  zoneLayerMap = {};
+
+  zones.forEach(zone => {
+    if (!zone.polygon || !zone.polygon.coordinates) return;
+    try {
+      const layer = L.geoJSON(zone.polygon, {
+        style: {
+          color: zone.display_color,
+          fillColor: zone.display_color,
+          fillOpacity: zone.display_opacity || DEFAULT_ZONE_OPACITY,
+          weight: 2,
+        },
+      }).addTo(map);
+
+      layer.bindTooltip(`<strong>${zone.name}</strong><br>${(zone.tags || []).map(t => t.name).join(', ') || 'Aucun tag'}`, {
+        sticky: true, direction: 'top'
+      });
+
+      zoneLayerMap[zone.id] = layer;
+    } catch (e) {
+      console.warn('Erreur rendu zone', zone.id, e);
+    }
+  });
+}
+
+function focusZone(id) {
+  const layer = zoneLayerMap[id];
+  if (layer) {
+    map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+    layer.setStyle({ weight: 4 });
+    setTimeout(() => layer.setStyle({ weight: 2 }), 1500);
+  }
+}
+
+
+
+
+async function saveZone() {
+  const name = document.getElementById('zone-name').value.trim();
+  if (!name) { toast('Le nom de la zone est requis.', 'error'); return; }
+  if (!drawnPolygon && !editingZoneId) { toast('Dessinez d\'abord un polygone sur la carte.', 'error'); return; }
+
+  const color = document.getElementById('zone-color').value;
+  const opacity = parseFloat(document.getElementById('zone-opacity').value) || DEFAULT_ZONE_OPACITY;
+  const notes = document.getElementById('zone-notes').value.trim();
+
+  const body = {
+    name,
+    display_color: color,
+    display_opacity: opacity,
+    notes,
+    tag_ids: [...selectedTagIds],
+    is_active: true,
+  };
+  if (drawnPolygon) body.polygon = drawnPolygon;
+
+  try {
+    if (editingZoneId) {
+      await api('PATCH', `${API.zones}${editingZoneId}/`, body);
+      toast('Zone mise à jour.', 'success');
+    } else {
+      await api('POST', API.zones, body);
+      toast('Zone créée.', 'success');
+    }
+    resetZoneForm();
+    await loadZones();
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+function resetZoneForm() {
+  document.getElementById('zone-name').value = '';
+  document.getElementById('zone-notes').value = '';
+  selectedTagIds.clear();
+  drawnPolygon = null;
+  editingZoneId = null;
+  clearBrushSession();
+  renderTagSelector();
+  updateZoneTagInfo();
+  document.getElementById('zone-form-section').style.display = 'none';
+}
+
+function cancelDraw() {
+  resetZoneForm();
+  toast('Dessin annulé.', 'info');
+}
+
+async function editZone(id) {
+  const zone = zones.find(z => z.id === id);
+  if (!zone) return;
+
+
+  try {
+    const full = await api('GET', `${API.zones}${id}/`);
+    document.getElementById('zone-name').value = full.name;
+    document.getElementById('zone-color').value = full.display_color;
+    document.getElementById('zone-color-hex').value = full.display_color;
+    document.getElementById('zone-opacity').value = full.display_opacity;
+    document.getElementById('zone-opacity-val').textContent = full.display_opacity;
+    document.getElementById('zone-notes').value = full.notes || '';
+    selectedTagIds = new Set((full.tags || []).map(t => t.id));
+    drawnPolygon = full.polygon;
+    editingZoneId = id;
+
+    document.getElementById('zone-form-section').style.display = 'block';
+
+    if (full.polygon && full.polygon.coordinates) {
+      const layer = L.geoJSON(full.polygon, {
+        style: { color: full.display_color, fillColor: full.display_color, fillOpacity: full.display_opacity }
+      });
+      layer.addTo(map);
+      map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+      setTimeout(() => map.removeLayer(layer), 3000);
+    }
+
+    renderTagSelector();
+    updateZoneTagInfo();
+
+    document.querySelector('[data-tab="map"]').click();
+    toast(`Édition de "${full.name}". Modifiez et sauvegardez.`);
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+async function deleteZone(id) {
+  const zone = zones.find(z => z.id === id);
+  if (!confirm(`Supprimer la zone "${zone?.name}" ?`)) return;
+  try {
+    await api('DELETE', `${API.zones}${id}/`);
+    toast('Zone supprimée.', 'success');
+    await loadZones();
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+
+
+
+function renderTagsGrid() {
+  const grid = document.getElementById('tags-grid');
+  if (!tags.length) {
+    grid.innerHTML = '<p style="color:#888;font-size:13px;">Aucune situation. Cliquez sur "+ Nouvelle situation".</p>';
+    return;
+  }
+  grid.innerHTML = tags.map(t => `
+    <div class="tag-card">
+      <div class="tag-header">
+        <div class="tag-color-preview" style="background:${t.color};"></div>
+        <div>
+          <div class="tag-name">${t.name}</div>
+          <div class="tag-impact">${t.impact_percent >= 0 ? '+' : ''}${t.impact_percent}% · ${t.affects_time ? formatMinPerKm(t.seconds_per_km) : '×' + t.time_multiplier + ' temps'}${t.is_danger ? ' · ⚠️ Danger' : ''}</div>
+        </div>
+      </div>
+      ${t.alert_message ? `<div style="font-size:12px;color:#555;margin:8px 0;padding:8px;background:#f8f9fa;border-radius:6px;">📢 ${t.alert_message}</div>` : ''}
+      ${t.description ? `<div style="font-size:12px;color:#888;margin-bottom:8px;">${t.description}</div>` : ''}
+      <div class="tag-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openTagModal(${t.id})">✏️ Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTag(${t.id})"${t.is_system ? ' disabled title="Situation par défaut — suppression impossible"' : ''}>🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openTagModal(id = null) {
+  const modal = document.getElementById('tag-modal');
+  document.getElementById('tag-modal-id').value = id || '';
+  document.getElementById('tag-modal-title').textContent = id ? 'Modifier la situation' : 'Nouvelle situation';
+
+  if (id) {
+    const tag = tags.find(t => t.id === id);
+    if (tag) {
+      document.getElementById('tag-modal-name').value = tag.name;
+      document.getElementById('tag-modal-color').value = tag.color;
+      document.getElementById('tag-modal-color-hex').value = tag.color;
+      document.getElementById('tag-modal-impact').value = tag.impact_percent;
+      document.getElementById('tag-modal-time').value = tag.time_multiplier;
+      document.getElementById('tag-modal-affects-time').checked = !!tag.affects_time;
+      document.getElementById('tag-modal-spk').value = spkToMin(tag.seconds_per_km) || '';
+      document.getElementById('tag-modal-spk-row').style.display = tag.affects_time ? 'block' : 'none';
+      document.getElementById('tag-modal-alert').value = tag.alert_message || '';
+      document.getElementById('tag-modal-desc').value = tag.description || '';
+      document.getElementById('tag-modal-danger').checked = !!tag.is_danger;
+      document.getElementById('tag-modal-notify').checked = !!(tag.notify_on_approach || tag.is_danger);
+    }
+  } else {
+    document.getElementById('tag-modal-name').value = '';
+    document.getElementById('tag-modal-color').value = '#FF5733';
+    document.getElementById('tag-modal-color-hex').value = '#FF5733';
+    document.getElementById('tag-modal-impact').value = '15';
+    document.getElementById('tag-modal-time').value = '1.0';
+    document.getElementById('tag-modal-affects-time').checked = false;
+    document.getElementById('tag-modal-spk').value = '';
+    document.getElementById('tag-modal-spk-row').style.display = 'none';
+    document.getElementById('tag-modal-alert').value = '';
+    document.getElementById('tag-modal-desc').value = '';
+    document.getElementById('tag-modal-danger').checked = false;
+    document.getElementById('tag-modal-notify').checked = false;
+  }
+  modal.classList.add('open');
+}
+
+document.getElementById('tag-modal-affects-time').addEventListener('change', (e) => {
+  document.getElementById('tag-modal-spk-row').style.display = e.target.checked ? 'block' : 'none';
+});
+document.getElementById('tag-modal-danger').addEventListener('change', (e) => {
+  if (e.target.checked) document.getElementById('tag-modal-notify').checked = true;
+});
+
+function closeTagModal() {
+  document.getElementById('tag-modal').classList.remove('open');
+}
+
+
+document.getElementById('tag-modal-color').addEventListener('input', (e) => {
+  document.getElementById('tag-modal-color-hex').value = e.target.value;
+});
+document.getElementById('tag-modal-color-hex').addEventListener('change', (e) => {
+  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+    document.getElementById('tag-modal-color').value = e.target.value;
+  }
+});
+
+async function saveTag() {
+  const id = document.getElementById('tag-modal-id').value;
+  const name = document.getElementById('tag-modal-name').value.trim();
+  if (!name) { toast('Le nom est requis.', 'error'); return; }
+
+  const body = {
+    name,
+    color: document.getElementById('tag-modal-color').value,
+    impact_percent: parseFloat(document.getElementById('tag-modal-impact').value),
+    time_multiplier: parseFloat(document.getElementById('tag-modal-time').value),
+    affects_time: document.getElementById('tag-modal-affects-time').checked,
+    seconds_per_km: minToSpk(document.getElementById('tag-modal-spk').value),
+    alert_message: document.getElementById('tag-modal-alert').value.trim(),
+    description: document.getElementById('tag-modal-desc').value.trim(),
+    is_danger: document.getElementById('tag-modal-danger').checked,
+    notify_on_approach: document.getElementById('tag-modal-danger').checked || document.getElementById('tag-modal-notify').checked,
+  };
+
+  try {
+    if (id) {
+      await api('PATCH', `${API.tags}${id}/`, body);
+      toast('Situation mise à jour.', 'success');
+    } else {
+      await api('POST', API.tags, body);
+      toast('Situation créée.', 'success');
+    }
+    closeTagModal();
+    await loadTags();
+    await loadZones(); 
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+async function deleteTag(id) {
+  const tag = tags.find(t => t.id === id);
+  if (tag && tag.is_system) { toast('Situation par défaut non supprimable.', 'error'); return; }
+  if (!confirm(`Supprimer "${tag?.name}" ? Elle sera retirée de toutes les zones.`)) return;
+  try {
+    await api('DELETE', `${API.tags}${id}/`);
+    toast('Situation supprimée.', 'success');
+    await loadTags();
+    await loadZones();
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+
+
+
+async function loadConfig() {
+  if (PRICING_EMBED || !document.getElementById('cfg-base-km')) return;
+  try {
+    const data = await api('GET', API.config + 'active/');
+    config = data;
+    document.getElementById('cfg-base-km').value = data.base_price_per_km;
+    document.getElementById('cfg-min-price').value = data.minimum_price;
+    document.getElementById('cfg-global-mult').value = data.global_multiplier;
+    document.getElementById('cfg-max-impact').value = data.max_zone_impact_percent;
+    document.getElementById('cfg-currency').value = data.currency;
+    document.getElementById('cfg-round-trip').value = data.round_trip_multiplier ?? 2;
+    document.getElementById('cfg-wait-30').value = data.wait_price_per_30min ?? 5;
+    document.getElementById('cfg-passenger-pct').value = data.passenger_price_percent ?? 0;
+    document.getElementById('cfg-pause-5').value = data.pause_price_per_5min ?? 2.5;
+    try {
+      const sys = await api('GET', API.systemConfig);
+      if (sys && sys.config) document.getElementById('cfg-usd-htg').value = sys.config.usd_htg_rate ?? 130;
+    } catch (_) {}
+  } catch (e) { toast('Erreur chargement config: ' + e.message, 'error'); }
+}
+
+async function saveConfig() {
+  const body = {
+    base_price_per_km: parseFloat(document.getElementById('cfg-base-km').value),
+    minimum_price: parseFloat(document.getElementById('cfg-min-price').value),
+    global_multiplier: parseFloat(document.getElementById('cfg-global-mult').value),
+    max_zone_impact_percent: parseFloat(document.getElementById('cfg-max-impact').value),
+    currency: document.getElementById('cfg-currency').value.trim().toUpperCase(),
+    round_trip_multiplier: parseFloat(document.getElementById('cfg-round-trip').value),
+    wait_price_per_30min: parseFloat(document.getElementById('cfg-wait-30').value),
+    passenger_price_percent: parseFloat(document.getElementById('cfg-passenger-pct').value),
+    pause_price_per_5min: parseFloat(document.getElementById('cfg-pause-5').value),
+    is_active: true,
+  };
+
+  try {
+    if (config && config.id) {
+      await api('PATCH', `${API.config}${config.id}/`, body);
+    } else {
+      await api('POST', API.config, body);
+    }
+    toast('Configuration sauvegardée.', 'success');
+    await loadConfig();
+    try {
+      await api('POST', '/htmx/admin/system-config/', { usd_htg_rate: parseFloat(document.getElementById('cfg-usd-htg').value) });
+    } catch (e) { toast('Tarifs OK, taux de change non enregistré: ' + e.message, 'error'); }
+  } catch (e) { toast('Erreur: ' + e.message, 'error'); }
+}
+
+
+
+
+function isPricingMobileLayout() {
+  return window.innerWidth <= 768;
+}
+
+function applyPricingLayout() {
+  const tabName = document.querySelector('.nav-tab.active')?.dataset.tab || 'map';
+  setPricingPageMode(tabName);
+  const hint = document.querySelector('.brush-toolbar-hint');
+  if (hint) hint.style.display = isPricingMobileLayout() ? 'block' : 'none';
+  if (tabName === 'map') {
+    setTimeout(() => map.invalidateSize(), 120);
+  }
+}
+
+function setPricingPageMode(tabName) {
+  const mobileMap = tabName === 'map' && isPricingMobileLayout();
+  const scrollMap = tabName === 'map' && (mobileMap || !!PRICING_EMBED);
+  const scrollTabs = tabName === 'tags' || tabName === 'config' || scrollMap;
+  document.body.classList.toggle('pricing-scroll-page', scrollTabs);
+  document.body.classList.toggle('pricing-map-page', !scrollTabs);
+  document.body.classList.toggle('pricing-mobile-map', mobileMap);
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => {
+      c.classList.remove('active');
+      c.style.display = 'none';
+    });
+    tab.classList.add('active');
+    const tabName = tab.dataset.tab;
+    setPricingPageMode(tabName);
+    const target = document.getElementById('tab-' + tabName);
+    if (target) {
+      target.style.display = tabName === 'map' ? 'flex' : 'block';
+      target.classList.add('active');
+    }
+    if (tabName === 'map') {
+      setTimeout(() => { map.invalidateSize(); applyPricingLayout(); }, 100);
+    }
+  });
+});
+
+window.addEventListener('resize', () => {
+  clearTimeout(window._pricingLayoutTimer);
+  window._pricingLayoutTimer = setTimeout(applyPricingLayout, 150);
+});
+
+
+
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+
+
+
+(async function init() {
+  applyPricingLayout();
+  const tasks = [loadTags(), loadZones()];
+  if (!PRICING_EMBED) tasks.push(loadConfig());
+  await Promise.all(tasks);
+  selectNavigateMode();
+  setTimeout(() => { applyPricingLayout(); map.invalidateSize(); }, 200);
+})();
+</script>
+</body>
+</html>

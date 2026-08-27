@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Daxi</string>
+    <string name="offline_banner">Hors ligne — certaines fonctions sont limitées</string>
+    <string name="offline_title">Pas de connexion Internet</string>
+    <string name="offline_body">Reconnectez-vous pour commander un taxi. Vos données locales restent disponibles.</string>
+    <string name="retry">Réessayer</string>
+    <string name="splash_loading">Chargement de Daxi…</string>
+    <string name="splash_offline">Mode hors ligne — cache local</string>
+    <string name="default_notification_channel_id">daxi_orders</string>
+    <string name="perm_location_title">Retrouver votre chauffeur plus vite</string>
+    <string name="perm_location_message">Activez la localisation pour que le chauffeur vous trouve en quelques secondes. Vous pouvez aussi saisir votre adresse manuellement.</string>
+    <string name="perm_location_enable">Activer ma position</string>
+    <string name="perm_location_manual">Saisir l\'adresse</string>
+    <string name="perm_location_later">Plus tard</string>
+    <string name="perm_notif_title">Rester informé de votre course</string>
+    <string name="perm_notif_message">Recevez une alerte quand un prix est proposé, quand un chauffeur est assigné, et quand il arrive — directement dans la barre de notifications.</string>
+    <string name="perm_notif_enable">Autoriser</string>
+    <string name="perm_notif_decline">Non merci</string>
+    <string name="perm_notif_settings_message">Les notifications ont été désactivées. Ouvrez les paramètres de l\'application pour les réactiver et recevoir les alertes de votre course.</string>
+    <string name="perm_notif_settings_open">Ouvrir les paramètres</string>
+</resources>

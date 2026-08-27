@@ -1,0 +1,407 @@
+
+.daxi-wa {
+  --wa-bg: #0b141a;
+  --wa-in: #1f2c34;
+  --wa-out: #005c4b;
+  --wa-text: #e9edef;
+  --wa-muted: #8696a0;
+  --wa-accent: #53bdeb;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+.daxi-wa-msgs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+}
+.daxi-wa-day-sep {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0 4px;
+  flex-shrink: 0;
+}
+.daxi-wa-day-sep span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #d1d7db;
+  background: rgba(17, 27, 33, 0.92);
+  padding: 5px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  line-height: 1.2;
+}
+[data-theme="light"] .daxi-wa-day-sep span {
+  color: #475569;
+  background: rgba(241, 245, 249, 0.96);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+.daxi-wa-row {
+  display: flex;
+  width: 100%;
+  position: relative;
+  align-items: flex-end;
+  gap: 4px;
+}
+.daxi-wa-row--out { justify-content: flex-end; flex-direction: row; }
+.daxi-wa-row--in { justify-content: flex-start; flex-direction: row-reverse; }
+.daxi-wa-bubble {
+  max-width: 78%;
+  position: relative;
+  padding: 7px 10px 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.28);
+  user-select: none;
+  touch-action: pan-y;
+}
+.daxi-wa-bubble--out {
+  background: var(--wa-out);
+  border-top-right-radius: 3px;
+  color: #e9edef;
+}
+.daxi-wa-bubble--in {
+  background: var(--wa-in);
+  border-top-left-radius: 3px;
+  color: var(--wa-text);
+}
+.daxi-wa-bubble--admin { background: #4f46e5; color: #fff; }
+.daxi-wa-sender {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  line-height: 1.2;
+}
+.daxi-wa-row--in .daxi-wa-sender { color: var(--wa-accent); }
+.daxi-wa-row--out .daxi-wa-sender { color: rgba(255,255,255,.75); }
+.daxi-wa-reply {
+  border-left: 3px solid var(--wa-accent);
+  padding: 5px 8px;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  background: rgba(0,0,0,.22);
+  font-size: 11px;
+  color: var(--wa-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.daxi-wa-text { font-size: 14px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.daxi-wa-img {
+  max-width: min(260px, 72vw);
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+.daxi-wa-audio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px;
+  max-width: 240px;
+  margin-bottom: 2px;
+}
+.daxi-wa-audio-play {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.daxi-wa-audio-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,.2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.daxi-wa-audio-fill {
+  height: 100%;
+  width: 0%;
+  background: #53bdeb;
+  border-radius: 99px;
+  transition: width .1s linear;
+}
+.daxi-wa-audio-dur {
+  font-size: 10px;
+  color: rgba(255,255,255,.65);
+  font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  text-align: right;
+}
+.daxi-wa-row-menu {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+.daxi-wa-row-menu:hover { background: rgba(255,255,255,.16); color: #e2e8f0; }
+.daxi-chat-action-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 140000;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.daxi-chat-action-sheet.open { display: flex; }
+.daxi-chat-action-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+.daxi-chat-action-sheet__panel {
+  position: relative;
+  width: min(400px, 100%);
+  background: #1f2c34;
+  border-radius: 18px 18px 0 0;
+  padding: 10px 0 calc(env(safe-area-inset-bottom,0px) + 10px);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.daxi-chat-action-sheet__panel button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  color: #e9edef;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.daxi-chat-action-sheet__panel button i { font-size: 20px; width: 22px; }
+.daxi-chat-action-sheet__panel button:hover { background: rgba(255,255,255,.06); }
+.daxi-chat-action-sheet__panel button.danger { color: #f87171; }
+.daxi-chat-action-sheet__panel button.muted { color: #94a3b8; justify-content: center; margin-top: 4px; }
+.daxi-wa-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+.daxi-wa-time { font-size: 10px; color: rgba(255,255,255,.5); font-variant-numeric: tabular-nums; }
+.daxi-wa-empty { text-align: center; color: var(--wa-muted); padding: 32px 16px; font-size: 13px; }
+
+
+.daxi-chat-shell {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  background: var(--wa-bg);
+}
+.daxi-chat-shell__head {
+  padding: 10px 12px;
+  background: #1f2c34;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.daxi-chat-shell__head-title {
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e9edef;
+}
+.daxi-chat-shell__msgs {
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--wa-bg);
+}
+.daxi-chat-reply-bar {
+  display: none;
+  padding: 8px 12px;
+  background: #111b21;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: 11px;
+  color: var(--wa-muted);
+  align-items: center;
+  gap: 8px;
+}
+.daxi-chat-reply-bar.open { display: flex; }
+.daxi-chat-reply-bar__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 3px solid #00a884;
+  padding-left: 8px;
+}
+.daxi-chat-reply-bar__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #00a884;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.daxi-chat-reply-bar__preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e9edef;
+  font-size: 12px;
+}
+.daxi-chat-reply-bar__thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.daxi-chat-reply-bar button {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+.daxi-chat-form {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #1f2c34;
+  align-items: center;
+  border-top: 1px solid rgba(37,45,54,.9);
+}
+.daxi-chat-form input[type="text"] {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 22px;
+  border: none;
+  background: #2a3942;
+  color: #e9edef;
+  font-size: 14px;
+  outline: none;
+}
+.daxi-chat-icon-btn {
+  background: none;
+  border: none;
+  color: #8696a0;
+  font-size: 22px;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.daxi-chat-icon-btn.is-recording { color: #ef4444; }
+.daxi-chat-send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #005c4b;
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+
+.daxi-chat-shell--light { border-color: #e5e7eb; background: #fff; }
+.daxi-chat-shell--light .daxi-chat-shell__head { background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+.daxi-chat-shell--light .daxi-chat-shell__head-title { color: #111827; }
+.daxi-chat-shell--light .daxi-chat-shell__msgs { background: #f3f4f6; }
+.daxi-chat-shell--light .daxi-chat-form { background: #fff; border-top-color: #e5e7eb; }
+.daxi-chat-shell--light .daxi-chat-form input[type="text"] { background: #f3f4f6; color: #111827; }
+
+
+.daxi-voice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130000;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(4px);
+}
+.daxi-voice-overlay.open { display: flex; }
+.daxi-voice-sheet {
+  width: min(440px, 100%);
+  background: linear-gradient(180deg, #111827 0%, #0b141a 100%);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  border: 1px solid rgba(255,255,255,.08);
+  text-align: center;
+}
+.daxi-voice-sheet__title { font-size: 15px; font-weight: 800; color: #f8fafc; margin-bottom: 6px; }
+.daxi-voice-sheet__sub { font-size: 12px; color: #94a3b8; margin-bottom: 20px; }
+.daxi-voice-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 56px;
+  margin-bottom: 16px;
+}
+.daxi-voice-wave span {
+  width: 4px;
+  border-radius: 99px;
+  background: #ef4444;
+  animation: daxiVoiceBar .8s ease-in-out infinite;
+}
+.daxi-voice-wave span:nth-child(1) { height: 12px; animation-delay: 0s; }
+.daxi-voice-wave span:nth-child(2) { height: 22px; animation-delay: .1s; }
+.daxi-voice-wave span:nth-child(3) { height: 32px; animation-delay: .2s; }
+.daxi-voice-wave span:nth-child(4) { height: 22px; animation-delay: .3s; }
+.daxi-voice-wave span:nth-child(5) { height: 14px; animation-delay: .4s; }
+@keyframes daxiVoiceBar {
+  0%, 100% { transform: scaleY(.45); opacity: .55; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+.daxi-voice-timer {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fecaca;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 22px;
+}
+.daxi-voice-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.daxi-voice-actions button {
+  flex: 1;
+  max-width: 160px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: none;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.daxi-voice-cancel { background: rgba(255,255,255,.08); color: #e2e8f0; }
+.daxi-voice-send { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; }

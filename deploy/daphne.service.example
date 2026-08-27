@@ -1,0 +1,16 @@
+[Unit]
+Description=DAXI Django ASGI (Daphne)
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/daxi/julmin_taxis_django
+EnvironmentFile=/var/www/daxi/julmin_taxis_django/.env
+ExecStart=/var/www/daxi/julmin_taxis_django/.venv/bin/daphne -b 127.0.0.1 -p 8000 julmin_taxis.asgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

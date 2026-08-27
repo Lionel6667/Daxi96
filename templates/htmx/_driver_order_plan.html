@@ -1,0 +1,120 @@
+{% load static %}
+<div class="drv-oc drv-oc--plan order-card"
+     id="driver-order-{{ o.id }}"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0|floatformat:0 }}"
+     data-price="{{ o.price|default:o.total_price|default:0|floatformat:0 }}"
+     data-extra-km-price="{{ o.extra_km_price|default:0|floatformat:0 }}"
+     data-pause-price="{{ o.pause_price|default:0|floatformat:0 }}"
+     data-pickup-lat="{{ o.pickup_lat|default:'' }}"
+     data-pickup-lng="{{ o.pickup_lng|default:'' }}"
+     data-dest-lat="{{ o.destination_lat|default:'' }}"
+     data-dest-lng="{{ o.destination_lng|default:'' }}"
+     data-client-name="{{ o.client_name|default:'' }}"
+     data-client-phone="{{ o.client_phone|default:'' }}"
+     data-is-paused="{{ o.is_paused|yesno:'true,false' }}"
+     data-is-extended="{{ o.is_extended|yesno:'true,false' }}"
+     data-pause-accum-secs="{{ o.pause_accumulated_seconds|default:0 }}"
+     data-pause-rate="{{ o.pause_rate_snapshot|default:0|floatformat:2 }}"
+     data-created-at="{{ o.created_at.isoformat }}"
+     {% if o.plan_stops_json %}data-plan-stops='{{ o.plan_stops_json|escape }}'{% endif %}
+     {% if o.is_later and o.scheduled_at %}data-scheduled-at="{{ o.scheduled_at }}"{% endif %}>
+
+  <div class="drv-oc-plan-banner">
+    <div class="drv-oc-plan-banner-left">
+      <i class="ri-vip-crown-fill"></i>
+      <div>
+        <div class="drv-oc-plan-title">{{ o.service_plan_display|default:o.service_plan }}</div>
+        <div class="drv-oc-plan-sub">{{ o.service_plan_hint }}</div>
+      </div>
+    </div>
+    {% if o.total_price or o.price %}<div class="drv-oc-plan-price">${{ o.total_price|default:o.price|stringformat:".0f" }} <span>fixe</span></div>{% endif %}
+  </div>
+
+  {% include "htmx/_order_status_pipeline.html" with pipeline_compact=True %}
+
+  <div class="drv-oc-head">
+    <div class="drv-oc-badges">
+      <span class="drv-oc-status drv-oc-status--plan">Forfait plan</span>
+      {% if o.is_later %}
+      <span class="drv-oc-timing drv-oc-timing--later">
+        <i class="ri-calendar-schedule-line"></i>
+        {% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} {{ o.time|slice:":5" }}{% endif %}
+      </span>
+      {% else %}
+      <span class="drv-oc-timing drv-oc-timing--now"><i class="ri-flashlight-fill"></i> Dès que possible</span>
+      {% endif %}
+    </div>
+    {% if tab == 'available' and o.pickup_lat %}
+    <button type="button" class="drv-oc-mapbtn"
+            onclick="driverPreviewOrder('{{ o.id }}', '{{ o.pickup_lat }}', '{{ o.pickup_lng }}', '{{ o.destination_lat|default:'0' }}', '{{ o.destination_lng|default:'0' }}')"
+            title="Voir sur la carte"><i class="ri-map-2-line"></i></button>
+    {% endif %}
+  </div>
+
+  {% include "htmx/_plan_stops_timeline.html" %}
+  {% if not o.plan_stops and not o.plan_itinerary %}
+  <div class="drv-oc-route">
+    <div class="drv-oc-route-rail">
+      <div class="drv-oc-dot drv-oc-dot--a"></div>
+      <div class="drv-oc-line"></div>
+      <div class="drv-oc-dot drv-oc-dot--b"></div>
+    </div>
+    <div class="drv-oc-route-body">
+      <div class="drv-oc-lbl">Prise en charge</div>
+      <div class="drv-oc-addr">{{ o.pickup_display|default:o.pickup }}</div>
+      <div class="drv-oc-lbl">Fin prévue</div>
+      <div class="drv-oc-addr">{{ o.destination_display|default:o.destination }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="drv-oc-meta">
+    {% if o.passengers %}<span class="drv-oc-chip"><i class="ri-user-3-line"></i> {{ o.passengers }} passager{{ o.passengers|pluralize }}</span>{% endif %}
+    {% if o.vehicle_type and o.vehicle_type != 'economy' %}
+    <span class="drv-oc-chip"><i class="ri-car-line"></i>
+      {% if o.vehicle_type == 'economy' %}Économique{% elif o.vehicle_type == 'comfort' %}Confort{% elif o.vehicle_type == 'suv' %}SUV{% elif o.vehicle_type == 'van' %}Fourgon{% elif o.vehicle_type == 'luxury' %}Luxe{% else %}{{ o.vehicle_type }}{% endif %}
+    </span>
+    {% endif %}
+    {% if o.payment_method %}
+    <span class="drv-oc-chip"><i class="ri-wallet-3-line"></i>
+      {% if o.payment_method == 'in_person' %}Sur place{% elif o.payment_method == 'moncash' %}MonCash{% elif o.payment_method == 'card' %}Carte{% else %}{{ o.payment_method }}{% endif %}
+    </span>
+    {% endif %}
+    <span class="drv-oc-chip drv-oc-chip--plan"><i class="ri-price-tag-3-line"></i> Prix forfaitaire</span>
+  </div>
+
+  {% if o.notes and '[ITINÉRAIRE]' not in o.notes %}
+  <div class="drv-oc-note"><i class="ri-chat-3-line"></i> {{ o.notes }}</div>
+  {% endif %}
+
+  {% if tab == 'available' %}
+  <div class="drv-oc-details" id="order-details-{{ o.id }}" style="display:none;">
+    <div class="drv-oc-contact">
+      {% if o.client_email %}
+      <div class="drv-oc-contact-item">
+        <div class="drv-oc-contact-lbl">Email</div>
+        <div class="drv-oc-contact-val">{{ o.client_email }}</div>
+      </div>
+      {% endif %}
+      {% if o.client_phone %}
+      <div class="drv-oc-contact-item">
+        <div class="drv-oc-contact-lbl">Téléphone</div>
+        <div class="drv-oc-contact-val">{{ o.client_phone_display|default:o.client_phone }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="drv-oc-sched-hint" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:#fcd34d;">
+      Forfait plan — tarif fixe, sans négociation. Consultez les arrêts sur la carte.
+    </div>
+  </div>
+  <button type="button" class="drv-oc-expand daxi-oc-expand-btn" onclick="toggleOrderDetails({{ o.id }})" id="voir-plus-btn-{{ o.id }}">
+    <i class="ri-arrow-down-s-line"></i> <span class="daxi-oc-expand-label">Voir plus</span>
+  </button>
+  {% endif %}
+
+  {% include "htmx/_order_party_client.html" %}
+
+  {% include "htmx/_driver_order_row_actions.html" %}
+</div>

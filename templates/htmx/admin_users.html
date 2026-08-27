@@ -1,0 +1,79 @@
+{% load static %}
+
+<div id="users-container">
+
+  
+  <form hx-get="/htmx/admin/users/"
+        hx-target="#users-container"
+        hx-swap="outerHTML"
+        style="margin-bottom:16px; display:flex; gap:8px;">
+    {% csrf_token %}
+    <input type="text" name="q" value="{{ search }}" placeholder="Rechercher par nom, email, téléphone..."
+           style="flex:1; padding:10px 14px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; outline:none;">
+    <button type="submit"
+            style="padding:10px 16px; background:#667eea; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">
+      <i class="ri-search-line"></i> Chercher
+    </button>
+  </form>
+
+  {% if not users %}
+  <div style="text-align:center; padding:40px; color:#9ca3af;">
+    <div style="font-size:40px; margin-bottom:8px; color:#9ca3af;"><i class="ri-group-line"></i></div>
+    <p>Aucun utilisateur trouvé</p>
+  </div>
+  {% endif %}
+
+  {% for u in users %}
+  <div id="user-card-{{ u.id }}" style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+
+    <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:200px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:16px; flex-shrink:0;">
+        {{ u.name|first|upper }}
+      </div>
+      <div>
+        <div style="font-weight:700; font-size:14px; color:#1f2937;">
+          {{ u.name }}
+          {% if u.is_blocked %}<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:6px;">BLOQUÉ</span>{% endif %}
+          {% if u.is_verified %}<span style="background:#d1fae5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:4px;">✓ Vérifié</span>{% endif %}
+        </div>
+        <div style="font-size:12px; color:#6b7280; margin-top:2px;">
+          {% if u.email %}<i class="ri-mail-line"></i> {{ u.email }}{% endif %}
+          {% if u.phone %} · <i class="ri-phone-line"></i> {{ u.phone }}{% endif %}
+          {% if u.city %} · <i class="ri-map-pin-line"></i> {{ u.city }}{% endif %}
+        </div>
+        <div style="font-size:11px; color:#9ca3af; margin-top:2px;">
+          ID: {{ u.firebase_user_id|default:u.id }}
+          {% if u.completed_trips %} · {{ u.completed_trips }} courses{% endif %}
+          {% if u.date_inscription %} · Inscrit le {{ u.date_inscription|date:"d/m/Y" }}{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-shrink:0;">
+      {% if u.is_blocked %}
+      <button hx-post="/htmx/admin/users/{{ u.id }}/block/"
+              hx-vals='{"action":"unblock"}'
+              hx-target="#user-card-{{ u.id }}"
+              hx-swap="outerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-confirm="Débloquer cet utilisateur?"
+              style="padding:7px 12px; background:#10b981; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+        <i class="ri-lock-unlock-line"></i> Débloquer
+      </button>
+      {% else %}
+      <button hx-post="/htmx/admin/users/{{ u.id }}/block/"
+              hx-vals='{"action":"block"}'
+              hx-target="#user-card-{{ u.id }}"
+              hx-swap="outerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-confirm="Bloquer cet utilisateur?"
+              style="padding:7px 12px; background:#ef4444; color:white; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+        <i class="ri-forbid-line"></i> Bloquer
+      </button>
+      {% endif %}
+    </div>
+
+  </div>
+  {% endfor %}
+
+</div>

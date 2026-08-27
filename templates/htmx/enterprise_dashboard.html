@@ -1,0 +1,17 @@
+{% load static %}
+
+<span data-ent-name style="display:none;">{{ enterprise.name }}</span>
+<span data-ent-total style="display:none;">{{ total_orders }}</span>
+<span data-ent-earnings style="display:none;">${{ total_earnings }}</span>
+<span data-ent-url style="display:none;">{{ affiliate_url }}</span>
+<span data-ent-code style="display:none;">{{ enterprise.affiliate_code }}</span>
+<span data-ent-commission style="display:none;">{{ enterprise.commission_percent }}</span>
+<span data-ent-mode style="display:none;">{{ enterprise.mode }}</span>
+<span data-ent-weekly-labels style="display:none;">{{ weekly_labels_json }}</span>
+<span data-ent-weekly-orders style="display:none;">{{ weekly_orders_json }}</span>
+<span data-ent-weekly-earn style="display:none;">{{ weekly_earn_json }}</span>
+<span data-ent-list style="display:none;">{{ all_enterprises_json }}</span>
+<span data-ent-lat style="display:none;">{{ enterprise.address_lat|default_if_none:"" }}</span>
+<span data-ent-lng style="display:none;">{{ enterprise.address_lng|default_if_none:"" }}</span>
+<span data-ent-address-label style="display:none;">{{ enterprise.address_label|default:enterprise.name }}</span>
+<span data-ent-location-status style="display:none;">{{ enterprise.location_status }}</span>

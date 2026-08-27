@@ -1,0 +1,100 @@
+
+<div class="daxi-coords-placer"
+     id="daxi-coords-{{ prefix }}{{ o.id }}"
+     data-order-id="{{ o.id }}"
+     data-prefix="{{ prefix }}"
+     data-pickup-lat="{{ o.pickup_lat|default:'' }}"
+     data-pickup-lng="{{ o.pickup_lng|default:'' }}"
+     data-dest-lat="{{ o.destination_lat|default:'' }}"
+     data-dest-lng="{{ o.destination_lng|default:'' }}"
+     data-coords-slots='{{ o.coords_slots_json|default:"[]"|escape }}'
+     data-plan-stops='{{ o.plan_stops_json|default:"[]"|escape }}'
+     data-fixed-price="{% if o.is_service_plan or o.price_confirmed %}1{% else %}0{% endif %}">
+  <style>
+    .daxi-coords-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 6px; margin-bottom: 8px; }
+    .daxi-coords-mode {
+      padding: 8px 8px; border-radius: 9px; font-size: 10px; font-weight: 800; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: #cbd5e1;
+      display: flex; align-items: center; justify-content: center; gap: 4px; line-height: 1.2;
+    }
+    .daxi-coords-mode--active { border-color: rgba(245,158,11,.5); background: rgba(245,158,11,.14); color: #fcd34d; }
+    .daxi-coords-mode--done { border-color: rgba(16,185,129,.35); color: #6ee7b7; }
+    .daxi-coords-mode__dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
+    .daxi-coords-mode--done .daxi-coords-mode__dot { background: #10b981; }
+    .daxi-coords-map {
+      width: 100%; height: 200px; border-radius: 12px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1); margin-bottom: 8px; background: #0b1220;
+    }
+    .daxi-coords-map-hint {
+      font-size: 9px; color: #64748b; text-align: center; margin: -4px 0 8px; line-height: 1.35;
+    }
+    .daxi-coords-label-row { margin-bottom: 8px; }
+    .daxi-coords-label-row .daxi-coords-lbl {
+      font-size: 9px; color: #9ca3af; font-weight: 700; text-transform: uppercase; margin-bottom: 3px;
+    }
+    .daxi-coords-label-row input {
+      width: 100%; padding: 8px 10px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 8px; color: #fff; font-size: 12px; outline: none;
+    }
+    .daxi-coords-missing-list { font-size: 9px; color: #94a3b8; margin: 0 0 8px; line-height: 1.45; }
+    .daxi-coords-missing-list span { color: #fbbf24; }
+  </style>
+
+  <div id="{{ prefix }}coords-missing-{{ o.id }}" class="daxi-coords-missing-list"></div>
+
+  {% for slot in o.coords_slots %}
+  {% if slot.kind == 'pickup' %}
+  <div class="daxi-coords-label-row" data-coords-label-for="pickup">
+    <div class="daxi-coords-lbl">Nom du départ</div>
+    <input id="{{ prefix }}plabel-{{ o.id }}" type="text" value="{{ o.pickup_display|default:o.pickup|default:'' }}" data-coords-label-input="pickup">
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <div class="daxi-coords-modes" id="{{ prefix }}coords-modes-{{ o.id }}">
+    {% for slot in o.coords_slots %}
+    <button type="button" class="daxi-coords-mode{% if forloop.first %} daxi-coords-mode--active{% endif %}"
+            data-coords-mode="{{ slot.id }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">
+      <span class="daxi-coords-mode__dot"></span> {{ slot.button_label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div id="{{ prefix }}coords-map-{{ o.id }}" class="daxi-coords-map" role="application" aria-label="Carte — placer les lieux"></div>
+  <div class="daxi-coords-map-hint">
+  <strong>Comment placer un point :</strong> sélectionnez « Départ » ou « Arrivée » ci-dessus, puis <strong>cliquez sur la carte</strong> à l'emplacement exact. Glissez le repère pour ajuster.
+  </div>
+
+  <input type="hidden" id="{{ prefix }}plat-{{ o.id }}" value="{{ o.pickup_lat|default:'' }}">
+  <input type="hidden" id="{{ prefix }}plng-{{ o.id }}" value="{{ o.pickup_lng|default:'' }}">
+  <input type="hidden" id="{{ prefix }}dlat-{{ o.id }}" value="{{ o.destination_lat|default:'' }}">
+  <input type="hidden" id="{{ prefix }}dlng-{{ o.id }}" value="{{ o.destination_lng|default:'' }}">
+  <input type="hidden" id="{{ prefix }}plan-stops-json-{{ o.id }}" value="">
+
+  {% for slot in o.coords_slots %}
+  {% if slot.kind != 'pickup' %}
+  <div class="daxi-coords-label-row" data-coords-label-for="{{ slot.id }}">
+    <div class="daxi-coords-lbl">{{ slot.label }}</div>
+    <input type="text" value="{{ slot.label }}"
+           data-coords-label-input="{{ slot.id }}"
+           data-stop-index="{% if slot.index != None %}{{ slot.index }}{% endif %}">
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <div id="{{ prefix }}coords-status-{{ o.id }}" style="font-size:10px;color:#9ca3af;margin-bottom:6px;min-height:14px;">
+    Choisissez Départ ou Arrivée, puis cliquez sur la carte pour placer le point.
+  </div>
+
+  <button type="button"
+          onclick="{% if prefix %}adminSubmitCoords{% else %}driverSubmitCoords{% endif %}('{{ o.id }}', '{{ csrf_token }}')"
+          style="width:100%;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;">
+    {% if o.is_service_plan or o.price_confirmed %}
+    <i class="ri-map-pin-line"></i> Confirmer les emplacements sur la carte
+    {% elif o.ready_for_accept %}
+    Confirmer les coordonnées
+    {% else %}
+    Confirmer les coordonnées → prix calculé par DAXI
+    {% endif %}
+  </button>
+</div>

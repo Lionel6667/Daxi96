@@ -1,0 +1,17 @@
+node_modules/
+.DS_Store
+*.log
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+android/local.properties
+ios/App/Pods/
+ios/App/build/
+ios/DerivedData/
+www/static/
+www/assets/
+www/villes/
+www/index.html
+www/js/daxi-capacitor.js
+www/daxi-capacitor-config.js

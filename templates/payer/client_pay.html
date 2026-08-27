@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAXI — Paiement course</title>
+  {% include "partials/daxi_favicon.html" %}
+  <script src="https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0b1220; color: #e2e8f0; min-height: 100vh; padding: 20px 16px 40px; }
+    .pay-wrap { max-width: 420px; margin: 0 auto; }
+    .pay-logo { text-align: center; margin-bottom: 20px; font-size: 22px; font-weight: 900; color: #fbbf24; }
+    .pay-intro { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 16px; line-height: 1.45; }
+    #pay-slot { min-height: 200px; }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+</head>
+<body class="pay-page">
+  <header class="daxi-mini-nav">
+    <span class="daxi-mini-nav__brand"><i class="ri-taxi-line"></i> DAXI</span>
+    <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+  </header>
+  <div class="pay-wrap">
+    <div class="pay-logo"><i class="ri-taxi-line"></i> DAXI</div>
+    <p class="pay-intro">Paiement de la course {{ order.ref_code }} — <strong>${{ order.price|floatformat:2 }}</strong></p>
+    <div id="pay-slot">
+      {% include "htmx/client_payment_selection.html" %}
+    </div>
+  </div>
+  <input type="hidden" id="guestIdHidden" name="guest_id" value="{{ guest_id }}">
+  <script>
+    document.body.addEventListener('htmx:configRequest', function(e) {
+      var m = document.cookie.match(/csrftoken=([^;]+)/);
+      if (m) e.detail.headers['X-CSRFToken'] = m[1];
+    });
+    document.querySelectorAll('[hx-target="#daxi-sheet-order-slot"]').forEach(function(el) {
+      el.setAttribute('hx-target', '#pay-slot');
+      el.setAttribute('hx-include', '#guestIdHidden');
+    });
+    {% if preset_method %}
+    setTimeout(function() {
+      var btn = document.querySelector('.daxi-pay-opt[data-method="{{ preset_method }}"]');
+      if (btn) btn.click();
+    }, 150);
+    {% endif %}
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{% load static %}
+{% if o.is_plan_order %}
+{% include "htmx/plan_cards/drv/_router.html" %}
+{% else %}
+{% include "htmx/plan_cards/drv/_standard_router.html" %}
+{% endif %}

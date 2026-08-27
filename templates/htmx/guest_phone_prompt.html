@@ -1,0 +1,58 @@
+<div id="guest-phone-card" data-daxi-checkout-flow="1" class="daxi-guest-phone-card">
+
+  <div class="daxi-guest-phone-hero">
+    <i class="ri-whatsapp-line"></i>
+    <div class="daxi-guest-phone-title">Votre numéro WhatsApp</div>
+    {% if pending_coords %}
+    <div class="daxi-guest-phone-sub">
+      Pour vous envoyer le <strong>prix</strong> par WhatsApp dès qu'un chauffeur aura localisé votre trajet sur la carte.
+    </div>
+    {% elif payment_method == 'in_person' %}
+    <div class="daxi-guest-phone-sub">
+      Course confirmée — indiquez votre WhatsApp pour suivre la course<br>
+      <span>Vous paierez le chauffeur en espèces à la fin du trajet.</span>
+    </div>
+    {% elif payment_method == 'moncash' %}
+    <div class="daxi-guest-phone-sub">MonCash sélectionné — votre WhatsApp pour les mises à jour</div>
+    {% else %}
+    <div class="daxi-guest-phone-sub">Paiement confirmé — indiquez votre WhatsApp pour les mises à jour</div>
+    {% endif %}
+  </div>
+
+  <form class="daxi-guest-phone-form"
+        hx-post="/htmx/client/orders/{{ order.id }}/phone/"
+        hx-target="#daxi-sheet-order-slot"
+        hx-swap="innerHTML">
+    {% if order.guest_id %}<input type="hidden" name="guest_id" value="{{ order.guest_id }}">{% endif %}
+    <input type="hidden" name="next" value="{{ next_step|default:'post_payment' }}">
+    {% if payment_method %}<input type="hidden" name="payment_method" value="{{ payment_method }}">{% endif %}
+
+    <label class="daxi-guest-phone-label">Numéro WhatsApp</label>
+    <div class="daxi-guest-phone-input-wrap">
+      <span class="daxi-guest-phone-prefix">+509</span>
+      <input type="tel" name="client_phone_local" required
+             class="daxi-guest-phone-input"
+             inputmode="numeric" pattern="[0-9]{8}" maxlength="8"
+             placeholder="44335226"
+             autocomplete="tel-national">
+    </div>
+
+    <button type="submit" id="guest-phone-submit" class="daxi-guest-phone-submit">
+      Terminer →
+    </button>
+  </form>
+</div>
+<script>
+(function(){
+  var gid = localStorage.getItem('daxi_guest_id') || '';
+  var el = document.querySelector('#guest-phone-card input[name=guest_id]');
+  if (el && gid) el.value = gid;
+  var inp = document.querySelector('#guest-phone-card input[name=client_phone_local]');
+  if (inp) {
+    inp.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').slice(0, 8);
+    });
+  }
+  if (window._daxiOnSheetOrderSwap) window._daxiOnSheetOrderSwap('{{ order.id }}');
+})();
+</script>

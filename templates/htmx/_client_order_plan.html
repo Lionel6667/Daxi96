@@ -1,0 +1,87 @@
+
+{% include "htmx/_order_map_snippet.html" with map_scope="client" show_map_actions=True %}
+<div id="co-{{ o.id }}"
+     class="daxi-oc-card daxi-oc-card--plan"
+     data-order-id="{{ o.id }}"
+     data-status="{{ o.status }}"
+     data-payment-status="{{ o.payment_status|default:'pending' }}"
+     data-total-price="{{ o.total_price|default:o.price|default:0 }}"
+     data-timing="{% if o.is_later %}later{% else %}now{% endif %}">
+
+  <div class="daxi-oc-accent daxi-oc-accent--plan"></div>
+
+  <div class="daxi-oc-inner">
+    <div class="daxi-oc-plan-hero">
+      <div class="daxi-oc-plan-hero-left">
+        <i class="ri-vip-crown-fill"></i>
+        <div>
+          <div class="daxi-oc-plan-name">{{ o.service_plan_display|default:o.service_plan }}</div>
+          <div class="daxi-oc-plan-hint">{{ o.service_plan_hint }}</div>
+        </div>
+      </div>
+      {% if o.total_price or o.price %}
+      <div class="daxi-oc-plan-price">${{ o.total_price|default:o.price|floatformat:2 }} <span>forfait</span></div>
+      {% endif %}
+    </div>
+
+    {% include "htmx/_order_status_pipeline.html" %}
+
+    <div class="daxi-oc-head">
+      <div class="daxi-oc-head-left">
+        <span class="daxi-oc-badge daxi-oc-badge--plan">Forfait plan</span>
+        {% if o.is_later %}
+        <span class="daxi-oc-timing daxi-oc-timing--later">
+          <i class="ri-calendar-schedule-line"></i>
+          <strong>{% if o.date_display %}{{ o.date_display }}{% endif %}{% if o.time %} · {{ o.time|slice:":5" }}{% endif %}</strong>
+        </span>
+        {% else %}
+        <span class="daxi-oc-timing daxi-oc-timing--now"><i class="ri-flashlight-fill"></i> <strong data-translate="timing_now">Dès que possible</strong></span>
+        {% endif %}
+      </div>
+      {% include "htmx/_order_client_status_badge.html" with badge_style="font-size:10px;" %}
+    </div>
+
+    {% include "htmx/_plan_stops_timeline.html" %}
+    {% if not o.plan_stops and not o.plan_itinerary %}
+    <div class="daxi-oc-route">
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--pickup"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label">Prise en charge</span>
+          <span class="daxi-oc-route-addr">{{ o.pickup_display|default:o.pickup|default:"Non défini" }}</span>
+        </div>
+      </div>
+      <div class="daxi-oc-route-connector"></div>
+      <div class="daxi-oc-route-line">
+        <span class="daxi-oc-dot daxi-oc-dot--dest"></span>
+        <div class="daxi-oc-route-text">
+          <span class="daxi-oc-route-label">Fin prévue</span>
+          <span class="daxi-oc-route-addr">{{ o.destination_display|default:o.destination|default:"Non définie" }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="daxi-oc-meta">
+      <span class="daxi-oc-chip daxi-oc-chip--plan"><i class="ri-price-tag-3-line"></i> Prix fixe</span>
+      {% if o.passengers %}<span class="daxi-oc-chip"><i class="ri-group-line"></i> {{ o.passengers }} pers.</span>{% endif %}
+      {% if o.vehicle_type and o.vehicle_type != 'economy' %}<span class="daxi-oc-chip"><i class="ri-car-line"></i> {{ o.vehicle_type }}</span>{% endif %}
+      {% if o.payment_method %}
+      <span class="daxi-oc-chip"><i class="ri-bank-card-line"></i>
+        {% if o.payment_method == 'in_person' %}Sur place{% elif o.payment_method == 'moncash' %}MonCash{% elif o.payment_method == 'card' %}Carte{% else %}{{ o.payment_method }}{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if o.notes and '[ITINÉRAIRE]' not in o.notes and '[PLAN_STOPS_JSON]' not in o.notes %}
+    <div class="daxi-oc-notes" style="margin:0 0 10px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;">
+      <span style="font-size:10px;font-weight:800;color:#fcd34d;text-transform:uppercase;">Instructions</span>
+      <div style="font-size:12px;color:rgba(253,230,138,0.9);margin-top:4px;">{{ o.notes }}</div>
+    </div>
+    {% endif %}
+
+    {% include "htmx/_client_order_driver_block.html" %}
+
+    {% include "htmx/_client_order_actions.html" %}
+  </div>
+</div>

@@ -1,0 +1,375 @@
+
+<style>
+.daxi-prof { color: #e2e8f0; padding: 0 0 28px; }
+.daxi-prof-hero {
+  text-align: center; padding: 8px 0 20px;
+}
+.daxi-prof-avatar-wrap {
+  position: relative; width: 88px; height: 88px; margin: 0 auto 12px; cursor: pointer;
+}
+.daxi-prof-avatar {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: linear-gradient(135deg,#f59e0b,#d97706);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 900; color: #000;
+  border: 3px solid rgba(245,158,11,0.45); overflow: hidden;
+}
+.daxi-prof-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.daxi-prof-cam {
+  position: absolute; bottom: 0; right: 0; width: 28px; height: 28px;
+  border-radius: 50%; background: #f59e0b; border: 2px solid #0f172a;
+  display: flex; align-items: center; justify-content: center; color: #000; font-size: 14px;
+}
+.daxi-prof-card {
+  background: rgba(8,14,35,0.85); border: 1px solid rgba(148,163,184,0.12);
+  border-radius: 14px; margin-bottom: 10px; overflow: hidden;
+}
+.daxi-prof-card-h {
+  padding: 10px 14px 6px; font-size: 10px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .8px; color: #64748b;
+}
+.daxi-prof-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+  border-top: 1px solid rgba(148,163,184,0.08); font-size: 13px; cursor: pointer;
+}
+.daxi-prof-row i { color: #f59e0b; font-size: 18px; width: 22px; text-align: center; }
+.daxi-prof-row small { display: block; font-size: 10px; color: #64748b; font-weight: 600; }
+.daxi-prof-field { padding: 0 14px 12px; }
+.daxi-prof-field label { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 5px; }
+.daxi-prof-field input {
+  width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.2);
+  background: rgba(15,23,42,0.9); color: #f1f5f9; font-size: 14px; outline: none;
+}
+.daxi-prof-field input:focus { border-color: #f59e0b; }
+.daxi-prof-phone-wrap {
+  display: flex; align-items: stretch; width: 100%;
+  border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; overflow: hidden;
+  background: rgba(15,23,42,0.9); transition: border-color .2s;
+}
+.daxi-prof-phone-wrap:focus-within { border-color: #f59e0b; }
+.daxi-prof-phone-prefix {
+  flex-shrink: 0; width: 76px; padding: 11px 22px 11px 10px;
+  font-size: 14px; font-weight: 700; color: #e2e8f0;
+  background: rgba(30,41,59,0.95)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 6px center;
+  border: none; border-right: 1px solid rgba(148,163,184,0.15);
+  appearance: none; -webkit-appearance: none; cursor: pointer; outline: none;
+}
+.daxi-prof-phone-input {
+  flex: 1; min-width: 0; border: none; padding: 11px 12px;
+  background: transparent; color: #f1f5f9; font-size: 14px; outline: none;
+}
+.daxi-prof-phone-input::placeholder { color: #64748b; }
+.daxi-prof-msg { margin: 0 14px 10px; padding: 10px 12px; border-radius: 10px; font-size: 12px; display: none; }
+.daxi-prof-msg.err { display: block; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.daxi-prof-msg.ok { display: block; background: rgba(34,197,94,0.12); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+.daxi-prof-save {
+  display: block; width: calc(100% - 28px); margin: 4px 14px 14px; padding: 13px;
+  border: none; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg,#f59e0b,#d97706); color: #000;
+  font-size: 14px; font-weight: 800;
+}
+.daxi-prof-sheet {
+  display: none; position: fixed; inset: 0; z-index: 12000;
+  background: rgba(0,0,0,0.55); align-items: flex-end; justify-content: center;
+}
+.daxi-prof-sheet.open { display: flex; }
+.daxi-prof-sheet-panel {
+  width: 100%; max-width: 480px; background: #1e293b; border-radius: 20px 20px 0 0;
+  padding: 20px 18px 32px; animation: daxiProfSlideUp .3s ease;
+}
+@keyframes daxiProfSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+</style>
+
+<div class="daxi-prof" id="daxi-profile-settings-root">
+{% if not is_authenticated %}
+  <div style="text-align:center;padding:40px 16px;">
+    <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">Connectez-vous pour modifier votre profil.</p>
+    <button type="button" onclick="if(window.openLoginModal)openLoginModal();"
+            style="padding:12px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:800;cursor:pointer;">
+      Se connecter
+    </button>
+  </div>
+{% else %}
+  <div class="daxi-prof-hero">
+    <div class="daxi-prof-avatar-wrap" onclick="window.DaxiProfileSettings.openPhoto()">
+      <div class="daxi-prof-avatar" id="daxi-prof-avatar">
+        {% if user_photo %}<img src="{{ user_photo }}" alt="">{% else %}<span>{{ initials }}</span>{% endif %}
+      </div>
+      <div class="daxi-prof-cam"><i class="ri-camera-line"></i></div>
+    </div>
+    <div style="font-size:17px;font-weight:800;color:#fff;">{{ user_name }}</div>
+    <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-top:4px;">ID: {{ user_id }}</div>
+  </div>
+
+  <div id="daxi-prof-form-msg" class="daxi-prof-msg"></div>
+
+  <div class="daxi-prof-card">
+    <div class="daxi-prof-card-h">Informations personnelles</div>
+    <div class="daxi-prof-field">
+      <label>Prénom</label>
+      <input type="text" id="daxi-prof-first" value="{{ first_name }}" autocomplete="given-name">
+    </div>
+    <div class="daxi-prof-field">
+      <label>Nom</label>
+      <input type="text" id="daxi-prof-last" value="{{ last_name }}" autocomplete="family-name">
+    </div>
+    <div class="daxi-prof-field">
+      <label>Téléphone WhatsApp</label>
+      <div class="daxi-prof-phone-wrap">
+        <select id="daxi-prof-phone-prefix" class="daxi-prof-phone-prefix" aria-label="Indicatif pays">
+          <option value="+509">+509</option>
+          <option value="+1">+1</option>
+          <option value="+33">+33</option>
+          <option value="+34">+34</option>
+          <option value="+44">+44</option>
+          <option value="+49">+49</option>
+          <option value="+39">+39</option>
+          <option value="+41">+41</option>
+          <option value="+32">+32</option>
+          <option value="+52">+52</option>
+          <option value="+57">+57</option>
+          <option value="+1809">+1809</option>
+          <option value="+1829">+1829</option>
+          <option value="+1849">+1849</option>
+        </select>
+        <input type="tel" id="daxi-prof-phone" value="" placeholder="40123456" autocomplete="tel-national" inputmode="numeric" class="daxi-prof-phone-input">
+      </div>
+    </div>
+    <div class="daxi-prof-field">
+      <label>Nouveau mot de passe <span style="color:#64748b;font-weight:500;">(optionnel)</span></label>
+      <input type="password" id="daxi-prof-password" placeholder="Laisser vide pour ne pas changer" autocomplete="new-password">
+    </div>
+    <button type="button" class="daxi-prof-save" id="daxi-prof-save-btn" onclick="window.DaxiProfileSettings.save()">Enregistrer les modifications</button>
+  </div>
+
+  <div class="daxi-prof-card">
+    <div class="daxi-prof-card-h">Photo</div>
+    <div class="daxi-prof-row" onclick="window.DaxiProfileSettings.openPhoto()">
+      <i class="ri-image-line"></i>
+      <div><small>Avatar</small>Changer ma photo de profil</div>
+      <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
+    </div>
+  </div>
+
+  <div class="daxi-prof-card" style="border-color:rgba(239,68,68,.25);">
+    <div class="daxi-prof-card-h" style="color:#f87171;">Zone sensible</div>
+    <div class="daxi-prof-field">
+      <label style="color:#fca5a5;">Supprimer mon compte</label>
+      <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;line-height:1.45;">
+        Action définitive. Votre profil et vos données personnelles seront supprimés.
+        Les factures légales peuvent être conservées selon la loi.
+      </p>
+      <input type="text" id="daxi-prof-delete-confirm" placeholder="Tapez SUPPRIMER pour confirmer" autocomplete="off"
+             style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(239,68,68,.35);background:rgba(15,23,42,.9);color:#fecaca;font-size:14px;">
+    </div>
+    <button type="button" id="daxi-prof-delete-btn" class="daxi-prof-save"
+            style="background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;margin-top:0;"
+            onclick="window.DaxiProfileSettings.deleteAccount()">Supprimer définitivement mon compte</button>
+    <p style="font-size:11px;color:#64748b;padding:0 14px 12px;margin:0;">
+      <a href="/suppression-donnees/" target="_blank" rel="noopener" style="color:#f59e0b;">Politique de suppression des données</a>
+    </p>
+  </div>
+{% endif %}
+</div>
+
+<div class="daxi-prof-sheet" id="daxi-prof-photo-sheet" onclick="window.DaxiProfileSettings.closePhoto()">
+  <div class="daxi-prof-sheet-panel" onclick="event.stopPropagation()">
+    <div style="width:40px;height:4px;background:#475569;border-radius:99px;margin:0 auto 16px;"></div>
+    <h3 style="font-size:16px;font-weight:800;color:#fff;margin:0 0 6px;">Photo de profil</h3>
+    <p style="font-size:12px;color:#94a3b8;margin:0 0 16px;">JPG ou PNG — max 5 Mo</p>
+    <div id="daxi-prof-photo-preview" style="display:none;text-align:center;margin-bottom:14px;">
+      <img id="daxi-prof-photo-preview-img" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #f59e0b;">
+    </div>
+    <label style="display:flex;align-items:center;gap:12px;padding:14px;border:1.5px dashed rgba(148,163,184,0.35);border-radius:14px;cursor:pointer;margin-bottom:14px;">
+      <div style="width:42px;height:42px;background:rgba(245,158,11,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <i class="ri-upload-cloud-line" style="font-size:22px;color:#f59e0b;"></i>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0;">Sélectionner une image</div>
+        <div style="font-size:11px;color:#64748b;">Depuis la galerie</div>
+      </div>
+      <input type="file" id="daxi-prof-photo-input" accept="image/*" style="display:none;">
+    </label>
+    <div id="daxi-prof-photo-err" class="daxi-prof-msg err" style="display:none;"></div>
+    <button type="button" id="daxi-prof-photo-save" class="daxi-prof-save" style="display:none;margin:0;width:100%;" onclick="window.DaxiProfileSettings.uploadPhoto()">Enregistrer la photo</button>
+    <button type="button" onclick="window.DaxiProfileSettings.closePhoto()" style="width:100%;padding:12px;background:none;border:none;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;">Annuler</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  function csrf() {
+    if (typeof getCsrfToken === 'function') return getCsrfToken();
+    var m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+  function showMsg(el, text, ok) {
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'daxi-prof-msg ' + (ok ? 'ok' : 'err');
+    el.style.display = 'block';
+  }
+  function refreshAccountSlots() {
+    var slot = document.getElementById('account-htmx-slot');
+    if (slot && typeof htmx !== 'undefined') {
+      htmx.ajax('GET', '/htmx/client/account/', { target: '#account-htmx-slot', swap: 'innerHTML' });
+    }
+    if (typeof displayUserName === 'function') displayUserName();
+  }
+  window.DaxiProfileSettings = {
+    openPhoto: function() {
+      var s = document.getElementById('daxi-prof-photo-sheet');
+      if (s) s.classList.add('open');
+    },
+    closePhoto: function() {
+      var s = document.getElementById('daxi-prof-photo-sheet');
+      if (s) s.classList.remove('open');
+      var inp = document.getElementById('daxi-prof-photo-input');
+      if (inp) inp.value = '';
+      var prev = document.getElementById('daxi-prof-photo-preview');
+      var btn = document.getElementById('daxi-prof-photo-save');
+      var err = document.getElementById('daxi-prof-photo-err');
+      if (prev) prev.style.display = 'none';
+      if (btn) btn.style.display = 'none';
+      if (err) err.style.display = 'none';
+    },
+    save: function() {
+      var btn = document.getElementById('daxi-prof-save-btn');
+      var msg = document.getElementById('daxi-prof-form-msg');
+      if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
+      if (msg) msg.style.display = 'none';
+      var fd = new FormData();
+      fd.append('first_name', (document.getElementById('daxi-prof-first') || {}).value || '');
+      fd.append('last_name', (document.getElementById('daxi-prof-last') || {}).value || '');
+      var prefixEl = document.getElementById('daxi-prof-phone-prefix');
+      var phoneEl = document.getElementById('daxi-prof-phone');
+      var prefix = prefixEl ? prefixEl.value : '+509';
+      var national = phoneEl ? phoneEl.value : '';
+      var normalized = (typeof daxiNormalizePhone === 'function')
+        ? daxiNormalizePhone(prefix, national)
+        : (prefix + String(national).replace(/\D/g, ''));
+      fd.append('phone_prefix', prefix);
+      fd.append('phone_national', String(national).replace(/\D/g, ''));
+      fd.append('phone', normalized);
+      var pw = (document.getElementById('daxi-prof-password') || {}).value || '';
+      if (pw) fd.append('password', pw);
+      fetch('/htmx/client/profile/update/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': csrf() }, body: fd
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer les modifications'; }
+        if (d.success) {
+          if (window.DJANGO_SESSION) {
+            window.DJANGO_SESSION.user_name = d.user_name || window.DJANGO_SESSION.user_name;
+            window.DJANGO_SESSION.user_phone = d.user_phone || window.DJANGO_SESSION.user_phone;
+            window.DJANGO_SESSION.first_name = d.first_name || window.DJANGO_SESSION.first_name;
+          }
+          showMsg(msg, 'Profil mis à jour.', true);
+          refreshAccountSlots();
+        } else {
+          showMsg(msg, d.error || 'Erreur lors de la mise à jour.', false);
+        }
+      }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer les modifications'; }
+        showMsg(msg, 'Erreur réseau. Réessayez.', false);
+      });
+    },
+    deleteAccount: function() {
+      var msg = document.getElementById('daxi-prof-form-msg');
+      var confirmEl = document.getElementById('daxi-prof-delete-confirm');
+      var btn = document.getElementById('daxi-prof-delete-btn');
+      var val = (confirmEl && confirmEl.value || '').trim().toUpperCase();
+      if (val !== 'SUPPRIMER') {
+        showMsg(msg, 'Tapez SUPPRIMER pour confirmer la suppression.', false);
+        return;
+      }
+      if (!window.confirm('Supprimer définitivement votre compte DAXI ? Cette action est irréversible.')) return;
+      if (btn) { btn.disabled = true; btn.textContent = 'Suppression…'; }
+      var fd = new FormData();
+      fd.append('confirm', 'supprimer');
+      fetch('/htmx/client/account/delete/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': csrf() }, body: fd
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.success) {
+          try {
+            if (window.DaxiSessionStore && DaxiSessionStore.clearOnAccountDelete) {
+              DaxiSessionStore.clearOnAccountDelete();
+            } else {
+              localStorage.removeItem('daxi_access');
+              localStorage.removeItem('daxi_guest_id');
+            }
+          } catch (e) {}
+          if (window.DJANGO_SESSION) window.DJANGO_SESSION.is_authenticated = false;
+          window.location.href = '/';
+        } else {
+          if (btn) { btn.disabled = false; btn.textContent = 'Supprimer définitivement mon compte'; }
+          showMsg(msg, d.error || 'Impossible de supprimer le compte.', false);
+        }
+      }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Supprimer définitivement mon compte'; }
+        showMsg(msg, 'Erreur réseau. Réessayez.', false);
+      });
+    },
+    uploadPhoto: function() {
+      var inp = document.getElementById('daxi-prof-photo-input');
+      var file = inp && inp.files && inp.files[0];
+      if (!file) return;
+      var btn = document.getElementById('daxi-prof-photo-save');
+      var err = document.getElementById('daxi-prof-photo-err');
+      if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+      if (err) err.style.display = 'none';
+      var fd = new FormData();
+      fd.append('photo', file);
+      fetch('/htmx/client/profile/photo/', {
+        method: 'POST', credentials: 'include',
+        headers: { 'X-CSRFToken': csrf() }, body: fd
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer la photo'; }
+        if (d.success && d.photo_url) {
+          var av = document.getElementById('daxi-prof-avatar');
+          if (av) av.innerHTML = '<img src="' + d.photo_url + '" alt="">';
+          if (window.DJANGO_SESSION) window.DJANGO_SESSION.user_photo = d.photo_url;
+          window.DaxiProfileSettings.closePhoto();
+          refreshAccountSlots();
+        } else {
+          if (err) { err.textContent = d.error || 'Erreur'; err.style.display = 'block'; }
+        }
+      }).catch(function() {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer la photo'; }
+        if (err) { err.textContent = 'Erreur réseau.'; err.style.display = 'block'; }
+      });
+    }
+  };
+  if (typeof daxiInitPhoneFields === 'function') {
+    daxiInitPhoneFields(
+      document.getElementById('daxi-prof-phone-prefix'),
+      document.getElementById('daxi-prof-phone'),
+      '{{ user_phone|escapejs }}'
+    );
+  }
+  var fileInp = document.getElementById('daxi-prof-photo-input');
+  if (fileInp) {
+    fileInp.addEventListener('change', function() {
+      var file = fileInp.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        var err = document.getElementById('daxi-prof-photo-err');
+        if (err) { err.textContent = 'Fichier trop grand (max 5 Mo)'; err.style.display = 'block'; }
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.getElementById('daxi-prof-photo-preview-img');
+        var prev = document.getElementById('daxi-prof-photo-preview');
+        var btn = document.getElementById('daxi-prof-photo-save');
+        if (img) img.src = e.target.result;
+        if (prev) prev.style.display = 'block';
+        if (btn) btn.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+})();
+</script>

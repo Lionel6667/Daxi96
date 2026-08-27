@@ -1,0 +1,34 @@
+
+{% if o.driver_name and o.status != 'pending' and o.status != 'price_proposed' and o.status != 'price_confirmed' and o.status != 'cancelled' %}
+<div class="daxi-oc-driver" id="daxi-driver-block-{{ o.id }}">
+  <div class="daxi-oc-driver-avatar">
+    {% if o.driver_photo %}
+    <img src="{{ o.driver_photo }}" alt="{{ o.driver_name }}" referrerpolicy="no-referrer" loading="eager" fetchpriority="high"
+         onerror="this.style.display='none';this.parentNode.querySelector('.daxi-oc-driver-fallback').style.display='flex';">
+    <i class="ri-steering-2-fill daxi-oc-driver-fallback" style="display:none;"></i>
+    {% else %}
+    <i class="ri-steering-2-fill"></i>
+    {% endif %}
+  </div>
+  <div class="daxi-oc-driver-info">
+    <span class="daxi-oc-driver-name">
+      {{ o.driver_name }}
+      {% if o.driver_is_verified %}<i class="ri-verified-badge-fill" style="color:#38bdf8;font-size:11px;margin-left:3px;" title="Chauffeur vérifié"></i>{% endif %}
+    </span>
+    {% if o.driver_vehicle_label or o.driver_car_brand or o.driver_vehicle %}
+    <span class="daxi-oc-driver-car">
+      {{ o.driver_vehicle_label|default:o.driver_car_brand }} {{ o.driver_car_model|default:"" }}
+      {% if o.driver_car_year %}({{ o.driver_car_year }}){% endif %}
+      {% if o.driver_plate %} · {{ o.driver_plate }}{% endif %}
+    </span>
+    {% endif %}
+    {% if o.driver_phone %}
+    <a href="tel:{{ o.driver_phone }}" class="daxi-oc-driver-call">
+      <i class="ri-phone-fill"></i> Appeler le chauffeur
+    </a>
+    {% endif %}
+  </div>
+  {% include "htmx/_daxi_car_image_thumb.html" %}
+  {% if o.driver_rating %}<span class="daxi-oc-driver-rating"><i class="ri-star-fill"></i> {{ o.driver_rating }}</span>{% endif %}
+</div>
+{% endif %}

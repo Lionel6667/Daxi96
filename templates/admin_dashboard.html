@@ -1,0 +1,2639 @@
+{% extends "base.html" %}
+{% block title %}DAXI Admin - Tableau de bord{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin_dashboard.css?v=20260801">
+<link rel="stylesheet" href="/static/css/admin-pro.css?v=20260758">
+<link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260749">
+<link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260735">
+<link rel="stylesheet" href="/static/css/admin-maps.css?v=20260803d">
+<link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260735">
+<link rel="stylesheet" href="/static/css/daxi-theme-admin-sections.css?v=20260773">
+<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823s">
+<link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
+<link rel="stylesheet" href="/static/css/daxi-calendar-modal.css?v=20260801">
+<style>
+  .sidebar { width: 260px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); }
+  .stat-card { transition: transform 0.2s; }
+  .stat-card:hover { transform: translateY(-3px); }
+  .nav-link { transition: all 0.2s; border-radius: 12px; }
+  .nav-link.active, .nav-link:hover { background: rgba(255,255,255,0.08); color: #00d4ff; }
+  .nav-link.active { background: linear-gradient(135deg, rgba(10,132,255,0.2), rgba(0,212,255,0.1)); border-left: 3px solid #00d4ff; }
+  .order-row:hover { background: rgba(255,255,255,0.03); }
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-price_proposed { background: #dbeafe; color: #1e40af; }
+  .badge-price_confirmed { background: #ede9fe; color: #5b21b6; }
+  .badge-driver_assigned { background: #f3e8ff; color: #6b21a8; }
+  .badge-on_way { background: #ffedd5; color: #9a3412; }
+  .badge-arrived { background: #ccfbf1; color: #0f5132; }
+  .badge-in_progress { background: #cffafe; color: #0c4a6e; }
+  .badge-completed { background: #dcfce7; color: #14532d; }
+  .badge-cancelled { background: #fee2e2; color: #991b1b; }
+  .badge-round-trip { background: #ede9fe; color: #5b21b6; }
+  .badge-one-way { background: #e0f2fe; color: #0369a1; }
+  .badge-scheduled { background: #fef3c7; color: #92400e; }
+  .badge-now { background: #dcfce7; color: #166534; }
+  .badge-pause { background: #ffedd5; color: #9a3412; }
+  .section-card { background: rgba(31,41,55,0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; }
+  .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
+  table { border-collapse: collapse; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .field-help-popover {
+    position: fixed; z-index: 10050; max-width: min(320px, calc(100vw - 24px));
+    background: #1f2937; border: 1px solid rgba(255,255,255,0.12); color: #e5e7eb;
+    padding: 12px 14px; border-radius: 12px; font-size: 12px; line-height: 1.55;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+  }
+  .field-help-btn {
+    width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08); color: #9ca3af; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .field-help-btn:hover { color: #00d4ff; border-color: #00d4ff; }
+  #nav-menu-total-badge {
+    position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px;
+    padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center;
+    line-height: 1; border: 2px solid #111827;
+  }
+  #nav-menu-total-badge.is-visible {
+    display: flex;
+  }
+  @media (max-width: 768px) {
+    #admin-section-pricing {
+      padding: 12px !important;
+    }
+    #admin-section-pricing .pricing-map-iframe-wrap {
+      height: auto !important;
+      min-height: min(88vh, 920px);
+    }
+    #pricing-map-iframe {
+      min-height: min(88vh, 920px) !important;
+      height: min(88vh, 920px) !important;
+    }
+    #admin-section-pricing .bg-gray-800.rounded-2xl.p-6 {
+      padding: 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div id="admin-app" data-page="admin" class="min-h-screen bg-gray-950 text-white flex flex-col">
+
+  
+  <div id="admin-login" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 to-gray-900 relative">
+    <div class="absolute top-4 right-4 z-20" id="daxi-theme-slot-login"></div>
+    <div class="admin-login-card bg-gray-800 rounded-3xl p-8 w-full max-w-sm space-y-6 shadow-2xl border border-white/10">
+      <div class="text-center">
+        <div class="flex justify-center mb-2">
+          <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--gold admin-topbar-logo">
+          <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--dark admin-topbar-logo">
+        </div>
+        <p class="admin-login-sub text-gray-400 text-sm mt-2">Administration</p>
+      </div>
+      <input id="admin-email" type="email" placeholder="Email admin" autocomplete="username" class="admin-login-input w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan">
+      <input id="admin-password" type="password" placeholder="Mot de passe" class="admin-login-input w-full px-4 py-3 bg-gray-700 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan" onkeypress="if(event.key==='Enter')adminLogin()">
+      <button onclick="adminLogin()" class="admin-login-btn w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl font-bold text-white flex items-center justify-center gap-2">
+        <span id="admin-login-text">Connexion</span>
+        <div id="admin-login-spinner" class="spinner hidden"></div>
+      </button>
+      <p id="admin-login-error" class="text-red-400 text-sm text-center hidden"></p>
+    </div>
+  </div>
+
+  
+  <div id="admin-main" class="hidden flex min-h-screen relative">
+
+    
+    <div id="admin-boot-overlay" class="admin-boot-overlay" aria-live="polite">
+      <div class="admin-boot-content">
+        <div class="admin-boot-logo-wrap">
+          <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--gold">
+          <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--dark">
+        </div>
+        <div class="admin-boot-bar" aria-hidden="true">
+          <div class="admin-boot-bar-fill"></div>
+        </div>
+        <p class="admin-boot-text" id="admin-boot-status">Préparation du tableau de bord…</p>
+      </div>
+    </div>
+
+    
+    <div id="admin-sidebar-backdrop" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden" onclick="closeAdminSidebar()"></div>
+    <aside id="admin-sidebar" class="sidebar fixed left-0 top-0 h-full z-30 flex flex-col border-r border-white/10 -translate-x-full lg:translate-x-0 transition-transform duration-200">
+      <div class="p-6 border-b border-white/10">
+        <div class="flex items-center gap-2">
+          <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--gold admin-sidebar-logo">
+          <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="daxi-brand-logo daxi-brand-logo--dark admin-sidebar-logo">
+        </div>
+        <p class="text-gray-400 text-xs mt-2">Panel d'administration</p>
+      </div>
+      <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <a href="/admin-dashboard/#dashboard" data-section="dashboard" role="button" onclick="showAdminSection('dashboard'); return false;" class="nav-link active flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-dashboard-line text-lg"></i><span>Tableau de bord</span>
+        </a>
+        <a href="/admin-dashboard/#orders" data-section="orders" role="button" onclick="showAdminSection('orders'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-car-line text-lg"></i><span>Commandes</span>
+          <span id="nav-orders-badge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#calendar" data-section="calendar" role="button" onclick="showAdminSection('calendar'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-calendar-line text-lg"></i><span>Calendrier</span>
+        </a>
+        <a href="/admin-dashboard/#pricing" data-section="pricing" role="button" onclick="showAdminSection('pricing'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-price-tag-3-line text-lg"></i><span>Tarification</span>
+        </a>
+        <a href="/admin-dashboard/#geo-zones" data-section="geo-zones" role="button" onclick="showAdminSection('geo-zones'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-earth-line text-lg"></i><span>Zones / Cartes</span>
+        </a>
+        <a href="/admin-dashboard/#enterprises" data-section="enterprises" role="button" onclick="showAdminSection('enterprises'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-building-line text-lg"></i><span>Entreprises</span>
+          <span id="nav-enterprises-badge" class="ml-auto bg-amber-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#withdrawals" data-section="withdrawals" role="button" onclick="showAdminSection('withdrawals'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-wallet-3-line text-lg"></i><span>Retraits & Paiements</span>
+          <span id="nav-withdrawals-badge" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#lost-objects" data-section="lost-objects" role="button" onclick="showAdminSection('lost-objects'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-briefcase-line text-lg"></i><span>Objets oubliés</span>
+          <span id="nav-lost-objects-badge" class="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#sos" data-section="sos" role="button" onclick="showAdminSection('sos'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-alarm-warning-line text-lg"></i><span>Alertes SOS</span>
+          <span id="nav-sos-badge" class="ml-auto bg-red-600 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#drivers" data-section="drivers" role="button" onclick="showAdminSection('drivers'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-user-star-line text-lg"></i><span>Chauffeurs</span>
+          <span id="nav-drivers-badge" class="ml-auto bg-yellow-500 text-gray-900 text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#users" data-section="users" role="button" onclick="showAdminSection('users'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-group-line text-lg"></i><span>Utilisateurs</span>
+        </a>
+        <a href="/admin-dashboard/#chat-support" data-section="chat-support" role="button" onclick="showAdminSection('chat-support'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-customer-service-2-line text-lg"></i><span>Support Chat</span>
+          <span id="nav-chat-badge" class="ml-auto bg-orange-500 text-white text-xs rounded-full px-2 py-0.5 hidden">0</span>
+        </a>
+        <a href="/admin-dashboard/#blog" data-section="blog" role="button" onclick="showAdminSection('blog'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-discuss-line text-lg"></i><span>Forum</span>
+        </a>
+        <a href="/admin-dashboard/#lieux" data-section="lieux" role="button" onclick="showAdminSection('lieux'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-map-pin-2-fill text-lg"></i><span>Lieux à visiter</span>
+        </a>
+        <a href="/admin-dashboard/#live-map" data-section="live-map" role="button" onclick="showAdminSection('live-map'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-map-2-line text-lg"></i><span>Carte live</span>
+        </a>
+        <a href="/admin-dashboard/#analytics" data-section="analytics" role="button" onclick="showAdminSection('analytics'); return false;" class="nav-link flex items-center gap-3 px-4 py-3 cursor-pointer text-gray-300">
+          <i class="ri-bar-chart-line text-lg"></i><span>Analytiques</span>
+        </a>
+      </nav>
+      <div class="p-4 border-t border-white/10">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-9 h-9 rounded-full bg-daxi-cyan/20 flex items-center justify-center">
+            <i class="ri-shield-check-line text-daxi-cyan"></i>
+          </div>
+          <div>
+            <div class="text-sm font-semibold" id="sidebar-admin-name">Admin</div>
+            <div class="text-xs text-gray-400">Administrateur</div>
+          </div>
+        </div>
+        <button type="button" onclick="adminLogout()" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-500/20 text-red-400 text-sm">
+          <i class="ri-logout-box-line"></i> Déconnexion
+        </button>
+        <button type="button"
+                onclick="if(window.DaxiShellRole){DaxiShellRole.goClient();}else if(window.DaxiAppShell){DaxiAppShell.goClient();}else{location.href='/';}"
+                class="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/10 text-gray-300 text-sm mt-2">
+          <i class="ri-home-smile-line"></i> Retour site client
+        </button>
+      </div>
+    </aside>
+
+    
+    <main class="ml-0 lg:ml-[260px] flex-1 flex flex-col min-h-screen w-full min-w-0">
+
+      
+      <header class="admin-topbar px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-20 gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button type="button" id="admin-sidebar-toggle" class="admin-topbar-btn lg:hidden relative w-10 h-10 rounded-xl flex items-center justify-center shrink-0" aria-label="Menu">
+            <i class="ri-menu-line text-xl"></i>
+            <span id="nav-menu-total-badge" aria-hidden="true"></span>
+          </button>
+          <h2 class="font-bold text-base sm:text-lg truncate" id="page-title">Tableau de bord</h2>
+        </div>
+        <div class="flex items-center gap-4">
+          <div id="daxi-theme-slot"></div>
+          <button type="button" onclick="refreshCurrentSection()" class="admin-topbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all" title="Actualiser">
+            <i class="ri-refresh-line"></i>
+          </button>
+        </div>
+      </header>
+
+      
+      <section id="admin-section-dashboard" class="adm-pro-page p-6 space-y-6">
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="stat-card bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-500/30 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <i class="ri-car-line text-2xl text-blue-400"></i>
+              <span class="text-xs text-blue-300 bg-blue-500/20 px-2 py-1 rounded-full">Aujourd'hui</span>
+            </div>
+            <div class="text-3xl font-bold" id="stat-today-orders">-</div>
+            <div class="text-sm text-gray-400 mt-1">Commandes</div>
+          </div>
+          <div class="stat-card bg-gradient-to-br from-yellow-600/20 to-orange-800/20 border border-yellow-500/30 rounded-2xl p-5 cursor-pointer hover:border-yellow-400/50" onclick="goToPendingOrders()" title="Voir les commandes en attente">
+            <div class="flex items-center justify-between mb-3">
+              <i class="ri-time-line text-2xl text-yellow-400"></i>
+              <span class="text-xs text-yellow-300 bg-yellow-500/20 px-2 py-1 rounded-full">En attente</span>
+            </div>
+            <div class="text-3xl font-bold text-yellow-400" id="stat-pending-orders">-</div>
+            <div class="text-sm text-gray-400 mt-1">À traiter →</div>
+          </div>
+          <div class="stat-card bg-gradient-to-br from-green-600/20 to-emerald-800/20 border border-green-500/30 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <i class="ri-money-dollar-circle-line text-2xl text-green-400"></i>
+              <span class="text-xs text-green-300 bg-green-500/20 px-2 py-1 rounded-full">Ce mois</span>
+            </div>
+            <div class="text-3xl font-bold text-green-400" id="stat-month-revenue">-</div>
+            <div class="text-sm text-gray-400 mt-1">Revenus ($)</div>
+          </div>
+          <div class="stat-card bg-gradient-to-br from-purple-600/20 to-pink-800/20 border border-purple-500/30 rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <i class="ri-user-star-line text-2xl text-purple-400"></i>
+              <span class="text-xs text-purple-300 bg-purple-500/20 px-2 py-1 rounded-full">Disponibles</span>
+            </div>
+            <div class="text-3xl font-bold text-purple-400" id="stat-available-drivers">-</div>
+            <div class="text-sm text-gray-400 mt-1">Chauffeurs</div>
+          </div>
+        </div>
+
+        
+        <div class="grid grid-cols-3 lg:grid-cols-6 gap-4">
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-daxi-cyan" id="stat-total-orders">-</div>
+            <div class="text-xs text-gray-400">Total commandes</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-green-400" id="stat-completed">-</div>
+            <div class="text-xs text-gray-400">Terminées</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-orange-400" id="stat-active-orders">-</div>
+            <div class="text-xs text-gray-400">En cours</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-blue-400" id="stat-total-drivers">-</div>
+            <div class="text-xs text-gray-400">Chauffeurs</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-pink-400" id="stat-total-users">-</div>
+            <div class="text-xs text-gray-400">Utilisateurs</div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-4 text-center">
+            <div class="font-bold text-lg text-yellow-400" id="stat-chats">-</div>
+            <div class="text-xs text-gray-400">Chats en attente</div>
+          </div>
+        </div>
+
+        
+        <div id="dashboard-quick-links" class="flex flex-wrap gap-3 hidden">
+          <button onclick="goToPendingOrders()" class="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 rounded-xl text-sm font-semibold hover:bg-yellow-500/30">
+            <i class="ri-alarm-warning-line"></i>
+            <span id="quick-pending-label">Commandes en attente</span>
+          </button>
+          <button type="button" onclick="goToFilteredOrders('price_proposed')" class="flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-xl text-sm font-semibold hover:bg-blue-500/30">
+            <i class="ri-price-tag-line"></i> Prix proposés
+          </button>
+          <button type="button" onclick="goToFilteredOrders('price_confirmed')" class="flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-300 rounded-xl text-sm font-semibold hover:bg-purple-500/30">
+            <i class="ri-user-add-line"></i> À assigner
+          </button>
+        </div>
+
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <div class="lg:col-span-2 bg-gray-800 rounded-2xl p-5">
+            <h3 class="font-bold mb-4">Commandes (7 derniers jours)</h3>
+            <canvas id="orders-chart" height="200"></canvas>
+          </div>
+          
+          <div class="bg-gray-800 rounded-2xl p-5">
+            <h3 class="font-bold mb-4">Statut chauffeurs</h3>
+            <canvas id="drivers-chart" height="200"></canvas>
+            <div class="mt-4 space-y-2" id="driver-status-legend"></div>
+          </div>
+        </div>
+
+        
+        <div class="admin-table-wrap">
+          <div class="flex items-center justify-between p-5 border-b border-white/10">
+            <h3 class="font-bold text-white">Commandes récentes</h3>
+            <button onclick="showAdminSection('orders')" class="text-daxi-cyan text-sm hover:underline flex items-center gap-1"><i class="ri-arrow-right-line"></i> Voir tout</button>
+          </div>
+          <div id="recent-orders-table" class="overflow-x-auto">
+            <table class="admin-table">
+              <thead>
+                <tr class="border-b border-white/10">
+                  <th class="px-5 py-3 text-left text-gray-400">#</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Client</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Trajet</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Type</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Date/Heure</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Statut</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Prix</th>
+                  <th class="px-5 py-3 text-left text-gray-400">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recent-orders-tbody">
+                <tr><td colspan="8" class="text-center py-8 text-gray-400">Chargement...</td></tr>
+              </tbody>
+            </table>
+            <div id="recent-orders-mobile" class="admin-mobile-cards"></div>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="admin-section-orders" class="adm-pro-page hidden p-4 sm:p-6 space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex gap-2 flex-wrap">
+            <button type="button" onclick="filterAdminOrders('all')" class="admin-order-filter px-4 py-2 rounded-xl bg-daxi-cyan text-white text-sm font-semibold" data-status="all">Actives <span class="admin-filter-count" data-filter="all">0</span></button>
+            <button type="button" onclick="filterAdminOrders('pending')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="pending">En attente <span class="admin-filter-count" data-filter="pending">0</span></button>
+            <button type="button" onclick="filterAdminOrders('price_proposed')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="price_proposed">Prix proposé <span class="admin-filter-count" data-filter="price_proposed">0</span></button>
+            <button type="button" onclick="filterAdminOrders('price_confirmed')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="price_confirmed">Prix confirmé <span class="admin-filter-count" data-filter="price_confirmed">0</span></button>
+            <button type="button" onclick="filterAdminOrders('driver_assigned')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="driver_assigned">Assigné <span class="admin-filter-count" data-filter="driver_assigned">0</span></button>
+            <button type="button" onclick="filterAdminOrders('ongoing')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="ongoing">En cours <span class="admin-filter-count" data-filter="ongoing">0</span></button>
+            <button type="button" onclick="filterAdminOrders('completed')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="completed">Terminé <span class="admin-filter-count" data-filter="completed">0</span></button>
+            <button type="button" onclick="filterAdminOrders('cancelled')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="cancelled">Annulées <span class="admin-filter-count" data-filter="cancelled">0</span></button>
+          </div>
+          <input id="orders-search" type="text" placeholder="Rechercher..." class="px-4 py-2 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm w-64 pl-10" oninput="searchAdminOrders()">
+        </div>
+        <div id="flash-message" class="admin-flash-message" aria-live="polite"></div>
+        <div id="orders-htmx-loader" class="admin-orders-card-grid" data-current-url="">
+        </div>
+      </section>
+
+      
+      <section id="admin-section-drivers" class="adm-pro-page hidden p-6 space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <input id="drivers-search" type="text" placeholder="🔍 Rechercher un chauffeur..." class="px-4 py-2 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm w-64" oninput="searchDrivers()">
+          <button type="button" onclick="showAllDriversOnMap()" class="px-4 py-2 bg-daxi-cyan/20 text-daxi-cyan border border-daxi-cyan/30 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-daxi-cyan/30">
+            <i class="ri-map-pin-user-line"></i> Carte — tous les chauffeurs
+          </button>
+        </div>
+        <div id="drivers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="text-center py-8 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>
+        </div>
+      </section>
+
+      
+      <section id="admin-section-users" class="adm-pro-page hidden p-4 sm:p-6 space-y-4">
+        <input id="users-search" type="text" placeholder="Rechercher nom, email, téléphone..." class="w-full max-w-md px-4 py-2 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm" oninput="searchUsers()">
+        <div class="admin-table-wrap overflow-x-auto">
+          <table class="admin-table">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="px-5 py-3 text-left text-gray-400">Utilisateur</th>
+                <th class="px-5 py-3 text-left text-gray-400">Type</th>
+                <th class="px-5 py-3 text-left text-gray-400">Email</th>
+                <th class="px-5 py-3 text-left text-gray-400">Téléphone</th>
+                <th class="px-5 py-3 text-left text-gray-400">Inscription</th>
+                <th class="px-5 py-3 text-left text-gray-400">Courses</th>
+                <th class="px-5 py-3 text-left text-gray-400">Statut</th>
+                <th class="px-5 py-3 text-left text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody">
+              <tr><td colspan="8" class="text-center py-8 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></td></tr>
+            </tbody>
+          </table>
+          <div id="admin-users-mobile" class="admin-mobile-cards"></div>
+        </div>
+      </section>
+
+      
+      <section id="admin-section-chat-support" class="adm-pro-page hidden p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" style="height:calc(100vh-200px)">
+          
+          <div class="bg-gray-800 rounded-2xl overflow-y-auto">
+            <div class="p-4 border-b border-white/10 font-bold">Sessions escaladées</div>
+            <div id="chat-sessions-list" class="p-3 space-y-2">
+              <p class="text-center text-gray-400 text-sm py-4">Chargement...</p>
+            </div>
+          </div>
+          
+          <div class="lg:col-span-2 bg-gray-800 rounded-2xl flex flex-col">
+            <div id="chat-support-header" class="p-4 border-b border-white/10">
+              <h3 class="font-bold">Sélectionnez une session</h3>
+            </div>
+            <div id="chat-support-messages" class="flex-1 overflow-y-auto p-4 space-y-3 min-h-64">
+              <p class="text-center text-gray-400 text-sm mt-8">Sélectionnez une session pour voir les messages.</p>
+            </div>
+            <div id="chat-support-input-area" class="hidden p-4 border-t border-white/10 flex gap-3">
+              <input type="text" id="admin-chat-reply" placeholder="Répondre..." class="flex-1 px-4 py-3 bg-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none" onkeypress="if(event.key==='Enter')adminSendChatReply()">
+              <button onclick="adminSendChatReply()" class="px-4 py-2 bg-daxi-cyan rounded-xl text-white font-bold">Envoyer</button>
+              <button onclick="adminResolveChat()" class="px-4 py-2 bg-green-500 rounded-xl text-white font-bold">Résoudre</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="admin-section-lieux" class="adm-pro-page hidden p-4 sm:p-6 space-y-6">
+        <div class="flex flex-wrap gap-2 items-center">
+          <h2 class="text-lg font-bold text-white mr-2"><i class="ri-map-pin-2-fill text-amber-400"></i> Lieux à visiter</h2>
+          <button type="button" onclick="lxNew()" class="px-4 py-2 rounded-xl text-sm font-bold bg-daxi-cyan text-gray-900 ml-auto"><i class="ri-add-line"></i> Nouveau lieu</button>
+        </div>
+        <p class="text-sm text-gray-400">Ajoute restaurants, hôtels, supermarchés et adresses partenaires. Le client les voit dans Découvrir → Lieux.</p>
+        <div class="bg-gray-800 rounded-2xl p-4 space-y-3">
+          <h3 class="font-bold text-white text-sm">Catégories</h3>
+          <p class="text-xs text-gray-400">Toutes les catégories sont en base. Tu peux en ajouter ou supprimer, y compris celles d’origine.</p>
+          <div class="flex gap-2 flex-wrap">
+            <input id="lx-new-cat-name" type="text" placeholder="Nom (ex. Musées)" class="px-3 py-2 bg-gray-900 rounded-xl text-white text-sm flex-1 min-w-[140px]">
+            <input id="lx-new-cat-icon" type="text" placeholder="ri-map-pin-2-fill" class="px-3 py-2 bg-gray-900 rounded-xl text-white text-sm w-44">
+            <input id="lx-new-cat-color" type="color" value="#c27803" class="w-12 h-10 rounded cursor-pointer">
+            <button type="button" onclick="lxCatCreate()" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Ajouter</button>
+          </div>
+          <div id="lx-admin-cats" class="space-y-2"></div>
+        </div>
+        <div id="lx-admin-editor" class="hidden lx-admin-form bg-gray-800 rounded-2xl p-4">
+          <input id="lx-name" type="text" placeholder="Nom du lieu">
+          <input id="lx-address" type="text" placeholder="Adresse">
+          <input id="lx-hours" type="text" placeholder="Horaires — ex. Lun–Sam 8h–22h">
+          <textarea id="lx-desc" rows="4" placeholder="Description qui donne envie d'y aller"></textarea>
+          <div class="lx-admin-row">
+            <select id="lx-category"></select>
+            <select id="lx-enterprise"></select>
+          </div>
+          <p class="text-xs text-amber-300">Place le lieu sur la carte — le GPS est obligatoire pour commander un taxi vers cette adresse.</p>
+          <div id="lx-map" style="width:100%;height:240px;border-radius:14px;overflow:hidden;border:1px solid rgba(148,163,184,.2);background:#0f172a;"></div>
+          <div class="lx-admin-row">
+            <input id="lx-lat" type="text" placeholder="Latitude (obligatoire)">
+            <input id="lx-lng" type="text" placeholder="Longitude (obligatoire)">
+          </div>
+          <label class="text-sm text-gray-300">Photo de couverture <input id="lx-cover" type="file" accept="image/*"></label>
+          <label class="text-sm text-gray-300">Galerie <input id="lx-photos" type="file" accept="image/*" multiple></label>
+          <div id="lx-gallery" class="flex flex-wrap gap-2"></div>
+          <label class="text-sm text-white"><input id="lx-published" type="checkbox" checked> Publié</label>
+          <label class="text-sm text-white"><input id="lx-featured" type="checkbox"> Coup de cœur</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="lxSave()" class="px-4 py-2 rounded-xl bg-daxi-cyan font-bold text-gray-900">Enregistrer</button>
+            <button type="button" onclick="lxCancel()" class="px-4 py-2 rounded-xl bg-slate-700 text-white">Annuler</button>
+          </div>
+        </div>
+        <div id="lx-admin-list" class="lx-admin-grid"></div>
+      </section>
+
+      <section id="admin-section-blog" class="adm-pro-page hidden p-4 sm:p-6 space-y-6">
+        <div class="flex flex-wrap gap-2 items-center">
+          <h2 class="text-lg font-bold text-white mr-2 hidden sm:block"><i class="ri-discuss-line text-daxi-cyan"></i> Forum</h2>
+          <button type="button" data-blog-tab="dashboard" onclick="blogAdminShowTab('dashboard')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-700 text-white">Tableau de bord</button>
+          <button type="button" data-blog-tab="articles" onclick="blogAdminShowTab('articles')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-700 text-white">Publications</button>
+          <button type="button" data-blog-tab="categories" onclick="blogAdminShowTab('categories')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-700 text-white">Catégories</button>
+          <button type="button" data-blog-tab="tags" onclick="blogAdminShowTab('tags')" class="px-4 py-2 rounded-xl text-sm font-bold bg-slate-700 text-white">Tags</button>
+          <button type="button" onclick="blogNewArticle()" class="px-4 py-2 rounded-xl text-sm font-bold bg-daxi-cyan text-gray-900 ml-auto"><i class="ri-add-line"></i> Nouvelle publication</button>
+        </div>
+        <div id="blog-admin-tab-dashboard">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="bg-gray-800 rounded-2xl p-4 text-center"><div class="text-2xl font-bold text-white" id="blog-stat-total">0</div><div class="text-xs text-gray-400">Publications</div></div>
+            <div class="bg-gray-800 rounded-2xl p-4 text-center"><div class="text-2xl font-bold text-green-400" id="blog-stat-published">0</div><div class="text-xs text-gray-400">Publiés</div></div>
+            <div class="bg-gray-800 rounded-2xl p-4 text-center"><div class="text-2xl font-bold text-amber-400" id="blog-stat-drafts">0</div><div class="text-xs text-gray-400">Brouillons</div></div>
+            <div class="bg-gray-800 rounded-2xl p-4 text-center"><div class="text-2xl font-bold text-daxi-cyan" id="blog-stat-categories">0</div><div class="text-xs text-gray-400">Catégories</div></div>
+            <div class="bg-gray-800 rounded-2xl p-4 text-center"><div class="text-2xl font-bold text-purple-400" id="blog-stat-tags">0</div><div class="text-xs text-gray-400">Tags</div></div>
+          </div>
+          <div class="bg-gray-800 rounded-2xl p-5 mt-4"><h3 class="font-bold text-white mb-3">Publications les plus lues</h3><div id="blog-top-views"></div></div>
+        </div>
+        <div id="blog-admin-tab-articles" class="hidden space-y-4">
+          <div class="flex flex-wrap gap-2">
+            <input id="blog-filter-q" type="search" placeholder="Rechercher…" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm flex-1 min-w-[180px]" onkeyup="if(event.key==='Enter')loadBlogArticles()">
+            <select id="blog-filter-status" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm" onchange="loadBlogArticles()">
+              <option value="">Tous statuts</option><option value="published">Publié</option><option value="draft">Brouillon</option><option value="scheduled">Programmé</option>
+            </select>
+            <button type="button" onclick="blogBulkAction('publish')" class="px-3 py-2 bg-green-600 rounded-lg text-xs font-bold text-white">Publier</button>
+            <button type="button" onclick="blogBulkAction('delete')" class="px-3 py-2 bg-red-600 rounded-lg text-xs font-bold text-white">Supprimer</button>
+          </div>
+          <div id="blog-articles-list" class="space-y-3"></div>
+        </div>
+        <div id="blog-admin-tab-categories" class="hidden space-y-4">
+          <p class="text-xs text-gray-400">Modifiez le nom ou la couleur directement sur chaque ligne. Les catégories par défaut peuvent être supprimées.</p>
+          <div class="flex gap-2 flex-wrap">
+            <input id="blog-new-cat-name" type="text" placeholder="Nouvelle catégorie" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm flex-1">
+            <input id="blog-new-cat-color" type="color" value="#6366f1" class="w-12 h-10 rounded cursor-pointer">
+            <button type="button" onclick="blogCreateCategory()" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Créer</button>
+          </div>
+          <div id="blog-categories-list" class="space-y-2"></div>
+        </div>
+        <div id="blog-admin-tab-tags" class="hidden space-y-4">
+          <div class="flex gap-2">
+            <input id="blog-new-tag-name" type="text" placeholder="Nouveau tag" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm flex-1">
+            <button type="button" onclick="blogCreateTag()" class="px-4 py-2 bg-daxi-cyan rounded-xl font-bold text-gray-900 text-sm">Créer</button>
+          </div>
+          <div id="blog-tags-list" class="flex flex-wrap gap-2"></div>
+        </div>
+        <div id="blog-admin-tab-editor" class="hidden space-y-4 max-w-4xl">
+          <input id="blog-editor-title" type="text" placeholder="Titre de l'article" class="w-full px-4 py-3 bg-gray-800 rounded-xl text-white text-lg font-bold">
+          <input id="blog-editor-slug" type="text" placeholder="slug-url (auto si vide)" class="w-full px-4 py-2 bg-gray-800 rounded-xl text-white text-sm">
+          <textarea id="blog-editor-excerpt" placeholder="Résumé court" rows="2" class="w-full px-4 py-2 bg-gray-800 rounded-xl text-white text-sm"></textarea>
+          <div class="flex flex-wrap gap-3">
+            <select id="blog-editor-category" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm"></select>
+            <select id="blog-editor-status" class="px-4 py-2 bg-gray-800 rounded-xl text-white text-sm">
+              <option value="draft">Brouillon</option><option value="published">Publié</option><option value="scheduled">Programmé</option>
+            </select>
+            <label class="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-xl text-white text-sm cursor-pointer"><i class="ri-image-line"></i> Couverture<input id="blog-editor-cover" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"></label>
+          </div>
+{% include "partials/admin_dashboard_tail.html" %}
+function formatTripBadges(o) {
+  const parts = [];
+  if (o.trip_type === 'round_trip') parts.push('<span class="badge badge-round-trip"><i class="ri-arrow-left-right-line"></i> Aller-retour</span>');
+  else if (o.trip_type) parts.push('<span class="badge badge-one-way"><i class="ri-arrow-right-line"></i> Simple</span>');
+  if (o.is_later) parts.push('<span class="badge badge-scheduled"><i class="ri-calendar-schedule-line"></i> Programmé</span>');
+  else parts.push('<span class="badge badge-now"><i class="ri-flashlight-fill"></i> Maintenant</span>');
+  if (o.is_paused) parts.push('<span class="badge badge-pause"><i class="ri-pause-circle-line"></i> Pause</span>');
+  if (Number(o.passengers) > 1) parts.push(`<span class="badge badge-guest"><i class="ri-group-line"></i> ${o.passengers} pers.</span>`);
+  return parts.join(' ') || '<span class="cell-muted">—</span>';
+}
+
+function formatOrderSchedule(o) {
+  if (o.is_later) {
+    const when = `${o.date || ''} ${(o.time || '').slice(0, 5)}`.trim();
+    return when || 'Programmé';
+  }
+  return 'Maintenant';
+}
+
+function adminFetch(url, options = {}) {
+  const opts = { credentials: 'same-origin', ...options };
+  const token = Auth.getAccessToken();
+  const csrf = typeof getCSRFToken === 'function' ? getCSRFToken() : '';
+  opts.headers = { ...(opts.headers || {}) };
+  if (token) opts.headers.Authorization = `Bearer ${token}`;
+  if (csrf && (opts.method === 'POST' || opts.method === 'PATCH' || opts.method === 'DELETE')) {
+    opts.headers['X-CSRFToken'] = csrf;
+  }
+  return (async () => {
+    let res = await fetch(url, opts);
+    if (res.status === 401 && token && Auth.getRefreshToken()) {
+      try {
+        const rr = await fetch('/api/auth/token/refresh/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': typeof getCSRFToken === 'function' ? getCSRFToken() : '',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ refresh: Auth.getRefreshToken() }),
+        });
+        if (rr.ok) {
+          const data = await rr.json();
+          Auth.setTokens(data.access, data.refresh);
+          opts.headers = { ...(opts.headers || {}), Authorization: `Bearer ${data.access}` };
+          res = await fetch(url, opts);
+        }
+      } catch (e) {}
+    }
+    return res;
+  })();
+}
+
+async function adminHtmxPost(url, fields = {}) {
+  const body = new URLSearchParams();
+  Object.entries(fields || {}).forEach(([k, v]) => {
+    if (v != null && v !== '') body.set(k, String(v));
+  });
+  const res = await adminFetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.text();
+}
+
+function _setNavBadge(id, count) {
+  const badge = document.getElementById(id);
+  if (!badge) return;
+  const n = parseInt(count, 10) || 0;
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n <= 0);
+  _updateMenuBadgeTotal();
+}
+
+const ADMIN_NAV_BADGE_IDS = [
+  'nav-orders-badge', 'nav-enterprises-badge', 'nav-withdrawals-badge',
+  'nav-lost-objects-badge', 'nav-sos-badge', 'nav-drivers-badge', 'nav-chat-badge',
+];
+
+const ADMIN_SECTION_BADGE_KEY = {
+  orders: 'orders',
+  enterprises: 'enterprises',
+  enterprise_locations: 'enterprise_locations',
+  withdrawals: 'withdrawals',
+  'lost-objects': 'lost_objects',
+  sos: 'sos',
+  drivers: 'drivers',
+  'chat-support': 'chat',
+};
+
+const ADMIN_BADGE_KEY_TO_NAV = {
+  orders: 'nav-orders-badge',
+  enterprises: 'nav-enterprises-badge',
+  enterprise_locations: 'nav-enterprises-badge',
+  withdrawals: 'nav-withdrawals-badge',
+  lost_objects: 'nav-lost-objects-badge',
+  sos: 'nav-sos-badge',
+  drivers: 'nav-drivers-badge',
+  chat: 'nav-chat-badge',
+};
+
+function _applyBadgeCounts(b) {
+  _setNavBadge('nav-orders-badge', b.orders);
+  _setNavBadge('nav-withdrawals-badge', b.withdrawals);
+  _setNavBadge('nav-lost-objects-badge', b.lost_objects);
+  _setNavBadge('nav-sos-badge', b.sos);
+  _setNavBadge('nav-chat-badge', b.chat);
+  _setNavBadge('nav-enterprises-badge', (b.enterprises || 0) + (b.enterprise_locations || 0));
+  _setNavBadge('nav-drivers-badge', b.drivers);
+  if (typeof b.orders === 'number') ADMIN.pendingCount = b.orders;
+}
+
+function _updateMenuBadgeTotal() {
+  const menuBadge = document.getElementById('nav-menu-total-badge');
+  if (!menuBadge) return;
+  let total = 0;
+  ADMIN_NAV_BADGE_IDS.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('hidden')) total += parseInt(el.textContent, 10) || 0;
+  });
+  if (total <= 0) {
+    menuBadge.textContent = '';
+    menuBadge.classList.remove('is-visible');
+    menuBadge.setAttribute('aria-hidden', 'true');
+    return;
+  }
+  menuBadge.textContent = total > 99 ? '99+' : String(total);
+  menuBadge.classList.add('is-visible');
+  menuBadge.setAttribute('aria-hidden', 'false');
+}
+
+async function markAdminSectionSeen(section) {
+  const key = ADMIN_SECTION_BADGE_KEY[section];
+  if (!key) return;
+  const navId = ADMIN_BADGE_KEY_TO_NAV[key];
+  if (navId) _setNavBadge(navId, 0);
+  try {
+    const res = await adminFetch('/api/admin-panel/mark-section-seen/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ section: key }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.badges) _applyBadgeCounts(data.badges);
+    }
+  } catch (e) {
+    console.warn('markAdminSectionSeen:', e);
+  }
+}
+
+async function refreshAllAdminBadges() {
+  try {
+    const res = await adminFetch('/api/admin-panel/badge-counts/');
+    if (!res.ok) return;
+    const b = await res.json();
+    _applyBadgeCounts(b);
+  } catch (e) {
+    console.warn('refreshAllAdminBadges:', e);
+  }
+}
+
+async function adminSyncSession() {
+  try {
+    const res = await adminFetch('/api/admin-panel/sync-session/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+      },
+      body: '{}',
+    });
+    if (!res.ok) {
+      if (res.status === 403 || res.status === 401) {
+        return null;
+      }
+      return null;
+    }
+    return res.json();
+  } catch (e) {
+    console.warn('adminSyncSession:', e);
+    return null;
+  }
+}
+
+
+async function adminLogin() {
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  if (!email || !password) return;
+  document.getElementById('admin-login-spinner').classList.remove('hidden');
+  document.getElementById('admin-login-text').classList.add('hidden');
+  document.getElementById('admin-login-error').classList.add('hidden');
+  try {
+    const res = await AuthAPI.login(email, password);
+    if (!res.user.is_staff) {
+      Auth.clearTokens();
+      throw new Error('Accès non autorisé - compte non administrateur');
+    }
+    document.getElementById('admin-login').classList.add('hidden');
+    document.getElementById('admin-main').classList.remove('hidden');
+    if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('admin');
+    document.getElementById('sidebar-admin-name').textContent = res.user.first_name || 'Admin';
+    try { await adminSyncSession(); } catch (e) { console.warn('Session sync:', e); }
+    initAdminDashboard();
+  } catch (e) {
+    const msg = e.detail || e.non_field_errors?.[0] || e.message || 'Identifiants incorrects';
+    document.getElementById('admin-login-error').textContent = msg;
+    document.getElementById('admin-login-error').classList.remove('hidden');
+  }
+  document.getElementById('admin-login-spinner').classList.add('hidden');
+  document.getElementById('admin-login-text').classList.remove('hidden');
+}
+
+function adminLogout() {
+  if (window.DaxiShellRole && DaxiShellRole.clearAuth) DaxiShellRole.clearAuth();
+  AuthAPI.logout();
+  location.reload();
+}
+
+
+(async () => {
+  if (Auth.isLoggedIn()) {
+    try {
+      const profile = await AuthAPI.getProfile();
+      if (profile.is_staff) {
+        document.getElementById('admin-login').classList.add('hidden');
+        document.getElementById('admin-main').classList.remove('hidden');
+        if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('admin');
+        document.getElementById('sidebar-admin-name').textContent = profile.first_name || 'Admin';
+        try { await adminSyncSession(); } catch (e) {}
+        initAdminDashboard();
+      } else {
+        Auth.clearTokens();
+      }
+    } catch { Auth.clearTokens(); }
+  }
+})();
+
+
+const ADMIN_SECTION_IDS = [
+  'dashboard', 'orders', 'calendar', 'pricing', 'geo-zones', 'enterprises', 'withdrawals',
+  'lost-objects', 'sos', 'drivers', 'users', 'chat-support', 'blog', 'lieux', 'live-map', 'analytics'
+];
+
+function parseAdminHash() {
+  const raw = (location.hash || '').replace(/^#/, '').trim().toLowerCase();
+  if (!raw) return 'dashboard';
+  const section = raw.split(/[?&]/)[0];
+  return ADMIN_SECTION_IDS.includes(section) ? section : 'dashboard';
+}
+
+function syncAdminHash(section) {
+  const target = '#' + section;
+  if (location.hash !== target) {
+    history.replaceState(null, '', '/admin-dashboard/' + target);
+  }
+}
+
+function syncAdminHeaderHeight() {
+  const header = document.querySelector('#admin-main > main > header');
+  if (header) {
+    document.documentElement.style.setProperty('--admin-header-h', header.offsetHeight + 'px');
+  }
+}
+
+async function showAdminSection(section) {
+  if (!ADMIN_SECTION_IDS.includes(section)) section = 'dashboard';
+  closeAdminSidebar();
+  if (section !== 'live-map' && typeof pauseAdminLiveMap === 'function') pauseAdminLiveMap();
+  document.querySelectorAll('[id^="admin-section-"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById('admin-section-'+section)?.classList.remove('hidden');
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-link[data-section="${section}"]`)?.classList.add('active');
+  syncAdminHash(section);
+  const titles = {
+    dashboard:'Tableau de bord', orders:'Commandes', calendar:'Calendrier',
+    pricing:'Tarification', 'geo-zones':'Zones / Cartes', enterprises:'Entreprises', withdrawals:'Retraits & Paiements',
+    'lost-objects':'Objets oubliés', sos:'Alertes SOS',
+    drivers:'Chauffeurs', users:'Utilisateurs', 'chat-support':'Support Chat',
+    'blog':'Forum', 'lieux':'Lieux à visiter', 'live-map':'Carte live', analytics:'Analytiques'
+  };
+  document.getElementById('page-title').textContent = titles[section] || section;
+  ADMIN.currentSection = section;
+  const mainEl = document.querySelector('#admin-main > main');
+  if (mainEl) mainEl.classList.toggle('admin-live-map-active', section === 'live-map');
+  syncAdminHeaderHeight();
+  if (ADMIN_SECTION_BADGE_KEY[section]) await markAdminSectionSeen(section);
+
+  if (section === 'orders') loadAdminOrders(adminOrdersCurrentFilter);
+  else if (section === 'calendar') loadAdminCalendar();
+  else if (section === 'pricing') { loadPricingConfig(); loadExchangeConfig(); adminSyncSession().finally(() => loadPricingMapIframe()); }
+  else if (section === 'geo-zones') loadAdminGeoZones(true);
+  else if (section === 'enterprises') loadAdminEnterprises('approved');
+  else if (section === 'withdrawals') loadAdminWithdrawals('driver', 'pending');
+  else if (section === 'lost-objects') loadAdminLostObjects();
+  else if (section === 'sos') loadAdminSosAlerts();
+  else if (section === 'drivers') loadAdminDrivers();
+  else if (section === 'users') loadAdminUsers();
+  else if (section === 'chat-support') loadChatSessions();
+  else if (section === 'blog') loadBlogAdmin();
+  else if (section === 'lieux') loadLieuxAdmin();
+  else if (section === 'live-map') {
+    if (window.LIVE && !window.LIVE.pendingFocusDriverId && !window.LIVE.pendingShowAllDrivers) {
+      window.LIVE.returnSection = null;
+      window.LIVE.returnLabel = null;
+      window.LIVE.focusDriverId = null;
+    }
+    initAdminLiveMap();
+    requestAnimationFrame(function () {
+      syncAdminHeaderHeight();
+      setTimeout(function () {
+        if (window.AdminMaps && AdminMaps.resizeLiveMap) AdminMaps.resizeLiveMap();
+      }, 50);
+      setTimeout(function () {
+        if (window.AdminMaps && AdminMaps.resizeLiveMap) AdminMaps.resizeLiveMap();
+      }, 250);
+    });
+  }
+  else if (section === 'analytics') loadAnalytics();
+}
+
+function loadPricingMapIframe(forceReload) {
+  const iframe = document.getElementById('pricing-map-iframe');
+  if (!iframe) return;
+  const token = Auth.getAccessToken();
+  const base = iframe.dataset.src || '/api/pricing/admin/';
+  const theme = (window.DaxiTheme && DaxiTheme.get()) || localStorage.getItem('daxi-theme') || 'dark';
+  const params = new URLSearchParams();
+  params.set('embed', '1');
+  params.set('theme', theme);
+  if (token) params.set('token', token);
+  const nextSrc = `${base}${base.includes('?') ? '&' : '?'}${params.toString()}`;
+  if (forceReload || iframe.dataset.loaded !== '1' || iframe.src !== nextSrc) {
+    iframe.src = nextSrc;
+    iframe.dataset.loaded = '1';
+  }
+}
+
+function closeAdminSidebar() {
+  document.getElementById('admin-sidebar')?.classList.add('-translate-x-full');
+  document.getElementById('admin-sidebar-backdrop')?.classList.add('hidden');
+}
+
+function openAdminSidebar() {
+  document.getElementById('admin-sidebar')?.classList.remove('-translate-x-full');
+  document.getElementById('admin-sidebar-backdrop')?.classList.remove('hidden');
+}
+
+function goToFilteredOrders(status) {
+  showAdminSection('orders');
+  loadAdminOrders(status);
+}
+
+function goToPendingOrders() {
+  goToFilteredOrders('pending');
+}
+
+async function loadAdminCalendar() {
+  const container = document.getElementById('admin-calendar-container');
+  container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>';
+  try {
+    const res = await adminFetch('/htmx/admin/calendar/');
+    const html = await res.text();
+    container.innerHTML = html;
+    if (window.htmx) htmx.process(container);
+  } catch {
+    container.innerHTML = '<p class="text-center py-12 text-red-400">Erreur de chargement du calendrier.</p>';
+  }
+}
+
+function _ensureAdminCalendarModal() {
+  var modal = document.getElementById('admin-calendar-modal');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.id = 'admin-calendar-modal';
+  modal.className = 'daxi-cal-modal';
+  modal.innerHTML = ''
+    + '<div class="daxi-cal-modal__backdrop" data-cal-modal-close></div>'
+    + '<div class="daxi-cal-modal__box" role="dialog" aria-modal="true">'
+    + '  <button type="button" class="daxi-cal-modal__close" data-cal-modal-close aria-label="Fermer"><i class="ri-close-line"></i></button>'
+    + '  <div class="daxi-cal-modal__body"></div>'
+    + '</div>';
+  var host = document.getElementById('admin-app') || document.body;
+  host.appendChild(modal);
+  modal.querySelectorAll('[data-cal-modal-close]').forEach(function(el) {
+    el.addEventListener('click', closeAdminCalendarDayModal);
+  });
+  return modal;
+}
+
+function openAdminCalendarDayModal(url) {
+  var modal = _ensureAdminCalendarModal();
+  var body = modal.querySelector('.daxi-cal-modal__body');
+  body.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="ri-loader-4-line animate-spin text-xl"></i></div>';
+  body.setAttribute('data-cal-day-url', url);
+  modal.classList.add('is-open');
+  document.body.classList.add('daxi-cal-modal-open');
+  adminFetch(url).then(function(r) { return r.text(); }).then(function(html) {
+    body.innerHTML = html;
+    if (window.htmx) htmx.process(body);
+    var dayRoot = body.querySelector('[data-cal-day-url]');
+    if (dayRoot) body.setAttribute('data-cal-day-url', dayRoot.getAttribute('data-cal-day-url') || url);
+  }).catch(function() {
+    body.innerHTML = '<p class="adm-cal-day__empty">Erreur de chargement.</p>';
+  });
+}
+
+function openAdminCalendarOrderDetail(orderId) {
+  closeAdminCalendarDayModal();
+  openOrderModal(orderId);
+}
+
+function closeAdminCalendarDayModal() {
+  var modal = document.getElementById('admin-calendar-modal');
+  if (modal) modal.classList.remove('is-open');
+  document.body.classList.remove('daxi-cal-modal-open');
+}
+
+document.body.addEventListener('htmx:afterSwap', (e) => {
+  const target = e.detail && e.detail.target;
+  if (!target || !window.htmx) return;
+  if (target.id === 'calendar-container' || target.id === 'admin-calendar-container') {
+    htmx.process(target);
+  }
+});
+
+document.body.addEventListener('click', function(e) {
+  const dayBtn = e.target.closest('.adm-cal__day-btn');
+  if (dayBtn) {
+    const url = dayBtn.getAttribute('data-cal-day-url');
+    if (!url) return;
+    e.preventDefault();
+    openAdminCalendarDayModal(url);
+    return;
+  }
+  const navBtn = e.target.closest('.adm-cal__nav');
+  if (navBtn) {
+    const url = navBtn.getAttribute('hx-get');
+    if (!url) return;
+    e.preventDefault();
+    const wrap = document.getElementById('admin-calendar-container');
+    if (!wrap) return;
+    adminFetch(url).then(function(r) { return r.text(); }).then(function(html) {
+      wrap.innerHTML = html;
+      if (window.htmx) htmx.process(wrap);
+    }).catch(function() {
+      showToast('Erreur calendrier', 'error');
+    });
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAdminCalendarDayModal();
+});
+
+async function loadAdminEnterprises(tab = 'approved') {
+  const container = document.getElementById('admin-enterprises-content');
+  container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>';
+  try {
+    const res = await adminFetch(`/htmx/admin/enterprises/?tab=${encodeURIComponent(tab)}`);
+    const html = await res.text();
+    container.innerHTML = html;
+    if (window.htmx) htmx.process(container);
+    if (tab === 'locations' && window.AdminMaps) {
+      AdminMaps.ensureReady().then(() => AdminMaps.initEntLocationMaps()).catch(() => {});
+    }
+  } catch {
+    container.innerHTML = '<p class="text-center py-12 text-red-400">Erreur de chargement des entreprises.</p>';
+  }
+}
+window.loadAdminEnterprisesTab = loadAdminEnterprises;
+
+async function loadAdminWithdrawals(tab = 'driver', status = 'pending') {
+  const container = document.getElementById('admin-withdrawals-content');
+  if (!container) return;
+  container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>';
+  try {
+    const qs = new URLSearchParams({ tab, status });
+    const res = await adminFetch('/htmx/admin/withdrawals/?' + qs.toString());
+    const html = await res.text();
+    container.innerHTML = html;
+    if (window.htmx) htmx.process(container);
+    updateWithdrawalsBadge();
+  } catch {
+    container.innerHTML = '<p class="text-center py-12 text-red-400">Erreur de chargement des retraits.</p>';
+  }
+}
+window.loadAdminWithdrawalsTab = loadAdminWithdrawals;
+
+async function updateWithdrawalsBadge() { await refreshAllAdminBadges(); }
+
+async function loadAdminLostObjects() {
+  const container = document.getElementById('admin-lost-objects-content');
+  if (!container) return;
+  container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>';
+  try {
+    const res = await adminFetch('/htmx/admin/lost-objects/');
+    container.innerHTML = await res.text();
+    if (window.htmx) htmx.process(container);
+    updateLostObjectsBadge();
+  } catch {
+    container.innerHTML = '<p class="text-center py-12 text-red-400">Erreur de chargement.</p>';
+  }
+}
+
+async function loadAdminSosAlerts(silent) {
+  const container = document.getElementById('admin-sos-content');
+  if (!container) return;
+  const alreadyLoaded = !!container.querySelector('#admin-sos-container');
+  if (!silent && !alreadyLoaded) {
+    container.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>';
+  }
+  try {
+    const res = await adminFetch('/htmx/admin/sos-alerts/');
+    container.innerHTML = await res.text();
+    if (window.htmx) htmx.process(container);
+  } catch {
+    if (!silent) {
+      container.innerHTML = '<p class="text-center py-12 text-red-400">Erreur de chargement.</p>';
+    }
+  }
+}
+
+function toggleSosOrderMap(orderId) {
+  const panel = document.getElementById('sos-map-panel-' + orderId);
+  if (!panel) return;
+  const opening = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if (opening) setTimeout(() => initSosOrderMap(orderId), 80);
+}
+
+async function updateLostObjectsBadge() { await refreshAllAdminBadges(); }
+
+async function updateSosBadge() { await refreshAllAdminBadges(); }
+
+const PRICING_FIELD_HELP = {
+  base_price_per_km: 'Tarif de référence pour chaque kilomètre parcouru. Ex. 1,50 $/km × 10 km = 15 $ avant zones et options. C\'est la base du calcul affiché au client.',
+  minimum_price: 'Prix plancher : même pour une course très courte, le client paie au minimum ce montant. Protège le chauffeur sur les petits trajets.',
+  round_trip_multiplier: 'Appliqué quand le client choisit aller-retour. Ex. 1,8 = le trajet aller + retour est facturé à 180 % du prix simple (hors attente).',
+  wait_price_per_30min: 'Majoration pour attente programmée lors d\'un aller-retour (client qui fait des courses pendant que le chauffeur attend). Facturé par tranche de 30 minutes.',
+  pause_price_per_5min: 'Arrêt imprévu en cours de course (pause chauffeur). Ajouté au prix final par tranche de 5 minutes d\'attente.',
+  passenger_price_percent: 'Pour chaque passager supplémentaire au-delà du premier. Ex. 10 % = +10 % sur le sous-total pour 2 passagers, +20 % pour 3, etc.',
+};
+
+let ADMIN_PRICING_HIDDEN = { global_multiplier: 1, notes: '' };
+
+let _fieldHelpEl = null;
+function showFieldHelp(ev, key) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const text = PRICING_FIELD_HELP[key];
+  if (!text) return;
+  if (_fieldHelpEl) _fieldHelpEl.remove();
+  const pop = document.createElement('div');
+  pop.className = 'field-help-popover';
+  pop.textContent = text;
+  document.body.appendChild(pop);
+  const btn = ev.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const left = Math.min(rect.left, window.innerWidth - pop.offsetWidth - 12);
+  pop.style.left = `${Math.max(12, left)}px`;
+  pop.style.top = `${rect.bottom + 8}px`;
+  _fieldHelpEl = pop;
+  const close = (e) => {
+    if (pop.contains(e.target) || btn.contains(e.target)) return;
+    pop.remove();
+    _fieldHelpEl = null;
+    document.removeEventListener('click', close, true);
+  };
+  setTimeout(() => document.addEventListener('click', close, true), 0);
+}
+
+async function loadPricingConfig() {
+  const statusEl = document.getElementById('pricing-config-status');
+  statusEl.classList.add('hidden');
+  try {
+    const res = await adminFetch('/htmx/admin/pricing/?format=json', { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('load failed');
+    const data = await res.json();
+    const cfg = data.config;
+    document.getElementById('cfg-base-price-per-km').value = cfg.base_price_per_km;
+    document.getElementById('cfg-minimum-price').value = cfg.minimum_price;
+    document.getElementById('cfg-round-trip-multiplier').value = cfg.round_trip_multiplier;
+    document.getElementById('cfg-wait-price').value = cfg.wait_price_per_30min;
+    document.getElementById('cfg-pause-price').value = cfg.pause_price_per_5min ?? 2.5;
+    document.getElementById('cfg-passenger-percent').value = cfg.passenger_price_percent;
+    document.getElementById('cfg-driver-commission').value = cfg.default_driver_commission_rate ?? 80;
+    ADMIN_PRICING_HIDDEN.global_multiplier = cfg.global_multiplier ?? 1;
+    ADMIN_PRICING_HIDDEN.notes = cfg.notes || '';
+  } catch {
+    showToast('Impossible de charger la configuration tarifaire', 'error');
+  }
+}
+
+async function savePricingConfig(e) {
+  e.preventDefault();
+  const btn = document.getElementById('pricing-save-btn');
+  btn.disabled = true;
+  const payload = {
+    base_price_per_km: parseFloat(document.getElementById('cfg-base-price-per-km').value),
+    minimum_price: parseFloat(document.getElementById('cfg-minimum-price').value),
+    round_trip_multiplier: parseFloat(document.getElementById('cfg-round-trip-multiplier').value),
+    wait_price_per_30min: parseFloat(document.getElementById('cfg-wait-price').value),
+    pause_price_per_5min: parseFloat(document.getElementById('cfg-pause-price').value),
+    passenger_price_percent: parseFloat(document.getElementById('cfg-passenger-percent').value),
+    default_driver_commission_rate: parseFloat(document.getElementById('cfg-driver-commission').value),
+    global_multiplier: ADMIN_PRICING_HIDDEN.global_multiplier,
+    notes: ADMIN_PRICING_HIDDEN.notes,
+  };
+  const statusEl = document.getElementById('pricing-config-status');
+  try {
+    const res = await adminFetch('/htmx/admin/pricing/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Erreur');
+    statusEl.textContent = (data.message || 'Configuration enregistrée.');
+    statusEl.className = 'px-4 py-3 rounded-2xl text-sm font-semibold bg-green-500/10 border border-green-500/30 text-green-400';
+    statusEl.classList.remove('hidden');
+    showToast('Configuration tarifaire enregistrée');
+  } catch (err) {
+    statusEl.textContent = (err.message || 'Erreur lors de la sauvegarde');
+    statusEl.className = 'px-4 py-3 rounded-2xl text-sm font-semibold bg-red-500/10 border border-red-500/30 text-red-400';
+    statusEl.classList.remove('hidden');
+    showToast('Erreur de sauvegarde', 'error');
+  }
+  btn.disabled = false;
+}
+
+async function loadExchangeConfig() {
+  try {
+    const res = await adminFetch('/htmx/admin/system-config/?format=json', { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('load failed');
+    const data = await res.json();
+    document.getElementById('cfg-usd-htg-rate').value = data.config.usd_htg_rate ?? 130;
+  } catch {
+    showToast('Impossible de charger le taux de change', 'error');
+  }
+}
+
+async function saveExchangeConfig(e) {
+  e.preventDefault();
+  const btn = document.getElementById('exchange-save-btn');
+  btn.disabled = true;
+  const payload = {
+    usd_htg_rate: parseFloat(document.getElementById('cfg-usd-htg-rate').value),
+  };
+  try {
+    const res = await adminFetch('/htmx/admin/system-config/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Erreur');
+    showToast(data.message || 'Taux de change enregistré');
+  } catch (err) {
+    showToast(err.message || 'Erreur de sauvegarde', 'error');
+  }
+  btn.disabled = false;
+}
+
+function refreshCurrentSection() {
+  showAdminSection(ADMIN.currentSection);
+}
+
+
+async function initAdminDashboard() {
+  document.getElementById('admin-sidebar-toggle')?.addEventListener('click', openAdminSidebar);
+  window.addEventListener('hashchange', () => {
+    const section = parseAdminHash();
+    if (section !== ADMIN.currentSection) showAdminSection(section);
+  });
+  document.addEventListener('daxi-theme-change', () => {
+    if (ADMIN.currentSection === 'pricing') loadPricingMapIframe(true);
+    if (window.AdminMaps && AdminMaps.syncTheme) AdminMaps.syncTheme();
+  });
+  document.body.addEventListener('htmx:configRequest', (e) => {
+    const token = Auth.getAccessToken();
+    if (token) e.detail.headers['Authorization'] = `Bearer ${token}`;
+    const csrf = typeof getCSRFToken === 'function' ? getCSRFToken() : (window.DaxiHtmxCsrf ? DaxiHtmxCsrf.read() : '');
+    if (csrf) {
+      e.detail.headers['X-CSRFToken'] = csrf;
+      const verb = String(e.detail.verb || 'get').toLowerCase();
+      if (verb !== 'get' && verb !== 'head') {
+        e.detail.parameters = e.detail.parameters || {};
+        if (!e.detail.parameters.csrfmiddlewaretoken) e.detail.parameters.csrfmiddlewaretoken = csrf;
+      }
+    }
+  });
+  const bootStatus = document.getElementById('admin-boot-status');
+  const setBoot = (msg) => { if (bootStatus) bootStatus.textContent = msg; };
+  try {
+    setBoot('Synchronisation…');
+    await adminSyncSession();
+    setBoot('Chargement des commandes…');
+    await Promise.all([
+      refreshAllAdminBadges(),
+      loadDashboardStats(),
+      prefetchAdminOrders('all'),
+      loadAdminSosAlerts(true),
+    ]);
+  } catch (e) {
+    console.warn('initAdminDashboard boot:', e);
+  } finally {
+    document.getElementById('admin-boot-overlay')?.classList.add('is-done');
+  }
+  syncAdminHeaderHeight();
+  const bootSection = parseAdminHash();
+  if (bootSection !== 'dashboard') await showAdminSection(bootSection);
+  setInterval(async () => {
+    await refreshAllAdminBadges();
+    await loadDashboardStats();
+  }, 30000);
+  connectAdminWebSocket();
+}
+
+async function loadDashboardStats() {
+  try {
+    let res = await adminFetch('/api/admin-panel/stats/');
+    if (res.status === 403) {
+      await adminSyncSession();
+      res = await adminFetch('/api/admin-panel/stats/');
+    }
+    if (!res.ok) {
+      console.warn('Dashboard stats HTTP', res.status);
+      return;
+    }
+    const stats = await res.json();
+    if (!stats.orders || !stats.revenue || !stats.drivers || !stats.users) {
+      console.warn('Dashboard stats: réponse invalide', stats);
+      return;
+    }
+    document.getElementById('stat-today-orders').textContent = stats.orders.today ?? 0;
+    document.getElementById('stat-pending-orders').textContent = stats.orders.pending ?? 0;
+    document.getElementById('stat-month-revenue').textContent = '$' + Math.round(stats.revenue.month || 0).toLocaleString('en-US');
+    document.getElementById('stat-available-drivers').textContent = stats.drivers.available ?? 0;
+    document.getElementById('stat-total-orders').textContent = stats.orders.total ?? 0;
+    document.getElementById('stat-completed').textContent = stats.orders.completed ?? 0;
+    document.getElementById('stat-active-orders').textContent = stats.orders.active ?? 0;
+    document.getElementById('stat-total-drivers').textContent = stats.drivers.total ?? 0;
+    document.getElementById('stat-total-users').textContent = stats.users.total ?? 0;
+    document.getElementById('stat-chats').textContent = stats.support?.escalated_chats ?? 0;
+    ADMIN.pendingCount = stats.orders.pending ?? 0;
+
+    const quickLinks = document.getElementById('dashboard-quick-links');
+    const quickLabel = document.getElementById('quick-pending-label');
+    if (stats.orders.pending > 0) {
+      quickLinks.classList.remove('hidden');
+      quickLabel.textContent = `${stats.orders.pending} commande${stats.orders.pending > 1 ? 's' : ''} en attente`;
+    } else {
+      quickLinks.classList.add('hidden');
+    }
+    try { await refreshAllAdminBadges(); } catch (e) { console.warn('refreshAllAdminBadges:', e); }
+    updateOrderFilterCounts(stats.orders.filter_counts || {});
+
+    renderRecentOrdersTable(stats.recent_orders || []);
+
+    renderOrdersChart(stats.chart_data || []);
+    renderDriversChart(stats.drivers);
+  } catch (e) { console.error('Dashboard stats error:', e); }
+}
+
+function updateOrderFilterCounts(counts) {
+  document.querySelectorAll('.admin-filter-count').forEach(el => {
+    const key = el.dataset.filter;
+    const n = counts[key] ?? 0;
+    el.textContent = '(' + n + ')';
+  });
+}
+
+function renderRecentOrdersTable(orders) {
+  const tbody = document.getElementById('recent-orders-tbody');
+  const mobile = document.getElementById('recent-orders-mobile');
+  if (!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-gray-400">Aucune commande récente.</td></tr>';
+    if (mobile) mobile.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Aucune commande récente.</div>';
+    return;
+  }
+  tbody.innerHTML = orders.map(o => `
+    <tr class="order-row cursor-pointer" onclick="openOrderModal(${o.id})">
+      <td class="text-daxi-cyan font-bold">#${o.id}</td>
+      <td><div class="font-medium text-white">${escapeHtml(o.client_name)}</div></td>
+      <td class="cell-route"><div class="route-main">${escapeHtml(o.pickup)}</div><div class="route-sub">→ ${escapeHtml(o.destination)}</div></td>
+      <td><div class="flex flex-wrap gap-1">${formatTripBadges(o)}</div></td>
+      <td class="cell-muted">${formatOrderSchedule(o)}</td>
+      <td><span class="badge badge-${o.status}">${o.status_display || o.status}</span></td>
+      <td class="admin-price">${formatPrice(o.price)}</td>
+      <td>
+        <div class="flex gap-1 flex-wrap" onclick="event.stopPropagation()">
+          ${o.status === 'pending' ? `<button onclick="openPriceModal(${o.id},'${escapeHtml(o.pickup)}→${escapeHtml(o.destination)}')" class="admin-btn-icon admin-btn-price" title="Proposer un prix"><i class="ri-price-tag-3-line"></i></button>` : ''}
+          ${['price_confirmed'].includes(o.status) ? `<button onclick="openAssignModal(${o.id})" class="admin-btn-icon admin-btn-assign" title="Assigner"><i class="ri-user-add-line"></i></button>` : ''}
+          <button onclick="openOrderModal(${o.id})" class="admin-btn-icon admin-btn-view" title="Détails"><i class="ri-eye-line"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  if (mobile) {
+    mobile.innerHTML = orders.map(o => `
+      <div class="admin-mcard" onclick="openOrderModal(${o.id})">
+        <div class="admin-mcard-head">
+          <div>
+            <div class="admin-mcard-id">#${o.id}</div>
+            <div class="admin-mcard-title">${escapeHtml(o.client_name)}</div>
+            <div class="admin-mcard-sub">${formatOrderSchedule(o)}</div>
+          </div>
+          <span class="badge badge-${o.status}">${escapeHtml(o.status_display || o.status)}</span>
+        </div>
+        <div class="admin-mcard-route">
+          <div><strong>Départ</strong> ${escapeHtml(o.pickup)}</div>
+          <div style="margin-top:4px;"><strong>Arrivée</strong> ${escapeHtml(o.destination)}</div>
+        </div>
+        <div class="admin-mcard-foot">
+          <div class="flex flex-wrap gap-1">${formatTripBadges(o)}</div>
+          <div class="admin-mcard-actions" onclick="event.stopPropagation()">
+            <span class="admin-price">${formatPrice(o.price)}</span>
+            <button onclick="openOrderModal(${o.id})" class="admin-btn-icon admin-btn-view"><i class="ri-eye-line"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderOrdersChart(data) {
+  const ctx = document.getElementById('orders-chart');
+  if (!ctx) return;
+  if (ADMIN.charts.orders) ADMIN.charts.orders.destroy();
+  ADMIN.charts.orders = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.date),
+      datasets: [{
+        label: 'Commandes',
+        data: data.map(d => d.orders),
+        backgroundColor: 'rgba(10,132,255,0.5)',
+        borderColor: '#0a84ff',
+        borderWidth: 2,
+        borderRadius: 8,
+      }, {
+        label: 'Revenus ($)',
+        data: data.map(d => d.revenue),
+        backgroundColor: 'rgba(0,212,255,0.3)',
+        borderColor: '#00d4ff',
+        borderWidth: 2,
+        borderRadius: 8,
+        type: 'line',
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+function renderDriversChart(drivers) {
+  const ctx = document.getElementById('drivers-chart');
+  if (!ctx) return;
+  if (ADMIN.charts.drivers) ADMIN.charts.drivers.destroy();
+  ADMIN.charts.drivers = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Disponible', 'Occupé', 'Hors ligne'],
+      datasets: [{
+        data: [drivers.available, drivers.busy, drivers.offline],
+        backgroundColor: ['#22c55e', '#f97316', '#6b7280'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      cutout: '70%',
+    }
+  });
+  document.getElementById('driver-status-legend').innerHTML = `
+    <div class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div>Disponible</div><span class="font-bold">${drivers.available}</span></div>
+    <div class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-orange-500"></div>Occupé</div><span class="font-bold">${drivers.busy}</span></div>
+    <div class="flex items-center justify-between text-sm"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-gray-500"></div>Hors ligne</div><span class="font-bold">${drivers.offline}</span></div>
+  `;
+}
+
+function orderMatchesStatusFilter(o, status) {
+  if (status === 'all') return true;
+  if (status === 'price_proposed') {
+    return o.status === 'price_proposed' || (o.status === 'pending' && o.price && Number(o.price) > 0);
+  }
+  if (status === 'active') {
+    return ['price_proposed', 'price_confirmed', 'driver_assigned', 'on_way', 'arrived', 'in_progress'].includes(o.status);
+  }
+  return o.status === status;
+}
+
+
+let adminOrdersCurrentFilter = 'all';
+let _adminOrdersCache = null;
+
+async function prefetchAdminOrders(statusFilter = 'all') {
+  const loader = document.getElementById('orders-htmx-loader');
+  if (!loader) return;
+  const url = `/htmx/admin/orders/?status=${encodeURIComponent(statusFilter)}`;
+  try {
+    const res = await adminFetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    _adminOrdersCache = { status: statusFilter, html, url };
+    loader.innerHTML = html;
+    loader.dataset.currentUrl = url;
+    adminOrdersCurrentFilter = statusFilter;
+    if (window.htmx) htmx.process(loader);
+    if (window.DaxiChatComposer) DaxiChatComposer.init();
+    bindAdminCancelOrderButtons(loader);
+    ensureAdminMapsReady().then(() => {
+      window.googleMapsLoaded = true;
+      if (typeof initAdminOrderMaps === 'function') initAdminOrderMaps();
+    }).catch(() => {});
+  } catch (e) { console.warn('prefetchAdminOrders:', e); }
+}
+
+async function loadAdminOrders(statusFilter = 'all', opts = {}) {
+  const loader = document.getElementById('orders-htmx-loader');
+  if (!loader) return;
+  const force = !!(opts && opts.force);
+  adminOrdersCurrentFilter = statusFilter || 'all';
+  const url = `/htmx/admin/orders/?status=${encodeURIComponent(adminOrdersCurrentFilter)}`;
+  if (!force && _adminOrdersCache && _adminOrdersCache.status === adminOrdersCurrentFilter && _adminOrdersCache.html) {
+    loader.innerHTML = _adminOrdersCache.html;
+    loader.dataset.currentUrl = url;
+    if (window.htmx) htmx.process(loader);
+    if (window.DaxiChatComposer) DaxiChatComposer.init();
+    bindAdminCancelOrderButtons(loader);
+    filterAdminOrdersUI(adminOrdersCurrentFilter);
+    ensureAdminMapsReady().then(() => {
+      window.googleMapsLoaded = true;
+      if (typeof initAdminOrderMaps === 'function') initAdminOrderMaps();
+    }).catch(() => {});
+    return;
+  }
+  loader.innerHTML = '<div class="text-center py-12"><i class="ri-loader-4-line animate-spin text-2xl text-gray-400"></i></div>';
+  loader.dataset.currentUrl = url;
+  try {
+    const res = await adminFetch(url);
+    const html = await res.text();
+    _adminOrdersCache = { status: adminOrdersCurrentFilter, html, url };
+    loader.innerHTML = html;
+    if (window.htmx) htmx.process(loader);
+    if (window.DaxiChatComposer) DaxiChatComposer.init();
+    bindAdminCancelOrderButtons(loader);
+    filterAdminOrdersUI(adminOrdersCurrentFilter);
+    ensureAdminMapsReady().then(() => {
+      window.googleMapsLoaded = true;
+      if (typeof initAdminOrderMaps === 'function') initAdminOrderMaps();
+    }).catch(() => {});
+  } catch {
+    loader.innerHTML = '<p class="text-center py-8 text-red-400">Erreur de chargement.</p>';
+  }
+}
+
+function filterAdminOrders(status, reload = true) {
+  if (reload) loadAdminOrders(status);
+  else filterAdminOrdersUI(status);
+}
+
+function filterAdminOrdersUI(status) {
+  document.querySelectorAll('.admin-order-filter').forEach(btn => {
+    btn.classList.remove('bg-daxi-cyan','text-white');
+    btn.classList.add('bg-gray-700','text-gray-300');
+  });
+  const activeBtn = document.querySelector(`.admin-order-filter[data-status="${status}"]`);
+  activeBtn?.classList.remove('bg-gray-700','text-gray-300');
+  activeBtn?.classList.add('bg-daxi-cyan','text-white');
+}
+
+function searchAdminOrders() {
+  const q = (document.getElementById('orders-search')?.value || '').toLowerCase();
+  document.querySelectorAll('#orders-container .order-card, #orders-container .adm-std-card, #orders-container .adm-plan-card').forEach(card => {
+    card.style.display = !q || card.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function reloadAdminOrdersHtmx() {
+    _adminOrdersCache = null;
+    const loader = document.getElementById('orders-htmx-loader');
+    if (loader?.dataset.currentUrl) loadAdminOrders(adminOrdersCurrentFilter);
+}
+
+function invalidateAdminOrdersCache() {
+  _adminOrdersCache = null;
+}
+
+function _adminRemoveOrderCard(orderId) {
+  const card = document.getElementById('order-card-' + orderId);
+  if (!card) return;
+  card.style.transition = 'opacity .22s ease, transform .22s ease';
+  card.style.opacity = '0';
+  card.style.transform = 'scale(.98)';
+  setTimeout(() => card.remove(), 240);
+}
+
+async function adminCancelOrder(orderId, meta) {
+  if (!orderId) return;
+  meta = meta || {};
+  const result = await openAdminCancelModal(orderId, meta);
+  if (!result || !result.confirmed) return;
+  try {
+    const body = new FormData();
+    body.append('send_client', result.sendClient ? '1' : '0');
+    body.append('send_driver', result.sendDriver ? '1' : '0');
+    if (result.sendClient && result.messageClient) body.append('message_client', result.messageClient);
+    if (result.sendDriver && result.messageDriver) body.append('message_driver', result.messageDriver);
+    const res = await adminFetch('/htmx/admin/orders/' + orderId + '/refuse/', { method: 'POST', body: body });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    _adminRemoveOrderCard(orderId);
+    if (window.DaxiRealtimeSync && DaxiRealtimeSync.removeAdminOrder) {
+      DaxiRealtimeSync.removeAdminOrder(orderId);
+    }
+    _adminOrdersCache = null;
+    showToast('Course annulée');
+    loadDashboardStats();
+    if (adminOrdersCurrentFilter === 'all' || adminOrdersCurrentFilter === 'cancelled') {
+      reloadAdminOrdersHtmx();
+    }
+  } catch (e) {
+    console.warn('adminCancelOrder:', e);
+    showToast('Erreur lors de l\'annulation', 'error');
+    reloadAdminOrdersHtmx();
+  }
+}
+
+function bindAdminCancelOrderButtons(scope) {
+  (scope || document).querySelectorAll('[data-admin-cancel-order]').forEach(btn => {
+    if (btn.dataset.adminCancelBound) return;
+    btn.dataset.adminCancelBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      adminCancelOrder(btn.getAttribute('data-admin-cancel-order'), {
+        status: btn.getAttribute('data-order-status') || '',
+        hasDriver: btn.getAttribute('data-order-driver') === '1',
+        paymentMethod: btn.getAttribute('data-order-payment-method') || '',
+        paymentStatus: btn.getAttribute('data-order-payment-status') || '',
+      });
+    });
+  });
+}
+
+const _ADMIN_DRIVER_MOVED = ['driver_assigned', 'on_way', 'arrived', 'in_progress'];
+
+function openAdminCancelModal(orderId, meta) {
+  meta = meta || {};
+  const moved = _ADMIN_DRIVER_MOVED.indexOf(meta.status || '') >= 0;
+  const hasDriver = !!meta.hasDriver;
+  const paidOnline = (meta.paymentMethod === 'card' || meta.paymentMethod === 'moncash')
+    && meta.paymentStatus === 'paid';
+  const payAtDriver = meta.paymentMethod === 'in_person';
+  let defaultClient;
+  if (paidOnline) {
+    defaultClient = moved
+      ? 'Nous sommes désolés, nous avons dû annuler votre course. Le chauffeur s\'était déjà en route.'
+      : 'Nous sommes désolés, nous avons dû annuler votre course.';
+  } else if (payAtDriver || !meta.paymentMethod) {
+    defaultClient = moved
+      ? 'Nous avons dû annuler votre course. Le chauffeur s\'était déjà déplacé : aucun frais ne vous sera demandé.'
+      : 'Nous avons dû annuler votre course. Aucun frais ne vous sera demandé.';
+  } else {
+    defaultClient = moved
+      ? 'Nous avons dû annuler votre course. Le chauffeur s\'était déjà déplacé : aucun frais ne vous sera demandé.'
+      : 'Nous avons dû annuler votre course. Aucun frais ne vous sera demandé.';
+  }
+  const defaultDriver = 'Cette course a été annulée par l\'équipe DAXI et retirée de votre planning.';
+
+  const clientBlock = ''
+    + '  <div class="adm-cancel-msg adm-cancel-msg--client">'
+    + '    <label class="adm-cancel-msg__toggle"><input type="checkbox" id="admCancelSendClient" checked><span><i class="ri-user-heart-line"></i> Message au client</span></label>'
+    + '    <textarea id="admCancelMsgClient" class="adm-cancel-msg__input" rows="3" placeholder="Message personnalisé pour le client…">' + defaultClient + '</textarea>'
+    + (paidOnline ? '    <p class="adm-cancel-msg__hint">Paiement en ligne détecté — le client sera informé du remboursement intégral.</p>' : '    <p class="adm-cancel-msg__hint">Ce message n\'est visible que par le client.</p>')
+    + '  </div>';
+
+  const driverBlock = hasDriver ? ''
+    + '  <div class="adm-cancel-msg adm-cancel-msg--driver">'
+    + '    <label class="adm-cancel-msg__toggle"><input type="checkbox" id="admCancelSendDriver" checked><span><i class="ri-steering-2-line"></i> Message au chauffeur</span></label>'
+    + '    <textarea id="admCancelMsgDriver" class="adm-cancel-msg__input" rows="3" placeholder="Message personnalisé pour le chauffeur…">' + defaultDriver + '</textarea>'
+    + '    <p class="adm-cancel-msg__hint">Ce message n\'est visible que par le chauffeur.</p>'
+    + '  </div>' : '  <p class="adm-cancel-msg__hint adm-cancel-msg__hint--solo">Aucun chauffeur assigné — seul le client peut être notifié.</p>';
+
+  return new Promise(function(resolve) {
+    const root = document.createElement('div');
+    root.className = 'adm-cancel-modal-root';
+    root.innerHTML = ''
+      + '<div class="adm-cancel-modal" role="dialog" aria-modal="true">'
+      + '  <div class="adm-cancel-modal__glow"></div>'
+      + '  <div class="adm-cancel-modal__head">'
+      + '    <div class="adm-cancel-modal__icon"><i class="ri-shield-cross-line"></i></div>'
+      + '    <div>'
+      + '      <h3>Annuler la course #' + orderId + '</h3>'
+      + '      <p>' + (moved
+        ? 'Chauffeur déjà en déplacement — <strong>aucun frais client</strong>, même selon le contrat.'
+        : 'Annulation administrative — aucun frais client.') + '</p>'
+      + '    </div>'
+      + '  </div>'
+      + clientBlock
+      + driverBlock
+      + '  <div class="adm-cancel-modal__actions">'
+      + '    <button type="button" class="adm-cancel-btn adm-cancel-btn--ghost" data-act="back">Retour</button>'
+      + '    <button type="button" class="adm-cancel-btn adm-cancel-btn--danger" data-act="confirm"><i class="ri-close-circle-line"></i> Confirmer l\'annulation</button>'
+      + '  </div>'
+      + '</div>';
+
+    function close(result) {
+      root.classList.add('is-closing');
+      setTimeout(function() { root.remove(); resolve(result); }, 180);
+    }
+
+    root.querySelector('[data-act="back"]').addEventListener('click', function() { close({ confirmed: false }); });
+    root.querySelector('[data-act="confirm"]').addEventListener('click', function() {
+      const sendClient = !!root.querySelector('#admCancelSendClient')?.checked;
+      const sendDriver = hasDriver && !!root.querySelector('#admCancelSendDriver')?.checked;
+      const messageClient = (root.querySelector('#admCancelMsgClient')?.value || '').trim();
+      const messageDriver = (root.querySelector('#admCancelMsgDriver')?.value || '').trim();
+      close({
+        confirmed: true,
+        sendClient: sendClient,
+        sendDriver: sendDriver,
+        messageClient: sendClient ? messageClient : '',
+        messageDriver: sendDriver ? messageDriver : '',
+      });
+    });
+    root.addEventListener('click', function(e) { if (e.target === root) close({ confirmed: false }); });
+    function syncToggle(boxId, inputId) {
+      const box = root.querySelector(boxId);
+      const input = root.querySelector(inputId);
+      const chk = box && box.querySelector('input[type="checkbox"]');
+      if (!box || !input || !chk) return;
+      function apply() { input.disabled = !chk.checked; box.classList.toggle('is-off', !chk.checked); }
+      chk.addEventListener('change', apply);
+      apply();
+    }
+    syncToggle('.adm-cancel-msg--client', '#admCancelMsgClient');
+    syncToggle('.adm-cancel-msg--driver', '#admCancelMsgDriver');
+    document.body.appendChild(root);
+    const first = root.querySelector('#admCancelMsgClient') || root.querySelector('[data-act="confirm"]');
+    if (first) first.focus();
+  });
+}
+
+
+
+async function updateOrderStatus(orderId, newStatus) {
+  try {
+    await adminHtmxPost('/htmx/admin/orders/' + orderId + '/status/', { status: newStatus });
+    showToast(`Statut mis à jour: ${newStatus}`);
+    reloadAdminOrdersHtmx();
+    loadDashboardStats();
+  } catch { showToast('Erreur', 'error'); }
+}
+
+async function deleteAdminOrder(orderId) {
+  if (!confirm(`Supprimer la commande #${orderId} ?`)) return;
+  try {
+    if (window.DaxiRealtimeSync && DaxiRealtimeSync.removeAdminOrder) {
+      DaxiRealtimeSync.removeAdminOrder(orderId);
+    }
+    await adminHtmxPost('/htmx/admin/orders/' + orderId + '/delete/', {});
+    showToast('Commande supprimée');
+    reloadAdminOrdersHtmx();
+  } catch { showToast('Erreur', 'error'); }
+}
+
+
+function openPriceModal(orderId, route) {
+  ADMIN.proposingPriceOrderId = orderId;
+  document.getElementById('price-modal-order-id').textContent = orderId;
+  document.getElementById('price-modal-route').textContent = route || '';
+  document.getElementById('price-input').value = '';
+  document.getElementById('price-modal').classList.remove('hidden');
+}
+
+function openProposePrice(orderId, currentPrice) {
+  openPriceModal(orderId, '');
+  if (currentPrice) document.getElementById('price-input').value = currentPrice;
+}
+
+function setPriceQuick(amount) {
+  document.getElementById('price-input').value = amount;
+}
+
+async function submitPriceProposal() {
+  const price = parseFloat(document.getElementById('price-input').value);
+  if (!price || price <= 0) return showToast('Prix invalide', 'warning');
+  try {
+    await adminHtmxPost('/htmx/admin/orders/' + ADMIN.proposingPriceOrderId + '/propose-price/', { price: price });
+    showToast(`Prix de ${formatPrice(price)} proposé`);
+    closeModal('price-modal');
+    reloadAdminOrdersHtmx();
+    loadDashboardStats();
+  } catch { showToast('Erreur', 'error'); }
+}
+
+function adminSubmitCoords(orderId, csrfToken) {
+  var statusEl = document.getElementById('adm-coords-status-' + orderId);
+  var root = document.getElementById('daxi-coords-adm-' + orderId);
+  var isFixed = root && root.dataset.fixedPrice === '1';
+  var payload = window.DaxiOrderCoordsMap
+    ? DaxiOrderCoordsMap.collectPayload('adm-', orderId, { requireAll: !isFixed })
+    : null;
+  if (!payload || !DaxiOrderCoordsMap.hasPlacedCoords(payload.body)) {
+    if (statusEl) statusEl.textContent = 'Placez au moins un point sur la carte.';
+    return;
+  }
+  if (!isFixed && payload.missing.length) {
+    if (statusEl) statusEl.textContent = 'Sélectionnez Départ ou Arrivée, puis cliquez sur la carte pour placer chaque point manquant.';
+    return;
+  }
+  if (statusEl) statusEl.textContent = 'Enregistrement…';
+  var submit = function(body) {
+    return fetch('/htmx/admin/orders/' + orderId + '/set-coords/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken },
+      body: body,
+      credentials: 'include'
+    }).then(function(r) { return r.text(); }).then(function(html) {
+      if (statusEl) statusEl.textContent = html.replace(/<[^>]+>/g, '').trim() || 'Coordonnées enregistrées';
+      showToast('Coordonnées enregistrées');
+      reloadAdminOrdersHtmx();
+    });
+  };
+  var chain = window.DaxiKnownPlaces
+    ? DaxiKnownPlaces.augmentCoordsFormData(payload.body, 'adm-', orderId)
+    : Promise.resolve(payload.body);
+  chain.then(submit).catch(function() {
+    if (statusEl) statusEl.textContent = 'Erreur réseau';
+    showToast('Erreur', 'error');
+  });
+}
+
+
+async function openAssignModal(orderId) {
+  ADMIN.assigningDriverOrderId = orderId;
+  document.getElementById('assign-modal-order-id').textContent = orderId;
+  document.getElementById('assign-modal').classList.remove('hidden');
+  const container = document.getElementById('available-drivers-list');
+  container.innerHTML = '<p class="text-center text-gray-400"><i class="ri-loader-4-line animate-spin text-xl"></i></p>';
+  try {
+    const drivers = await AdminAPI.getAvailableDrivers();
+    if (!drivers.length) {
+      container.innerHTML = '<p class="text-center text-gray-400 text-sm">Aucun chauffeur disponible.</p>';
+      return;
+    }
+    container.innerHTML = drivers.map(d => `
+      <div class="flex items-center gap-4 p-3 bg-gray-700 rounded-xl cursor-pointer hover:bg-gray-600" onclick="assignDriver(${d.id})">
+        <img src="${adminAvatarUrl(d.photo_url, d.full_name)}" class="driver-avatar">
+        <div class="flex-1">
+          <div class="font-semibold text-sm">${escapeHtml(d.full_name)}</div>
+          <div class="text-xs text-gray-400">${escapeHtml(d.vehicle)} - ${escapeHtml(d.plate)}</div>
+          <div class="flex items-center gap-1 mt-0.5">
+            <i class="ri-star-fill text-yellow-400 text-xs"></i>
+            <span class="text-xs">${d.rating}/5</span>
+          </div>
+        </div>
+        <span class="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded-full">Disponible</span>
+      </div>
+    `).join('');
+  } catch { container.innerHTML = '<p class="text-center text-red-400 text-sm">Erreur.</p>'; }
+}
+
+async function assignDriver(driverId) {
+  try {
+    await adminHtmxPost('/htmx/admin/orders/' + ADMIN.assigningDriverOrderId + '/assign-driver/', { driver_id: driverId });
+    showToast('Chauffeur assigné avec succès !');
+    closeModal('assign-modal');
+    reloadAdminOrdersHtmx();
+    loadDashboardStats();
+  } catch { showToast('Erreur lors de l\'assignation', 'error'); }
+}
+
+
+async function openOrderModal(orderId) {
+  document.getElementById('modal-order-id').textContent = orderId;
+  document.getElementById('modal-order-content').innerHTML = '<p class="text-center text-gray-400"><i class="ri-loader-4-line animate-spin text-xl"></i></p>';
+  document.getElementById('order-modal').classList.remove('hidden');
+  try {
+    const order = await OrdersAPI.getOrder(orderId);
+    document.getElementById('modal-order-content').innerHTML = `
+      <div class="grid grid-cols-2 gap-4 text-sm admin-order-modal-grid">
+        <div><span class="modal-label">Client</span><div class="modal-value">${escapeHtml(order.client_name)}</div></div>
+        <div><span class="modal-label">Email</span><div class="modal-value">${escapeHtml(order.client_email || '—')}</div></div>
+        <div><span class="modal-label">Téléphone</span><div class="modal-value">${escapeHtml(order.client_phone||'-')}</div></div>
+        <div><span class="modal-label">Statut</span><div class="mt-1"><span class="badge badge-${order.status}">${order.status_display||order.status}</span></div></div>
+        <div class="col-span-2"><span class="modal-label">Départ</span><div class="modal-value">${escapeHtml(order.pickup)}</div></div>
+        <div class="col-span-2"><span class="modal-label">Destination</span><div class="modal-value">${escapeHtml(order.destination)}</div></div>
+        <div><span class="modal-label">Date</span><div class="modal-value">${order.date || '-'}</div></div>
+        <div><span class="modal-label">Heure</span><div class="modal-value">${(order.time||'').slice(0,5) || '-'}</div></div>
+        <div><span class="modal-label">Type trajet</span><div class="mt-1 adm-modal-badges">${formatTripBadges(order)}</div></div>
+        <div><span class="modal-label">Passagers</span><div class="modal-value">${order.passengers || 1}</div></div>
+        <div><span class="modal-label">Véhicule</span><div class="modal-value">${order.vehicle_type||'-'}</div></div>
+        <div><span class="modal-label">Prix</span><div class="modal-value admin-price">${formatPrice(order.price)}</div></div>
+        ${order.is_paused || Number(order.pause_price) > 0 ? `<div class="col-span-2 adm-modal-subcard adm-modal-subcard--pause"><span class="modal-label">Attente / pause</span><div class="modal-value mt-1">${order.is_paused ? 'En pause' : 'Terminée'} · ${formatPrice(order.pause_price || 0)}${order.pause_accumulated_seconds ? ` · ${Math.round(order.pause_accumulated_seconds / 60)} min` : ''}</div></div>` : ''}
+        ${order.driver_name ? `<div class="col-span-2 adm-modal-subcard adm-modal-subcard--driver"><span class="modal-label">Chauffeur</span><div class="modal-value">${escapeHtml(order.driver_name)}</div><div class="modal-value modal-value--muted">${escapeHtml(order.driver_vehicle||'')} · ${escapeHtml(order.driver_plate||'')}</div><div class="modal-value modal-value--muted">${escapeHtml(order.driver_phone||'')}</div></div>` : ''}
+        ${order.notes ? `<div class="col-span-2"><span class="modal-label">Notes</span><div class="modal-value modal-value--muted">${escapeHtml(order.notes)}</div></div>` : ''}
+      </div>
+      ${order.messages?.length ? `
+        <div class="mt-4 adm-modal-messages">
+          <h4 class="adm-modal-messages__title font-bold text-sm mb-2">Messages (${order.messages.length})</h4>
+          <div class="space-y-2 max-h-48 overflow-y-auto">
+            ${order.messages.map(m => `<div class="flex gap-2 text-xs"><span class="font-bold adm-modal-messages__sender">${m.sender_type}:</span><span class="modal-value modal-value--plain">${escapeHtml(m.content)}</span></div>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+  } catch { document.getElementById('modal-order-content').innerHTML = '<p class="text-center text-red-400">Erreur de chargement.</p>'; }
+}
+
+
+async function loadAdminDrivers() {
+  const grid = document.getElementById('drivers-grid');
+  grid.innerHTML = '<div class="text-center col-span-3 py-8"><i class="ri-loader-4-line animate-spin text-2xl text-gray-400"></i></div>';
+  try {
+    const res = await DriversAPI.getAll({ page_size: 500 });
+    const drivers = Array.isArray(res) ? res : (res.results || []);
+    ADMIN.allDrivers = drivers;
+    renderDriversGrid(drivers);
+  } catch { grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Erreur de chargement.</p>'; }
+}
+
+function refreshDriverLastSeenLabels() {
+  document.querySelectorAll('[data-driver-last-seen]').forEach(function(el) {
+    if (el.getAttribute('data-driver-online') === '1') return;
+    var iso = el.getAttribute('data-driver-last-seen');
+    if (!iso) {
+      el.textContent = 'Jamais connecté';
+      return;
+    }
+    var secs = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+    el.textContent = 'Était en ligne il y a ' + formatDurationAgoFr(secs);
+  });
+}
+
+if (!window._daxiDriverLastSeenTimer) {
+  window._daxiDriverLastSeenTimer = setInterval(refreshDriverLastSeenLabels, 60000);
+}
+
+function formatDriverVehicle(d) {
+  const v = String(d.vehicle || '').trim();
+  const p = String(d.plate || '').trim();
+  if (v && p && v !== '-' && p !== '-') return `${v} — ${p}`;
+  if (v && v !== '-') return v;
+  if (p && p !== '-') return p;
+  return 'Véhicule non renseigné';
+}
+
+function formatDriverRating(rating, ratingCount) {
+  const n = parseFloat(rating);
+  const count = parseInt(ratingCount, 10) || 0;
+  if (rating == null || rating === '' || Number.isNaN(n) || n <= 0 || count <= 0) {
+    return '2,5/5';
+  }
+  const formatted = n.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return `${formatted}/5`;
+}
+
+function searchDrivers() {
+  const q = document.getElementById('drivers-search').value.toLowerCase();
+  const filtered = ADMIN.allDrivers.filter(d =>
+    d.full_name.toLowerCase().includes(q) || d.email.toLowerCase().includes(q) ||
+    d.plate.toLowerCase().includes(q) || d.vehicle.toLowerCase().includes(q)
+  );
+  renderDriversGrid(filtered);
+}
+
+function formatDriverStatusDetail(d) {
+  if (d.is_online) {
+    return d.status_duration_label || 'Connecté';
+  }
+  return d.status_duration_label || formatDriverLastSeenAgo(d) || 'Jamais connecté';
+}
+
+function formatDriverLastSeenAgo(d) {
+  if (!d.last_seen_at) return '';
+  var secs = Math.max(0, Math.floor((Date.now() - new Date(d.last_seen_at).getTime()) / 1000));
+  return 'Était en ligne il y a ' + formatDurationAgoFr(secs);
+}
+
+function formatDurationAgoFr(secs) {
+  if (secs < 60) return "moins d'une minute";
+  var mins = Math.floor(secs / 60);
+  if (mins < 60) return mins + ' min';
+  var hours = Math.floor(mins / 60);
+  var rem = mins % 60;
+  if (hours < 48) return rem ? (hours + ' h ' + rem + ' min') : (hours + ' h');
+  var days = Math.floor(hours / 24);
+  return days + ' jour' + (days > 1 ? 's' : '');
+}
+
+function driverStatusDotClass(d) {
+  var avail = d.availability || d.presence_status || d.status;
+  if (d.is_online && avail === 'available') return 'bg-green-400';
+  if (d.is_online && avail === 'busy') return 'bg-orange-400';
+  return 'bg-gray-500';
+}
+
+function showDriverOnMap(driverId) {
+  if (window.LIVE) {
+    window.LIVE.focusOrderId = null;
+    window.LIVE.focusDriverId = driverId;
+    window.LIVE.pendingFocusDriverId = driverId;
+    window.LIVE.pendingShowAllDrivers = false;
+    window.LIVE.returnSection = 'drivers';
+    window.LIVE.returnLabel = 'Chauffeurs';
+  }
+  showAdminSection('live-map');
+}
+
+function showAllDriversOnMap() {
+  if (window.LIVE) {
+    window.LIVE.focusOrderId = null;
+    window.LIVE.focusDriverId = null;
+    window.LIVE.pendingFocusDriverId = null;
+    window.LIVE.pendingShowAllDrivers = true;
+    window.LIVE.returnSection = 'drivers';
+    window.LIVE.returnLabel = 'Chauffeurs';
+  }
+  showAdminSection('live-map');
+}
+
+function renderDriversGrid(drivers) {
+  const grid = document.getElementById('drivers-grid');
+  if (!drivers.length) { grid.innerHTML = '<p class="text-center text-gray-400 col-span-3 py-8">Aucun chauffeur.</p>'; return; }
+  grid.innerHTML = drivers.map(d => `
+    <div class="bg-gray-800 rounded-2xl p-5 space-y-4">
+      <div class="flex items-center gap-4">
+        <img src="${adminAvatarUrl(d.photo_url, d.full_name, 48)}" class="w-14 h-14 rounded-full object-cover">
+        <div class="flex-1 min-w-0">
+          <div class="font-bold">${escapeHtml(d.full_name)}</div>
+          <div class="text-sm text-gray-400 adm-drv-vehicle">${escapeHtml(formatDriverVehicle(d))}</div>
+          <div class="flex items-center gap-1.5 mt-1.5">
+            <span class="w-2 h-2 rounded-full ${driverStatusDotClass(d)}"></span>
+            <span class="text-xs ${d.is_online ? 'text-green-400' : 'text-gray-400'}">${d.is_online ? 'En ligne' : 'Hors ligne'}</span>
+            ${d.is_online && d.availability === 'busy' ? '<span class="text-xs text-orange-400 font-semibold">· Occupé</span>' : ''}
+            ${d.is_online && d.availability === 'available' ? '<span class="text-xs text-green-400 font-semibold">· Disponible</span>' : ''}
+          </div>
+          <div class="text-xs text-gray-500 mt-1 leading-snug" data-driver-last-seen="${d.last_seen_at || ''}" data-driver-online="${d.is_online ? '1' : '0'}">${escapeHtml(formatDriverStatusDetail(d))}</div>
+          ${d.active_order ? `<div class="text-xs text-daxi-cyan mt-1 truncate" title="${escapeHtml(d.active_order.pickup || '')}"><i class="ri-route-line"></i> ${escapeHtml(d.active_order.status_display)} — ${escapeHtml((d.active_order.pickup || '').slice(0, 42))}${(d.active_order.pickup || '').length > 42 ? '…' : ''}</div>` : ''}
+          <div class="text-xs mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            <span class="text-green-400 flex items-center gap-1"><i class="ri-wallet-3-line"></i> Solde: ${formatPrice(d.wallet_balance || 0)}</span>
+            <span class="${(d.cash_owed_to_admin || 0) > 0 ? 'text-orange-400' : 'text-gray-500'} flex items-center gap-1"><i class="ri-cash-line"></i> Dû admin: ${formatPrice(d.cash_owed_to_admin || 0)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-center text-xs bg-gray-700 rounded-xl p-3">
+        <div><div class="font-bold text-daxi-cyan">${d.completed_trips ?? 0}</div><div class="text-gray-400">Courses</div></div>
+        <div><div class="font-bold text-yellow-400 adm-drv-rating">${formatDriverRating(d.rating, d.rating_count ?? d.reviews_count)}</div><div class="text-gray-400">Note</div></div>
+        <div><div class="font-bold text-green-400">${formatPrice(d.total_earnings)}</div><div class="text-gray-400">Gains</div></div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button onclick="showDriverOnMap(${d.id})" class="flex-1 min-w-[100px] py-2 bg-daxi-cyan/15 text-daxi-cyan border border-daxi-cyan/25 rounded-xl text-xs hover:bg-daxi-cyan/25 flex items-center justify-center gap-1"><i class="ri-map-pin-2-line"></i> Localiser</button>
+        <button onclick="editDriver(${d.id})" class="flex-1 min-w-[100px] py-2 bg-gray-700 rounded-xl text-xs hover:bg-gray-600 flex items-center justify-center gap-1"><i class="ri-edit-line"></i> Modifier</button>
+        <button onclick="deleteDriver(${d.id})" class="flex-1 min-w-[100px] py-2 bg-red-500/20 text-red-400 rounded-xl text-xs flex items-center justify-center gap-1">
+          <i class="ri-delete-bin-line"></i> Supprimer
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function previewDriverPhoto(input) {
+  const preview = document.getElementById('drv-photo-preview');
+  if (!preview) return;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  preview.src = URL.createObjectURL(file);
+  preview.classList.remove('hidden');
+}
+
+function resetDriverPhotoPreview(photoUrl) {
+  const preview = document.getElementById('drv-photo-preview');
+  const photoInput = document.getElementById('drv-photo');
+  if (photoInput) photoInput.value = '';
+  if (!preview) return;
+  if (photoUrl) {
+    preview.src = photoUrl;
+    preview.classList.remove('hidden');
+  } else {
+    preview.removeAttribute('src');
+    preview.classList.add('hidden');
+  }
+}
+
+function showAddDriverModal() {
+  ADMIN.editingDriverId = null;
+  document.getElementById('driver-modal-title').textContent = 'Ajouter un chauffeur';
+  ['drv-firstname','drv-lastname','drv-email','drv-phone','drv-vehicle','drv-plate'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('drv-verified').checked = true;
+  resetDriverPhotoPreview(null);
+  document.getElementById('driver-modal').classList.remove('hidden');
+}
+
+async function editDriver(id) {
+  const d = ADMIN.allDrivers.find(d => d.id === id);
+  if (!d) return;
+  ADMIN.editingDriverId = id;
+  document.getElementById('driver-modal-title').textContent = 'Modifier le chauffeur';
+  document.getElementById('drv-firstname').value = d.firstname;
+  document.getElementById('drv-lastname').value = d.lastname;
+  document.getElementById('drv-email').value = d.email;
+  document.getElementById('drv-phone').value = d.phone;
+  document.getElementById('drv-vehicle').value = d.vehicle;
+  document.getElementById('drv-plate').value = d.plate;
+  document.getElementById('drv-verified').checked = d.is_verified;
+  resetDriverPhotoPreview(d.photo_url || null);
+  document.getElementById('driver-modal').classList.remove('hidden');
+}
+
+async function saveDriver() {
+  const photoFile = document.getElementById('drv-photo').files[0];
+  const data = {
+    firstname: document.getElementById('drv-firstname').value.trim(),
+    lastname: document.getElementById('drv-lastname').value.trim(),
+    email: document.getElementById('drv-email').value.trim(),
+    phone: document.getElementById('drv-phone').value.trim(),
+    vehicle: document.getElementById('drv-vehicle').value.trim(),
+    plate: document.getElementById('drv-plate').value.trim(),
+    is_verified: document.getElementById('drv-verified').checked ? 'true' : 'false',
+  };
+  if (photoFile) data.photo = photoFile;
+  if (!data.firstname || !data.lastname || !data.email || !data.vehicle || !data.plate) {
+    return showToast('Tous les champs obligatoires sont requis', 'warning');
+  }
+  const saveBtn = document.getElementById('drv-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Enregistrement…'; }
+  try {
+    if (ADMIN.editingDriverId) {
+      await DriversAPI.update(ADMIN.editingDriverId, data);
+      showToast('Chauffeur mis à jour !');
+    } else {
+      if (!photoFile) return showToast('La photo de profil est obligatoire', 'warning');
+      await DriversAPI.create(data);
+      showToast('Chauffeur ajouté !');
+    }
+    closeModal('driver-modal');
+    loadAdminDrivers();
+  } catch (e) {
+    const msg = e.email?.[0] || e.photo?.[0] || e.error || e.detail || 'Erreur lors de l\'enregistrement';
+    showToast(msg, 'error');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Enregistrer'; }
+  }
+}
+
+async function deleteDriver(id) {
+  const driver = (ADMIN.allDrivers || []).find(function(d) { return d.id === id; });
+  const label = (driver && driver.full_name) || 'ce chauffeur';
+  const ok = confirm(
+    'Supprimer définitivement « ' + label + ' » ?\n\n' +
+    'Son compte sera effacé du système. Les courses déjà effectuées resteront visibles avec son nom.'
+  );
+  if (!ok) return;
+  try {
+    await DriversAPI.delete(id);
+    showToast('Chauffeur supprimé');
+    loadAdminDrivers();
+  } catch (e) {
+    showToast((e && e.error) || 'Erreur lors de la suppression', 'error');
+  }
+}
+
+
+async function loadAdminUsers() {
+  const tbody = document.getElementById('admin-users-tbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8"><i class="ri-loader-4-line animate-spin text-2xl text-gray-400"></i></td></tr>';
+  try {
+    ADMIN.allUsers = await AdminAPI.getClients();
+    renderUsersTable(ADMIN.allUsers);
+  } catch { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Erreur.</td></tr>'; }
+}
+
+function searchUsers() {
+  const q = document.getElementById('users-search').value.toLowerCase();
+  const filtered = ADMIN.allUsers.filter(u =>
+    u.name.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.phone||'').includes(q) || (u.guest_id||'').includes(q)
+  );
+  renderUsersTable(filtered);
+}
+
+function renderUsersTable(users) {
+  const tbody = document.getElementById('admin-users-tbody');
+  const mobile = document.getElementById('admin-users-mobile');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Aucun client.</td></tr>';
+    if (mobile) mobile.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Aucun client.</div>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr class="order-row cursor-pointer" onclick="openClientModal('${u.type}', ${u.type === 'guest' ? JSON.stringify(u.guest_id || '') : u.id})">
+      <td>
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="${adminAvatarUrl(u.photo, u.name, 32)}" class="w-8 h-8 rounded-full object-cover shrink-0">
+          <div class="font-medium text-white truncate">${escapeHtml(u.name)}</div>
+        </div>
+      </td>
+      <td>${u.type === 'guest' ? '<span class="badge badge-guest"><i class="ri-user-unfollow-line"></i> Invité</span>' : '<span class="badge badge-completed"><i class="ri-user-line"></i> Compte</span>'}</td>
+      <td class="cell-muted max-w-[140px] truncate">${escapeHtml(u.email||'-')}</td>
+      <td class="cell-muted whitespace-nowrap">${escapeHtml(u.phone||'-')}</td>
+      <td class="cell-muted whitespace-nowrap">${u.date_inscription ? new Date(u.date_inscription).toLocaleDateString('fr-FR') : '-'}</td>
+      <td class="admin-price">${u.completed_trips || 0}</td>
+      <td>${u.is_blocked ? '<span class="badge badge-cancelled"><i class="ri-forbid-line"></i> Bloqué</span>' : '<span class="badge badge-completed"><i class="ri-check-line"></i> Actif</span>'}</td>
+      <td onclick="event.stopPropagation()">
+        <button type="button" class="admin-btn-icon ${u.is_blocked ? 'admin-btn-success' : 'admin-btn-danger'}"
+          data-client-type="${u.type}"
+          data-client-id="${u.type === 'guest' ? escapeHtml(u.guest_id || '') : u.id}"
+          data-blocked="${u.is_blocked ? '1' : '0'}"
+          onclick="blockClientFromBtn(this)">
+          <i class="${u.is_blocked ? 'ri-lock-unlock-line' : 'ri-forbid-line'}"></i> ${u.is_blocked ? 'Débloquer' : 'Bloquer'}
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  if (mobile) {
+    mobile.innerHTML = users.map(u => `
+      <div class="admin-mcard" onclick="openClientModal('${u.type}', ${u.type === 'guest' ? JSON.stringify(u.guest_id || '') : u.id})">
+        <div class="admin-mcard-user">
+          <img src="${adminAvatarUrl(u.photo, u.name, 44)}" class="admin-mcard-avatar" alt="">
+          <div style="flex:1;min-width:0;">
+            <div class="admin-mcard-title">${escapeHtml(u.name)}</div>
+            <div class="admin-mcard-sub">${u.type === 'guest' ? 'Invité' : 'Compte'} · ${u.date_inscription ? new Date(u.date_inscription).toLocaleDateString('fr-FR') : '-'}</div>
+          </div>
+          ${u.is_blocked ? '<span class="badge badge-cancelled">Bloqué</span>' : '<span class="badge badge-completed">Actif</span>'}
+        </div>
+        <div class="admin-mcard-meta-row">
+          <span><i class="ri-mail-line"></i> ${escapeHtml(u.email || '-')}</span>
+          <span><i class="ri-phone-line"></i> ${escapeHtml(u.phone || '-')}</span>
+          <span><i class="ri-car-line"></i> ${u.completed_trips || 0} courses</span>
+        </div>
+        <div class="admin-mcard-foot" style="margin-top:10px;" onclick="event.stopPropagation()">
+          <button type="button" class="admin-btn-icon ${u.is_blocked ? 'admin-btn-success' : 'admin-btn-danger'}"
+            data-client-type="${u.type}"
+            data-client-id="${u.type === 'guest' ? escapeHtml(u.guest_id || '') : u.id}"
+            data-blocked="${u.is_blocked ? '1' : '0'}"
+            onclick="blockClientFromBtn(this)">
+            <i class="${u.is_blocked ? 'ri-lock-unlock-line' : 'ri-forbid-line'}"></i> ${u.is_blocked ? 'Débloquer' : 'Bloquer'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function blockClientFromBtn(btn) {
+  const type = btn.dataset.clientType;
+  const id = btn.dataset.clientId;
+  const block = btn.dataset.blocked !== '1';
+  blockClientItem(type, id, block);
+}
+
+async function openClientModal(type, idOrGuest) {
+  document.getElementById('client-modal-title').textContent = 'Client';
+  document.getElementById('client-modal-content').innerHTML = '<p class="text-center text-gray-400 py-8"><i class="ri-loader-4-line animate-spin text-xl"></i></p>';
+  document.getElementById('client-modal').classList.remove('hidden');
+  try {
+    const params = type === 'guest' ? { guest_id: idOrGuest } : { user_id: idOrGuest };
+    const data = await AdminAPI.getClientDetail(params);
+    const c = data.client;
+    ADMIN.selectedClient = c;
+    document.getElementById('client-modal-title').textContent = c.name || 'Client';
+    const ordersHtml = (data.orders || []).length ? `
+      <div class="mt-4">
+        <h4 class="font-bold text-sm mb-2 text-white">Courses (${data.orders.length})</h4>
+        <div class="space-y-2 max-h-56 overflow-y-auto">
+          ${data.orders.map(o => `
+            <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-600 cursor-pointer hover:border-daxi-cyan/40" onclick="openOrderModal(${o.id}); closeModal('client-modal');">
+              <div class="flex justify-between gap-2 text-sm">
+                <span class="text-daxi-cyan font-bold">#${o.id}</span>
+                <span class="badge badge-${o.status}">${escapeHtml(o.status_display)}</span>
+              </div>
+              <div class="text-xs cell-muted mt-1 truncate">${escapeHtml(o.pickup)} → ${escapeHtml(o.destination)}</div>
+              <div class="text-xs mt-1 flex justify-between"><span class="admin-price">${o.price_display || formatPrice(o.price)}</span><span class="cell-muted">${o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : ''}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : '<p class="text-sm cell-muted mt-4">Aucune course enregistrée.</p>';
+    document.getElementById('client-modal-content').innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div><span class="modal-label">Type</span><div class="modal-value">${c.type === 'guest' ? 'Invité (sans compte)' : 'Compte enregistré'}</div></div>
+        <div><span class="modal-label">Statut</span><div class="modal-value">${c.is_blocked ? '<span class="badge badge-cancelled">Bloqué</span>' : '<span class="badge badge-completed">Actif</span>'}</div></div>
+        <div><span class="modal-label">Email</span><div class="modal-value break-all">${escapeHtml(c.email||'-')}</div></div>
+        <div><span class="modal-label">Téléphone</span><div class="modal-value">${escapeHtml(c.phone||'-')}</div></div>
+        ${c.guest_id ? `<div class="sm:col-span-2"><span class="modal-label">ID invité</span><div class="modal-value font-mono text-xs break-all">${escapeHtml(c.guest_id)}</div></div>` : ''}
+        <div><span class="modal-label">Courses</span><div class="modal-value">${c.completed_trips || 0}</div></div>
+        <div><span class="modal-label">Inscription / dernière cmd</span><div class="modal-value">${c.date_inscription ? new Date(c.date_inscription).toLocaleDateString('fr-FR') : '-'}</div></div>
+      </div>
+      ${ordersHtml}
+      <div class="flex gap-2 pt-4 border-t border-white/10">
+        <button type="button" class="flex-1 py-2.5 rounded-xl font-bold text-sm ${c.is_blocked ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}"
+          onclick="blockClientItem('${c.type}', ${c.type === 'guest' ? JSON.stringify(c.guest_id || '') : c.id}, ${!c.is_blocked}); openClientModal('${c.type}', ${c.type === 'guest' ? JSON.stringify(c.guest_id || '') : c.id});">
+          <i class="${c.is_blocked ? 'ri-lock-unlock-line' : 'ri-forbid-line'}"></i> ${c.is_blocked ? 'Débloquer' : 'Bloquer'}
+        </button>
+      </div>
+    `;
+  } catch {
+    document.getElementById('client-modal-content').innerHTML = '<p class="text-center text-red-400 py-8">Erreur de chargement.</p>';
+  }
+}
+
+async function blockClientItem(type, idOrGuest, block) {
+  const client = ADMIN.allUsers.find(u =>
+    type === 'guest' ? u.guest_id === idOrGuest : String(u.id) === String(idOrGuest)
+  );
+  if (!client) return showToast('Client introuvable', 'error');
+  try {
+    if (type === 'guest') {
+      await AdminAPI.blockContact({
+        blocked: block,
+        guest_id: client.guest_id || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        client_name: client.name || '',
+      });
+    } else {
+      await AdminAPI.blockUser(client.id, block);
+    }
+    showToast(block ? 'Client bloqué' : 'Client débloqué');
+    loadAdminUsers();
+  } catch { showToast('Erreur lors du blocage', 'error'); }
+}
+
+async function blockClient(client, block) {
+  if (client.type === 'guest') {
+    await AdminAPI.blockContact({ blocked: block, guest_id: client.guest_id || '', email: client.email || '', phone: client.phone || '', client_name: client.name || '' });
+  } else {
+    await AdminAPI.blockUser(client.id, block);
+  }
+}
+
+async function blockUser(id, block) {
+  return blockClientItem('user', id, block);
+}
+
+
+async function loadChatSessions() {
+  const container = document.getElementById('chat-sessions-list');
+  try {
+    const sessions = await ChatbotAPI.getAdminSessions();
+    if (!sessions.length) { container.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Aucune session escaladée.</p>'; return; }
+    container.innerHTML = sessions.map(s => `
+      <div class="p-3 rounded-xl bg-gray-700 cursor-pointer hover:bg-gray-600 ${s.id === ADMIN.selectedChatSession ? 'ring-2 ring-daxi-cyan' : ''}" onclick="openChatSession(${s.id})">
+        <div class="font-semibold text-sm">${escapeHtml(s.user || 'Anonyme')}</div>
+        <div class="text-xs text-gray-400 truncate mt-0.5">${escapeHtml(s.last_message || '')}</div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-gray-500">${s.message_count} messages</span>
+          ${s.is_resolved ? '<span class="text-xs text-green-400">✓ Résolu</span>' : '<span class="text-xs text-orange-400">● En attente</span>'}
+        </div>
+      </div>
+    `).join('');
+  } catch { container.innerHTML = '<p class="text-center text-red-400 text-sm">Erreur.</p>'; }
+}
+
+async function openChatSession(sessionId) {
+  ADMIN.selectedChatSession = sessionId;
+  document.getElementById('chat-support-input-area').classList.remove('hidden');
+  const messages = document.getElementById('chat-support-messages');
+  messages.innerHTML = '<p class="text-center text-gray-400"><i class="ri-loader-4-line animate-spin"></i></p>';
+  try {
+    const data = await ChatbotAPI.getHistory(sessionId);
+    messages.innerHTML = data.messages.map(m => `
+      <div class="flex ${m.role==='user'?'justify-end':'justify-start'} gap-2">
+        ${m.role!=='user' ? `<div class="w-7 h-7 rounded-full bg-daxi-cyan flex items-center justify-center text-xs">${m.role==='admin'?'👤':'🤖'}</div>` : ''}
+        <div class="px-4 py-2 rounded-2xl max-w-sm text-sm ${m.role==='user'?'bg-blue-600':'bg-gray-700'}">
+          <p>${escapeHtml(m.content)}</p>
+          <p class="text-xs opacity-50 mt-1">${new Date(m.timestamp).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</p>
+        </div>
+      </div>
+    `).join('');
+    messages.scrollTop = messages.scrollHeight;
+    loadChatSessions();
+  } catch { messages.innerHTML = '<p class="text-center text-red-400">Erreur.</p>'; }
+}
+
+async function adminSendChatReply() {
+  const input = document.getElementById('admin-chat-reply');
+  const content = input.value.trim();
+  if (!content || !ADMIN.selectedChatSession) return;
+  input.value = '';
+  try {
+    await ChatbotAPI.adminReply(ADMIN.selectedChatSession, content);
+    openChatSession(ADMIN.selectedChatSession);
+    showToast('Réponse envoyée !');
+  } catch { showToast('Erreur', 'error'); }
+}
+
+async function adminResolveChat() {
+  if (!ADMIN.selectedChatSession) return;
+  try {
+    await ChatbotAPI.resolveSession(ADMIN.selectedChatSession);
+    showToast('Session résolue !');
+    ADMIN.selectedChatSession = null;
+    loadChatSessions();
+    document.getElementById('chat-support-input-area').classList.add('hidden');
+    document.getElementById('chat-support-messages').innerHTML = '<p class="text-center text-green-400 mt-8">Session résolue ✓</p>';
+  } catch { showToast('Erreur', 'error'); }
+}
+
+
+async function loadForumModeration() {
+  const container = document.getElementById('admin-forum-posts');
+  try {
+    const posts = await AdminAPI.getForumPostsAdmin();
+    if (!posts.length) {
+      container.innerHTML = '<p class="text-gray-400 col-span-3 text-center py-8">Aucun post. Publiez la première annonce ci-dessus.</p>';
+      return;
+    }
+    container.innerHTML = posts.map(p => `
+      <div class="bg-gray-800/90 rounded-2xl p-4 space-y-3 border border-slate-700">
+        <div class="flex items-center gap-3">
+          ${p.author_photo ? `<img src="${escapeHtml(p.author_photo)}" class="w-10 h-10 rounded-full object-cover" alt="">` : `<div class="w-10 h-10 rounded-full bg-daxi-cyan/20 flex items-center justify-center text-daxi-cyan font-bold">${escapeHtml((p.author_name || 'A')[0])}</div>`}
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm text-white">${escapeHtml(p.author_name || 'Admin')}</div>
+            <div class="text-xs cell-muted">${new Date(p.created_at).toLocaleDateString('fr-FR')}</div>
+          </div>
+          <button type="button" onclick="toggleForumPost(${p.id},${!p.is_visible})" class="admin-btn-icon ${p.is_visible ? 'admin-btn-danger' : 'admin-btn-success'} shrink-0">
+            <i class="${p.is_visible ? 'ri-eye-off-line' : 'ri-eye-line'}"></i> ${p.is_visible ? 'Masquer' : 'Afficher'}
+          </button>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed">${escapeHtml(p.content.slice(0,280))}${p.content.length > 280 ? '...' : ''}</p>
+        ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" class="w-full rounded-xl object-cover max-h-48" alt="">` : ''}
+        <div class="flex gap-4 text-xs cell-muted">
+          <span><i class="ri-heart-line"></i> ${p.likes_count || 0}</span>
+          <span><i class="ri-chat-3-line"></i> ${p.comments_count || 0}</span>
+          ${!p.is_visible ? '<span class="badge badge-cancelled">Masqué</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch { container.innerHTML = '<p class="text-red-400 col-span-3">Erreur de chargement.</p>'; }
+}
+
+async function adminCreateForumPost() {
+  const ta = document.getElementById('admin-forum-new-content');
+  const content = (ta && ta.value || '').trim();
+  if (!content) return showToast('Écrivez un message', 'warning');
+  const imageInput = document.getElementById('admin-forum-image');
+  const imageFile = imageInput?.files?.[0] || null;
+  try {
+    await ForumAPI.createPost(content, imageFile);
+    if (ta) ta.value = '';
+    if (imageInput) imageInput.value = '';
+    const preview = document.getElementById('admin-forum-image-preview');
+    if (preview) { preview.classList.add('hidden'); preview.src = ''; }
+    showToast('Annonce publiée');
+    loadForumModeration();
+  } catch { showToast('Erreur de publication', 'error'); }
+}
+
+function previewAdminForumImage(e) {
+  const file = e.target.files?.[0];
+  const preview = document.getElementById('admin-forum-image-preview');
+  if (!file || !preview) return;
+  preview.src = URL.createObjectURL(file);
+  preview.classList.remove('hidden');
+}
+
+async function toggleForumPost(id, visible) {
+  try {
+    await apiRequest('PATCH', `/api/forum/posts/${id}/moderate/`, { is_visible: visible });
+    showToast(visible ? 'Post affiché' : 'Post masqué');
+    loadForumModeration();
+  } catch { showToast('Erreur', 'error'); }
+}
+
+
+async function loadAnalytics() {
+  try {
+    const stats = await AdminAPI.getDashboardStats();
+    document.getElementById('an-total-revenue').textContent = '$' + Math.round(stats.revenue.total).toLocaleString('en-US');
+    document.getElementById('an-week-revenue').textContent = '$' + Math.round(stats.revenue.week).toLocaleString('en-US');
+    document.getElementById('an-month-users').textContent = stats.users.new_month;
+    document.getElementById('an-week-orders').textContent = stats.orders.week;
+
+    const chartOpts = {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      }
+    };
+
+    const ctx = document.getElementById('analytics-chart');
+    if (ADMIN.charts.analytics) ADMIN.charts.analytics.destroy();
+    ADMIN.charts.analytics = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: stats.chart_data.map(d => d.date),
+        datasets: [{
+          label: 'Revenus ($)',
+          data: stats.chart_data.map(d => d.revenue),
+          borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.12)', fill: true, tension: 0.4, yAxisID: 'y',
+        }, {
+          label: 'Commandes',
+          data: stats.chart_data.map(d => d.orders),
+          borderColor: '#0a84ff', backgroundColor: 'rgba(10,132,255,0.08)', fill: true, tension: 0.4, yAxisID: 'y1',
+        }]
+      },
+      options: {
+        ...chartOpts,
+        scales: {
+          ...chartOpts.scales,
+          y1: { position: 'right', ticks: { color: '#9ca3af' }, grid: { display: false } },
+        }
+      }
+    });
+
+    const statusCtx = document.getElementById('analytics-status-chart');
+    if (statusCtx) {
+      if (ADMIN.charts.status) ADMIN.charts.status.destroy();
+      ADMIN.charts.status = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Terminées', 'En cours', 'En attente'],
+          datasets: [{
+            data: [stats.orders.completed, stats.orders.active, stats.orders.pending],
+            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b'],
+            borderWidth: 0,
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: '#9ca3af' } } }, cutout: '65%' }
+      });
+    }
+
+    const barCtx = document.getElementById('analytics-orders-bar');
+    if (barCtx) {
+      if (ADMIN.charts.ordersBar) ADMIN.charts.ordersBar.destroy();
+      ADMIN.charts.ordersBar = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: stats.chart_data.map(d => d.date),
+          datasets: [{
+            label: 'Commandes / jour',
+            data: stats.chart_data.map(d => d.orders),
+            backgroundColor: 'rgba(10,132,255,0.55)',
+            borderRadius: 8,
+          }]
+        },
+        options: chartOpts
+      });
+    }
+  } catch {}
+}
+
+
+function connectAdminWebSocket() {
+  if (ADMIN.wsManager) {
+    try { ADMIN.wsManager.ws?.close(); } catch (e) {}
+  }
+  ADMIN.wsManager = new WSManager('/ws/admin/orders/', {
+    onOpen: () => { console.debug('Admin WS connected'); ADMIN.wsConnected = true; },
+    onClose: () => { ADMIN.wsConnected = false; },
+    onMessage: (data) => {
+      const ev = data.event;
+      const payload = data.data || {};
+      if (!ev) return;
+
+      const orderEv = window.DaxiRealtime ? DaxiRealtime.isOrderEvent(ev) : false;
+      const realtimeEv = orderEv || (window.DaxiRealtimeSync && DaxiRealtimeSync.isRealtimeEvent(ev));
+      if (realtimeEv) {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent(ev, payload);
+        if (window.DaxiRealtimeSync) DaxiRealtimeSync.handle(ev, payload);
+        else {
+          refreshAllAdminBadges();
+          loadDashboardStats();
+          if (ADMIN.currentSection === 'orders') reloadAdminOrdersHtmx();
+        }
+        if (ADMIN.currentSection === 'live-map' && (
+          ev === 'driver_location' || ev === 'driver_assigned' || ev === 'driver_on_the_way' ||
+          ev === 'driver_arrived' || ev === 'in_progress' || ev === 'status_updated' || ev === 'order_updated'
+        )) refreshAdminLiveMap();
+      }
+
+      if (ev === 'new_order' || ev === 'new_order_pending_accept') {
+        if (!orderEv && typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('new_order', payload);
+        else if (!orderEv) showToast('Nouvelle commande', 'info');
+      } else if (ev === 'price_confirmed' || ev === 'order_updated') {
+        if (!orderEv) {
+          if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('order_updated', payload);
+          else showToast('Commande mise à jour', 'info');
+        }
+      } else if (ev === 'driver_location' && ADMIN.currentSection === 'live-map' && !orderEv) {
+        refreshAdminLiveMap();
+      } else if (ev === 'enterprise_pending') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('enterprise_pending', payload);
+        else showToast('Nouvelle entreprise en attente', 'info');
+        refreshAllAdminBadges();
+        if (ADMIN.currentSection === 'enterprises') loadAdminEnterprises('approved');
+      } else if (ev === 'enterprise_location_pending') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('enterprise_location_pending', payload);
+        else showToast('Nouvel emplacement entreprise à configurer', 'info');
+        refreshAllAdminBadges();
+        if (ADMIN.currentSection === 'enterprises') loadAdminEnterprises('locations');
+      } else if (ev === 'withdrawal_request' || ev === 'enterprise_withdrawal') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('withdrawal_request', payload);
+        else showToast('Nouvelle demande de retrait', 'info');
+        updateWithdrawalsBadge();
+        if (ADMIN.currentSection === 'withdrawals') loadAdminWithdrawals('driver', 'pending');
+      } else if (ev === 'lost_object_reported') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('lost_object_reported', payload);
+        else showToast('Objet oublié signalé', 'warning');
+        refreshAllAdminBadges();
+        if (ADMIN.currentSection === 'lost-objects') loadAdminLostObjects();
+      } else if (ev === 'sos_alert') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('sos_alert', payload);
+        else showToast('ALERTE SOS — intervention immédiate', 'error');
+        refreshAllAdminBadges();
+        loadAdminSosAlerts(true);
+      } else if (ev === 'driver_status_changed') {
+        refreshAllAdminBadges();
+        loadDashboardStats();
+        if (ADMIN.currentSection === 'drivers') loadAdminDrivers();
+      }
+    }
+  });
+}
+
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.add('hidden');
+  });
+});
+
+
+(function(g){var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await(a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+({key: "{{ google_maps_api_key|escapejs }}", v: "weekly"});
+</script>
+<script src="/static/js/daxi-map-markers.js?v=20260803d"></script>
+<script src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+  <script src="/static/js/daxi-shell-role.js?v=20260820f"></script>
+<script src="/static/js/daxi-offline.js?v=20260820a"></script>
+<script src="/static/js/daxi-map-theme.js?v=20260735"></script>
+<script src="/static/js/daxi-realtime.js?v=20260738"></script>
+<script src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
+<script src="/static/js/daxi-notifications.js?v=20260823n"></script>
+<script src="/static/js/daxi-realtime-sync.js?v=20260823o"></script>
+<script src="/static/js/daxi-push-register.js?v=20260823o"></script>
+<script src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
+<script src="/static/js/daxi-modal.js?v=20260820b"></script>
+<link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760">
+<script src="/static/js/daxi-order-expand.js?v=20260757"></script>
+<script src="/static/js/daxi-chat-media.js?v=20260760"></script>
+<script src="/static/js/daxi-chat-ui.js?v=20260760"></script>
+<script src="/static/js/daxi-chat-composer.js?v=20260760"></script>
+<script src="/static/js/daxi-map-snap.js?v=20260728"></script>
+<script src="/static/js/daxi-order-card-map.js?v=20260806"></script>
+<script src="/static/js/daxi-known-places.js?v=20260803f"></script>
+<script src="/static/js/daxi-maplibre.js?v=20260777"></script>
+<script src="/static/js/admin-geo-zones.js?v=20260780"></script>
+<script src="/static/js/daxi-order-coords-map.js?v=20260803f"></script>
+<script src="/static/js/daxi-routes.js?v=20260726"></script>
+<script src="/static/js/admin-maps.js?v=20260803e"></script>
+<script src="/static/js/lieux_admin.js?v=20260823w"></script>
+<script>
+function ensureAdminMapsReady() {
+  return window.AdminMaps ? AdminMaps.ensureReady() : Promise.reject(new Error('AdminMaps not loaded'));
+}
+function _liveMapPinIcon(color, scale) {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: scale || 9,
+    fillColor: color,
+    fillOpacity: 0.95,
+    strokeColor: '#fff',
+    strokeWeight: 2,
+  };
+}
+
+</script>
+{% endblock %}

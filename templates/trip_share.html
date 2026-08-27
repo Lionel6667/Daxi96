@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Suivi en direct de votre course DAXI">
+  <title>{% if error %}Course introuvable{% else %}Suivi · {{ share_payload.card_title|default:"DAXI" }}{% endif %}</title>
+  {% include "partials/daxi_favicon.html" %}
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <link rel="stylesheet" href="/static/css/trip-share.css?v=20260731">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+  <script src="/static/js/daxi-map-markers.js?v=20260749"></script>
+  <script src="/static/js/daxi-external-nav.js?v=20260731"></script>
+</head>
+<body class="trip-share-page" data-ts-theme="{{ share_payload.card_theme|default:'oneway' }}">
+  <header class="daxi-mini-nav daxi-mini-nav--overlay">
+    <a href="/" class="daxi-mini-nav__brand"><i class="ri-taxi-line"></i> DAXI</a>
+    <div class="daxi-mini-nav__actions"><div id="daxi-theme-slot"></div></div>
+  </header>
+
+{% if error %}
+  <div class="ts-err">
+    <h1 style="font-size:22px;font-weight:900;margin-bottom:8px;">Lien invalide ou expiré</h1>
+    <p style="color:#94a3b8;font-size:13px;">Cette course n'est plus disponible au suivi public.</p>
+  </div>
+{% else %}
+  <section class="ts-hero">
+    <div class="ts-brand">
+      <img src="/static/img/daxi-logo.png" alt="DAXI">
+      <span>DAXI · Suivi live</span>
+    </div>
+
+    <div class="ts-trip-card">
+      <div class="ts-trip-head">
+        <div style="display:flex;gap:12px;align-items:flex-start;min-width:0;">
+          <div class="ts-trip-icon"><i id="ts-trip-icon" class="{{ share_payload.card_icon|default:'ri-car-line' }}"></i></div>
+          <div style="min-width:0;">
+            <div class="ts-trip-title" id="ts-trip-title">{{ share_payload.card_title|default:"Suivi course" }}</div>
+            <div class="ts-trip-sub" id="ts-trip-sub">{{ share_payload.card_subtitle|default:"" }}</div>
+          </div>
+        </div>
+        <span class="ts-trip-badge" id="ts-trip-badge">{{ share_payload.card_badge|default:"Course" }}</span>
+      </div>
+      <div class="ts-live-pill" id="ts-live-pill"><span id="ts-live-status">{{ status_label }}</span></div>
+      <div class="ts-countdown" id="ts-countdown" style="display:none;"></div>
+      <div class="ts-waiting" id="ts-waiting" style="{% if not share_payload.waiting_title %}display:none{% endif %}">
+        <div class="ts-waiting-title" id="ts-waiting-title">{{ share_payload.waiting_title|default:"" }}</div>
+        <div class="ts-waiting-detail" id="ts-waiting-detail">{{ share_payload.waiting_detail|default:"" }}</div>
+      </div>
+      <div class="ts-ws" id="ts-ws"><i class="ri-record-circle-fill"></i> Connexion…</div>
+    </div>
+
+    <p class="sub" style="font-size:12px;color:#94a3b8;margin-top:4px;">Course de <strong id="ts-client-name">{{ order.client_name|default:"un proche" }}</strong></p>
+  </section>
+
+  <div id="ts-map"></div>
+
+  <div class="ts-panel">
+    <div id="ts-banners"></div>
+
+    <div class="ts-card" id="ts-eta-card">
+      <div class="ts-card-title">Arrivée estimée</div>
+      <div class="ts-eta-val" id="ts-eta-val">—</div>
+      <div class="ts-eta-sub" id="ts-eta-sub"></div>
+    </div>
+
+    <div class="ts-card">
+      <div class="ts-card-title">Itinéraire</div>
+      <div class="ts-route">
+        <div class="ts-rail">
+          <div class="ts-dot ts-dot-a"></div>
+          <div class="ts-line"></div>
+          <div class="ts-dot ts-dot-b"></div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="ts-lbl">Départ</div>
+          <div class="ts-addr" id="ts-pickup">{{ order.pickup }}</div>
+          <div id="ts-meeting-block" style="display:none;">
+            <div class="ts-lbl" id="ts-meeting-lbl">Point de rendez-vous</div>
+            <div class="ts-addr" style="color:var(--ts-accent-2);">Confirmé sur la carte</div>
+          </div>
+          <div class="ts-lbl">Destination</div>
+          <div class="ts-addr" id="ts-dest">{{ order.destination }}</div>
+        </div>
+      </div>
+      <div class="ts-stops" id="ts-stops" style="display:none;"></div>
+      <div style="margin-top:8px;{% if not share_payload.plan_itinerary %}display:none{% endif %}">
+        <div class="ts-lbl">Parcours prévu</div>
+        <div class="ts-addr" id="ts-itinerary" style="font-size:11px;color:#cbd5e1;">{{ share_payload.plan_itinerary|default:"" }}</div>
+      </div>
+      <div class="ts-chips" id="ts-meta-chips"></div>
+      <div class="ts-price-row" id="ts-price-row"></div>
+    </div>
+
+    <div class="ts-card">
+      <div class="ts-card-title">Progression</div>
+      <div class="ts-pipeline" id="ts-pipeline"></div>
+    </div>
+
+    <div class="ts-card">
+      <div class="ts-card-title">Votre chauffeur</div>
+      <div class="ts-driver">
+        <div class="ts-avatar" id="ts-avatar">
+          {% if driver_photo %}<img src="{{ driver_photo }}" alt="">{% else %}🚕{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="ts-drv-name" id="ts-drv-name">{{ driver_name|default:"Chauffeur DAXI" }}</div>
+          <div class="ts-drv-meta" id="ts-drv-meta">
+            {% if driver_vehicle %}{{ driver_vehicle }}{% endif %}
+            {% if driver_plate %} · {{ driver_plate }}{% endif %}
+            {% if driver_rating %} · ⭐ {{ driver_rating }}{% endif %}
+          </div>
+        </div>
+        {% if driver_car_image %}
+        <div class="ts-car-img" id="ts-car-img"><img src="{{ driver_car_image }}" alt="Véhicule"></div>
+        {% else %}
+        <div class="ts-car-img" id="ts-car-img" style="display:none;"></div>
+        {% endif %}
+      </div>
+      <div class="ts-actions">
+        <a class="ts-btn ts-btn-call" id="ts-btn-call" href="tel:{{ driver_phone|default:'' }}" style="{% if not driver_phone %}display:none{% endif %}">
+          <i class="ri-phone-fill"></i> Appeler
+        </a>
+        <button type="button" class="ts-btn ts-btn-share" id="ts-btn-share"><i class="ri-share-forward-line"></i> Partager</button>
+        <a class="ts-btn ts-btn-wa" id="ts-btn-wa" href="#" style="display:none;"><i class="ri-whatsapp-line"></i> WhatsApp</a>
+        <button type="button" class="ts-btn ts-btn-gps" id="ts-btn-gps"><i class="ri-map-2-line"></i> Ouvrir GPS</button>
+      </div>
+    </div>
+
+    <div class="ts-card" id="ts-safety-card">
+      <div class="ts-card-title">Sécurité & confidentialité</div>
+      <p style="font-size:12px;color:#94a3b8;line-height:1.55;">
+        Ce lien est privé — ne le partagez qu'avec des personnes de confiance.
+        En cas d'urgence, appelez le chauffeur ou les autorités locales (114 / 118).
+        DAXI ne remplace pas les services d'urgence.
+      </p>
+    </div>
+  </div>
+
+  <div class="ts-footer">Propulsé par DAXI · Cap-Haïtien, Haïti</div>
+
+  {{ share_payload|json_script:"daxi-track-initial" }}
+  <script>
+    window.__DAXI_TRACK__ = {
+      token: '{{ token|escapejs }}',
+      googleKey: '{{ google_maps_key|escapejs }}',
+      initial: JSON.parse(document.getElementById('daxi-track-initial').textContent)
+    };
+  </script>
+  <script src="/static/js/trip-share-live.js?v=20260731"></script>
+{% endif %}
+</body>
+</html>

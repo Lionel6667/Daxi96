@@ -1,0 +1,64 @@
+{% load static %}
+<script type="application/json" id="ent-plans-catalog-data">{{ plans_json|safe }}</script>
+<div class="daxi-plans-stage" id="entPlansStage">
+  <div class="daxi-plans-stage__glow"></div>
+  <div class="plans-container-wrapper">
+    <button type="button" class="nav-arrow left" aria-label="Précédent"><i class="ri-arrow-left-s-line"></i></button>
+
+    <div class="plans-container" id="entPlansContainer">
+      {% for p in plans %}
+      <div class="plan-card plan-card--p{{ p.id }}{% if forloop.first %} active{% endif %}" data-plan="{{ p.id }}">
+        <div class="plan-header">
+          <div class="plan-header-row">
+            <div class="plan-card-icon"><i class="{{ p.icon }}"></i></div>
+            <div class="plan-header-text">
+              <h3>{{ p.title }}</h3>
+              <p>{{ p.subtitle }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="plan-content">
+          <div class="plan-image-wrapper">
+            <img src="/{{ p.hero }}" alt="{{ p.title }}" class="plan-image" loading="eager" decoding="async" fetchpriority="high">
+          </div>
+          <div class="plan-preview-text">{{ p.preview }}</div>
+          <div class="plan-actions">
+            <button type="button" class="learn-more-btn" onclick="openEntPlanModal({{ p.id }})">
+              <i class="ri-arrow-right-up-line"></i> {% if p.pricing_mode == 'fixed' %}Réserver{% else %}En savoir plus{% endif %}
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <button type="button" class="nav-arrow right" aria-label="Suivant"><i class="ri-arrow-right-s-line"></i></button>
+  </div>
+
+  <div class="daxi-plans-rail">
+    <span class="daxi-plans-rail__label" id="entPlansRailLabel">1 / {{ plans|length }}</span>
+    <div class="daxi-plans-rail__track"><div class="daxi-plans-rail__fill" id="entPlansRailFill" style="width:16.6667%;"></div></div>
+  </div>
+
+  <div class="dots-indicator" id="entPlansDots">
+    {% for p in plans %}<div class="dot{% if forloop.first %} active{% endif %}" data-index="{{ forloop.counter0 }}"></div>{% endfor %}
+  </div>
+
+  <div class="daxi-plans-onboard">
+    <h3>Services à bord</h3>
+    <div class="services-grid">
+      <div class="daxi-perk-card daxi-perk-card--wifi">
+        <div class="daxi-perk-icon-wrap"><i class="ri-wifi-line"></i></div>
+        <h3>Wifi gratuit</h3>
+        <p>Connexion haut débit à bord pour vos clients — travail, streaming ou simplement rester joignable.</p>
+        <span class="daxi-perk-badge">Inclus</span>
+      </div>
+      <div class="daxi-perk-card daxi-perk-card--water">
+        <div class="daxi-perk-icon-wrap"><i class="ri-drop-line"></i></div>
+        <h3>Eau fraîche</h3>
+        <p>Bouteille d'eau offerte à bord pour rafraîchir vos clients tout au long du trajet.</p>
+        <span class="daxi-perk-badge">Gratuit</span>
+      </div>
+    </div>
+  </div>
+</div>

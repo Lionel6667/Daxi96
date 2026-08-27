@@ -1,0 +1,23 @@
+{% if not o.has_coords and o.status != 'cancelled' and o.status != 'completed' %}
+<div id="adm-coords-section-{{ o.id }}"
+     class="adm-coords-panel"
+     style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:12px;padding:12px;margin:12px 0;">
+  <div style="font-size:12px;font-weight:800;color:#fbbf24;margin-bottom:8px;">
+    <i class="ri-map-pin-line"></i> GPS manquant — placer les lieux sur la carte
+  </div>
+  {% if o.coords_placed_by_name %}
+  <p style="font-size:11px;color:#94a3b8;margin:0 0 10px;">
+    Placé par {{ o.coords_placed_by_name }} — vous pouvez corriger si besoin.
+  </p>
+  {% else %}
+  <p style="font-size:11px;color:#94a3b8;margin:0 0 10px;line-height:1.45;">
+    {% if o.is_service_plan or o.price_confirmed %}
+    Le client a commandé sans adresse Google. Sélectionnez « Départ » ou « Arrivée », puis <strong style="color:#fcd34d;">cliquez sur la carte</strong> pour placer chaque point — le tarif forfait reste inchangé.
+    {% else %}
+    Le client a commandé sans adresse Google. Sélectionnez « Départ » ou « Arrivée », puis <strong style="color:#fcd34d;">cliquez sur la carte</strong> pour placer chaque point — le prix sera calculé et envoyé au client.
+    {% endif %}
+  </p>
+  {% endif %}
+  {% include "htmx/_order_coords_map_placer.html" with prefix="adm-" o=o csrf_token=csrf_token %}
+</div>
+{% endif %}
