@@ -2,28 +2,41 @@
 
 ```
 DAXI
-  → UI (HTML / CSS / JS existants)
-  → Capacitor
+  → UI (HTML / CSS / JS existants) chargée depuis https://daxipro.com
+  → Capacitor (server.url production)
   → services natifs iOS / Android
        GPS · Push · stockage · réseau · partage · deep links
 ```
 
-Ce n’est **pas** un site ouvert dans un navigateur. L’interface DAXI tourne dans l’app ; Capacitor expose les APIs système (permissions, notifications, géoloc, hors-ligne, liens, share sheet).
+En production, le WebView charge **https://daxipro.com** (`server.url` conservé). Django reste le backend (commandes, HTMX, API, WebSocket).
 
-Django reste le backend (commandes, HTMX, API).
+## Config active (production)
+
+| Fichier | Rôle |
+|---|---|
+| `capacitor.config.json` | **Actif** — `server.url: https://daxipro.com` |
+| `capacitor.config.production.json` | Miroir production |
+| `capacitor.config.development.json` | Backup Live/ngrok |
+| `backend.config.json` | `DAXI_API_ENV=production`, API `https://daxipro.com`, debug logs off |
 
 ## Backend URL (une seule source)
 
 Fichier : `clients/daxi-capacitor/backend.config.json`
 
-- `DAXI_API_ENV` : `development` | `production`
-- `DAXI_API_BASE_URL_DEVELOPMENT` : Django/ngrok actuel
-- `DAXI_API_BASE_URL_PRODUCTION` : vide jusqu’au backend officiel
-- En DEV, `ngrok-url.txt` peut overlay l’URL **uniquement au build** (`useNgrokFileForDev`)
+- `DAXI_API_ENV` : `production` (actif) | `development` (Live)
+- `DAXI_API_BASE_URL_PRODUCTION` : `https://daxipro.com`
+- `DAXI_API_BASE_URL_DEVELOPMENT` : ngrok (uniquement si retour en Live)
+- `DAXI_API_DEBUG_LOGS` : `false` en production
 
 Override CI : variable d’environnement `DAXI_API_BASE_URL`.
 
 Injecté dans `www/daxi-capacitor-config.js` puis utilisé par `capacitor-src/main.js` (`backendUrl` / `backendWsUrl`).
+
+### Revenir en Live / ngrok
+
+1. Copier `capacitor.config.development.json` → `capacitor.config.json`
+2. Mettre `DAXI_API_ENV` à `development` dans `backend.config.json`
+3. `npm run sync`
 
 ## Services natifs
 
@@ -41,7 +54,9 @@ Injecté dans `www/daxi-capacitor-config.js` puis utilisé par `capacitor-src/ma
 
 ```bash
 cd clients/daxi-capacitor
-npx cap sync
+npm run sync
 ```
 
 Puis `npx cap open android` ou `npx cap open ios` (Mac + `pod install` pour le `.xcworkspace`).
+
+Ne génère pas l’APK/AAB automatiquement — build manuel dans Android Studio / Xcode quand tu es prêt.

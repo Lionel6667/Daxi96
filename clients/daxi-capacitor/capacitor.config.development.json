@@ -3,16 +3,21 @@
   "appName": "Daxi",
   "webDir": "www",
   "server": {
-    "url": "https://daxipro.com",
-    "cleartext": false,
+    "url": "https://repacking-shorts-vocalist.ngrok-free.dev",
+    "cleartext": true,
     "androidScheme": "https",
     "iosScheme": "https",
-    "hostname": "daxipro.com",
+    "hostname": "repacking-shorts-vocalist.ngrok-free.dev",
     "allowNavigation": [
+      "localhost",
+      "localhost:8000",
+      "127.0.0.1",
+      "127.0.0.1:8000",
       "daxipro.com",
       "*.daxipro.com",
-      "*.up.railway.app",
-      "*.railway.app"
+      "*.ngrok-free.dev",
+      "*.ngrok-free.app",
+      "*.ngrok.io"
     ]
   },
   "plugins": {
