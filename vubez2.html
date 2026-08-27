@@ -74,6 +74,7 @@
     (function(){
       window._daxiPreferServerPlaces = true;
       window._daxiGpsUserConsent = false;
+      try { window._daxiGeoBrowserBlocked = sessionStorage.getItem('daxi_geo_blocked') === '1'; } catch (e0) { window._daxiGeoBrowserBlocked = false; }
       /* Production: zero console noise unless window.DAXI_DEBUG = true */
       if (!window.DAXI_DEBUG) {
         var _noop = function() {};
@@ -84,30 +85,62 @@
           console.warn = _noop;
         } catch (e) {}
       }
-      /* STRICT: geolocation ONLY after explicit DAXI toast accept this session
-         (or native bridge). localStorage alone must NEVER open the browser prompt. */
+      /* STRICT geolocation gate:
+         - no OS prompt without DAXI toast accept
+         - never call the API again once the browser has blocked / denied it
+           (stops Chrome "dismissed several times" console spam) */
       try {
         if (navigator.geolocation && !navigator.geolocation._daxiGated) {
           var _geo = navigator.geolocation;
           var _rawGet = _geo.getCurrentPosition.bind(_geo);
           var _rawWatch = _geo.watchPosition.bind(_geo);
+          function _daxiMarkGeoBlocked() {
+            window._daxiGeoBrowserBlocked = true;
+            try { sessionStorage.setItem('daxi_geo_blocked', '1'); } catch (eB) {}
+          }
+          window._daxiMarkGeoBlocked = _daxiMarkGeoBlocked;
+          window._daxiClearGeoBlocked = function() {
+            window._daxiGeoBrowserBlocked = false;
+            try { sessionStorage.removeItem('daxi_geo_blocked'); } catch (eC) {}
+          };
           function _daxiGeoAllowed() {
+            if (window._daxiGeoBrowserBlocked) return false;
             return !!(window._daxiGpsUserConsent || window._daxiGpsPerm);
           }
           function _deny(err) {
             if (typeof err === 'function') {
-              try { err({ code: 1, message: 'DAXI: consent required', PERMISSION_DENIED: 1 }); } catch (e3) {}
+              try { err({ code: 1, message: 'DAXI: geolocation blocked or consent required', PERMISSION_DENIED: 1 }); } catch (e3) {}
             }
+          }
+          function _wrapErr(err) {
+            return function(e) {
+              if (e && (e.code === 1 || /dismissed|blocked|denied/i.test(String(e.message || '')))) {
+                _daxiMarkGeoBlocked();
+              }
+              if (typeof err === 'function') err(e);
+            };
           }
           _geo.getCurrentPosition = function(ok, err, opt) {
             if (!_daxiGeoAllowed()) { _deny(err); return; }
-            return _rawGet(ok, err, opt);
+            return _rawGet(ok, _wrapErr(err), opt);
           };
           _geo.watchPosition = function(ok, err, opt) {
             if (!_daxiGeoAllowed()) { _deny(err); return -1; }
-            return _rawWatch(ok, err, opt);
+            return _rawWatch(ok, _wrapErr(err), opt);
           };
           _geo._daxiGated = true;
+          /* If already denied in browser settings, mark blocked without calling the API */
+          if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
+              if (p.state === 'denied') _daxiMarkGeoBlocked();
+              if (p.addEventListener) {
+                p.addEventListener('change', function() {
+                  if (p.state === 'denied') _daxiMarkGeoBlocked();
+                  if (p.state === 'granted' && window._daxiClearGeoBlocked) window._daxiClearGeoBlocked();
+                });
+              }
+            }).catch(function() {});
+          }
         }
       } catch (eGate) {}
     })();
@@ -30680,6 +30713,9 @@ function _daxiStartLiveTracking(orderId) {
                     if (window._daxiRefreshOrderSheet) _daxiRefreshOrderSheet(orderId, { silent: true, cacheOnly: true });
                 }
                 if (msg.event === 'payment_confirmed' && window._daxiApplyBookingMarkersLock) window._daxiApplyBookingMarkersLock();
+                if (msg.event === 'payment_confirmed' && typeof window._daxiMaybeAskNotificationsNow === 'function') {
+                    window._daxiMaybeAskNotificationsNow('payment_confirmed');
+                }
             } else if (msg.event === 'relocate_prompt') {
                 var relocMeta = _daxiEnrichOrderMeta(msg.data || { id: orderId });
                 _daxiUpsertSheetOrderMeta(relocMeta);
@@ -32592,13 +32628,17 @@ function _daxiHasGpsUserConsent() {
 
 /** Must run inside a click handler so the browser shows the OS permission dialog. */
 function _daxiRequestBrowserGeoFromUserGesture(onDone) {
-    _daxiGrantGpsUserConsent();
     function done(ok, err) {
         if (typeof onDone === 'function') {
             try { onDone(ok, err); } catch (e) {}
         }
     }
+    function showBlocked() {
+        if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(true);
+        done(false, { code: 1, message: 'blocked' });
+    }
     if (window.DaxiAndroid && DaxiAndroid.requestLocationPermission) {
+        _daxiGrantGpsUserConsent();
         window._daxiPendingNativeGpsBoot = true;
         try { DaxiAndroid.requestLocationPermission(); } catch (e) {}
         done(true, null);
@@ -32608,42 +32648,67 @@ function _daxiRequestBrowserGeoFromUserGesture(onDone) {
         done(false, { code: 0, message: 'unsupported' });
         return;
     }
-    try {
-        navigator.geolocation.getCurrentPosition(
-            function(pos) {
-                _markGeoGranted();
-                done(true, null);
-                _daxiGpsFinalized = false;
-                _daxiGpsLocked = false;
-                _clientGpsBootStarted = false;
-                if (typeof _bootClientGps === 'function') _bootClientGps();
-                if (pos && pos.coords && typeof _placeClientPickupOnMap === 'function') {
-                    try {
-                        _placeClientPickupOnMap(pos.coords.latitude, pos.coords.longitude, {
-                            acc: pos.coords.accuracy || 0,
-                            forcePan: true,
-                            source: 'consent-gesture'
-                        });
-                    } catch (e2) {}
-                }
-            },
-            function(err) {
-                done(false, err || { code: 1 });
-                /* Chrome may block after repeated dismissals — show denied UI */
-                if (err && (err.code === 1 || /dismissed|blocked|denied/i.test(String(err.message || '')))) {
-                    if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(true);
-                } else {
+    /* Already browser-blocked → never call the API (avoids console spam) */
+    if (window._daxiGeoBrowserBlocked) {
+        showBlocked();
+        return;
+    }
+    function startOsPrompt() {
+        _daxiGrantGpsUserConsent();
+        try {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    if (window._daxiClearGeoBlocked) window._daxiClearGeoBlocked();
+                    _markGeoGranted();
+                    done(true, null);
                     _daxiGpsFinalized = false;
                     _daxiGpsLocked = false;
                     _clientGpsBootStarted = false;
                     if (typeof _bootClientGps === 'function') _bootClientGps();
-                }
-            },
-            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-        );
-    } catch (e3) {
-        done(false, e3);
+                    if (pos && pos.coords && typeof _placeClientPickupOnMap === 'function') {
+                        try {
+                            _placeClientPickupOnMap(pos.coords.latitude, pos.coords.longitude, {
+                                acc: pos.coords.accuracy || 0,
+                                forcePan: true,
+                                source: 'consent-gesture'
+                            });
+                        } catch (e2) {}
+                    }
+                },
+                function(err) {
+                    if (err && err.code === 1 && window._daxiMarkGeoBlocked) window._daxiMarkGeoBlocked();
+                    done(false, err || { code: 1 });
+                    showBlocked();
+                },
+                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+            );
+        } catch (e3) {
+            done(false, e3);
+        }
     }
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
+            if (p.state === 'denied') {
+                if (window._daxiMarkGeoBlocked) window._daxiMarkGeoBlocked();
+                showBlocked();
+                return;
+            }
+            if (p.state === 'granted') {
+                if (window._daxiClearGeoBlocked) window._daxiClearGeoBlocked();
+                _daxiGrantGpsUserConsent();
+                _markGeoGranted();
+                _daxiGpsFinalized = false;
+                _daxiGpsLocked = false;
+                _clientGpsBootStarted = false;
+                if (typeof _bootClientGps === 'function') _bootClientGps();
+                done(true, null);
+                return;
+            }
+            startOsPrompt();
+        }).catch(function() { startOsPrompt(); });
+        return;
+    }
+    startOsPrompt();
 }
 window._daxiRequestBrowserGeoFromUserGesture = _daxiRequestBrowserGeoFromUserGesture;
 
@@ -32671,16 +32736,21 @@ function _daxiScheduleNotifAfterLocFlow() {
 
 function _daxiMaybeAskLocation() {
     /* STRICT: never call browser geolocation while permission is "prompt".
-       Always show DAXI explain UI first; OS dialog only after user taps Autoriser. */
+       Always show DAXI explain UI first; OS dialog only after user taps Activer. */
     if (window._daxiNativePermissionHost) {
         try {
             if (typeof _ensureClientGpsLiveRunning === 'function') _ensureClientGpsLiveRunning();
         } catch (e) {}
         return;
     }
+    if (window._daxiGeoBrowserBlocked) {
+        _showLocationSharePrompt(true);
+        return;
+    }
     if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
             if (p.state === 'granted') {
+                if (window._daxiClearGeoBlocked) window._daxiClearGeoBlocked();
                 _markGeoGranted();
                 _daxiGrantGpsUserConsent();
                 if (window.DaxiWebGps && !window.DaxiAndroid) {
@@ -32690,17 +32760,16 @@ function _daxiMaybeAskLocation() {
                 return;
             }
             if (p.state === 'denied') {
+                if (window._daxiMarkGeoBlocked) window._daxiMarkGeoBlocked();
                 _showLocationSharePrompt(true);
                 return;
             }
-            /* prompt — explain first, never getCurrentPosition */
             _showLocationSharePrompt(false);
         }).catch(function() {
             _showLocationSharePrompt(false);
         });
         return;
     }
-    /* No Permissions API — always explain first */
     _showLocationSharePrompt(false);
 }
 window._daxiMaybeAskLocation = _daxiMaybeAskLocation;
@@ -33146,6 +33215,10 @@ function _requestPickupGps(onSuccess, onError, opts) {
 var _clientGpsBootRetries = 0;
 
 function _bootClientGps() {
+    if (window._daxiGeoBrowserBlocked) {
+        if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(true);
+        return;
+    }
     if (!_daxiHasGpsUserConsent()) {
         if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt(false);
         return;
@@ -33220,7 +33293,7 @@ function _showLocationSharePrompt(forceDenied) {
     if (!el) return;
     var desc = el.querySelector('.location-share-desc');
     if (desc && forceDenied) {
-        desc.textContent = 'La localisation est bloquée pour ce site (refus répétés ou paramètres navigateur). Réactivez-la via l’icône cadenas / infos du site à côté de l’URL, ou saisissez votre adresse manuellement.';
+        desc.textContent = 'La localisation est bloquée par le navigateur (refus répétés). Cliquez sur l’icône ⚙ / cadenas à gauche de daxipro.com → Autorisations → Localisation → Autoriser, puis rechargez la page. Ou saisissez l’adresse manuellement.';
     }
     el.classList.add('show');
 }
