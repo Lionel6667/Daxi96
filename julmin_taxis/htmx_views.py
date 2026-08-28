@@ -214,6 +214,13 @@ def _htmx_success(message: str) -> HttpResponse:
     )
 
 
+def _admin_ok(request, message: str):
+    accept = request.headers.get('Accept') or ''
+    if 'application/json' in accept:
+        return JsonResponse({'ok': True, 'message': message})
+    return _htmx_success(message)
+
+
 def _notify_ws(group: str, event_type: str, data: dict):
     """Broadcast a WebSocket message via Django Channels."""
     data = dict(data or {})
@@ -2005,7 +2012,8 @@ def admin_verify_driver(request, driver_id):
 
     driver = get_object_or_404(Driver, pk=driver_id)
     driver.is_verified = True
-    driver.save(update_fields=['is_verified'])
+    driver.is_blocked = False
+    driver.save(update_fields=['is_verified', 'is_blocked'])
     try:
         from julmin_taxis.whatsapp_service import notify_driver_verified
         notify_driver_verified(driver)
@@ -2016,7 +2024,28 @@ def admin_verify_driver(request, driver_id):
         _safe_push_driver(driver, 'account_validated')
     except Exception:
         pass
-    return _htmx_success(f'Chauffeur {driver.get_full_name()} approuvé')
+    return _admin_ok(request, f'Chauffeur {driver.get_full_name()} approuvé')
+
+
+def admin_reject_driver(request, driver_id):
+    """POST: refuse a pending driver registration (block, stay unverified)."""
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    driver = get_object_or_404(Driver, pk=driver_id)
+    reason = (request.POST.get('reason') or '').strip()
+    note = f'Refusé le {timezone.now().strftime("%d/%m/%Y %H:%M")}'
+    if reason:
+        note = f'{note} — {reason}'
+    existing = (driver.verification_notes or '').strip()
+    driver.is_verified = False
+    driver.is_blocked = True
+    driver.verification_notes = (existing + '\n' + note).strip() if existing else note
+    driver.save(update_fields=['is_verified', 'is_blocked', 'verification_notes'])
+    from julmin_taxis.security_audit import log_driver_block
+    log_driver_block(driver, True, request)
+    return _admin_ok(request, f'Inscription de {driver.get_full_name()} refusée')
 
 
 def admin_delete_driver(request, driver_id):

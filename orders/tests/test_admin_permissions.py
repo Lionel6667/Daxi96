@@ -97,3 +97,76 @@ class GpsAntispoofTests(TestCase):
         self.assertFalse(ok2)
         self.assertIn('gps_speed', reason)
         self.assertLess(trust, 100)
+
+
+class AdminDriverReviewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        User = get_user_model()
+        self.admin = User.objects.create_user(
+            'adm1', 'admin@test.com', 'pass12345', is_staff=True,
+        )
+        self.support = User.objects.create_user(
+            'support2', 'support2@test.com', 'pass12345',
+            is_staff=True, admin_role='support',
+        )
+        self.pending = Driver.objects.create(
+            firstname='Jean', lastname='Pierre', phone='+50937001111',
+            email='pending.drv@daxi.ht', city='Cap-Haïtien',
+            plate='ABC-1', is_verified=False, is_blocked=False,
+        )
+
+    def test_admin_approves_pending_driver(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            f'/htmx/admin/drivers/{self.pending.pk}/verify/',
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data.get('ok'))
+        self.pending.refresh_from_db()
+        self.assertTrue(self.pending.is_verified)
+        self.assertFalse(self.pending.is_blocked)
+
+    def test_admin_rejects_pending_driver(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            f'/htmx/admin/drivers/{self.pending.pk}/reject/',
+            {'reason': 'Permis illisible'},
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get('ok'))
+        self.pending.refresh_from_db()
+        self.assertFalse(self.pending.is_verified)
+        self.assertTrue(self.pending.is_blocked)
+        self.assertIn('Permis illisible', self.pending.verification_notes)
+
+    def test_support_cannot_approve_driver(self):
+        self.client.force_login(self.support)
+        self.client.post(f'/htmx/admin/drivers/{self.pending.pk}/verify/')
+        self.pending.refresh_from_db()
+        self.assertFalse(self.pending.is_verified)
+
+    def test_staff_driver_list_includes_review_fields(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get('/api/drivers/')
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.json()
+        if isinstance(rows, dict):
+            rows = rows.get('results') or []
+        match = next((r for r in rows if r.get('id') == self.pending.pk), None)
+        self.assertIsNotNone(match)
+        self.assertIn('city', match)
+        self.assertIn('driving_license_url', match)
+        self.assertEqual(match['city'], 'Cap-Haïtien')
+
+    def test_public_driver_list_hides_unverified_and_docs(self):
+        resp = self.client.get('/api/drivers/')
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.json()
+        if isinstance(rows, dict):
+            rows = rows.get('results') or []
+        ids = [r.get('id') for r in rows]
+        self.assertNotIn(self.pending.pk, ids)

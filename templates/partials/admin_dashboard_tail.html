@@ -136,6 +136,30 @@
   </div>
 </div>
 
+<div id="driver-review-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeModal('driver-review-modal')">
+  <div class="adm-drv-review" role="dialog" aria-modal="true" aria-labelledby="drv-review-title">
+    <div class="adm-drv-review__head">
+      <button type="button" class="adm-drv-review__close" onclick="closeModal('driver-review-modal')" aria-label="Fermer"><i class="ri-close-line"></i></button>
+      <div class="adm-drv-review__identity">
+        <img id="drv-review-photo" alt="" class="adm-drv-review__avatar">
+        <div class="min-w-0">
+          <h3 id="drv-review-title" class="adm-drv-review__name"></h3>
+          <p id="drv-review-meta" class="adm-drv-review__meta"></p>
+        </div>
+      </div>
+    </div>
+    <div id="drv-review-body" class="adm-drv-review__body"></div>
+    <div id="drv-review-actions" class="adm-drv-review__foot"></div>
+  </div>
+</div>
+<div id="driver-lightbox" class="modal-overlay hidden fixed inset-0 z-[60] flex items-center justify-center p-4" onclick="closeModal('driver-lightbox')">
+  <figure class="adm-drv-lightbox" onclick="event.stopPropagation()">
+    <button type="button" class="adm-drv-review__close" onclick="closeModal('driver-lightbox')" aria-label="Fermer"><i class="ri-close-line"></i></button>
+    <img id="drv-lightbox-img" alt="">
+    <figcaption id="drv-lightbox-caption"></figcaption>
+  </figure>
+</div>
+
 <div id="driver-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center p-4">
   <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-lg border border-white/10">
     <h3 class="font-bold text-lg mb-4" id="driver-modal-title">Chauffeur</h3>
@@ -178,7 +202,7 @@
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
 <script src="/static/js/lieux_admin.js?v=20260827a"></script>
 <script>
-const ADMIN = { charts: {}, currentSection: 'dashboard', allDrivers: [], pendingCount: 0 };
+const ADMIN = { charts: {}, currentSection: 'dashboard', allDrivers: [], pendingCount: 0, driversTab: 'pending' };
 
 function adminAvatarUrl(photo, name, size) {
   if (photo) {

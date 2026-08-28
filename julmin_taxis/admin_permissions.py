@@ -63,6 +63,7 @@ _ADMIN_PATH_RULES: list[tuple[str, str]] = [
     (r'^/htmx/admin/drivers/\d+/commission/?', PERM_COMMISSIONS),
     (r'^/htmx/admin/drivers/\d+/block/?', PERM_DRIVERS_MANAGE),
     (r'^/htmx/admin/drivers/\d+/verify/?', PERM_DRIVERS_MANAGE),
+    (r'^/htmx/admin/drivers/\d+/reject/?', PERM_DRIVERS_MANAGE),
     (r'^/htmx/admin/drivers/\d+/delete/?', PERM_DRIVERS_MANAGE),
     (r'^/htmx/admin/drivers/\d+/car-image/?', PERM_DRIVERS_MANAGE),
     (r'^/htmx/admin/drivers/\d+/photo/?', PERM_DRIVERS_MANAGE),

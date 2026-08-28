@@ -60,6 +60,43 @@ class DriverSerializer(serializers.ModelSerializer):
         from julmin_taxis.driver_display_utils import _driver_photo_url
         return _driver_photo_url(obj, request=self.context.get('request')) or None
 
+    def _safe_file_url(self, field):
+        if not field:
+            return ''
+        try:
+            return field.url or ''
+        except Exception:
+            return ''
+
+    def _is_staff_request(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        return bool(user and getattr(user, 'is_authenticated', False) and getattr(user, 'is_staff', False))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self._is_staff_request():
+            return data
+        data.update({
+            'city': instance.city or '',
+            'car_brand': instance.car_brand or '',
+            'car_model': instance.car_model or '',
+            'car_year': instance.car_year or '',
+            'commission_rate': float(instance.commission_rate or 0),
+            'verification_notes': instance.verification_notes or '',
+            'vehicle_reference_photo_url': self._safe_file_url(instance.vehicle_reference_photo),
+            'vehicle_professional_photo_url': instance.get_public_vehicle_image_url() or '',
+            'driving_license_url': self._safe_file_url(instance.driving_license),
+            'oavct_insurance_url': self._safe_file_url(instance.oavct_insurance),
+            'dgi_card_url': self._safe_file_url(instance.dgi_card),
+            'tint_permit_url': self._safe_file_url(instance.tint_permit),
+            'has_license': bool(instance.driving_license),
+            'has_oavct': bool(instance.oavct_insurance),
+            'has_dgi': bool(instance.dgi_card),
+            'has_tint': bool(instance.tint_permit),
+        })
+        return data
+
     def get_reviews_count(self, obj):
         return obj.reviews.count()
 

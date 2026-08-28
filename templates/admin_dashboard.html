@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260735">
 <link rel="stylesheet" href="/static/css/admin-maps.css?v=20260803d">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260735">
-<link rel="stylesheet" href="/static/css/daxi-theme-admin-sections.css?v=20260773">
+<link rel="stylesheet" href="/static/css/daxi-theme-admin-sections.css?v=20260828h">
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823s">
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
 <link rel="stylesheet" href="/static/css/daxi-calendar-modal.css?v=20260801">
@@ -374,12 +374,25 @@
       </section>
 
       
-      <section id="admin-section-drivers" class="adm-pro-page hidden p-6 space-y-6">
+      <section id="admin-section-drivers" class="adm-pro-page hidden p-4 sm:p-6 space-y-5">
         <div class="flex items-center justify-between flex-wrap gap-3">
-          <input id="drivers-search" type="text" placeholder="🔍 Rechercher un chauffeur..." class="px-4 py-2 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm w-64" oninput="searchDrivers()">
+          <input id="drivers-search" type="text" placeholder="Rechercher un chauffeur..." class="px-4 py-2 bg-gray-800 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-daxi-cyan text-sm w-full sm:w-64" oninput="searchDrivers()">
           <button type="button" onclick="showAllDriversOnMap()" class="px-4 py-2 bg-daxi-cyan/20 text-daxi-cyan border border-daxi-cyan/30 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-daxi-cyan/30">
-            <i class="ri-map-pin-user-line"></i> Carte — tous les chauffeurs
+            <i class="ri-map-pin-user-line"></i> Carte
           </button>
+        </div>
+        <div class="adm-seg-nav">
+          <div class="adm-seg-group">
+            <button type="button" id="drv-tab-pending" class="adm-seg-btn adm-seg-btn--pending is-active" onclick="setAdminDriversTab('pending')">
+              <i class="ri-time-line"></i> En attente <span id="drv-tab-pending-count" class="adm-seg-badge hidden">0</span>
+            </button>
+            <button type="button" id="drv-tab-active" class="adm-seg-btn adm-seg-btn--approved" onclick="setAdminDriversTab('active')">
+              <i class="ri-check-line"></i> Actifs <span id="drv-tab-active-count" class="adm-seg-badge hidden">0</span>
+            </button>
+            <button type="button" id="drv-tab-blocked" class="adm-seg-btn adm-seg-btn--rejected" onclick="setAdminDriversTab('blocked')">
+              <i class="ri-forbid-line"></i> Bloqués <span id="drv-tab-blocked-count" class="adm-seg-badge hidden">0</span>
+            </button>
+          </div>
         </div>
         <div id="drivers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div class="text-center py-8 text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i></div>
@@ -1878,8 +1891,59 @@ async function loadAdminDrivers() {
     const res = await DriversAPI.getAll({ page_size: 500 });
     const drivers = Array.isArray(res) ? res : (res.results || []);
     ADMIN.allDrivers = drivers;
-    renderDriversGrid(drivers);
+    syncAdminDriversTabCounts();
+    applyAdminDriversTab();
   } catch { grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Erreur de chargement.</p>'; }
+}
+
+function driverMatchesQuery(d, q) {
+  if (!q) return true;
+  const blob = [d.full_name, d.firstname, d.lastname, d.email, d.phone, d.plate, d.vehicle, d.city, d.car_brand, d.car_model]
+    .map(function (v) { return String(v || '').toLowerCase(); })
+    .join(' ');
+  return blob.indexOf(q) >= 0;
+}
+
+function driversForCurrentTab() {
+  const list = ADMIN.allDrivers || [];
+  const tab = ADMIN.driversTab || 'pending';
+  return list.filter(function (d) {
+    if (tab === 'pending') return !d.is_verified && !d.is_blocked;
+    if (tab === 'blocked') return !!d.is_blocked;
+    return !!d.is_verified && !d.is_blocked;
+  });
+}
+
+function syncAdminDriversTabCounts() {
+  const list = ADMIN.allDrivers || [];
+  const pending = list.filter(function (d) { return !d.is_verified && !d.is_blocked; }).length;
+  const active = list.filter(function (d) { return d.is_verified && !d.is_blocked; }).length;
+  const blocked = list.filter(function (d) { return !!d.is_blocked; }).length;
+  const set = function (id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n;
+    el.classList.toggle('hidden', n <= 0);
+  };
+  set('drv-tab-pending-count', pending);
+  set('drv-tab-active-count', active);
+  set('drv-tab-blocked-count', blocked);
+}
+
+function setAdminDriversTab(tab) {
+  ADMIN.driversTab = tab;
+  applyAdminDriversTab();
+}
+
+function applyAdminDriversTab() {
+  const tab = ADMIN.driversTab || 'pending';
+  ['pending', 'active', 'blocked'].forEach(function (name) {
+    document.getElementById('drv-tab-' + name)?.classList.toggle('is-active', name === tab);
+  });
+  const q = (document.getElementById('drivers-search')?.value || '').toLowerCase().trim();
+  const filtered = driversForCurrentTab().filter(function (d) { return driverMatchesQuery(d, q); });
+  if (tab === 'pending') renderPendingDriversGrid(filtered);
+  else renderDriversGrid(filtered);
 }
 
 function refreshDriverLastSeenLabels() {
@@ -1919,12 +1983,7 @@ function formatDriverRating(rating, ratingCount) {
 }
 
 function searchDrivers() {
-  const q = document.getElementById('drivers-search').value.toLowerCase();
-  const filtered = ADMIN.allDrivers.filter(d =>
-    d.full_name.toLowerCase().includes(q) || d.email.toLowerCase().includes(q) ||
-    d.plate.toLowerCase().includes(q) || d.vehicle.toLowerCase().includes(q)
-  );
-  renderDriversGrid(filtered);
+  applyAdminDriversTab();
 }
 
 function formatDriverStatusDetail(d) {
@@ -1980,6 +2039,179 @@ function showAllDriversOnMap() {
     window.LIVE.returnLabel = 'Chauffeurs';
   }
   showAdminSection('live-map');
+}
+
+function renderPendingDriversGrid(drivers) {
+  const grid = document.getElementById('drivers-grid');
+  if (!drivers.length) {
+    grid.innerHTML = '<div class="adm-drv-empty col-span-3"><i class="ri-user-star-line"></i><p>Aucun chauffeur en attente de confirmation.</p></div>';
+    return;
+  }
+  grid.innerHTML = drivers.map(function (d) {
+    const name = escapeHtml(d.full_name || ((d.firstname || '') + ' ' + (d.lastname || '')).trim() || 'Chauffeur');
+    const vehicle = escapeHtml(formatDriverVehicle(d));
+    const city = escapeHtml(d.city || '');
+    const when = d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : '';
+    const photo = adminAvatarUrl(d.photo_url, d.full_name, 64);
+    const docs = [
+      d.has_license || d.driving_license_url,
+      d.has_oavct || d.oavct_insurance_url,
+      d.has_dgi || d.dgi_card_url,
+    ].filter(Boolean).length;
+    return `
+    <button type="button" class="adm-drv-pending" onclick="openAdminDriverReview(${d.id})">
+      <img src="${photo}" alt="" class="adm-drv-pending__photo">
+      <div class="adm-drv-pending__info">
+        <div class="adm-drv-pending__name">${name} <span class="adm-drv-pending__badge">En attente</span></div>
+        <div class="adm-drv-pending__sub">${vehicle}${city ? ' · ' + city : ''}</div>
+        <div class="adm-drv-pending__meta">${when ? 'Inscrit le ' + when : ''} · ${docs}/3 docs</div>
+      </div>
+      <i class="ri-arrow-right-s-line adm-drv-pending__chevron"></i>
+    </button>`;
+  }).join('');
+}
+
+function adminDocTile(url, label) {
+  if (!url) {
+    return `<div class="adm-drv-doc is-empty"><i class="ri-image-line"></i><span>${escapeHtml(label)}</span><em>Manquant</span></div>`;
+  }
+  const safe = escapeHtml(url);
+  const lab = escapeHtml(label);
+  return `<button type="button" class="adm-drv-doc" data-url="${safe}" data-label="${lab}" onclick="openAdminDriverLightbox(this)">
+    <img src="${safe}" alt="${lab}" loading="lazy">
+    <span>${lab}</span>
+  </button>`;
+}
+
+function openAdminDriverLightbox(btn) {
+  const url = btn.getAttribute('data-url');
+  const label = btn.getAttribute('data-label') || '';
+  const img = document.getElementById('drv-lightbox-img');
+  const cap = document.getElementById('drv-lightbox-caption');
+  if (img) { img.src = url; img.alt = label; }
+  if (cap) cap.textContent = label;
+  document.getElementById('driver-lightbox')?.classList.remove('hidden');
+}
+
+function openAdminDriverReview(id) {
+  const d = (ADMIN.allDrivers || []).find(function (x) { return x.id === id; });
+  if (!d) return;
+  const name = d.full_name || ((d.firstname || '') + ' ' + (d.lastname || '')).trim() || 'Chauffeur';
+  const photoEl = document.getElementById('drv-review-photo');
+  if (photoEl) {
+    photoEl.src = adminAvatarUrl(d.photo_url, name, 80);
+    photoEl.alt = name;
+  }
+  document.getElementById('drv-review-title').textContent = name;
+  document.getElementById('drv-review-meta').textContent = [d.phone, d.email, d.city].filter(Boolean).join(' · ');
+  const rows = [
+    ['Prénom', d.firstname],
+    ['Nom', d.lastname],
+    ['Email', d.email],
+    ['WhatsApp', d.phone],
+    ['Ville', d.city],
+    ['Véhicule', formatDriverVehicle(d)],
+    ['Marque', d.car_brand],
+    ['Modèle', d.car_model],
+    ['Année', d.car_year],
+    ['Plaque', d.plate],
+    ['Commission', d.commission_rate != null ? d.commission_rate + ' %' : ''],
+    ['Inscription', d.created_at ? new Date(d.created_at).toLocaleString('fr-FR') : ''],
+  ].filter(function (r) { return r[1]; }).map(function (r) {
+    return `<div class="adm-drv-kv"><dt>${escapeHtml(r[0])}</dt><dd>${escapeHtml(String(r[1]))}</dd></div>`;
+  }).join('');
+  const notes = (d.verification_notes || '').trim();
+  const body = `
+    <section class="adm-drv-review__section">
+      <h4>Identité</h4>
+      <dl class="adm-drv-kv-grid">${rows}</dl>
+    </section>
+    <section class="adm-drv-review__section">
+      <h4>Photo de profil</h4>
+      <div class="adm-drv-docs">${adminDocTile(d.photo_url, 'Profil')}</div>
+    </section>
+    <section class="adm-drv-review__section">
+      <h4>Véhicule</h4>
+      <div class="adm-drv-docs">
+        ${adminDocTile(d.vehicle_reference_photo_url, 'Photo véhicule (chauffeur)')}
+        ${adminDocTile(d.vehicle_professional_photo_url, 'Photo pro publique')}
+      </div>
+    </section>
+    <section class="adm-drv-review__section">
+      <h4>Documents</h4>
+      <div class="adm-drv-docs">
+        ${adminDocTile(d.driving_license_url, 'Permis de conduire')}
+        ${adminDocTile(d.oavct_insurance_url, 'OAVCT')}
+        ${adminDocTile(d.dgi_card_url, 'Carte DGI')}
+        ${adminDocTile(d.tint_permit_url, 'Permis teinte')}
+      </div>
+    </section>
+    ${notes ? `<section class="adm-drv-review__section"><h4>Notes de vérification</h4><pre class="adm-drv-notes">${escapeHtml(notes)}</pre></section>` : ''}
+  `;
+  document.getElementById('drv-review-body').innerHTML = body;
+  const pending = !d.is_verified && !d.is_blocked;
+  const foot = document.getElementById('drv-review-actions');
+  if (pending) {
+    foot.innerHTML = `
+      <div id="drv-reject-box" class="adm-drv-reject-box hidden">
+        <label>Motif du refus (optionnel)</label>
+        <textarea id="drv-reject-reason" rows="2" placeholder="Documents illisibles, plaque incorrecte…"></textarea>
+        <button type="button" class="adm-drv-btn adm-drv-btn--danger" onclick="confirmRejectAdminDriver(${d.id})">Confirmer le refus</button>
+      </div>
+      <div class="adm-drv-review__btns">
+        <button type="button" class="adm-drv-btn adm-drv-btn--ghost" onclick="document.getElementById('drv-reject-box').classList.toggle('hidden')">Refuser</button>
+        <button type="button" class="adm-drv-btn adm-drv-btn--ok" onclick="approveAdminDriver(${d.id})"><i class="ri-check-line"></i> Approuver</button>
+      </div>`;
+  } else {
+    foot.innerHTML = `<button type="button" class="adm-drv-btn adm-drv-btn--ghost" onclick="closeModal('driver-review-modal')">Fermer</button>`;
+  }
+  document.getElementById('driver-review-modal')?.classList.remove('hidden');
+}
+
+async function adminDriverReviewPost(url, fields) {
+  const body = new URLSearchParams();
+  Object.entries(fields || {}).forEach(function (kv) {
+    if (kv[1] != null && kv[1] !== '') body.set(kv[0], String(kv[1]));
+  });
+  const res = await adminFetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+    },
+    body: body.toString(),
+  });
+  const data = await res.json().catch(function () { return {}; });
+  if (!res.ok || data.ok === false) throw new Error(data.message || data.error || 'Action impossible');
+  return data;
+}
+
+async function approveAdminDriver(id) {
+  if (!confirm('Approuver ce chauffeur ? Il pourra ensuite accepter des courses.')) return;
+  try {
+    const data = await adminDriverReviewPost('/htmx/admin/drivers/' + id + '/verify/', {});
+    showToast(data.message || 'Chauffeur approuvé');
+    closeModal('driver-review-modal');
+    await loadAdminDrivers();
+    refreshAllAdminBadges();
+  } catch (err) {
+    showToast(err.message || 'Erreur', 'error');
+  }
+}
+
+async function confirmRejectAdminDriver(id) {
+  const reason = (document.getElementById('drv-reject-reason') || {}).value || '';
+  if (!confirm('Refuser cette inscription ? Le chauffeur sera bloqué.')) return;
+  try {
+    const data = await adminDriverReviewPost('/htmx/admin/drivers/' + id + '/reject/', { reason: reason });
+    showToast(data.message || 'Inscription refusée');
+    closeModal('driver-review-modal');
+    ADMIN.driversTab = 'blocked';
+    await loadAdminDrivers();
+    refreshAllAdminBadges();
+  } catch (err) {
+    showToast(err.message || 'Erreur', 'error');
+  }
 }
 
 function renderDriversGrid(drivers) {

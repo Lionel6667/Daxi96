@@ -37,6 +37,7 @@ urlpatterns = [
     path('admin/drivers/',                     v.admin_drivers_list,   name='htmx-admin-drivers'),
     path('admin/drivers/<int:driver_id>/block/',      v.admin_block_driver,          name='htmx-admin-block-driver'),
     path('admin/drivers/<int:driver_id>/verify/',     v.admin_verify_driver,         name='htmx-admin-verify-driver'),
+    path('admin/drivers/<int:driver_id>/reject/',     v.admin_reject_driver,         name='htmx-admin-reject-driver'),
     path('admin/drivers/<int:driver_id>/delete/',     v.admin_delete_driver,         name='htmx-admin-delete-driver'),
     path('admin/drivers/<int:driver_id>/car-image/',  v.admin_set_driver_car_image,  name='htmx-admin-driver-car-image'),
     path('admin/drivers/<int:driver_id>/vehicle-reference-download/', v.admin_download_vehicle_reference, name='htmx-admin-driver-vehicle-ref-download'),
