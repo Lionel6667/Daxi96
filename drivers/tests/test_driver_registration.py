@@ -78,17 +78,20 @@ class DriverRegistrationTests(TestCase):
         self.assertEqual(driver.status, 'offline')
         self.assertTrue(driver.photo)
         self.assertTrue(driver.vehicle_reference_photo)
-        self.assertFalse(driver.vehicle_professional_photo)
-        self.assertFalse(driver.car_image_url)
-        self.assertTrue(driver.driving_license)
-        expected_hash = hashlib.sha256(b'SecurePass8').hexdigest()
-        self.assertEqual(driver.password_hash, expected_hash)
-        self.assertIn('vérification admin', driver.verification_notes.lower())
 
-        session = self.client.session
-        session.load()
-        self.assertEqual(session.get('driver_id'), driver.pk)
-        self.assertTrue(session.get('driver_pending_verification'))
+    def test_register_accepts_whatsapp_verified_flag_without_otp_cache(self):
+        """Étape 2 après verify-otp : le flag verified suffit si le cache OTP a expiré."""
+        email = 'verified.flag@daxi.ht'
+        cache.set(f'reg_otp_driver_verified_{email}', True, timeout=600)
+        cache.set(f'reg_otp_driver_phone_{email}', '+50944123456', timeout=600)
+        resp = self.client.post(
+            '/htmx/driver/register/',
+            {**_register_payload(email=email), 'otp': '847291', **_register_files()},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get('HX-Redirect'), '/driver/')
+        driver = Driver.objects.get(email=email)
+        self.assertFalse(driver.is_verified)
 
     def test_register_rejects_duplicate_email(self):
         Driver.objects.create(

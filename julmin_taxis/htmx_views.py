@@ -2634,13 +2634,15 @@ def driver_register(request):
     from django.core.cache import cache
 
     otp = request.POST.get('otp', '').strip()
+    otp_verified = cache.get(f'reg_otp_driver_verified_{email}')
     stored_otp = cache.get(f'reg_otp_driver_{email}')
     if not otp:
         return _htmx_error('Vérifiez votre WhatsApp à l\'étape 1 (code OTP requis).')
-    if not stored_otp:
-        return _htmx_error('Code WhatsApp expiré — retournez à l\'étape 1 pour renvoyer un code.')
-    if otp != stored_otp:
-        return _htmx_error('Code OTP incorrect.')
+    if not otp_verified:
+        if not stored_otp:
+            return _htmx_error('Code WhatsApp expiré — retournez à l\'étape 1 pour renvoyer un code.')
+        if otp != stored_otp:
+            return _htmx_error('Code OTP incorrect.')
     stored_phone = cache.get(f'reg_otp_driver_phone_{email}')
     if stored_phone and _sanitize_phone(stored_phone) != phone:
         return _htmx_error('Le numéro WhatsApp ne correspond pas au code envoyé.')
@@ -2732,6 +2734,11 @@ def driver_register(request):
         dgi_card=request.FILES.get('dgi_card'),
         tint_permit=request.FILES.get('tint_permit'),
         verification_notes=verification_notes,
+    )
+    import logging
+    logging.getLogger(__name__).info(
+        '[DriverRegister] pending driver #%s %s (%s)',
+        driver.pk, driver.get_full_name(), email,
     )
 
     request.session['driver_id'] = driver.pk

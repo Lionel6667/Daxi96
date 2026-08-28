@@ -1888,15 +1888,29 @@ async function loadAdminDrivers() {
   const grid = document.getElementById('drivers-grid');
   grid.innerHTML = '<div class="text-center col-span-3 py-8"><i class="ri-loader-4-line animate-spin text-2xl text-gray-400"></i></div>';
   try {
-    const res = await adminFetch('/api/admin-panel/drivers/');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    await adminSyncSession();
+    let res = await adminFetch('/api/admin-panel/drivers/');
+    if (res.status === 403) {
+      await adminSyncSession();
+      res = await adminFetch('/api/admin-panel/drivers/');
+    }
+    if (!res.ok) {
+      res = await adminFetch('/api/drivers/');
+    }
+    if (!res.ok) {
+      grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Impossible de charger les chauffeurs (HTTP ' + res.status + '). Reconnectez-vous.</p>';
+      return;
+    }
     const payload = await res.json();
     const drivers = Array.isArray(payload) ? payload : (payload.results || []);
     ADMIN.allDrivers = drivers;
     syncAdminDriversTabCounts();
     applyAdminDriversTab();
     refreshAllAdminBadges();
-  } catch { grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Erreur de chargement.</p>'; }
+  } catch (e) {
+    console.warn('loadAdminDrivers:', e);
+    grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Erreur de chargement des chauffeurs.</p>';
+  }
 }
 
 function driverMatchesQuery(d, q) {

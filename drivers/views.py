@@ -41,6 +41,18 @@ class DriverListView(generics.ListAPIView):
         from julmin_taxis.staff_auth import user_is_staff
         return _drivers_queryset(for_staff=user_is_staff(self.request))
 
+    def list(self, request, *args, **kwargs):
+        from julmin_taxis.staff_auth import user_is_staff
+        if user_is_staff(request):
+            qs = self.filter_queryset(self.get_queryset())
+            return Response(
+                DriverSerializer(
+                    qs, many=True,
+                    context={'request': request, 'force_staff': True},
+                ).data,
+            )
+        return super().list(request, *args, **kwargs)
+
 
 class DriverDetailView(generics.RetrieveAPIView):
     """Get driver profile."""
