@@ -30,6 +30,7 @@ public class MainActivity extends BridgeActivity {
     private boolean consumedDeepLink = false;
     private String lastGoodUrl = SITE;
     private volatile boolean deviceOnline = true;
+    private volatile boolean bootNetworkReady = false;
     private ConnectivityManager connectivityManager;
     private ConnectivityManager.NetworkCallback networkCallback;
 
@@ -40,12 +41,7 @@ public class MainActivity extends BridgeActivity {
         installWebClient();
         watchNetwork();
         mainHandler.postDelayed(() -> loadDeepLink(getIntent()), 250);
-        mainHandler.postDelayed(() -> {
-            if (isDeviceOnline() || getBridge() == null || getBridge().getWebView() == null) {
-                return;
-            }
-            stayOnCachedShell(getBridge().getWebView());
-        }, 280);
+        mainHandler.postDelayed(() -> bootNetworkReady = true, 3000);
         watchBlankFirstLoad();
     }
 
@@ -100,15 +96,15 @@ public class MainActivity extends BridgeActivity {
             if (webView == null) {
                 return;
             }
-            String current = webView.getUrl();
-            if (current == null || current.isEmpty() || "about:blank".equals(current) || looksLikeErrorPage(webView)) {
-                if (isDeviceOnline()) {
-                    webView.loadUrl(SITE);
-                } else {
-                    stayOnCachedShell(webView);
-                }
+            if (!looksLikeErrorPage(webView)) {
+                return;
             }
-        }, 1600);
+            if (isDeviceOnline()) {
+                webView.loadUrl(SITE);
+            } else {
+                stayOnCachedShell(webView);
+            }
+        }, 4000);
     }
 
     private boolean looksLikeErrorPage(WebView view) {
@@ -334,7 +330,7 @@ public class MainActivity extends BridgeActivity {
         }
         applyCacheMode(webView, online);
         if (!online) {
-            if (looksLikeErrorPage(webView) || !isDeviceOnline()) {
+            if (looksLikeErrorPage(webView)) {
                 stayOnCachedShell(webView);
             } else {
                 notifyJsOffline(webView);
@@ -353,7 +349,7 @@ public class MainActivity extends BridgeActivity {
         if (Build.VERSION.SDK_INT >= 23) {
             Network network = cm.getActiveNetwork();
             if (network == null) {
-                return false;
+                return !bootNetworkReady;
             }
             NetworkCapabilities caps = cm.getNetworkCapabilities(network);
             return caps != null && (

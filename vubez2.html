@@ -30,7 +30,7 @@
             visibility: hidden !important;
         }
     </style>
-    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+9000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');var c=document.getElementById('daxi-cinematic');if(c&&c.parentNode)c.remove();if(!window._daxiLoaderDismissed&&window._daxiDismissInitialLoader)window._daxiDismissInitialLoader();if(window._clientBgMap&&typeof window._daxiPlaceholderHide==='function')window._daxiPlaceholderHide('boot-timeout');}setTimeout(bootTimeout,2800);})();</script>
+    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+9000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');}setTimeout(bootTimeout,2800);})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
     
     <script>
@@ -55,7 +55,7 @@
     })();
     </script>
     
-    <script src="/static/js/daxi-intro.js?v=20260823t"></script>
+    <script src="/static/js/daxi-intro.js?v=20260828d"></script>
     <script>
     try {
       if (window.DaxiIntro && typeof DaxiIntro.play === 'function') DaxiIntro.play();
@@ -1154,14 +1154,18 @@
         
         .app-sheet #bookingSection input[type=time]::-webkit-calendar-picker-indicator,
         .app-sheet #bookingSection input[type=date]::-webkit-calendar-picker-indicator {
-            filter: invert(1) brightness(1.4);
-            opacity: 0.95;
+            opacity: 0;
             cursor: pointer;
         }
         #dateTimeSection input[type=time]::-webkit-calendar-picker-indicator,
         #dateTimeSection input[type=date]::-webkit-calendar-picker-indicator {
-            filter: invert(1) brightness(1.5) !important;
-            opacity: 1 !important;
+            opacity: 0 !important;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            cursor: pointer;
         }
         .booking-input::placeholder,
         .app-sheet #bookingSection input::placeholder {
@@ -10423,20 +10427,98 @@
             border: none !important;
         }
         .app-sheet #bookingSection #dateTimeSection input {
-            background: rgba(255,255,255,0.09) !important;
-            border: 1.5px solid rgba(255,255,255,0.14) !important;
+            background: transparent !important;
+            border: none !important;
             color: #fff !important;
+            -webkit-text-fill-color: #fff !important;
             color-scheme: dark;
         }
+        #dateTimeSection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        #dateTimeSection.hidden {
+            display: none !important;
+        }
+        #dateTimeSection .daxi-datetime-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 42px;
+            padding: 0 10px 0 36px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.09) !important;
+            border: 1.5px solid rgba(255,255,255,0.14) !important;
+            overflow: hidden;
+        }
+        #dateTimeSection .daxi-datetime-field > i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+            font-size: 17px;
+            line-height: 1;
+            color: #fff;
+            pointer-events: none;
+        }
+        #dateTimeSection .daxi-datetime-ph {
+            position: absolute;
+            left: 36px;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.55);
+            pointer-events: none;
+        }
+        #dateTimeSection .daxi-datetime-field:not(.is-empty) .daxi-datetime-ph {
+            display: none;
+        }
         #dateTimeSection .daxi-datetime-input {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            min-height: 42px;
+            padding: 8px 4px !important;
+            background: transparent !important;
+            border: none !important;
+            color: #fff !important;
+            -webkit-text-fill-color: #fff !important;
+            color-scheme: dark;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-text,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit-text,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-hour-field,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit-hour-field,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-minute-field,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit-minute-field,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-ampm-field,
+        #dateTimeSection input[type="time"]::-webkit-datetime-edit-ampm-field,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-day-field,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-month-field,
+        #dateTimeSection input[type="date"]::-webkit-datetime-edit-year-field {
+            color: #fff !important;
+            -webkit-text-fill-color: #fff !important;
         }
         #dateTimeSection input[type="date"]::-webkit-calendar-picker-indicator,
         #dateTimeSection input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.82) sepia(0.35) saturate(2.5) hue-rotate(75deg) brightness(1.05);
+            opacity: 0 !important;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
             cursor: pointer;
-            opacity: 0.95;
         }
         #daxiRouteStatsHud {
             display: none;
@@ -11841,10 +11923,39 @@
         html[data-theme="light"] #dateTimeSection .daxi-datetime-input,
         html[data-theme="light"] #dateTimeSection input[type="date"],
         html[data-theme="light"] #dateTimeSection input[type="time"] {
+            background: transparent !important;
+            border: none !important;
+            color: #102A43 !important;
+            -webkit-text-fill-color: #102A43 !important;
+            color-scheme: light !important;
+        }
+        html[data-theme="light"] #dateTimeSection .daxi-datetime-field {
             background: #F0F4F9 !important;
             border: 1.5px solid #D9E2EC !important;
+        }
+        html[data-theme="light"] #dateTimeSection .daxi-datetime-field > i {
             color: #102A43 !important;
-            color-scheme: light !important;
+        }
+        html[data-theme="light"] #dateTimeSection .daxi-datetime-ph {
+            color: #627D98 !important;
+        }
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-text,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit-text,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-hour-field,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit-hour-field,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-minute-field,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit-minute-field,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-ampm-field,
+        html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-datetime-edit-ampm-field,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-day-field,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-month-field,
+        html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-datetime-edit-year-field {
+            color: #102A43 !important;
+            -webkit-text-fill-color: #102A43 !important;
         }
         html[data-theme="light"] #dateTimeSection input[type=time]::-webkit-calendar-picker-indicator,
         html[data-theme="light"] #dateTimeSection input[type=date]::-webkit-calendar-picker-indicator,
@@ -11852,8 +11963,8 @@
         html[data-theme="light"] .app-sheet #bookingSection input[type=date]::-webkit-calendar-picker-indicator,
         html[data-theme="light"] #dateTimeSection input[type="date"]::-webkit-calendar-picker-indicator,
         html[data-theme="light"] #dateTimeSection input[type="time"]::-webkit-calendar-picker-indicator {
+            opacity: 0 !important;
             filter: none !important;
-            opacity: 0.55 !important;
         }
 
     </style>
@@ -11884,11 +11995,11 @@
 <script src="/static/js/daxi-map-debug.js?v=20260755"></script>
 <script src="/static/js/daxi-map-theme.js?v=20260812"></script>
 <script src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
-<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260759">
+<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a">
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260827b">
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a">
-<script src="/static/js/daxi-network-banner.js?v=20260759"></script>
+<script src="/static/js/daxi-network-banner.js?v=20260828d"></script>
 <script src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
 <script src="/static/js/daxi-maplibre.js?v=20260777"></script>
 <script src="/static/js/daxi-map-provider.js?v=20260777"></script>
@@ -12362,11 +12473,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p id="dest-pin-hint" style="display:none;font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">📍 Déplacez l'épingle pour ajuster l'emplacement exact.</p>
 
                     
-                    <div id="dateTimeSection" class="hidden grid grid-cols-2 gap-2" style="margin-bottom:4px;">
-                            <input type="time" id="bookingTime"
+                    <div id="dateTimeSection" class="hidden daxi-datetime-grid" style="margin-bottom:4px;">
+                            <label class="daxi-datetime-field is-empty" for="bookingTime">
+                                <i class="ri-time-line" aria-hidden="true"></i>
+                                <span class="daxi-datetime-ph">Heure</span>
+                                <input type="time" id="bookingTime"
                             class="w-full px-3 py-2 booking-input daxi-datetime-input">
-                            <input type="date" id="bookingDate"
+                            </label>
+                            <label class="daxi-datetime-field is-empty" for="bookingDate">
+                                <i class="ri-calendar-line" aria-hidden="true"></i>
+                                <span class="daxi-datetime-ph">Date</span>
+                                <input type="date" id="bookingDate"
                             class="w-full px-3 py-2 booking-input daxi-datetime-input">
+                            </label>
                         </div>
 
                     
@@ -16285,10 +16404,10 @@ document.addEventListener('DOMContentLoaded', function () {
     <script src="static/js/daxi-phone.js?v=20260702"></script>
     <script src="static/js/firebase-shim.js"></script>
     <script src="static/js/daxi-session-store.js?v=20260809"></script>
-    <script src="static/js/daxi-network-state.js?v=20260809"></script>
+    <script src="static/js/daxi-network-state.js?v=20260828d"></script>
     <script src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
     <script src="static/js/daxi-shell-role.js?v=20260820f"></script>
-    <script src="static/js/daxi-offline.js?v=20260828c"></script>
+    <script src="static/js/daxi-offline.js?v=20260828d"></script>
     <script src="static/js/daxi-countdown.js"></script>
     <script src="static/js/daxi-auto-i18n.js?v=20260737"></script>
     <script src="static/js/daxi-plan-wizard.js?v=20260721d"></script>
@@ -26247,6 +26366,16 @@ document.addEventListener('DOMContentLoaded', function() {
         captureScheduledGps();
         setTimeout(function() { _syncSheetHeightVar(); if (window._bookingMarkers) _fitMapToBookingMarkers(); }, 80);
     });
+    (function bindDatetimePlaceholders() {
+        document.querySelectorAll('#dateTimeSection .daxi-datetime-field').forEach(function(field) {
+            var input = field.querySelector('input');
+            if (!input) return;
+            var sync = function() { field.classList.toggle('is-empty', !input.value); };
+            input.addEventListener('input', sync);
+            input.addEventListener('change', sync);
+            sync();
+        });
+    })();
 
     var notesRow = document.getElementById('notesToggleRow');
     var notesExpand = document.getElementById('notesExpand');
@@ -32163,14 +32292,32 @@ window._daxiLoadLieux = function(q, cat) {
     slot.querySelectorAll('.daxi-lieux-chip').forEach(function(chip) {
         chip.classList.toggle('is-on', (chip.getAttribute('data-cat') || '') === window._daxiLieuxCat);
     });
-    var grid = slot.querySelector('.daxi-lieux-grid, .daxi-lieux-empty');
-    if (grid) grid.style.opacity = '0.4';
     var qs = '?q=' + encodeURIComponent(window._daxiLieuxQ) + '&cat=' + encodeURIComponent(window._daxiLieuxCat);
-    fetch('/htmx/lieux/client/' + qs, { credentials: 'same-origin', headers: { 'Accept': 'text/html' } })
+    var url = '/htmx/lieux/client/' + qs;
+    var offline = (typeof window._daxiNativeOnline === 'boolean' && !window._daxiNativeOnline)
+        || (window.DaxiOffline && DaxiOffline.isReadOnly && DaxiOffline.isReadOnly())
+        || (typeof navigator !== 'undefined' && navigator.onLine === false);
+    if (!offline) {
+        var grid = slot.querySelector('.daxi-lieux-grid, .daxi-lieux-empty');
+        if (grid) grid.style.opacity = '0.4';
+    }
+    fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'text/html' } })
         .then(function(r) { if (!r.ok) throw new Error('lieux'); return r.text(); })
         .then(function(html) { slot.innerHTML = html; })
         .catch(function() {
-            slot.innerHTML = '<div class="daxi-lieux-empty"><i class="ri-wifi-off-line"></i><p>Impossible de charger les lieux. Réessaie.</p></div>';
+            var applyEmpty = function() {
+                slot.innerHTML = '<div class="daxi-lieux-empty"><i class="ri-map-pin-line"></i><p>Ouvrez Lieux une fois en ligne pour les consulter hors connexion.</p></div>';
+            };
+            if (window.DaxiOffline && DaxiOffline.tryServeHtmxFromCache) {
+                DaxiOffline.tryServeHtmxFromCache(url, slot).then(function(ok) {
+                    if (ok) return;
+                    DaxiOffline.tryServeHtmxFromCache('/htmx/lieux/client/', slot).then(function(ok2) {
+                        if (!ok2) applyEmpty();
+                    });
+                });
+                return;
+            }
+            applyEmpty();
         });
 };
 window._daxiOpenLieu = function(id) {

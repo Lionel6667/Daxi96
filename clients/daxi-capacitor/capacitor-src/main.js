@@ -172,10 +172,9 @@ function commitOffline(opts) {
       if (DaxiOffline.ensureOfflineMap) DaxiOffline.ensureOfflineMap();
     }
   } catch (eOff) {}
-  if (networkToastsReady && !(opts && opts.silent)) {
-    toast(OFFLINE_MSG);
-    haptic(ImpactStyle.Medium);
-  }
+  try {
+    if (window.DaxiNetworkBanner && DaxiNetworkBanner.show) DaxiNetworkBanner.show();
+  } catch (eBan) {}
 }
 
 function setOnline(on, opts) {
@@ -239,10 +238,25 @@ async function initNetwork() {
   }, 2500);
 }
 
+function notifyOfflineBlocked(action) {
+  try {
+    if (document.getElementById('daxi-map-need-online')) return;
+    if (document.querySelector('#daxi-offline-required-modal.show')) return;
+    if (document.querySelector('.daxi-offline-modal.show')) return;
+    if (window.DaxiNetworkState && DaxiNetworkState.notifyAction) {
+      DaxiNetworkState.notifyAction(action);
+      return;
+    }
+    if (window._daxiShowOfflineModal) {
+      window._daxiShowOfflineModal(action);
+      return;
+    }
+  } catch (e) {}
+}
+
 function blockIfOffline(method, url) {
   if (nativeOnline) return false;
   if (!isWrite(method, url)) return false;
-  toast(OFFLINE_MSG);
   return true;
 }
 
@@ -480,7 +494,7 @@ function patchNetworking() {
       const method = (d.verb || d.requestConfig?.verb || 'GET').toUpperCase();
       const path = d.path || d.pathInfo?.requestPath || '';
       if (d.xhr) d.xhr.withCredentials = true;
-      if (blockIfOffline(method, path)) {
+        if (blockIfOffline(method, path)) {
         evt.preventDefault();
         try {
           const el = d.elt;
@@ -492,7 +506,7 @@ function patchNetworking() {
             if (el.dataset && el.dataset.origHtml) el.innerHTML = el.dataset.origHtml;
           }
         } catch (e) {}
-        toast(OFFLINE_MSG);
+        notifyOfflineBlocked('Action');
       }
     },
     true,
@@ -515,7 +529,7 @@ function patchNetworking() {
       if (blockIfOffline(method, hxAction)) {
         evt.preventDefault();
         evt.stopPropagation();
-        toast(OFFLINE_MSG);
+        notifyOfflineBlocked('Action');
       }
     },
     true,
@@ -545,7 +559,7 @@ function patchNetworking() {
       if (blockIfOffline(method, url)) {
         evt.preventDefault();
         evt.stopPropagation();
-        toast(OFFLINE_MSG);
+        notifyOfflineBlocked('Action');
       }
     },
     true,
@@ -577,7 +591,7 @@ function patchNetworking() {
           evt.stopPropagation();
           if (dest.pathname.indexOf('/compte') === 0) location.hash = '#/compte';
           else if (dest.pathname.indexOf('/assistance') === 0) location.hash = '#/assistance';
-          else toast('Hors ligne — cette page reste disponible une fois reconnecté.');
+          else notifyOfflineBlocked('Cette page');
         }
         return;
       }
@@ -585,7 +599,7 @@ function patchNetworking() {
       if (!nativeOnline) {
         evt.preventDefault();
         evt.stopPropagation();
-        toast('Hors ligne — cette page reste disponible une fois reconnecté.');
+        notifyOfflineBlocked('Cette page');
         return;
       }
       const next = nativePageUrl(dest.pathname + dest.search + dest.hash);
@@ -1403,11 +1417,17 @@ async function probeBackend() {
 
 
 function hideSplashWhenPainted() {
-  const hide = () => SplashScreen.hide({ fadeOutDuration: 180 }).catch(() => {});
+  const hide = () => SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
+  if (window._daxiIntroFirstFrame) {
+    hide();
+    return;
+  }
+  if (window._daxiIntroPlaying) {
+    document.addEventListener('daxi-intro-first-frame', hide, { once: true });
+    setTimeout(hide, 900);
+    return;
+  }
   hide();
-  if (window._daxiIntroFirstFrame || !window._daxiIntroPlaying) return;
-  document.addEventListener('daxi-intro-first-frame', hide, { once: true });
-  setTimeout(hide, 2500);
 }
 
 async function readLaunchUrl() {

@@ -1529,7 +1529,6 @@
   }
 
   // capacitor-src/main.js
-  var OFFLINE_MSG = "Vous \xEAtes actuellement hors-ligne. Veuillez r\xE9tablir votre connexion internet pour effectuer cette action.";
   var WRITE_RE = /^(POST|PUT|PATCH|DELETE)$/i;
   var API_RE = /\/(htmx|api)\//;
   var BACKEND_FETCH_TIMEOUT_MS = 45e3;
@@ -1660,9 +1659,9 @@
       }
     } catch (eOff) {
     }
-    if (networkToastsReady && !(opts && opts.silent)) {
-      toast(OFFLINE_MSG);
-      haptic(ImpactStyle.Medium);
+    try {
+      if (window.DaxiNetworkBanner && DaxiNetworkBanner.show) DaxiNetworkBanner.show();
+    } catch (eBan) {
     }
   }
   function setOnline(on, opts) {
@@ -1723,10 +1722,25 @@
       networkToastsReady = true;
     }, 2500);
   }
+  function notifyOfflineBlocked(action) {
+    try {
+      if (document.getElementById("daxi-map-need-online")) return;
+      if (document.querySelector("#daxi-offline-required-modal.show")) return;
+      if (document.querySelector(".daxi-offline-modal.show")) return;
+      if (window.DaxiNetworkState && DaxiNetworkState.notifyAction) {
+        DaxiNetworkState.notifyAction(action);
+        return;
+      }
+      if (window._daxiShowOfflineModal) {
+        window._daxiShowOfflineModal(action);
+        return;
+      }
+    } catch (e) {
+    }
+  }
   function blockIfOffline(method, url) {
     if (nativeOnline) return false;
     if (!isWrite(method, url)) return false;
-    toast(OFFLINE_MSG);
     return true;
   }
   function rememberApiError(kind, url, extra) {
@@ -1976,7 +1990,7 @@
             }
           } catch (e) {
           }
-          toast(OFFLINE_MSG);
+          notifyOfflineBlocked("Action");
         }
       },
       true
@@ -1992,7 +2006,7 @@
         if (blockIfOffline(method, hxAction)) {
           evt.preventDefault();
           evt.stopPropagation();
-          toast(OFFLINE_MSG);
+          notifyOfflineBlocked("Action");
         }
       },
       true
@@ -2008,7 +2022,7 @@
         if (blockIfOffline(method, url)) {
           evt.preventDefault();
           evt.stopPropagation();
-          toast(OFFLINE_MSG);
+          notifyOfflineBlocked("Action");
         }
       },
       true
@@ -2039,7 +2053,7 @@
             evt.stopPropagation();
             if (dest.pathname.indexOf("/compte") === 0) location.hash = "#/compte";
             else if (dest.pathname.indexOf("/assistance") === 0) location.hash = "#/assistance";
-            else toast("Hors ligne \u2014 cette page reste disponible une fois reconnect\xE9.");
+            else notifyOfflineBlocked("Cette page");
           }
           return;
         }
@@ -2047,7 +2061,7 @@
         if (!nativeOnline) {
           evt.preventDefault();
           evt.stopPropagation();
-          toast("Hors ligne \u2014 cette page reste disponible une fois reconnect\xE9.");
+          notifyOfflineBlocked("Cette page");
           return;
         }
         const next = nativePageUrl(dest.pathname + dest.search + dest.hash);
@@ -2860,12 +2874,18 @@
     }
   }
   function hideSplashWhenPainted() {
-    const hide = () => SplashScreen.hide({ fadeOutDuration: 180 }).catch(() => {
+    const hide = () => SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {
     });
+    if (window._daxiIntroFirstFrame) {
+      hide();
+      return;
+    }
+    if (window._daxiIntroPlaying) {
+      document.addEventListener("daxi-intro-first-frame", hide, { once: true });
+      setTimeout(hide, 900);
+      return;
+    }
     hide();
-    if (window._daxiIntroFirstFrame || !window._daxiIntroPlaying) return;
-    document.addEventListener("daxi-intro-first-frame", hide, { once: true });
-    setTimeout(hide, 2500);
   }
   async function readLaunchUrl() {
     let url = "";

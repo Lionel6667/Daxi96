@@ -1105,15 +1105,31 @@
     function cacheHtmxResponse(path, html) {
         if (_idbDisabled || !path || !html) return;
         try {
-            var p = idbPut('htmx_cache', path, html);
-            if (p && typeof p.catch === 'function') p.catch(function() {});
+            var p = normalizeHtmxPath(path);
+            var put = idbPut('htmx_cache', p, html);
+            if (put && typeof put.catch === 'function') put.catch(function() {});
+            var bare = p.split('?')[0];
+            if (bare && bare !== p) {
+                var put2 = idbPut('htmx_cache', bare, html);
+                if (put2 && typeof put2.catch === 'function') put2.catch(function() {});
+            }
         } catch (e) {
             disableIdb();
         }
     }
 
+    function lookupHtmxCache(path) {
+        var p = normalizeHtmxPath(path);
+        return idbGet('htmx_cache', p).then(function(row) {
+            if (row && row.html) return row;
+            var bare = p.split('?')[0];
+            if (bare && bare !== p) return idbGet('htmx_cache', bare);
+            return null;
+        });
+    }
+
     function tryServeHtmxFromCache(path, target) {
-        return idbGet('htmx_cache', path).then(function(row) {
+        return lookupHtmxCache(path).then(function(row) {
             if (!row || !row.html) return false;
             var el = typeof target === 'string' ? document.querySelector(target) : target;
             if (el) el.innerHTML = row.html;
@@ -1179,13 +1195,52 @@
 
     function prefetchKeyPages() {
         if (isOffline()) return;
-        var urls = [
-            '/htmx/blog/',
-            '/htmx/client/orders/?tab=active',
-            '/htmx/client/orders/?tab=history',
-            '/htmx/client/account/',
-            '/htmx/driver/orders/'
-        ];
+        var path = (location.pathname || '/').toLowerCase();
+        var urls;
+        if (path.indexOf('/driver') === 0) {
+            urls = [
+                '/htmx/driver/orders/',
+                '/htmx/driver/orders/?tab=available',
+                '/htmx/driver/orders/?tab=accepted',
+                '/htmx/driver/profile/',
+                '/htmx/driver/stats/',
+                '/htmx/driver/wallet/',
+                '/htmx/driver/calendar/',
+                '/htmx/driver/lost-objects/',
+                '/htmx/driver/active-order/'
+            ];
+        } else if (path.indexOf('/admin') >= 0) {
+            urls = [
+                '/htmx/admin/orders/',
+                '/htmx/admin/stats/',
+                '/htmx/admin/drivers/?tab=confirmed',
+                '/htmx/admin/users/',
+                '/htmx/admin/calendar/',
+                '/htmx/admin/lost-objects/',
+                '/htmx/admin/enterprises/?tab=pending',
+                '/htmx/admin/assistance/',
+                '/htmx/lieux/admin/'
+            ];
+        } else if (path.indexOf('/entreprise') >= 0) {
+            urls = [
+                '/htmx/enterprise/dashboard/',
+                '/htmx/enterprise/orders/',
+                '/htmx/enterprise/plans/',
+                '/htmx/lieux/enterprise/',
+                '/htmx/lieux/enterprise/meta/'
+            ];
+        } else {
+            urls = [
+                '/htmx/blog/',
+                '/htmx/forum/',
+                '/htmx/client/orders/?tab=active',
+                '/htmx/client/orders/?tab=history',
+                '/htmx/client/account/',
+                '/htmx/client/lost-objects/',
+                '/htmx/lieux/client/',
+                '/htmx/lieux/client/?q=&cat='
+            ];
+        }
         urls.forEach(function(u) {
             try {
                 fetch(u, { credentials: 'include' }).then(function(r) {
@@ -1253,7 +1308,7 @@
                 }
             } else if (path.indexOf('/htmx/client/account') >= 0) {
                 renderCachedAccountIfAny();
-            } else if (path.indexOf('/htmx/blog') >= 0 || path.indexOf('/htmx/driver/') >= 0 || path.indexOf('/htmx/admin/') >= 0) {
+            } else if (path.indexOf('/htmx/') >= 0) {
                 if (target) serveCachedHtmxOrFallback(path, target, null);
             }
         });
@@ -1287,13 +1342,17 @@
             }
             if (el && isOrderCreate) {
                 evt.preventDefault();
-                alert('Vous êtes hors ligne. Connectez-vous à Internet pour passer une commande.');
+                if (window.DaxiNetworkState && DaxiNetworkState.showOfflineModal) {
+                    DaxiNetworkState.showOfflineModal('Commander');
+                }
                 return;
             }
             
             if (verb !== 'get') {
                 evt.preventDefault();
-                if (window.DaxiNetworkState && DaxiNetworkState.showOfflineModal) {
+                if (window.DaxiNetworkState && DaxiNetworkState.notifyAction) {
+                    DaxiNetworkState.notifyAction('Action');
+                } else if (window.DaxiNetworkState && DaxiNetworkState.showOfflineModal) {
                     DaxiNetworkState.showOfflineModal('Action');
                 } else {
                     alert('Connexion requise pour cette action.');
@@ -1343,17 +1402,23 @@
                 serveCachedHtmxOrFallback(path, '#account-htmx-slot', function() {
                     renderOfflineAccount(window._daxiOfflineData);
                 });
-            } else if (path.indexOf('/htmx/blog') >= 0 || path.indexOf('/htmx/driver/') >= 0 || path.indexOf('/htmx/admin/') >= 0) {
+            } else if (path.indexOf('/htmx/') >= 0) {
                 evt.preventDefault();
-                var sel = target || (path.indexOf('/htmx/blog') >= 0 ? '#blogFullscreenContainer' : null);
+                var sel = target;
+                if (!sel) {
+                    if (path.indexOf('/htmx/blog') >= 0) sel = '#blogFullscreenContainer';
+                    else if (path.indexOf('/htmx/lieux/client') >= 0) sel = '#client-lieux-slot';
+                    else if (path.indexOf('/htmx/client/lost-objects') >= 0) sel = '#client-lost-object-slot';
+                    else if (path.indexOf('/htmx/lieux/enterprise') >= 0) sel = '#ent-lieux-slot';
+                    else if (path.indexOf('/htmx/lieux/admin') >= 0) sel = '#admin-lieux-slot';
+                }
                 serveCachedHtmxOrFallback(path, sel, function() {
-                    if (sel) {
-                        var el2 = typeof sel === 'string' ? document.querySelector(sel) : sel;
-                        if (el2 && !el2.innerHTML.trim()) {
-                            el2.innerHTML = '<div style="padding:28px;text-align:center;color:#94a3b8;">'
-                                + '<p style="font-weight:700;color:#e2e8f0;">Contenu indisponible hors ligne</p>'
-                                + '<p style="font-size:12px;margin-top:6px;">Ouvrez cette page une fois en ligne pour la mettre en cache.</p></div>';
-                        }
+                    if (!sel) return;
+                    var el2 = typeof sel === 'string' ? document.querySelector(sel) : sel;
+                    if (el2 && !el2.innerHTML.trim()) {
+                        el2.innerHTML = '<div style="padding:28px;text-align:center;color:#94a3b8;">'
+                            + '<p style="font-weight:700;color:#e2e8f0;">Contenu indisponible hors ligne</p>'
+                            + '<p style="font-size:12px;margin-top:6px;">Ouvrez cette page une fois en ligne pour la mettre en cache.</p></div>';
                     }
                 });
             }
@@ -1394,11 +1459,15 @@
                 var url = typeof input === 'string' ? input : (input && input.url) || '';
                 var method = String((init.method || (input && input.method) || 'GET')).toUpperCase();
                 var p = normalizeHtmxPath(url);
-                var isCacheable = /\/htmx\/(blog|driver|admin|client)\//.test(p) || /\/api\/mobile\//.test(p);
+                var isCacheable = /\/htmx\//.test(p) || /\/api\/mobile\//.test(p);
                 if (method === 'GET' && isCacheable && isOffline()) {
-                    return idbGet('htmx_cache', p).then(function(row) {
+                    return lookupHtmxCache(p).then(function(row) {
                         if (row && row.html) {
-                            return new Response(row.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+                            var json = row.html.charAt(0) === '{' || row.html.charAt(0) === '[';
+                            return new Response(row.html, {
+                                status: 200,
+                                headers: { 'Content-Type': json ? 'application/json' : 'text/html; charset=utf-8' }
+                            });
                         }
                         return orig.apply(window, args);
                     });

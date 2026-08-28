@@ -34,8 +34,22 @@
 
     function requiresInternet(action) {
         if (isNativeOnline()) return true;
-        showOfflineModal(action);
+        notifyAction(action);
         return false;
+    }
+
+    function isDedicatedOfflineUiVisible() {
+        try {
+            if (document.getElementById('daxi-map-need-online')) return true;
+            if (document.querySelector('#daxi-offline-required-modal.show')) return true;
+            if (document.querySelector('.daxi-offline-modal.show')) return true;
+        } catch (e) {}
+        return false;
+    }
+
+    function notifyAction(actionLabel) {
+        if (isDedicatedOfflineUiVisible()) return;
+        showOfflineModal(actionLabel);
     }
 
     function ensureModal() {
@@ -117,6 +131,7 @@
     global._daxiRequiresInternet = requiresInternet;
     global._daxiShowOfflineModal = showOfflineModal;
     global._daxiHideOfflineModal = hideOfflineModal;
+    global._daxiNotifyOfflineAction = notifyAction;
     global._daxiApplyNativeNetworkState = applyNativeState;
 
     global.DaxiNetworkState = {
@@ -126,6 +141,7 @@
         requiresInternet: requiresInternet,
         showOfflineModal: showOfflineModal,
         hideOfflineModal: hideOfflineModal,
+        notifyAction: notifyAction,
         applyNativeState: applyNativeState
     };
 })(typeof window !== 'undefined' ? window : this);

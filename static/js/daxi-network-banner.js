@@ -2,7 +2,7 @@
 (function (global) {
   'use strict';
 
-  var SHOW_DELAY_MS = 10000;
+    var SHOW_DELAY_MS = 400;
   var _showTimer = null;
   var _visible = false;
   var _bound = false;

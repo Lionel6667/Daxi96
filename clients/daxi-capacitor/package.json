@@ -1,6 +1,6 @@
 {
   "name": "daxi-capacitor",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "private": true,
   "description": "DAXI — UI HTML/CSS/JS + Capacitor + services natifs iOS/Android",
   "scripts": {
