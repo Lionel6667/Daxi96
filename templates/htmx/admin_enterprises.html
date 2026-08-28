@@ -14,7 +14,7 @@
 
   <div class="adm-seg-nav">
     <div class="adm-seg-group">
-      <button type="button" class="adm-seg-btn adm-seg-btn--pending{% if tab == 'pending' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('pending'); return false;"><i class="ri-time-line"></i> En attente</button>
+      <button type="button" class="adm-seg-btn adm-seg-btn--pending{% if tab == 'pending' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('pending'); return false;"><i class="ri-time-line"></i> En attente{% if stats.pending %}<span class="adm-seg-badge">{{ stats.pending }}</span>{% endif %}</button>
       <button type="button" class="adm-seg-btn adm-seg-btn--approved{% if tab == 'approved' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('approved'); return false;"><i class="ri-check-line"></i> Approuvées</button>
       <button type="button" class="adm-seg-btn adm-seg-btn--rejected{% if tab == 'rejected' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('rejected'); return false;"><i class="ri-close-circle-line"></i> Refusées</button>
       <button type="button" class="adm-seg-btn adm-seg-btn--loc{% if tab == 'locations' %} is-active{% endif %}" onclick="loadAdminEnterprisesTab('locations'); if(typeof markAdminSectionSeen==='function') markAdminSectionSeen('enterprise_locations'); return false;"><i class="ri-map-pin-line"></i> Emplacements{% if stats.locations %}<span class="adm-seg-badge">{{ stats.locations }}</span>{% endif %}</button>
@@ -78,15 +78,11 @@
           <label class="adm-ent-input-label">Commission (%)</label>
           <input name="commission_percent" type="number" min="0" max="100" step="0.5" value="10" class="adm-ent-input">
         </div>
-        <div style="flex:2;min-width:180px;">
-          <label class="adm-ent-input-label">Notes admin</label>
-          <input name="admin_notes" placeholder="Notes internes..." class="adm-ent-input">
-        </div>
         <button type="submit" class="adm-ent-btn adm-ent-btn--approve"><i class="ri-check-line"></i> Approuver</button>
       </form>
       <form hx-post="/htmx/admin/enterprises/{{ ent.pk }}/reject/" hx-target="#admin-enterprises-content" hx-swap="innerHTML" class="adm-ent-form-row">
         {% csrf_token %}
-        <input name="reason" placeholder="Raison du refus (optionnel)" class="adm-ent-input" style="flex:1;">
+        <input name="reason" required placeholder="Motif du refus (obligatoire)" class="adm-ent-input" style="flex:1;">
         <button type="submit" class="adm-ent-btn adm-ent-btn--reject"><i class="ri-close-circle-line"></i> Refuser</button>
       </form>
 

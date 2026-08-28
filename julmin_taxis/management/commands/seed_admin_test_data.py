@@ -17,14 +17,24 @@ class Command(BaseCommand):
             help='Supprime les enregistrements de test précédents avant de recréer.',
         )
         parser.add_argument(
+            '--clean-only',
+            action='store_true',
+            help='Supprime les enregistrements de test sans en recréer.',
+        )
+        parser.add_argument(
             '--verify',
             action='store_true',
             help='Affiche les compteurs admin après création.',
         )
 
     def handle(self, *args, **options):
-        if options['clean']:
+        if options['clean'] or options['clean_only']:
             self._clean()
+        if options['clean_only']:
+            self.stdout.write(self.style.SUCCESS('Données de test supprimées.'))
+            if options['verify']:
+                self._print_counts()
+            return
         created = self._seed()
         for label, n in created.items():
             self.stdout.write(f'  {label}: {n}')

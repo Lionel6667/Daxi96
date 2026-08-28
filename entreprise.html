@@ -338,7 +338,7 @@
       <div class="status-panel">
         <span class="status-icon">❌</span>
         <div class="status-title">Demande refusée</div>
-        <p class="status-desc">Contactez le support pour plus d'informations.</p>
+        <p class="status-desc" id="enterprise-rejection-reason">Contactez le support pour plus d'informations.</p>
       </div>
       <div class="chat-pending-wrap">
         <div hx-get="/htmx/enterprise/chat/" hx-trigger="load" hx-swap="innerHTML" id="rejected-chat-box"
@@ -614,7 +614,27 @@
       } else if (entStatus === 'pending') {
         show('enterprise-pending-section');
       } else if (entStatus === 'rejected') {
+        showEnterpriseRejection(session.enterprise_rejection_reason || '');
         show('enterprise-rejected-section');
+      }
+    }
+
+    function showEnterpriseRejection(reason) {
+      var el = document.getElementById('enterprise-rejection-reason');
+      if (!el) return;
+      var text = (reason || '').trim();
+      el.innerHTML = text
+        ? 'Votre demande de partenariat a été refusée.<br><strong>Motif :</strong> ' + text.replace(/</g, '&lt;')
+        : 'Votre demande de partenariat a été refusée. Contactez le support pour plus d\'informations.';
+    }
+
+    function redirectAfterEnterpriseLogin(data) {
+      if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
+      var status = (data && data.status) || '';
+      if (status === 'approved') {
+        window.location.href = '/entreprise/dashboard/';
+      } else {
+        window.location.href = '/entreprise/';
       }
     }
 
@@ -641,14 +661,12 @@
           showEnterpriseSelector(data.enterprises);
           btn.disabled = false; btn.textContent = 'Se connecter';
         } else if (data && data.enterprise_id) {
-          if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
-          window.location.href = '/entreprise/dashboard/';
+          redirectAfterEnterpriseLogin(data);
         } else if (data && data.error) {
           resp.innerHTML = '<div class="ent-alert ent-alert-error">' + data.error + '</div>';
           btn.disabled = false; btn.textContent = 'Se connecter';
         } else {
-          if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
-          window.location.href = '/entreprise/dashboard/';
+          redirectAfterEnterpriseLogin(data);
         }
       })
       .catch(function() {
@@ -682,9 +700,9 @@
         headers: { 'X-CSRFToken': getCsrf() }
       }).then(function() {
         if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
-        window.location.href = '/entreprise/dashboard/';
+        window.location.href = '/entreprise/';
       }).catch(function() {
-        window.location.href = '/entreprise/dashboard/';
+        window.location.href = '/entreprise/';
       });
     }
 

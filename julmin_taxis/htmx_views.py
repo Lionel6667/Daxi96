@@ -2035,13 +2035,15 @@ def admin_reject_driver(request, driver_id):
 
     driver = get_object_or_404(Driver, pk=driver_id)
     reason = (request.POST.get('reason') or '').strip()
-    note = f'Refusé le {timezone.now().strftime("%d/%m/%Y %H:%M")}'
-    if reason:
-        note = f'{note} — {reason}'
-    existing = (driver.verification_notes or '').strip()
+    if not reason:
+        accept = request.headers.get('Accept') or ''
+        if 'application/json' in accept:
+            return JsonResponse({'ok': False, 'message': 'Motif du refus requis.'}, status=400)
+        return _htmx_error('Motif du refus requis.')
+    from julmin_taxis.registration_utils import set_driver_rejection_notes
     driver.is_verified = False
     driver.is_blocked = True
-    driver.verification_notes = (existing + '\n' + note).strip() if existing else note
+    driver.verification_notes = set_driver_rejection_notes(driver.verification_notes, reason)
     driver.save(update_fields=['is_verified', 'is_blocked', 'verification_notes'])
     from julmin_taxis.security_audit import log_driver_block
     log_driver_block(driver, True, request)
@@ -2568,33 +2570,38 @@ def driver_login(request):
     if not identifier or not password:
         return _htmx_error('Identifiant et mot de passe requis')
 
-                                          
-    driver = None
-    qs = Driver.objects.filter(is_blocked=False)
+    def _driver_phone_match(d, phone_norm):
+        dp = (d.phone or '').replace(' ', '').replace('-', '').replace('+', '')
+        return dp and (dp == phone_norm or dp.lstrip('0') == phone_norm.lstrip('0'))
 
+    driver = None
     if '@' in identifier:
-        driver = qs.filter(email=identifier).first()
+        driver = Driver.objects.filter(email=identifier).first()
     else:
-                     
         phone_norm = identifier.replace(' ', '').replace('-', '').replace('+', '')
-        for d in qs:
-            dp = (d.phone or '').replace(' ', '').replace('-', '').replace('+', '')
-            if dp and (dp == phone_norm or dp.lstrip('0') == phone_norm.lstrip('0')):
+        for d in Driver.objects.all():
+            if _driver_phone_match(d, phone_norm):
                 driver = d
                 break
 
     if not driver:
-        return _htmx_error('Identifiant introuvable ou compte bloqué')
+        return _htmx_error('Identifiant introuvable')
 
-                                                                  
     pw_hash = _hash(password)
     if driver.password_hash and driver.password_hash != pw_hash:
-                                                         
         if driver.password_hash != password:
             return _htmx_error('Mot de passe incorrect')
 
+    if driver.is_blocked and not driver.is_verified:
+        from julmin_taxis.registration_utils import driver_rejection_reason
+        reason = driver_rejection_reason(driver.verification_notes)
+        return _htmx_error(f'Votre inscription a été refusée. Motif : {reason}')
+
     if driver.is_blocked:
         return _htmx_error('Votre compte est bloqué. Contactez l\'administrateur.')
+
+    if not driver.is_verified:
+        return _htmx_error('Votre inscription est en cours de validation. Réponse sous 24–48h.')
 
     request.session['driver_id'] = driver.pk
     request.session['driver_name'] = driver.get_full_name()
@@ -7589,9 +7596,11 @@ def enterprise_login(request):
     request.session.modified = True
     request.session.save()
     enterprises_data = [{"id": e.pk, "name": e.name, "status": e.status} for e in all_ents]
+    rejection_reason = (current.admin_notes or '').strip() if current.status == 'rejected' else ''
     return JsonResponse({
         "enterprise_id": current.pk,
         "status": current.status,
+        "rejection_reason": rejection_reason,
         "enterprises": enterprises_data,
     })
 
@@ -8338,11 +8347,9 @@ def admin_enterprise_approve(request, enterprise_id):
         ent = Enterprise.objects.get(pk=enterprise_id)
     except Enterprise.DoesNotExist:
         return _htmx_error("Entreprise introuvable.", 200)
-    commission   = float(request.POST.get("commission_percent", 0) or 0)
-    admin_notes  = request.POST.get("admin_notes", "").strip()
+    commission = float(request.POST.get("commission_percent", 0) or 0)
     ent.status = "approved"
     ent.commission_percent = commission
-    ent.admin_notes = admin_notes
     ent.approved_at = timezone.now()
     ent.save()
     EnterpriseChatMessage.objects.create(
@@ -8363,12 +8370,14 @@ def admin_enterprise_reject(request, enterprise_id):
     except Enterprise.DoesNotExist:
         return _htmx_error("Entreprise introuvable.", 200)
     reason = request.POST.get("reason", "").strip()
+    if not reason:
+        return _htmx_error("Motif du refus requis.", 200)
     ent.status = "rejected"
     ent.admin_notes = reason
     ent.save()
     EnterpriseChatMessage.objects.create(
         enterprise=ent, is_from_admin=True,
-        message=f"Votre demande de partenariat a été refusée.{(' Raison: ' + reason) if reason else ''}"
+        message=f"Votre demande de partenariat a été refusée. Motif : {reason}"
     )
     ctx = _admin_enterprises_context("pending")
     ctx['csrf_token'] = get_token(request)

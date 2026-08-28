@@ -230,6 +230,10 @@ class ServeOriginalPage(View):
                 "current_enterprise_id": current_eid,
                 "enterprise_ids": enterprise_ids,
                 "enterprise_status": ent_status,
+                "enterprise_rejection_reason": (
+                    (_ent_obj.admin_notes or '').strip()
+                    if _ent_obj and _ent_obj.status == 'rejected' else None
+                ),
                 "enterprise_mode": ent_mode,
                 "enterprise_name": _ent_display_name if _has_enterprise else (_ent_obj.name if _ent_obj else None),
                 "has_enterprise": _has_enterprise,
@@ -326,6 +330,13 @@ class ServeOriginalPage(View):
                         f'id="enterprise-rejected-section" class="ent-page" style="display:{"block" if ent.status == "rejected" else "none"};"',
                         1
                     )
+                    if ent.status == 'rejected' and (ent.admin_notes or '').strip():
+                        reason_html = (ent.admin_notes or '').replace('<', '&lt;').replace('>', '&gt;')
+                        content = content.replace(
+                            'id="enterprise-rejection-reason">Contactez le support pour plus d\'informations.',
+                            f'id="enterprise-rejection-reason">Votre demande de partenariat a été refusée.<br><strong>Motif :</strong> {reason_html}',
+                            1
+                        )
                                                       
                     if ent.mode == 'self_order':
                         content = content.replace(

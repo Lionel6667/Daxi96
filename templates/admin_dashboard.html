@@ -2189,8 +2189,8 @@ function openAdminDriverReview(id) {
   if (pending) {
     foot.innerHTML = `
       <div id="drv-reject-box" class="adm-drv-reject-box hidden">
-        <label>Motif du refus (optionnel)</label>
-        <textarea id="drv-reject-reason" rows="2" placeholder="Documents illisibles, plaque incorrecte…"></textarea>
+        <label>Motif du refus (obligatoire)</label>
+        <textarea id="drv-reject-reason" rows="2" required placeholder="Documents illisibles, plaque incorrecte…"></textarea>
         <button type="button" class="adm-drv-btn adm-drv-btn--danger" onclick="confirmRejectAdminDriver(${d.id})">Confirmer le refus</button>
       </div>
       <div class="adm-drv-review__btns">
@@ -2235,7 +2235,11 @@ async function approveAdminDriver(id) {
 }
 
 async function confirmRejectAdminDriver(id) {
-  const reason = (document.getElementById('drv-reject-reason') || {}).value || '';
+  const reason = ((document.getElementById('drv-reject-reason') || {}).value || '').trim();
+  if (!reason) {
+    showToast('Indiquez le motif du refus.', 'error');
+    return;
+  }
   if (!confirm('Refuser cette inscription ? Le chauffeur sera bloqué.')) return;
   try {
     const data = await adminDriverReviewPost('/htmx/admin/drivers/' + id + '/reject/', { reason: reason });

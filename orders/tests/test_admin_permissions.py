@@ -143,6 +143,16 @@ class AdminDriverReviewTests(TestCase):
         self.assertTrue(self.pending.is_blocked)
         self.assertIn('Permis illisible', self.pending.verification_notes)
 
+    def test_admin_reject_driver_requires_reason(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            f'/htmx/admin/drivers/{self.pending.pk}/reject/',
+            {},
+            HTTP_ACCEPT='application/json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(resp.json().get('ok'))
+
     def test_support_cannot_approve_driver(self):
         self.client.force_login(self.support)
         self.client.post(f'/htmx/admin/drivers/{self.pending.pk}/verify/')
