@@ -6530,6 +6530,23 @@ def driver_accept_link_page(request, order_id):
     return redirect(f'/driver/#commande-{order_id}')
 
 
+def driver_accept_wa_from_raw(request, raw):
+    """GET /driver/accept/<raw>/ — liens Meta mal formés ({{1}}114/token) ou sans route int."""
+    import re
+    from urllib.parse import unquote
+
+    cleaned = unquote(raw or '').strip().strip('/')
+    cleaned = re.sub(r'\{\{1\}\}', '', cleaned)
+    m = re.match(r'^(\d+)/(.+)$', cleaned)
+    if not m:
+        m_id = re.match(r'^(\d+)$', cleaned)
+        if m_id:
+            return driver_wa_accept_legacy_page(request, int(m_id.group(1)))
+        from julmin_taxis.error_views import page_not_found
+        return page_not_found(request)
+    return driver_wa_accept_page(request, int(m.group(1)), m.group(2).strip('/'))
+
+
 def driver_order_deep_link(request, order_id):
     """GET /driver/commande_<id>/ — lien WhatsApp coords / voir commande."""
     from django.shortcuts import redirect

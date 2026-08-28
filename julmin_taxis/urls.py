@@ -9,7 +9,7 @@ from django.db.models import F
 import os
 import json
 import mimetypes
-from julmin_taxis.htmx_views import driver_wa_accept_page, driver_wa_accept_legacy_page, driver_accept_link_page, driver_order_deep_link, client_receipt_short_link, trip_share_page, trip_share_api, blog_article_page, blog_index_page, enterprise_client_pay_page
+from julmin_taxis.htmx_views import driver_wa_accept_page, driver_wa_accept_legacy_page, driver_accept_link_page, driver_accept_wa_from_raw, driver_order_deep_link, client_receipt_short_link, trip_share_page, trip_share_api, blog_article_page, blog_index_page, enterprise_client_pay_page
 from julmin_taxis.whatsapp_test_views import whatsapp_test_logs_api, whatsapp_test_page
 from julmin_taxis.payment_views import (
     card_payment_page,
@@ -559,6 +559,9 @@ urlpatterns = [
     path('wa/accept/<int:order_id>/', driver_wa_accept_legacy_page, name='wa-driver-accept-legacy'),
     path('wa/accept/<int:order_id>/<path:token>/', driver_wa_accept_page, name='wa-driver-accept'),
     path('wa/accept/<int:order_id>/<path:token>', driver_wa_accept_page),
+    path('driver/accept/<int:order_id>/<path:token>/', driver_wa_accept_page, name='driver-wa-accept'),
+    path('driver/accept/<int:order_id>/<path:token>', driver_wa_accept_page),
+    path('driver/accept/<path:raw>/', driver_accept_wa_from_raw, name='driver-accept-raw'),
     path('driver/accept/<int:order_id>/', driver_accept_link_page, name='driver-accept-link'),
     path('driver/accept/<int:order_id>', driver_accept_link_page),
     re_path(r'^commande_(?P<order_id>\d+)/?$', driver_order_deep_link, name='driver-order-deeplink-legacy'),

@@ -233,17 +233,19 @@ Puis Admin → Chauffeurs → **En attente**.
 
 ### Liens boutons WhatsApp (Meta Business)
 
-URL de base à configurer dans chaque template Meta (suffixe dynamique = `{{1}}` côté Meta) :
+URL de base à configurer dans chaque template Meta (suffixe dynamique ajouté par l’API — **sans** `{{1}}` dans l’URL) :
 
 | Template | URL de base Meta | Suffixe Django |
 |----------|------------------|----------------|
-| `nouvelle_commande` | `https://daxipro.com/wa/accept/` | `{order_id}/{token_signé}/` |
+| `nouvelle_commande` | `https://daxipro.com/wa/accept/` **ou** `https://daxipro.com/driver/accept/` | `{order_id}/{token_signé}/` |
 | `commande_attente_coords` (chauffeur) | `https://daxipro.com/` | `driver/commande_{id}/` |
 | `commande_attente_coords` (admin) | `https://daxipro.com/` | `admin-dashboard/#orders` |
 | `recu_course` | `https://daxipro.com/` | `recu_{id}.pdf` |
 | `course_terminee` | `https://daxipro.com/` | `compte/?order={id}` |
 
 Les anciens liens `/wa/accept/{id}` sans token affichent une page d’aide (plus de 404).
+
+Si le template Meta contient encore `{{1}}` dans l’URL (ex. `…/driver/accept/{{1}}`), Meta peut produire des liens du type `…/driver/accept/{{1}}114/token/` — le serveur les corrige automatiquement via `/driver/accept/<raw>/`.
 
 ### Sauvegarde PostgreSQL (Railway)
 

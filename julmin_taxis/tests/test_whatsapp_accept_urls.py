@@ -61,6 +61,16 @@ class WhatsAppAcceptRouteTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/driver/#commande-55', resp['Location'])
 
+    def test_driver_accept_with_token_uses_wa_handler(self):
+        token = signing.dumps({'o': 999, 'd': self.driver.pk}, salt='daxi-wa-accept')
+        resp = self.client.get(f'/driver/accept/999/{token}/')
+        self.assertIn(resp.status_code, (200, 302))
+
+    def test_driver_accept_meta_malformed_url(self):
+        token = signing.dumps({'o': 114, 'd': self.driver.pk}, salt='daxi-wa-accept')
+        resp = self.client.get(f'/driver/accept/%7B%7B1%7D%7D114/{token}/')
+        self.assertIn(resp.status_code, (200, 302))
+
     def test_driver_accept_without_slash_redirects(self):
         resp = self.client.get('/driver/accept/888')
         self.assertIn(resp.status_code, (301, 302))

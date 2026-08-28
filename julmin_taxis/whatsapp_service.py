@@ -490,7 +490,7 @@ def _accept_public_path(order_id: int) -> str:
 
 
 def _accept_wa_button_suffix(order_id: int, driver_id: int) -> str:
-    """Suffixe bouton Meta — URL modèle : {SITE_URL}/wa/accept/{{1}}"""
+    """Suffixe bouton Meta — URL modèle : {SITE_URL}/wa/accept/ (sans {{1}} dans Meta)."""
     from django.core import signing
     token = signing.dumps({'o': order_id, 'd': driver_id}, salt='daxi-wa-accept')
     return f'{order_id}/{token}/'
