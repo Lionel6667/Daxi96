@@ -81,9 +81,10 @@ class DriverRegistrationTests(TestCase):
 
     def test_register_accepts_whatsapp_verified_flag_without_otp_cache(self):
         """Étape 2 après verify-otp : le flag verified suffit si le cache OTP a expiré."""
+        from julmin_taxis.reg_otp_cache import mark_registration_verified
         email = 'verified.flag@daxi.ht'
-        cache.set(f'reg_otp_driver_verified_{email}', True, timeout=600)
         cache.set(f'reg_otp_driver_phone_{email}', '+50944123456', timeout=600)
+        mark_registration_verified(email, namespace='driver')
         resp = self.client.post(
             '/htmx/driver/register/',
             {**_register_payload(email=email), 'otp': '847291', **_register_files()},

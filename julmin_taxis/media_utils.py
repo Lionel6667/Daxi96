@@ -135,6 +135,18 @@ def _post_cloudinary(file_obj, folder: str, resource_type: str = 'image', public
     return body.get('secure_url'), body.get('public_id')
 
 
+def upload_raw_file_to_cloudinary(file_path, folder='daxi/backups/db', public_id=None):
+    """Upload fichier binaire (dump DB) vers Cloudinary raw."""
+    if not cloudinary_configured():
+        return None, 'Cloudinary non configuré'
+    path = str(file_path)
+    try:
+        with open(path, 'rb') as fh:
+            return _post_cloudinary(fh, folder, resource_type='raw', public_id=public_id)
+    except Exception as exc:
+        return None, str(exc)
+
+
 def upload_image_to_cloudinary(
     file_obj,
     folder='daxi/media',

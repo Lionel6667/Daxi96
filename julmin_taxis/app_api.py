@@ -483,11 +483,11 @@ def app_send_otp(request):
         return _err('Numéro WhatsApp requis.')
     otp = str(random.randint(100000, 999999))
     from julmin_taxis.whatsapp_service import _normalize_phone, send_otp_whatsapp
+    from julmin_taxis.reg_otp_cache import store_registration_otp
     phone_norm = _normalize_phone(phone)
     if not phone_norm:
         return _err('Numéro WhatsApp invalide.')
-    cache.set(f'reg_otp_{email}', otp, timeout=600)
-    cache.set(f'reg_otp_phone_{email}', phone_norm, timeout=600)
+    store_registration_otp(email, otp, phone_norm=phone_norm, namespace='')
     try:
         if send_otp_whatsapp(phone_norm, name, otp):
             return _ok({'success': True, 'message': 'Code envoyé sur WhatsApp.'})

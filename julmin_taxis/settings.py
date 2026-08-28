@@ -317,6 +317,8 @@ BACKUP_ENABLED = os.environ.get('BACKUP_ENABLED', 'True') == 'True'
 BACKUP_DIR = Path(os.environ.get('BACKUP_DIR', str(BASE_DIR / 'backups')))
 BACKUP_INTERVAL_HOURS = int(os.environ.get('BACKUP_INTERVAL_HOURS', '24') or '24')
 BACKUP_KEEP_DAYS = int(os.environ.get('BACKUP_KEEP_DAYS', '14') or '14')
+BACKUP_UPLOAD_CLOUDINARY = os.environ.get('BACKUP_UPLOAD_CLOUDINARY', 'True') == 'True'
+BACKUP_CLOUDINARY_FOLDER = os.environ.get('BACKUP_CLOUDINARY_FOLDER', 'daxi/backups/db')
 
                               
                                                                              

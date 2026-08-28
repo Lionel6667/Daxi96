@@ -5,3 +5,7 @@ builder = "NIXPACKS"
 startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && DJANGO_SETTINGS_MODULE=julmin_taxis.settings daphne -b 0.0.0.0 -p $PORT julmin_taxis.asgi:application"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+
+# Service Cron séparé sur Railway : ajoute un job avec cette commande (ex. 04:00 UTC daily)
+# python manage.py backup_db --force --upload
+# Variables requises : DATABASE_URL, REDIS_URL, CLOUDINARY_* , BACKUP_UPLOAD_CLOUDINARY=True

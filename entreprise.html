@@ -489,6 +489,22 @@
       fd.append('otp', otp);
       if (btn) { btn.disabled = true; btn.textContent = 'Envoi...'; }
       try {
+        var vr = await fetch('/api/auth/verify-reg-otp/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email: _entPendingReg.email,
+            phone: _entPendingReg.phone,
+            otp: otp,
+          }),
+        });
+        var vd = await vr.json();
+        if (!vd.success) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">' + (vd.message || 'Code incorrect.') + '</div>';
+          entHideOtpModal();
+          return;
+        }
         var r = await fetch('/htmx/enterprise/register/', {
           method: 'POST', body: fd, credentials: 'same-origin',
           headers: { 'X-CSRFToken': getCsrf() },

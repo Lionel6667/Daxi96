@@ -17,6 +17,7 @@ urlpatterns = [
     path('fcm-token/', views.UpdateFCMTokenView.as_view(), name='fcm-token'),
                                                       
     path('send-otp/', views.SendOTPEmailView.as_view(), name='send-otp'),
+    path('verify-reg-otp/', views.VerifyRegOTPView.as_view(), name='verify-reg-otp'),
     path('send-reset-code/', views.SendResetCodeView.as_view(), name='send-reset-code'),
     path('verify-reset-code-simple/', views.VerifyResetCodeSimpleView.as_view(), name='verify-reset-code-simple'),
     path('reset-password-simple/', views.ResetPasswordSimpleView.as_view(), name='reset-password-simple'),

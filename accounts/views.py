@@ -339,12 +339,12 @@ class SendOTPEmailView(APIView):
 
         otp = str(random.randint(100000, 999999))
         from julmin_taxis.whatsapp_service import _normalize_phone, send_otp_whatsapp
+        from julmin_taxis.reg_otp_cache import store_registration_otp
         phone_norm = _normalize_phone(phone)
         if not phone_norm:
             return Response({'success': False, 'message': 'Numéro WhatsApp invalide.'}, status=400)
 
-        cache.set(f'reg_otp_{email}', otp, timeout=600)
-        cache.set(f'reg_otp_phone_{email}', phone_norm, timeout=600)
+        store_registration_otp(email, otp, phone_norm=phone_norm, namespace='')
 
         try:
             if send_otp_whatsapp(phone_norm, name, otp):
@@ -353,6 +353,29 @@ class SendOTPEmailView(APIView):
         except Exception as e:
             logger.warning('OTP WhatsApp failed for %s: %s', email, e)
             return Response({'success': False, 'message': str(e)}, status=500)
+
+
+class VerifyRegOTPView(APIView):
+    """Valide OTP WhatsApp avant soumission finale (client / entreprise)."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        otp = (request.data.get('code') or request.data.get('otp') or '').strip()
+        phone = (request.data.get('phone') or request.data.get('whatsapp') or '').strip()
+        if not email or not otp:
+            return Response({'success': False, 'message': 'Email et code requis.'}, status=400)
+        from julmin_taxis.reg_otp_cache import (
+            mark_registration_verified,
+            validate_registration_otp,
+        )
+        from julmin_taxis.whatsapp_service import _normalize_phone
+        phone_norm = _normalize_phone(phone) if phone else None
+        ok, msg = validate_registration_otp(email, otp, phone_norm=phone_norm, namespace='')
+        if not ok:
+            return Response({'success': False, 'message': msg}, status=400)
+        mark_registration_verified(email, namespace='')
+        return Response({'success': True, 'message': 'Code vérifié.'})
 
 
 class SendResetCodeView(APIView):

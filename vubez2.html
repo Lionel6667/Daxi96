@@ -27479,6 +27479,29 @@ window._daxiSyncSidebarEnterprise = _daxiSyncSidebarEnterprise;
         if (verifyBtn) { verifyBtn.classList.add('btn-loading'); verifyBtn.disabled = true; }
         if (statusEl) statusEl.textContent = 'Vérification…';
 
+        try {
+            var verifyResp = await fetch('/api/auth/verify-reg-otp/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    email: pending.email,
+                    phone: pending.phone,
+                    otp: code,
+                }),
+            });
+            var verifyData = await verifyResp.json();
+            if (!verifyData.success) {
+                if (statusEl) statusEl.textContent = verifyData.message || 'Code incorrect ou expiré.';
+                if (verifyBtn) { verifyBtn.classList.remove('btn-loading'); verifyBtn.disabled = false; }
+                return;
+            }
+        } catch (ex) {
+            if (statusEl) statusEl.textContent = 'Erreur réseau. Réessayez.';
+            if (verifyBtn) { verifyBtn.classList.remove('btn-loading'); verifyBtn.disabled = false; }
+            return;
+        }
+
         var formData = new FormData();
         formData.append('firstname', pending.firstname);
         formData.append('lastname', pending.lastname);

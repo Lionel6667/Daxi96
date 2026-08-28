@@ -110,7 +110,7 @@ def rotate_old_backups() -> int:
     return removed
 
 
-def run_backup(*, force: bool = False) -> dict:
+def run_backup(*, force: bool = False, upload: bool | None = None) -> dict:
     if not getattr(settings, 'BACKUP_ENABLED', True) and not force:
         return {'ok': False, 'skipped': True, 'reason': 'disabled'}
 
@@ -130,14 +130,35 @@ def run_backup(*, force: bool = False) -> dict:
 
     (folder / _STAMP_NAME).write_text(datetime.now().isoformat(), encoding='utf-8')
     removed = rotate_old_backups()
-    logger.info('[Backup] %s %s (%s octets, purge=%s)', kind, dest.name, size, removed)
-    return {
+    remote_url = ''
+    upload_err = ''
+    should_upload = upload if upload is not None else getattr(settings, 'BACKUP_UPLOAD_CLOUDINARY', True)
+    if should_upload:
+        remote_url, upload_err = _upload_backup_remote(dest, stamp)
+    logger.info('[Backup] %s %s (%s octets, purge=%s, remote=%s)', kind, dest.name, size, removed, bool(remote_url))
+    result = {
         'ok': True,
         'kind': kind,
         'file': str(dest),
         'bytes': size,
         'purged': removed,
+        'remote_url': remote_url,
     }
+    if upload_err and should_upload:
+        result['upload_error'] = upload_err
+    return result
+
+
+def _upload_backup_remote(dest: Path, stamp: str) -> tuple[str, str]:
+    from julmin_taxis.media_utils import cloudinary_configured, upload_raw_file_to_cloudinary
+    if not cloudinary_configured():
+        return '', 'Cloudinary non configuré — backup local uniquement (disque éphémère Railway)'
+    folder = getattr(settings, 'BACKUP_CLOUDINARY_FOLDER', 'daxi/backups/db')
+    public_id = f'daxi-db-{stamp}'
+    url, err = upload_raw_file_to_cloudinary(dest, folder=folder, public_id=public_id)
+    if url:
+        return url, ''
+    return '', err or 'upload failed'
 
 
 def maybe_run_auto_backup() -> dict:

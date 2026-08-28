@@ -126,3 +126,28 @@ SQLite est **écrasé** à chaque redeploy (disque éphémère). Sur Railway :
 - Build release Capacitor : copie `capacitor.config.production.json` → `capacitor.config.json` (ou change `server.url` vers Railway/`daxipro.com`), puis `npx cap sync`. L’APK de dev pointe encore vers ngrok → les tokens n’arrivent pas en prod.
 
 Le géo DAXI marche en **PostgreSQL plain** (pas besoin de PostGIS sur Railway) : coords en Float/JSON + Shapely.
+
+### Redis (obligatoire prod)
+
+Sans **Redis** (`REDIS_URL`), le cache OTP est en mémoire par worker → inscriptions chauffeur / client / entreprise peuvent échouer silencieusement entre deux requêtes HTTP. Ajoute le plugin **Redis** sur Railway et vérifie `REDIS_URL`.
+
+### Sauvegarde PostgreSQL (Railway)
+
+Le disque Railway est **éphémère** : les fichiers dans `backups/` disparaissent au redeploy.
+
+1. Variables : `CLOUDINARY_*` (déjà utilisées pour les médias), `BACKUP_UPLOAD_CLOUDINARY=True`
+2. Backup manuel (shell Railway) :
+   ```bash
+   python manage.py backup_db --force --upload
+   ```
+3. **Cron Railway** (service séparé, ex. `0 4 * * *`) :
+   ```bash
+   python manage.py backup_db --force --upload
+   ```
+   Les dumps `.pgdump.gz` sont uploadés sur Cloudinary (`daxi/backups/db/`).
+
+4. Données de test admin (vérifie PostgreSQL → dashboard) :
+   ```bash
+   python manage.py seed_admin_test_data --clean --verify
+   ```
+   Puis Admin → Chauffeurs → **En attente** (2e onglet).

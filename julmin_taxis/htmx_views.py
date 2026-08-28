@@ -2631,24 +2631,12 @@ def driver_register(request):
     if password != password_confirm:
         return _htmx_error('Les mots de passe ne correspondent pas')
 
-    from django.core.cache import cache
-
     otp = request.POST.get('otp', '').strip()
-    otp_verified = cache.get(f'reg_otp_driver_verified_{email}')
-    stored_otp = cache.get(f'reg_otp_driver_{email}')
-    if not otp:
-        return _htmx_error('Vérifiez votre WhatsApp à l\'étape 1 (code OTP requis).')
-    if not otp_verified:
-        if not stored_otp:
-            return _htmx_error('Code WhatsApp expiré — retournez à l\'étape 1 pour renvoyer un code.')
-        if otp != stored_otp:
-            return _htmx_error('Code OTP incorrect.')
-    stored_phone = cache.get(f'reg_otp_driver_phone_{email}')
-    if stored_phone and _sanitize_phone(stored_phone) != phone:
-        return _htmx_error('Le numéro WhatsApp ne correspond pas au code envoyé.')
-    cache.delete(f'reg_otp_driver_{email}')
-    cache.delete(f'reg_otp_driver_phone_{email}')
-    cache.delete(f'reg_otp_driver_verified_{email}')
+    from julmin_taxis.reg_otp_cache import consume_registration_otp, validate_registration_otp
+    ok, otp_err = validate_registration_otp(email, otp, phone_norm=phone, namespace='driver')
+    if not ok:
+        return _htmx_error(otp_err)
+    consume_registration_otp(email, namespace='driver')
 
     if not all([firstname, lastname, email, phone, password, car_brand, car_model, plate]):
         return _htmx_error('Tous les champs obligatoires (incluant voiture et plaque) sont requis')
@@ -2789,9 +2777,8 @@ def driver_send_reg_otp(request):
         return _fail('Ce numéro WhatsApp est déjà inscrit comme chauffeur. Utilisez « Retour à la connexion ».')
 
     otp = str(random.randint(100000, 999999))
-    cache.set(f'reg_otp_driver_{email}', otp, timeout=600)
-    cache.set(f'reg_otp_driver_phone_{email}', phone_norm, timeout=600)
-    cache.delete(f'reg_otp_driver_verified_{email}')
+    from julmin_taxis.reg_otp_cache import store_registration_otp
+    store_registration_otp(email, otp, phone_norm=phone_norm, namespace='driver')
 
     name = firstname or 'Chauffeur'
     try:
@@ -2807,7 +2794,7 @@ def driver_verify_reg_otp(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Méthode non supportée'}, status=405)
 
-    from django.core.cache import cache
+    from julmin_taxis.reg_otp_cache import mark_registration_verified, validate_registration_otp
 
     email = request.POST.get('email', '').strip().lower()
     phone = request.POST.get('phone', '').strip()
@@ -2816,18 +2803,12 @@ def driver_verify_reg_otp(request):
     if not email or not otp:
         return JsonResponse({'success': False, 'message': 'Email et code requis.'})
 
-    stored_otp = cache.get(f'reg_otp_driver_{email}')
-    if not stored_otp:
-        return JsonResponse({'success': False, 'message': 'Code expiré — renvoyez un nouveau code.'})
-    if otp != stored_otp:
-        return JsonResponse({'success': False, 'message': 'Code incorrect.'})
-
     phone_norm = _driver_phone_from_request(request)
-    stored_phone = cache.get(f'reg_otp_driver_phone_{email}')
-    if stored_phone and phone_norm and stored_phone != phone_norm:
-        return JsonResponse({'success': False, 'message': 'Numéro WhatsApp incorrect.'})
+    ok, msg = validate_registration_otp(email, otp, phone_norm=phone_norm, namespace='driver')
+    if not ok:
+        return JsonResponse({'success': False, 'message': msg})
 
-    cache.set(f'reg_otp_driver_verified_{email}', True, timeout=1800)
+    mark_registration_verified(email, namespace='driver')
     return JsonResponse({'success': True, 'message': 'WhatsApp vérifié.'})
 
 
@@ -5520,7 +5501,7 @@ def client_register(request):
     if request.method != 'POST':
         return _htmx_error('Méthode non supportée', 405)
 
-    from django.core.cache import cache
+    from julmin_taxis.reg_otp_cache import consume_registration_otp, validate_registration_otp
 
     firstname = request.POST.get('firstname', '').strip()
     lastname  = request.POST.get('lastname', '').strip()
@@ -5538,14 +5519,10 @@ def client_register(request):
         return _htmx_error('Entrez une adresse email valide (ex. toi@gmail.com ou toi@entreprise.ht).', 200)
 
                             
-    stored_otp = cache.get(f'reg_otp_{email}')
-    if not otp:
-        return _htmx_error('Veuillez entrer votre code de vérification.', 200)
-    if not stored_otp:
-        return _htmx_error('Votre code a expiré. Veuillez en renvoyer un nouveau.', 200)
-    if otp != stored_otp:
-        return _htmx_error('Code OTP incorrect. Vérifiez le code reçu.', 200)
-    cache.delete(f'reg_otp_{email}')
+    ok, otp_err = validate_registration_otp(email, otp, namespace='')
+    if not ok:
+        return _htmx_error(otp_err, 200)
+    consume_registration_otp(email, namespace='')
 
     if len(password) < 6:
         return _htmx_error('Le mot de passe doit contenir au moins 6 caractères', 200)
@@ -7534,22 +7511,14 @@ def enterprise_register(request):
         return _htmx_error("Tous les champs obligatoires doivent être remplis.", 200)
     if len(pwd) < 6:
         return _htmx_error("Le mot de passe doit contenir au moins 6 caractères.", 200)
-    from django.core.cache import cache
-    otp = request.POST.get("otp", "").strip()
-    stored_otp = cache.get(f'reg_otp_{email}')
-    if not otp:
-        return _htmx_error("Vérifiez votre WhatsApp avec le code reçu.", 200)
-    if not stored_otp:
-        return _htmx_error("Code expiré. Renvoyez un nouveau code.", 200)
-    if otp != stored_otp:
-        return _htmx_error("Code WhatsApp incorrect.", 200)
-    stored_phone = cache.get(f'reg_otp_phone_{email}')
+    from julmin_taxis.reg_otp_cache import consume_registration_otp, validate_registration_otp
     from julmin_taxis.whatsapp_service import _normalize_phone
+    otp = request.POST.get("otp", "").strip()
     phone_norm = _normalize_phone(phone)
-    if stored_phone and phone_norm and stored_phone != phone_norm:
-        return _htmx_error("Le numéro ne correspond pas à celui vérifié.", 200)
-    cache.delete(f'reg_otp_{email}')
-    cache.delete(f'reg_otp_phone_{email}')
+    ok, otp_err = validate_registration_otp(email, otp, phone_norm=phone_norm, namespace='')
+    if not ok:
+        return _htmx_error(otp_err, 200)
+    consume_registration_otp(email, namespace='')
                                                              
     if Enterprise.objects.filter(email=email, name=name).exists():
         return _htmx_error("Une entreprise avec ce nom existe déjà pour cet email.", 200)
