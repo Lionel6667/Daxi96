@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260735">
 <link rel="stylesheet" href="/static/css/admin-maps.css?v=20260803d">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260735">
-<link rel="stylesheet" href="/static/css/daxi-theme-admin-sections.css?v=20260828h">
+<link rel="stylesheet" href="/static/css/daxi-theme-admin-sections.css?v=20260828i">
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823s">
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
 <link rel="stylesheet" href="/static/css/daxi-calendar-modal.css?v=20260801">
@@ -1232,7 +1232,22 @@ function refreshCurrentSection() {
 }
 
 
+function adminAvatarInitials(name) {
+  var parts = String(name || 'U').replace(/[()]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  return ((parts[0] || 'U').charAt(0) + (parts[1] || parts[0] || 'U').charAt(0)).toUpperCase();
+}
+
+function adminPendingDriverPhoto(d, name) {
+  if (d.photo_url) {
+    return '<img src="' + adminAvatarUrl(d.photo_url, name, 64) + '" alt="" class="adm-drv-pending__photo">';
+  }
+  return '<div class="adm-drv-pending__photo adm-drv-pending__photo--initials" aria-hidden="true">' + escapeHtml(adminAvatarInitials(name)) + '</div>';
+}
+
 async function initAdminDashboard() {
+  if (typeof daxiWaitForIntro === 'function') await daxiWaitForIntro();
+  var skipBoot = typeof daxiShouldSkipSecondaryBoot === 'function' && daxiShouldSkipSecondaryBoot();
+  if (skipBoot) document.getElementById('admin-boot-overlay')?.classList.add('is-done');
   document.getElementById('admin-sidebar-toggle')?.addEventListener('click', openAdminSidebar);
   window.addEventListener('hashchange', () => {
     const section = parseAdminHash();
@@ -1954,6 +1969,8 @@ function setAdminDriversTab(tab) {
 
 function applyAdminDriversTab() {
   const tab = ADMIN.driversTab || 'active';
+  const grid = document.getElementById('drivers-grid');
+  if (grid) grid.classList.toggle('drivers-grid--pending', tab === 'pending');
   ['pending', 'active', 'blocked'].forEach(function (name) {
     document.getElementById('drv-tab-' + name)?.classList.toggle('is-active', name === tab);
   });
@@ -2065,11 +2082,12 @@ function renderPendingDriversGrid(drivers) {
     return;
   }
   grid.innerHTML = drivers.map(function (d) {
-    const name = escapeHtml(d.full_name || ((d.firstname || '') + ' ' + (d.lastname || '')).trim() || 'Chauffeur');
+    const rawName = (d.full_name || ((d.firstname || '') + ' ' + (d.lastname || '')).trim()) || 'Chauffeur';
+    const name = escapeHtml(rawName);
     const vehicle = escapeHtml(formatDriverVehicle(d));
     const city = escapeHtml(d.city || '');
     const when = d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : '';
-    const photo = adminAvatarUrl(d.photo_url, d.full_name, 64);
+    const photo = adminPendingDriverPhoto(d, rawName);
     const docs = [
       d.has_license || d.driving_license_url,
       d.has_oavct || d.oavct_insurance_url,
@@ -2077,7 +2095,7 @@ function renderPendingDriversGrid(drivers) {
     ].filter(Boolean).length;
     return `
     <button type="button" class="adm-drv-pending" onclick="openAdminDriverReview(${d.id})">
-      <img src="${photo}" alt="" class="adm-drv-pending__photo">
+      ${photo}
       <div class="adm-drv-pending__info">
         <div class="adm-drv-pending__name">${name} <span class="adm-drv-pending__badge">En attente</span></div>
         <div class="adm-drv-pending__sub">${vehicle}${city ? ' · ' + city : ''}</div>

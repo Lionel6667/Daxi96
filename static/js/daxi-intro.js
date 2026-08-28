@@ -402,6 +402,7 @@
         if (killer) clearTimeout(killer);
         global._daxiIntroPlaying = false;
         global._daxiIntroDone = true;
+        global._daxiSkipSecondaryBoot = true;
         bootMark('intro-complete');
         try {
           document.documentElement.classList.add('daxi-intro-done');
@@ -468,6 +469,40 @@
 
     return global._daxiIntroPromise;
   }
+
+  global.daxiShouldSkipSecondaryBoot = function () {
+    try {
+      if (global._daxiIntroDone || global._daxiIntroPlaying || global._daxiSkipSecondaryBoot) return true;
+      if (global._daxiCapacitorApp) return true;
+      if (global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform()) {
+        return true;
+      }
+      if (document.documentElement && document.documentElement.classList.contains('daxi-native-shell')) {
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+
+  global.daxiWaitForIntro = function (timeoutMs) {
+    timeoutMs = timeoutMs || 6000;
+    if (!global.daxiShouldSkipSecondaryBoot || !global.daxiShouldSkipSecondaryBoot()) {
+      return Promise.resolve();
+    }
+    if (global._daxiIntroDone) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var done = false;
+      var finish = function () {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      try {
+        global.addEventListener('daxi:intro-complete', finish, { once: true });
+      } catch (e0) {}
+      setTimeout(finish, timeoutMs);
+    });
+  };
 
   global.DAXI_INTRO_ENABLED = DAXI_INTRO_ENABLED;
   global.playDaxiIntro = playDaxiIntro;

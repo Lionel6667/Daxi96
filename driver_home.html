@@ -904,6 +904,15 @@ function _tryDismissSplash() {
         window.addEventListener('daxi:intro-complete', _tryDismissSplash, { once: true });
         return;
     }
+    if (window._daxiIntroDone || window._daxiSkipSecondaryBoot) {
+        var splashSkip = document.getElementById('splash');
+        if (splashSkip) {
+            splashSkip.classList.add('hide');
+            splashSkip.style.display = 'none';
+            splashSkip.style.pointerEvents = 'none';
+        }
+        return;
+    }
     if (window._drvSplashMinUntil && Date.now() < window._drvSplashMinUntil) {
         setTimeout(_tryDismissSplash, window._drvSplashMinUntil - Date.now() + 40);
         return;

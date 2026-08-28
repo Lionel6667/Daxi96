@@ -35,6 +35,8 @@
 
   function mount() {
     if (isNative() || !isAppSurface() || hasOwnBoot() || document.getElementById('daxi-web-radar')) return;
+    if (global._daxiIntroPlaying || global._daxiIntroDone || global._daxiSkipSecondaryBoot) return;
+    if (typeof global.daxiShouldSkipSecondaryBoot === 'function' && global.daxiShouldSkipSecondaryBoot()) return;
     var el = document.createElement('div');
     el.id = 'daxi-web-radar';
     el.className = 'daxi-web-radar';
