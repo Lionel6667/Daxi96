@@ -248,10 +248,8 @@ def compute_admin_badge_counts(request):
     if seen_loc:
         loc_qs = loc_qs.filter(location_help_requested_at__gt=seen_loc)
 
+    # Chauffeurs: le badge reste tant que le dossier n'est pas traité (pas « vu = zéro »).
     drivers_qs = Driver.objects.filter(is_verified=False, is_blocked=False)
-    seen_drivers = _admin_badge_seen_at(request, 'drivers')
-    if seen_drivers:
-        drivers_qs = drivers_qs.filter(created_at__gt=seen_drivers)
 
     return {
         'orders': orders_qs.count(),
@@ -784,6 +782,24 @@ class AdminAvailableDriversView(APIView):
         )
         from drivers.serializers import DriverSerializer
         return Response(DriverSerializer(drivers, many=True, context={'request': request}).data)
+
+
+class AdminDriversListView(APIView):
+    """GET — tous les chauffeurs (actifs, en attente, bloqués) pour le dashboard admin."""
+    permission_classes = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication, SessionAuthentication]
+
+    def get(self, request):
+        from julmin_taxis.staff_auth import resolve_staff_user
+        if not resolve_staff_user(request):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+
+        from drivers.serializers import DriverSerializer
+        from drivers.views import _drivers_queryset
+        qs = _drivers_queryset(for_staff=True)
+        return Response(DriverSerializer(
+            qs, many=True, context={'request': request, 'force_staff': True},
+        ).data)
 
 
 def covered_departments_api(request):

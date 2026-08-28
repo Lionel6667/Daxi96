@@ -1,7 +1,10 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from julmin_taxis.staff_auth import OptionalJWTAuthentication
 from .models import Notification
 from .serializers import NotificationSerializer
 from .email_service import EmailService
@@ -280,9 +283,11 @@ body{{margin:0;padding:0;background:#f4f6f9;font-family:'Segoe UI',Arial,sans-se
             return Response({'success': False, 'message': str(e)}, status=500)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class PresenceHeartbeatView(APIView):
     """POST — le client signale qu'il est actif sur le site (onglet visible)."""
     permission_classes = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]
 
     def post(self, request):
         from julmin_taxis.presence import mark_presence_context
@@ -298,8 +303,12 @@ class PresenceHeartbeatView(APIView):
         if _truthy(request.data.get('viewing_price_proposal') or request.POST.get('viewing_price_proposal')):
             ctx['viewing_price_proposal'] = True
 
-        if request.user.is_authenticated:
-            mark_presence_context('user', request.user.pk, **ctx)
+        inner = getattr(request, '_request', request)
+        user = getattr(request, 'user', None)
+        if not (user and getattr(user, 'is_authenticated', False)):
+            user = getattr(inner, 'user', None)
+        if user and getattr(user, 'is_authenticated', False):
+            mark_presence_context('user', user.pk, **ctx)
 
         gid = (
             request.data.get('guest_id')

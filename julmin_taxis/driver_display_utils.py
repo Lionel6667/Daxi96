@@ -1,4 +1,6 @@
 """Champs chauffeur unifiés pour API client, WebSocket et page track."""
+import base64
+
 from django.conf import settings
 
 
@@ -31,13 +33,29 @@ def _usable_data_uri(raw: str) -> str:
     if not b64:
         return ''
     if b64.startswith('data:'):
-        payload = b64.split(',', 1)[-1] if ',' in b64 else ''
-        if len(payload) < 200 or not b64.lower().startswith('data:image/'):
+        if not b64.lower().startswith('data:image/'):
             return ''
-        return b64
-    if len(b64) < 200:
+        payload = b64.split(',', 1)[-1] if ',' in b64 else ''
+    else:
+        payload = b64
+        b64 = f'data:image/jpeg;base64,{payload}'
+    payload = ''.join(payload.split())
+    if len(payload) < 200 or len(payload) > 400_000:
         return ''
-    return f'data:image/jpeg;base64,{b64}'
+    try:
+        padded = payload + '=' * ((4 - len(payload) % 4) % 4)
+        decoded = base64.b64decode(padded, validate=False)
+    except Exception:
+        return ''
+    if len(decoded) < 64:
+        return ''
+    is_jpeg = decoded[:2] == b'\xff\xd8'
+    is_png = decoded[:8] == b'\x89PNG\r\n\x1a\n'
+    if is_jpeg and decoded[-2:] != b'\xff\xd9':
+        return ''
+    if not is_jpeg and not is_png:
+        return ''
+    return b64
 
 
 def _driver_photo_url(driver, order=None, request=None) -> str:

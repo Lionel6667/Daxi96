@@ -106,6 +106,9 @@
     if (global.ADMIN && global.ADMIN.currentSection === 'lost-objects' && typeof global.loadAdminLostObjects === 'function') {
       global.loadAdminLostObjects();
     }
+    if (global.ADMIN && global.ADMIN.currentSection === 'drivers' && typeof global.loadAdminDrivers === 'function') {
+      global.loadAdminDrivers();
+    }
   }
 
   function refreshEnterprise(orderId) {
@@ -137,7 +140,7 @@
       'driver_unassigned', 'gps_reminder', 'now_transition', 'pickup_confirm_prompt',
       'relocate_prompt', 'new_order_needs_coords', 'withdrawal_request', 'enterprise_withdrawal',
       'enterprise_pending', 'enterprise_location_pending', 'lost_object_reported', 'sos_alert',
-      'driver_status_changed', 'driver_location', 'danger_zone', 'status_changed', 'order_deleted'
+      'driver_status_changed', 'driver_pending', 'driver_location', 'danger_zone', 'status_changed', 'order_deleted'
     ];
     return extra.indexOf(ev) >= 0;
   }
@@ -187,6 +190,7 @@
     }
 
     function heartbeat() {
+      if (PAGE === 'admin') return;
       if (document.visibilityState !== 'visible') return;
       var body = new URLSearchParams();
       var gid = global.localStorage && localStorage.getItem('daxi_guest_id');
@@ -195,7 +199,9 @@
       Object.keys(ctx).forEach(function(k) {
         if (ctx[k] != null && ctx[k] !== '') body.set(k, ctx[k]);
       });
-      var csrf = (typeof global.getCsrfToken === 'function') ? global.getCsrfToken() : '';
+      var csrf = '';
+      if (typeof global.getCSRFToken === 'function') csrf = global.getCSRFToken() || '';
+      if (!csrf && typeof global.getCsrfToken === 'function') csrf = global.getCsrfToken() || '';
       fetch('/api/notifications/presence/', {
         method: 'POST',
         credentials: 'include',
@@ -207,11 +213,13 @@
       }).catch(function() {});
     }
 
-    heartbeat();
-    setInterval(heartbeat, 45000);
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') heartbeat();
-    });
+    if (PAGE !== 'admin') {
+      heartbeat();
+      setInterval(heartbeat, 45000);
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') heartbeat();
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

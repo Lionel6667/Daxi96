@@ -677,6 +677,14 @@ def notify_admin_driver_pending_event(driver) -> None:
         extra_data={'driver_id': str(driver.pk)},
     )
     try:
+        from orders.views import notify_websocket
+        notify_websocket('admin_orders', 'driver_pending', {
+            'driver_id': driver.pk,
+            'name': driver.get_full_name(),
+        })
+    except Exception as exc:
+        logger.warning('[Notify] admin driver_pending WS failed: %s', exc)
+    try:
         from julmin_taxis.whatsapp_service import notify_admin_driver_pending
         notify_admin_driver_pending(driver)
     except Exception as exc:

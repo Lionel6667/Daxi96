@@ -69,9 +69,13 @@ class DriverSerializer(serializers.ModelSerializer):
             return ''
 
     def _is_staff_request(self):
+        if self.context.get('force_staff'):
+            return True
         request = self.context.get('request')
-        user = getattr(request, 'user', None)
-        return bool(user and getattr(user, 'is_authenticated', False) and getattr(user, 'is_staff', False))
+        if not request:
+            return False
+        from julmin_taxis.staff_auth import user_is_staff
+        return user_is_staff(request)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

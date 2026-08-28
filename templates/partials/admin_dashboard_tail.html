@@ -202,14 +202,12 @@
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260823v">
 <script src="/static/js/lieux_admin.js?v=20260827a"></script>
 <script>
-const ADMIN = { charts: {}, currentSection: 'dashboard', allDrivers: [], pendingCount: 0, driversTab: 'pending' };
+const ADMIN = { charts: {}, currentSection: 'dashboard', allDrivers: [], pendingCount: 0, driversTab: 'active' };
 
 function adminAvatarUrl(photo, name, size) {
   if (photo) {
     var p = String(photo).trim();
-    if (p.indexOf('data:') === 0 && p.length < 200) {
-      
-    } else if (p.indexOf('data:') === 0 || p.indexOf('http') === 0 || p.charAt(0) === '/') {
+    if (p.indexOf('http') === 0 || p.charAt(0) === '/') {
       return p;
     }
   }

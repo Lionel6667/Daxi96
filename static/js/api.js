@@ -256,6 +256,9 @@ const AdminAPI = {
   async getAvailableDrivers() {
     return get('/admin-panel/available-drivers/');
   },
+  async getDrivers() {
+    return get('/admin-panel/drivers/');
+  },
   async syncSession() {
     return post('/admin-panel/sync-session/', {});
   },

@@ -170,3 +170,42 @@ class AdminDriverReviewTests(TestCase):
             rows = rows.get('results') or []
         ids = [r.get('id') for r in rows]
         self.assertNotIn(self.pending.pk, ids)
+
+    def test_session_admin_list_includes_pending_driver(self):
+        session = self.client.session
+        session['is_admin'] = True
+        session.save()
+        resp = self.client.get('/api/admin-panel/drivers/')
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.json()
+        if isinstance(rows, dict):
+            rows = rows.get('results') or []
+        match = next((r for r in rows if r.get('id') == self.pending.pk), None)
+        self.assertIsNotNone(match)
+        self.assertFalse(match.get('is_verified'))
+        self.assertIn('driving_license_url', match)
+        self.assertEqual(match.get('city'), 'Cap-Haïtien')
+
+    def test_drivers_badge_stays_until_reviewed(self):
+        from django.utils import timezone
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['is_admin'] = True
+        session['admin_badge_seen_at'] = {'drivers': timezone.now().isoformat()}
+        session.save()
+        resp = self.client.get('/api/admin-panel/badge-counts/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json().get('drivers'), 1)
+
+    def test_staff_jwt_driver_list_includes_pending(self):
+        self.client.force_login(self.admin)
+        session = self.client.session
+        session['is_admin'] = True
+        session.save()
+        resp = self.client.get('/api/drivers/')
+        self.assertEqual(resp.status_code, 200)
+        rows = resp.json()
+        if isinstance(rows, dict):
+            rows = rows.get('results') or []
+        ids = [r.get('id') for r in rows]
+        self.assertIn(self.pending.pk, ids)

@@ -383,11 +383,11 @@
         </div>
         <div class="adm-seg-nav">
           <div class="adm-seg-group">
-            <button type="button" id="drv-tab-pending" class="adm-seg-btn adm-seg-btn--pending is-active" onclick="setAdminDriversTab('pending')">
-              <i class="ri-time-line"></i> En attente <span id="drv-tab-pending-count" class="adm-seg-badge hidden">0</span>
-            </button>
-            <button type="button" id="drv-tab-active" class="adm-seg-btn adm-seg-btn--approved" onclick="setAdminDriversTab('active')">
+            <button type="button" id="drv-tab-active" class="adm-seg-btn adm-seg-btn--approved is-active" onclick="setAdminDriversTab('active')">
               <i class="ri-check-line"></i> Actifs <span id="drv-tab-active-count" class="adm-seg-badge hidden">0</span>
+            </button>
+            <button type="button" id="drv-tab-pending" class="adm-seg-btn adm-seg-btn--pending" onclick="setAdminDriversTab('pending')">
+              <i class="ri-time-line"></i> En attente <span id="drv-tab-pending-count" class="adm-seg-badge hidden">0</span>
             </button>
             <button type="button" id="drv-tab-blocked" class="adm-seg-btn adm-seg-btn--rejected" onclick="setAdminDriversTab('blocked')">
               <i class="ri-forbid-line"></i> Bloqués <span id="drv-tab-blocked-count" class="adm-seg-badge hidden">0</span>
@@ -849,7 +849,7 @@ async function showAdminSection(section) {
   const mainEl = document.querySelector('#admin-main > main');
   if (mainEl) mainEl.classList.toggle('admin-live-map-active', section === 'live-map');
   syncAdminHeaderHeight();
-  if (ADMIN_SECTION_BADGE_KEY[section]) await markAdminSectionSeen(section);
+  if (ADMIN_SECTION_BADGE_KEY[section] && section !== 'drivers') await markAdminSectionSeen(section);
 
   if (section === 'orders') loadAdminOrders(adminOrdersCurrentFilter);
   else if (section === 'calendar') loadAdminCalendar();
@@ -1888,11 +1888,14 @@ async function loadAdminDrivers() {
   const grid = document.getElementById('drivers-grid');
   grid.innerHTML = '<div class="text-center col-span-3 py-8"><i class="ri-loader-4-line animate-spin text-2xl text-gray-400"></i></div>';
   try {
-    const res = await DriversAPI.getAll({ page_size: 500 });
-    const drivers = Array.isArray(res) ? res : (res.results || []);
+    const res = await adminFetch('/api/admin-panel/drivers/');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const payload = await res.json();
+    const drivers = Array.isArray(payload) ? payload : (payload.results || []);
     ADMIN.allDrivers = drivers;
     syncAdminDriversTabCounts();
     applyAdminDriversTab();
+    refreshAllAdminBadges();
   } catch { grid.innerHTML = '<p class="text-center text-red-400 col-span-3">Erreur de chargement.</p>'; }
 }
 
@@ -1906,7 +1909,7 @@ function driverMatchesQuery(d, q) {
 
 function driversForCurrentTab() {
   const list = ADMIN.allDrivers || [];
-  const tab = ADMIN.driversTab || 'pending';
+  const tab = ADMIN.driversTab || 'active';
   return list.filter(function (d) {
     if (tab === 'pending') return !d.is_verified && !d.is_blocked;
     if (tab === 'blocked') return !!d.is_blocked;
@@ -1936,7 +1939,7 @@ function setAdminDriversTab(tab) {
 }
 
 function applyAdminDriversTab() {
-  const tab = ADMIN.driversTab || 'pending';
+  const tab = ADMIN.driversTab || 'active';
   ['pending', 'active', 'blocked'].forEach(function (name) {
     document.getElementById('drv-tab-' + name)?.classList.toggle('is-active', name === tab);
   });
@@ -2801,6 +2804,11 @@ function connectAdminWebSocket() {
         else showToast('ALERTE SOS — intervention immédiate', 'error');
         refreshAllAdminBadges();
         loadAdminSosAlerts(true);
+      } else if (ev === 'driver_pending') {
+        if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent('driver_pending', payload);
+        else showToast('Nouveau chauffeur à valider', 'info');
+        refreshAllAdminBadges();
+        if (ADMIN.currentSection === 'drivers') loadAdminDrivers();
       } else if (ev === 'driver_status_changed') {
         refreshAllAdminBadges();
         loadDashboardStats();
@@ -2842,7 +2850,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 <script src="/static/js/daxi-realtime.js?v=20260738"></script>
 <script src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
 <script src="/static/js/daxi-notifications.js?v=20260823n"></script>
-<script src="/static/js/daxi-realtime-sync.js?v=20260823o"></script>
+<script src="/static/js/daxi-realtime-sync.js?v=20260828p"></script>
 <script src="/static/js/daxi-push-register.js?v=20260823o"></script>
 <script src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
 <script src="/static/js/daxi-modal.js?v=20260820b"></script>

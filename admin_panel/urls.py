@@ -14,6 +14,7 @@ urlpatterns = [
     path('users/<int:pk>/block/', views.AdminUserBlockView.as_view(), name='admin-user-block'),
     path('pending-orders/', views.AdminPendingOrdersView.as_view(), name='admin-pending-orders'),
     path('available-drivers/', views.AdminAvailableDriversView.as_view(), name='admin-available-drivers'),
+    path('drivers/', views.AdminDriversListView.as_view(), name='admin-drivers-list'),
     path('covered-departments/', views.covered_departments_api, name='covered-departments'),
     path('whatsapp-proxy/', views.whatsapp_proxy, name='whatsapp-proxy'),
     path('whatsapp-discover/', views.whatsapp_discover, name='whatsapp-discover'),

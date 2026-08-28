@@ -91,6 +91,7 @@ _API_ADMIN_RULES: list[tuple[str, str]] = [
     (r'^/api/admin-panel/finance', PERM_PAYMENTS),
     (r'^/api/admin-panel/drivers/.*/commission', PERM_COMMISSIONS),
     (r'^/api/admin-panel/drivers/.*/block', PERM_DRIVERS_MANAGE),
+    (r'^/api/admin-panel/drivers/?$', PERM_ORDERS_VIEW),
     (r'^/api/admin-panel/chat', PERM_CHAT),
     (r'^/api/admin-panel/users', PERM_USERS),
     (r'^/api/admin-panel/enterprises', PERM_ENTERPRISES),

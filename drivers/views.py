@@ -38,8 +38,8 @@ class DriverListView(generics.ListAPIView):
     search_fields = ['firstname', 'lastname', 'vehicle', 'plate']
 
     def get_queryset(self):
-        is_staff = self.request.user.is_authenticated and self.request.user.is_staff
-        return _drivers_queryset(for_staff=is_staff)
+        from julmin_taxis.staff_auth import user_is_staff
+        return _drivers_queryset(for_staff=user_is_staff(self.request))
 
 
 class DriverDetailView(generics.RetrieveAPIView):
