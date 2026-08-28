@@ -651,6 +651,35 @@ function pushLog(msg, extra) {
   } catch (e) {}
 }
 
+function toHttpsDaxiUrl(raw) {
+  let s = String(raw || '').trim();
+  if (!s) return '';
+  try {
+    if (/^daxi:/i.test(s)) s = s.replace(/^daxi:\/\//i, 'https://daxipro.com/');
+    const u = new URL(s, 'https://daxipro.com');
+    const host = String(u.hostname || '').replace(/^www\./i, '').toLowerCase();
+    if (host && host !== 'daxipro.com') return '';
+    return u.origin + u.pathname + u.search + u.hash;
+  } catch (e) {
+    return '';
+  }
+}
+
+function isOffHomeDeepLink(raw) {
+  if (window.DaxiDeepLinkRouter && typeof window.DaxiDeepLinkRouter.isOffHome === 'function') {
+    return window.DaxiDeepLinkRouter.isOffHome(raw);
+  }
+  const dest = toHttpsDaxiUrl(raw);
+  if (!dest) return false;
+  try {
+    const u = new URL(dest);
+    const path = (u.pathname || '/').replace(/\/+$/, '') || '/';
+    return path !== '/';
+  } catch (e2) {
+    return false;
+  }
+}
+
 function installDaxiDeepLink() {
   if (window.DaxiDeepLink && window.DaxiDeepLink._daxiNative) return window.DaxiDeepLink;
   const api = {
@@ -659,7 +688,7 @@ function installDaxiDeepLink() {
     handle(raw) {
       const url = String(raw || '').trim();
       if (!url) return;
-      pushLog('Deep link received', { url: url.slice(0, 120) });
+      pushLog('Deep link received', { url: url.slice(0, 180) });
       this._pending = url;
       try {
         sessionStorage.setItem('daxi_pending_deeplink', url);
@@ -685,61 +714,23 @@ function installDaxiDeepLink() {
       Preferences.remove({ key: 'daxi_pending_deeplink' }).catch(() => {});
     },
     execute(raw) {
-      const url = String(raw || '');
-      const tarif = url.match(/#\/tarif\/([^/?#]+)/) || url.match(/daxi:\/\/tarif\/([^/?#]+)/i);
-      if (tarif) {
-        location.hash = '#/tarif/' + tarif[1];
-        pushLog('Deep link executed', { kind: 'tarif' });
+      const url = String(raw || '').trim();
+      if (!url) return true;
+      if (window.DaxiDeepLinkRouter) {
+        const parsed = window.DaxiDeepLinkRouter.parse(url);
+        pushLog('Deep link executed', { type: parsed && parsed.type, path: parsed && parsed.path });
+        window.DaxiDeepLinkRouter.apply(parsed);
         return true;
       }
-      const track = url.match(/(?:\/track\/|daxi:\/\/track\/)([^/?#]+)/i);
-      if (track) {
-        fetch(absUrl('/api/track/' + track[1] + '/'), { credentials: 'include' })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => {
-            if (!data) return;
-            toast('Course partagée ouverte');
-            window._daxiSharedTrack = data;
-          })
-          .catch(() => {});
-        pushLog('Deep link executed', { kind: 'track' });
+      const dest = toHttpsDaxiUrl(url);
+      if (!dest) return false;
+      try {
+        const here = location.origin + location.pathname + location.search + location.hash;
+        if (here !== dest) location.assign(dest);
         return true;
-      }
-      const oidMatch = url.match(/(?:commande\/|#courses\/|#order-|\/orders?\/|order[_-]|daxi:\/\/order\/)(\d+)/i);
-      const oid = (oidMatch && oidMatch[1]) || '';
-      const isDriver = /\/driver/i.test(url) || /#order-/.test(url);
-
-      if (isDriver) {
-        if (!/\/driver/i.test(location.pathname || '')) {
-          return false;
-        }
-        pushLog('Deep link executed', { role: 'driver', order_id: oid });
-        if (oid && typeof window._daxiFocusDriverOrder === 'function') {
-          window._daxiFocusDriverOrder(oid);
-          return true;
-        }
-        if (oid) {
-          location.hash = 'order-' + oid;
-          return true;
-        }
+      } catch (e) {
         return false;
       }
-
-      if (typeof window._daxiFocusClientOrder === 'function') {
-        if (oid) {
-          pushLog('Deep link executed', { role: 'client', order_id: oid });
-          window._daxiFocusClientOrder(oid);
-          return true;
-        }
-      }
-      if (oid && typeof window.openOrderSheet === 'function') {
-        try {
-          window.openOrderSheet(oid);
-          pushLog('Deep link executed', { via: 'openOrderSheet', order_id: oid });
-          return true;
-        } catch (e) {}
-      }
-      return false;
     },
   };
   window.DaxiDeepLink = api;
@@ -1025,7 +1016,8 @@ async function restoreOfflineReads() {
   }
 }
 
-async function restoreShellRoleAndRedirect() {
+async function restoreShellRoleAndRedirect(launchUrl) {
+  if (launchUrl && isOffHomeDeepLink(launchUrl)) return false;
   try {
     if (sessionStorage.getItem('daxi_shell_nav') === '1') return false;
   } catch (eNav) {}
@@ -1403,22 +1395,36 @@ async function probeBackend() {
 
 
 function hideSplashWhenPainted() {
-  const hide = () => SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
-  if (window._daxiIntroFirstFrame) { hide(); return; }
-  if (!window._daxiIntroPlaying) { hide(); return; }
-  let done = false;
-  const once = () => { if (!done) { done = true; hide(); } };
-  document.addEventListener('daxi-intro-first-frame', once, { once: true });
-  setTimeout(once, 4000);
+  const hide = () => SplashScreen.hide({ fadeOutDuration: 180 }).catch(() => {});
+  hide();
+  if (window._daxiIntroFirstFrame || !window._daxiIntroPlaying) return;
+  document.addEventListener('daxi-intro-first-frame', hide, { once: true });
+  setTimeout(hide, 2500);
+}
+
+async function readLaunchUrl() {
+  let url = '';
+  try {
+    const launch = await App.getLaunchUrl();
+    if (launch && launch.url) url = String(launch.url);
+  } catch (e) {}
+  if (!url) {
+    try { url = sessionStorage.getItem('daxi_pending_deeplink') || ''; } catch (e2) {}
+  }
+  return url;
 }
 
 async function boot() {
   if (!Capacitor.isNativePlatform()) return;
   markNative();
+  hideSplashWhenPainted();
   const cfg = installDaxiApiGlobal();
   if (window.DaxiApi) window.DaxiApi.probe = probeBackend;
   if (!cfg.ok) toast('[DAXI API] ' + (cfg.error || 'configuration invalide'));
-  if (await restoreShellRoleAndRedirect()) return;
+  installDaxiDeepLink();
+  const launchUrl = await readLaunchUrl();
+  if (launchUrl) handleDeepLink(launchUrl);
+  if (await restoreShellRoleAndRedirect(launchUrl)) return;
   try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (eNav2) {}
   installNativeBridge();
   patchNetworking();
@@ -1430,7 +1436,6 @@ async function boot() {
   }
   probeBackend().catch(() => {});
   await initChrome();
-  hideSplashWhenPainted();
   const startMap = () => initNativeMap();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startMap);
   else startMap();
@@ -1443,14 +1448,13 @@ async function boot() {
   const gid = window._daxiGuestId || localStorage.getItem('daxi_guest_id') || '';
   if (gid) persistNative('guest_id', gid);
   if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
-  installDaxiDeepLink();
   let tries = 0;
   const flushLink = () => {
     tries += 1;
     if (window.DaxiDeepLink) window.DaxiDeepLink.ready();
-    if (tries < 20) setTimeout(flushLink, 500);
+    if (tries < 8) setTimeout(flushLink, 400);
   };
-  setTimeout(flushLink, 400);
+  setTimeout(flushLink, 200);
 }
 
 try {

@@ -58,15 +58,20 @@ class CloudinaryMediaStorage(Storage):
             pass
 
     def exists(self, name):
-        return bool(name)
+        if not name:
+            return False
+        name = str(name).lstrip('/')
+        if name.startswith('daxi/') or name.startswith('http://') or name.startswith('https://'):
+            return True
+        return self._local_fallback().exists(name)
 
     def url(self, name):
         if not name:
             return ''
-        name = str(name)
+        name = str(name).lstrip('/')
         if name.startswith('http://') or name.startswith('https://'):
             return name
-        if cloudinary_configured():
+        if cloudinary_configured() and name.startswith('daxi/'):
             cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '')
             if cloud_name:
                 return f'https://res.cloudinary.com/{cloud_name}/image/upload/{name}'

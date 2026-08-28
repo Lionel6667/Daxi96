@@ -83,19 +83,7 @@ def aasa_body() -> dict:
     if team:
         details.append({
             'appID': f'{team}.{bundle}',
-            'paths': [
-                '/',
-                '/driver/*',
-                '/wa/*',
-                '/track/*',
-                '/payer/*',
-                '/payment/*',
-                '/recu_*',
-                '/compte/*',
-                '/entreprise/*',
-                '/assistance/*',
-                '/blog/*',
-            ],
+            'paths': ['*'],
         })
     return {'applinks': {'apps': [], 'details': details}}
 

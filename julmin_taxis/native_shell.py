@@ -3,12 +3,10 @@
 import os
 import re
 
-NATIVE_CAP_HEAD = (
+NATIVE_ENV_HEAD = (
     '<script>'
     'window.DAXI_API_ENV=window.DAXI_API_ENV||"development";'
     'window.DAXI_API_BASE_URL=window.DAXI_API_BASE_URL||"";'
-    
-    
     'window.DAXI_API_ALLOW_HTTP=(location.protocol==="http:");'
     'window.DAXI_API_DEBUG_LOGS=true;'
     'window.DAXI_USE_GOOGLE_MAPS=true;'
@@ -16,8 +14,10 @@ NATIVE_CAP_HEAD = (
     'window._daxiLiveBaseUrl=window._daxiLiveBaseUrl||"";'
     'window._daxiCapacitorApp=true;'
     '</script>\n'
-    '<script src="/js/daxi-capacitor.js?v=20260823i"></script>\n'
 )
+NATIVE_ROUTER_TAG = '<script src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>\n'
+NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828a"></script>\n'
+NATIVE_CAP_HEAD = NATIVE_ENV_HEAD + NATIVE_ROUTER_TAG + NATIVE_CAP_TAG
 
 
 INTRO_PATH = os.path.join(
@@ -162,19 +162,25 @@ def unblock_stylesheets(content):
     return content[:head_match.start()] + new_head + content[head_match.end():]
 
 
-def inject_native_head(content):
+def inject_native_head(content, request=None):
     if not content or not isinstance(content, str):
         return content
     full = _is_full_document(content)
     if full:
         content = inline_intro(content)
-    content = unblock_stylesheets(content)
     inject = ''
     if '<base ' not in content.lower():
         inject += '<base href="/" />\n'
+    if '_daxiCapacitorApp' not in content and 'DAXI_API_ENV' not in content:
+        inject += NATIVE_ENV_HEAD
+    if 'daxi-deeplink-router.js' not in content:
+        inject += NATIVE_ROUTER_TAG
     if 'daxi-capacitor.js' not in content:
-        inject += NATIVE_CAP_HEAD
-    if full and 'data-daxi-intro=' not in content and 'daxi-intro.js' not in content:
+        inject += NATIVE_CAP_TAG
+    path = '/'
+    if request is not None:
+        path = request.path or '/'
+    if full and path in ('/', '') and 'data-daxi-intro=' not in content and 'daxi-intro.js' not in content:
         inject += _intro_boot_tags()
     if not inject:
         return content
@@ -202,7 +208,7 @@ class DaxiNativeShellMiddleware:
             content = response.content.decode(response.charset or 'utf-8')
         except Exception:
             return response
-        next_content = inject_native_head(content)
+        next_content = inject_native_head(content, request)
         if next_content != content:
             response.content = next_content.encode(response.charset or 'utf-8')
             if response.has_header('Content-Length'):

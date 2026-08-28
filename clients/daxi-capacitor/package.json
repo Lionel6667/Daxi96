@@ -1,11 +1,11 @@
 {
   "name": "daxi-capacitor",
-  "version": "1.6.0",
+  "version": "1.6.2",
   "private": true,
   "description": "DAXI — UI HTML/CSS/JS + Capacitor + services natifs iOS/Android",
   "scripts": {
     "bundle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/bundle-www.ps1",
-    "build:bridge": "esbuild capacitor-src/main.js --bundle --format=iife --outfile=www/js/daxi-capacitor.js --platform=browser",
+    "build:bridge": "esbuild capacitor-src/main.js --bundle --format=iife --outfile=www/js/daxi-capacitor.js --platform=browser && esbuild capacitor-src/main.js --bundle --format=iife --outfile=../../static/js/daxi-capacitor.js --platform=browser",
     "sync": "npm run bundle && npx cap sync",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios"

@@ -11892,7 +11892,7 @@
 <script src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
 <script src="/static/js/daxi-maplibre.js?v=20260777"></script>
 <script src="/static/js/daxi-map-provider.js?v=20260777"></script>
-<script src="/static/js/daxi-deeplink-router.js?v=20260824a"></script>
+<script src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>
 <script src="/static/js/daxi-places-catalog.js?v=20260814b"></script>
 <script src="/static/js/daxi-assist-ai.js?v=20260814f"></script>
 <script src="/static/js/daxi-routes.js?v=20260803r"></script>
@@ -25531,7 +25531,13 @@ function _getTopDriversData() {
 function _daxiAbsMediaUrl(url) {
     url = String(url || '').trim();
     if (!url) return '';
-    if (/^(blob:|data:)/i.test(url)) return url;
+    if (/^blob:/i.test(url)) return url;
+    if (/^data:/i.test(url)) {
+        if (!/^data:image\//i.test(url) || url.indexOf(',') < 0) return '';
+        var payload = url.split(',')[1] || '';
+        if (payload.length < 200) return '';
+        return url;
+    }
     if (url.indexOf('//') === 0) url = 'https:' + url;
     var origin = '';
     try { origin = String(location.origin || ''); } catch (e0) {}
@@ -25540,6 +25546,7 @@ function _daxiAbsMediaUrl(url) {
         if (/^https?:\/\//i.test(url)) {
             var u = new URL(url);
             if (/cloudinary\.com$/i.test(u.hostname) || /\.cloudinary\.com$/i.test(u.hostname)) {
+                if (/\/upload\/drivers\//i.test(u.pathname)) return '';
                 return url.replace(/^http:\/\//i, 'https://');
             }
             if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {

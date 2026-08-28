@@ -1,6 +1,8 @@
 package com.daxipro.daxi;
 
+import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,54 +20,116 @@ import java.util.Map;
 
 public class MainActivity extends BridgeActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private int ngrokLoadAttempts = 0;
+    private int siteLoadAttempts = 0;
+    private boolean consumedDeepLink = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         applySystemBars();
-        skipNgrokBrowserWarning();
+        installRetryClient();
+        mainHandler.postDelayed(() -> loadDeepLink(getIntent()), 250);
+        watchBlankFirstLoad();
     }
 
-    
-    private void skipNgrokBrowserWarning() {
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        loadDeepLink(intent);
+    }
+
+    private void loadDeepLink(Intent intent) {
+        if (intent == null || getBridge() == null) {
+            return;
+        }
+        Uri data = intent.getData();
+        if (data == null) {
+            return;
+        }
+        String url = toSiteUrl(data);
+        if (url == null) {
+            return;
+        }
+        WebView webView = getBridge().getWebView();
+        if (webView == null) {
+            return;
+        }
+        consumedDeepLink = true;
+        webView.post(() -> webView.loadUrl(url));
+    }
+
+    private void watchBlankFirstLoad() {
+        mainHandler.postDelayed(() -> {
+            if (consumedDeepLink || getBridge() == null) {
+                return;
+            }
+            WebView webView = getBridge().getWebView();
+            if (webView == null) {
+                return;
+            }
+            String current = webView.getUrl();
+            if (current == null || current.isEmpty() || "about:blank".equals(current)) {
+                webView.loadUrl("https://daxipro.com/");
+            }
+        }, 1600);
+    }
+
+    private String toSiteUrl(Uri data) {
+        String scheme = data.getScheme() == null ? "" : data.getScheme().toLowerCase();
+        if ("daxi".equals(scheme)) {
+            String host = data.getHost() == null ? "" : data.getHost();
+            String path = data.getPath() == null ? "" : data.getPath();
+            String query = data.getQuery() == null ? "" : ("?" + data.getQuery());
+            String hash = data.getFragment() == null ? "" : ("#" + data.getFragment());
+            String rest = host + path;
+            if (!rest.startsWith("/")) {
+                rest = "/" + rest;
+            }
+            return "https://daxipro.com" + rest + query + hash;
+        }
+        if (!"https".equals(scheme) && !"http".equals(scheme)) {
+            return null;
+        }
+        String host = data.getHost() == null ? "" : data.getHost().toLowerCase();
+        if (!"daxipro.com".equals(host) && !"www.daxipro.com".equals(host)) {
+            return null;
+        }
+        return data.toString();
+    }
+
+    private void installRetryClient() {
         if (getBridge() == null) {
             return;
         }
-        String serverUrl = getBridge().getServerUrl();
         WebView webView = getBridge().getWebView();
-        if (webView == null || serverUrl == null) {
+        if (webView == null) {
             return;
         }
-        String host = serverUrl.toLowerCase();
-        if (!host.contains("ngrok")) {
-            return;
-        }
-        Map<String, String> headers = new HashMap<>();
-        headers.put("ngrok-skip-browser-warning", "true");
-        String url = serverUrl.endsWith("/") ? serverUrl : serverUrl + "/";
-        webView.post(() -> {
-            webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
-                @Override
-                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                    super.onReceivedError(view, request, error);
-                    if (request == null || !request.isForMainFrame()) {
-                        return;
-                    }
-                    retryNgrokLoad(view, url, headers);
+        webView.post(() -> webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request == null || !request.isForMainFrame() || view == null) {
+                    return;
                 }
-            });
-            webView.loadUrl(url, headers);
-        });
+                retrySiteLoad(view, request.getUrl() != null ? request.getUrl().toString() : null);
+            }
+        }));
     }
 
-    private void retryNgrokLoad(WebView view, String url, Map<String, String> headers) {
-        if (ngrokLoadAttempts >= 4 || view == null) {
+    private void retrySiteLoad(WebView view, String url) {
+        if (siteLoadAttempts >= 4 || view == null) {
             return;
         }
-        ngrokLoadAttempts += 1;
-        long delay = 700L * ngrokLoadAttempts;
-        mainHandler.postDelayed(() -> view.loadUrl(url, headers), delay);
+        String target = url;
+        if (target == null || target.isEmpty()) {
+            target = "https://daxipro.com/";
+        }
+        siteLoadAttempts += 1;
+        long delay = 600L * siteLoadAttempts;
+        String loadUrl = target;
+        mainHandler.postDelayed(() -> view.loadUrl(loadUrl), delay);
     }
 
     @Override

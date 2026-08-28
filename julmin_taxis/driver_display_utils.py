@@ -25,21 +25,49 @@ def _abs_url(url: str, request=None) -> str:
     return url
 
 
+def _usable_data_uri(raw: str) -> str:
+    """Ignore truncated/corrupt base64 leftovers that browsers reject as ERR_INVALID_URL."""
+    b64 = (raw or '').strip()
+    if not b64:
+        return ''
+    if b64.startswith('data:'):
+        payload = b64.split(',', 1)[-1] if ',' in b64 else ''
+        if len(payload) < 200 or not b64.lower().startswith('data:image/'):
+            return ''
+        return b64
+    if len(b64) < 200:
+        return ''
+    return f'data:image/jpeg;base64,{b64}'
+
+
 def _driver_photo_url(driver, order=None, request=None) -> str:
     if order and getattr(order, 'driver_photo_url', None):
-        return _abs_url(order.driver_photo_url, request)
-    if driver and getattr(driver, 'photo', None):
-        try:
-            if driver.photo:
-                return _abs_url(driver.photo.url, request)
-        except Exception:
-            pass
+        stored = _abs_url(order.driver_photo_url, request)
+        if stored.startswith('data:'):
+            stored = _usable_data_uri(stored)
+        if stored and 'res.cloudinary.com' in stored and '/upload/drivers/' in stored:
+            stored = ''
+        if stored:
+            return stored
+    if driver and getattr(driver, 'photo', None) and driver.photo:
+        name = str(getattr(driver.photo, 'name', '') or '').lstrip('/')
+        usable = True
+        if name and not name.startswith(('daxi/', 'http://', 'https://')):
+            try:
+                usable = bool(driver.photo.storage.exists(name))
+            except Exception:
+                usable = not name.startswith('drivers/')
+        if usable:
+            try:
+                url = _abs_url(driver.photo.url, request)
+                if url and 'res.cloudinary.com' in url and '/upload/drivers/' in url:
+                    url = ''
+                if url:
+                    return url
+            except Exception:
+                pass
     if driver and getattr(driver, 'photo_base64', None):
-        b64 = (driver.photo_base64 or '').strip()
-        if b64.startswith('data:'):
-            return b64
-        if b64:
-            return f'data:image/jpeg;base64,{b64}'
+        return _usable_data_uri(driver.photo_base64)
     return ''
 
 

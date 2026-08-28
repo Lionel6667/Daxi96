@@ -39,17 +39,8 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="daxipro.com" android:path="/" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/driver" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/wa/" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/track/" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/payer/" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/payment/" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/recu_" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/compte" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/entreprise" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/assistance" />
-                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/blog" />
+                <data android:scheme="https" android:host="daxipro.com" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="www.daxipro.com" android:pathPrefix="/" />
             </intent-filter>
 
         </activity>

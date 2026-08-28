@@ -57,14 +57,8 @@ class DriverSerializer(serializers.ModelSerializer):
         return None
 
     def get_photo_url(self, obj):
-        if obj.photo:
-            return obj.photo.url
-        b64 = (getattr(obj, 'photo_base64', None) or '').strip()
-        if b64.startswith('data:'):
-            return b64
-        if b64:
-            return f'data:image/jpeg;base64,{b64}'
-        return None
+        from julmin_taxis.driver_display_utils import _driver_photo_url
+        return _driver_photo_url(obj, request=self.context.get('request')) or None
 
     def get_reviews_count(self, obj):
         return obj.reviews.count()

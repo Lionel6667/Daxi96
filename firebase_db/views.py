@@ -36,6 +36,14 @@ def _broadcast_change(path, event_type, data):
         pass
 
 
+def _order_driver_photo(driver, order):
+    try:
+        from julmin_taxis.driver_display_utils import _driver_photo_url
+        return _driver_photo_url(driver, order) or ''
+    except Exception:
+        return ''
+
+
 def _order_to_firebase(order):
     """Convert a Django Order to a Firebase-compatible dict."""
     driver = order.driver
@@ -65,7 +73,7 @@ def _order_to_firebase(order):
         'driverId': driver.firebase_uid if driver else (order.firebase_uid or ''),
         'driverName': (driver.get_full_name() if driver else None) or order.driver_name or '',
         'driverPhone': (driver.phone if driver else None) or order.driver_phone or '',
-        'driverPhoto': (driver.photo_base64[:200] if driver and driver.photo_base64 else '') or order.driver_photo_url or '',
+        'driverPhoto': _order_driver_photo(driver, order),
                                 
         'userId': order.firebase_user_id or '',
         'guestId': order.guest_id or '',

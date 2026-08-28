@@ -433,19 +433,8 @@ class AdminLiveMapView(APIView):
         from julmin_taxis.driver_presence import get_driver_presence
 
         def _driver_photo_url(drv):
-            if drv.photo:
-                try:
-                    return request.build_absolute_uri(drv.photo.url)
-                except Exception:
-                    return drv.photo.url
-            b64 = (getattr(drv, 'photo_base64', None) or '').strip()
-            if not b64:
-                return ''
-            if b64.startswith('data:') and len(b64) >= 200:
-                return b64
-            if len(b64) >= 100:
-                return f'data:image/jpeg;base64,{b64}'
-            return ''
+            from julmin_taxis.driver_display_utils import _driver_photo_url as shared_photo
+            return shared_photo(drv, request=request) or ''
 
         now = timezone.now()
         live_map_horizon = now + timedelta(hours=1)

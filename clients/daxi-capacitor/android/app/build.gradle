@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-def keystorePropsFile = file('../../daxi-android/keystore.properties')
+def keystorePropsFile = file('../../../daxi-android/keystore.properties')
 def keystoreProps = new Properties()
 if (keystorePropsFile.exists()) {
     keystoreProps.load(new FileInputStream(keystorePropsFile))
@@ -30,8 +30,8 @@ android {
         applicationId "com.daxipro.daxi"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 29
-        versionName "1.6.0"
+        versionCode 31
+        versionName "1.6.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
