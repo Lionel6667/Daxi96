@@ -21,6 +21,7 @@
      data-client-phone="{{ o.client_phone|default:'' }}"
      {% if o.client_gps_lat %}data-client-gps-lat="{{ o.client_gps_lat|daxi_coord }}"{% endif %}
      {% if o.client_gps_lng %}data-client-gps-lng="{{ o.client_gps_lng|daxi_coord }}"{% endif %}
+     {% if o.client_gps_accuracy %}data-client-gps-accuracy="{{ o.client_gps_accuracy|floatformat:0 }}"{% endif %}
      data-is-paused="{{ o.is_paused|yesno:'true,false' }}"
      data-is-extended="{{ o.is_extended|yesno:'true,false' }}"
      data-pause-accum-secs="{{ o.pause_accumulated_seconds|default:0 }}"

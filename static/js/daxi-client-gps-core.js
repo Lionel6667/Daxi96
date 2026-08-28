@@ -2,11 +2,11 @@
 (function (global) {
     'use strict';
 
-    var VALIDATED_MAX_M = 200;
-    var TARGET_M = 60;
-    var EXTREME_REJECT_M = 10000;
-    var APPROX_VISUAL_MAX_MOBILE = 1500;
-    var APPROX_VISUAL_MAX_DESKTOP = 800;
+    var VALIDATED_MAX_M = 300;
+    var TARGET_M = 100;
+    var EXTREME_REJECT_M = 300;
+    var APPROX_VISUAL_MAX_MOBILE = 300;
+    var APPROX_VISUAL_MAX_DESKTOP = 300;
     var MAX_JUMP_SPEED_MS = 42;
     var MAX_FIX_AGE_MS = 45000;
 
@@ -43,8 +43,7 @@
     }
 
     function approxVisualMax() {
-        if (isNativeClient()) return 5000;
-        return isDesktopClient() ? APPROX_VISUAL_MAX_DESKTOP : APPROX_VISUAL_MAX_MOBILE;
+        return VALIDATED_MAX_M;
     }
 
     function canShowApproxVisual(acc) {
@@ -155,7 +154,7 @@
             reason = 'OUT_OF_COVERAGE';
         } else if (!isValidatedAccuracy(acc)) {
             decision = 'APPROXIMATE';
-            reason = 'ACCURACY_ABOVE_200M';
+            reason = 'ACCURACY_ABOVE_LIMIT';
             if (!state.approx || acc < state.approx.acc) {
                 state.approx = { lat: lat, lng: lng, acc: acc, ts: ts, source: source };
             }

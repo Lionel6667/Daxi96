@@ -12377,6 +12377,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="hidden" name="destination" id="destinationHidden">
                     <input type="hidden" name="pickup_lat" id="pickupLatHidden">
                     <input type="hidden" name="pickup_lng" id="pickupLngHidden">
+                    <input type="hidden" name="client_gps_lat" id="clientGpsLatHidden">
+                    <input type="hidden" name="client_gps_lng" id="clientGpsLngHidden">
+                    <input type="hidden" name="client_gps_accuracy" id="clientGpsAccHidden">
                     <input type="hidden" name="destination_lat" id="destLatHidden">
                     <input type="hidden" name="destination_lng" id="destLngHidden">
                     <input type="hidden" name="date" id="bookingDateHidden">
@@ -12397,7 +12400,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         hx-swap="innerHTML"
                         hx-disabled-elt="this"
                         hx-timeout="25000"
-                        hx-include="[name=pickup],[name=destination],[name=pickup_lat],[name=pickup_lng],[name=destination_lat],[name=destination_lng],[name=date],[name=time],[name=notes],[name=passengerCount],[name=trip_type],[name=is_later],[name=guest_id],[name=service_plan],[name=fixed_price],[name=round_trip_wait_minutes],[name=round_trip_allow_driver_other_rides],[name=plan_waypoints],[name=affiliate_code]"
+                        hx-include="[name=pickup],[name=destination],[name=pickup_lat],[name=pickup_lng],[name=destination_lat],[name=destination_lng],[name=client_gps_lat],[name=client_gps_lng],[name=client_gps_accuracy],[name=date],[name=time],[name=notes],[name=passengerCount],[name=trip_type],[name=is_later],[name=guest_id],[name=service_plan],[name=fixed_price],[name=round_trip_wait_minutes],[name=round_trip_allow_driver_other_rides],[name=plan_waypoints],[name=affiliate_code]"
                         class="w-full gold-button py-2 !rounded-button font-semibold text-base shadow-lg cursor-pointer btn-glow"
                         data-translate="order_taxi_btn">
                         COMMANDER UN TAXI
@@ -19031,6 +19034,30 @@ function _syncBookingHiddenFields() {
     if (waitSel && waitH) waitH.value = waitSel.value || '0';
     if (allowH && allowCb) allowH.value = allowCb.checked ? 'true' : 'false';
     if (typeof _daxiPersistAffiliateRef === 'function') _daxiPersistAffiliateRef();
+    _syncClientGpsAccuracyHiddenFields();
+}
+
+function _syncClientGpsAccuracyHiddenFields() {
+    var accH = document.getElementById('clientGpsAccHidden');
+    var cLatH = document.getElementById('clientGpsLatHidden');
+    var cLngH = document.getElementById('clientGpsLngHidden');
+    var maxM = (typeof DAXI_GPS_VALIDATED_MAX_M === 'number') ? DAXI_GPS_VALIDATED_MAX_M : 300;
+    var src = null;
+    if (window._daxiPickupFromGps) {
+        var validated = window.DaxiClientGps && DaxiClientGps.getValidated && DaxiClientGps.getValidated();
+        var last = window._lastClientGpsPos;
+        if (validated && validated.acc <= maxM) src = validated;
+        else if (last && last.acc != null && last.acc <= maxM) src = last;
+    }
+    if (src && src.lat != null && src.lng != null) {
+        if (cLatH) cLatH.value = src.lat;
+        if (cLngH) cLngH.value = src.lng;
+        if (accH) accH.value = Math.round(src.acc);
+    } else {
+        if (cLatH) cLatH.value = '';
+        if (cLngH) cLngH.value = '';
+        if (accH) accH.value = '';
+    }
 }
 
 function _validateBookingForm() {
@@ -21149,6 +21176,7 @@ function _syncGpsPickupHiddenFields(lat, lng) {
     var lngEl = document.getElementById('pickupLngHidden');
     if (latEl) latEl.value = lat;
     if (lngEl) lngEl.value = lng;
+    _syncClientGpsAccuracyHiddenFields();
 }
 
 function _hideGpsPickupMarker() {
@@ -24099,6 +24127,7 @@ function _daxiCollectBookingFormData() {
     if (typeof _syncBookingHiddenFields === 'function') _syncBookingHiddenFields();
     var names = [
         'pickup', 'destination', 'pickup_lat', 'pickup_lng', 'destination_lat', 'destination_lng',
+        'client_gps_lat', 'client_gps_lng', 'client_gps_accuracy',
         'date', 'time', 'notes', 'passengerCount', 'trip_type', 'is_later', 'guest_id',
         'service_plan', 'fixed_price', 'round_trip_wait_minutes', 'round_trip_allow_driver_other_rides',
         'plan_waypoints', 'affiliate_code'
@@ -29256,7 +29285,7 @@ window._daxiPersistLang = function(lang) {
     }
 })();
 </script>
-<script src="/static/js/daxi-client-gps-core.js?v=20260804i"></script>
+<script src="/static/js/daxi-client-gps-core.js?v=20260828a"></script>
 <script src="/static/js/daxi-gps-trace.js?v=20260805"></script>
 <script src="/static/js/gps-precision-engine.js?v=20260804g"></script>
 <script>
@@ -32614,11 +32643,11 @@ window.daxiClientLogout = daxiClientLogout;
 })();
 
 
-var DAXI_GPS_VALIDATED_MAX_M = 200;
-var DAXI_GPS_TARGET_M = 60;
-var DAXI_GPS_QUARTIER_ACCURACY = 800;
-var DAXI_GPS_MAX_ACCEPT_M = 200;
-var DAXI_GPS_FALLBACK_M = 200;
+var DAXI_GPS_VALIDATED_MAX_M = 300;
+var DAXI_GPS_TARGET_M = 100;
+var DAXI_GPS_QUARTIER_ACCURACY = 300;
+var DAXI_GPS_MAX_ACCEPT_M = 300;
+var DAXI_GPS_FALLBACK_M = 300;
 var DAXI_GPS_QUARTIER_MS = 0;
 var DAXI_GPS_SCAN_MAX_MS = 15000;
 var DAXI_GEO_GRANTED_KEY = 'daxi_geo_granted';
@@ -33499,8 +33528,8 @@ function _createClientGpsEngine() {
     return DaxiGpsEngine.create({
         mode: _clientGpsEngineMode(),
         targetAccuracy: DAXI_GPS_TARGET_M,
-        maxAccuracy: 3000,
-        displayMaxAccuracy: 3000,
+        maxAccuracy: DAXI_GPS_VALIDATED_MAX_M,
+        displayMaxAccuracy: DAXI_GPS_VALIDATED_MAX_M,
         geoFollow: { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
     });
 }
@@ -33908,8 +33937,9 @@ function _getClientGpsZoom(accuracy) {
     if (accuracy <= 12) return 19;
     if (accuracy <= 25) return 18;
     if (accuracy <= 60) return 17;
-    if (accuracy <= 120) return 16;
-    return 15;
+    if (accuracy <= 100) return 16;
+    if (accuracy <= 200) return 15;
+    return 14;
 }
 
 function _daxiFlushClientGpsToMap() {

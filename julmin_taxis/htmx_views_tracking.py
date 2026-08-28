@@ -159,6 +159,7 @@ def _order_track_dict(order: Order):
         'driver_lng': drv_lng,
         'client_lat': client_lat,
         'client_lng': client_lng,
+        'client_gps_accuracy': order.client_gps_accuracy,
         'destination_lat': dest_lat,
         'destination_lng': dest_lng,
         'is_round_trip': is_round_trip_order(order),
@@ -507,26 +508,50 @@ def client_update_gps(request, order_id):
     
     try:
         lat_f, lng_f = float(lat), float(lng)
+        from julmin_taxis.gps_accuracy import parse_client_gps_accuracy, CLIENT_GPS_MAX_M
+        accuracy_m = parse_client_gps_accuracy(acc_raw)
+        if acc_raw and accuracy_m is None:
+            try:
+                too_coarse = float(acc_raw)
+            except ValueError:
+                too_coarse = None
+            if too_coarse is not None and too_coarse > CLIENT_GPS_MAX_M:
+                gps_trace(
+                    'BACKEND',
+                    'BACKEND_CLIENT_UPDATE_GPS_REJECT',
+                    ok=False,
+                    order_id=order.pk,
+                    reason='accuracy_too_coarse',
+                    accuracy=acc_raw,
+                )
+                return JsonResponse({'error': 'GPS trop imprécis.'}, status=400)
+
         order.client_gps_lat = lat_f
         order.client_gps_lng = lng_f
         order.client_gps_updated_at = timezone.now()
-        order.save(update_fields=['client_gps_lat', 'client_gps_lng', 'client_gps_updated_at'])
+        update_fields = ['client_gps_lat', 'client_gps_lng', 'client_gps_updated_at']
+        if accuracy_m is not None:
+            order.client_gps_accuracy = accuracy_m
+            update_fields.append('client_gps_accuracy')
+        order.save(update_fields=update_fields)
         gps_trace(
             'BACKEND',
             'BACKEND_CLIENT_UPDATE_GPS_SAVED',
             order_id=order.pk,
             lat=lat_f,
             lng=lng_f,
+            accuracy=accuracy_m,
             client_gps_updated_at=order.client_gps_updated_at.isoformat(),
         )
-
-        accuracy_m = None
-        acc_raw = request.POST.get('accuracy', '').strip()
-        if acc_raw:
-            try:
-                accuracy_m = float(acc_raw)
-            except ValueError:
-                accuracy_m = None
+        if order.driver_id:
+            gps_payload = {
+                'order_id': order.pk,
+                'lat': lat_f,
+                'lng': lng_f,
+                'accuracy': accuracy_m if accuracy_m is not None else order.client_gps_accuracy,
+            }
+            _notify_ws_tracking(f'order_{order.pk}', 'client_gps_updated', gps_payload)
+            _notify_ws_tracking(f'driver_{order.driver_id}', 'client_gps_updated', gps_payload)
 
         from julmin_taxis.meeting_point_utils import should_prompt_relocate
         active = {'pending', 'price_proposed', 'price_confirmed', 'driver_assigned', 'on_way', 'arrived', 'in_progress'}

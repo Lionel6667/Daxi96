@@ -161,6 +161,9 @@ class Order(models.Model):
     client_gps_lat = models.FloatField(null=True, blank=True, verbose_name='GPS client lat')
     client_gps_lng = models.FloatField(null=True, blank=True, verbose_name='GPS client lng')
     client_gps_updated_at = models.DateTimeField(null=True, blank=True)
+    client_gps_accuracy = models.FloatField(
+        null=True, blank=True, verbose_name='Précision GPS client (m)'
+    )
     meeting_lat = models.FloatField(null=True, blank=True, verbose_name='Lieu RDV lat (figé)')
     meeting_lng = models.FloatField(null=True, blank=True, verbose_name='Lieu RDV lng (figé)')
     meeting_relocate_prompted_at = models.DateTimeField(null=True, blank=True)

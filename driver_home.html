@@ -103,6 +103,26 @@
     #mission-panel{display:none;}
     #mission-panel.is-active{display:block !important;}
     .mission-card{border-radius:28px;padding:18px;border:1px solid rgba(245,158,11,.2);}
+    #drv-client-gps-warn{
+        display:none;position:absolute;left:16px;right:16px;
+        top:calc(env(safe-area-inset-top,0px) + 72px);z-index:450;
+        background:rgba(15,23,42,.94);border:1px solid rgba(245,158,11,.45);
+        border-radius:16px;padding:12px 14px;color:#f8fafc;
+        box-shadow:0 10px 32px rgba(0,0,0,.4);backdrop-filter:blur(16px);
+        pointer-events:auto;
+    }
+    #drv-client-gps-warn.is-on{display:block;}
+    #drv-client-gps-warn .drv-gps-warn-title{font-size:12px;font-weight:800;color:#fbbf24;margin-bottom:4px;}
+    #drv-client-gps-warn .drv-gps-warn-body{font-size:12px;line-height:1.4;color:#e2e8f0;}
+    #drv-client-gps-warn button{
+        margin-top:8px;width:100%;padding:9px;border:none;border-radius:10px;
+        background:#f59e0b;color:#000;font-weight:800;font-size:12px;cursor:pointer;
+    }
+    #mission-gps-accuracy{
+        display:none;margin-bottom:10px;padding:10px 12px;border-radius:12px;
+        background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);
+        color:#fde68a;font-size:11px;line-height:1.4;font-weight:600;
+    }
 
     
     #orders-drawer{position:fixed;bottom:0;left:0;right:0;height:78%;background:#0a0f1c;border-radius:32px 32px 0 0;border:1px solid rgba(255,255,255,.06);z-index:1200;transform:translateY(100%);transition:transform .55s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;}
@@ -289,6 +309,11 @@
 <div id="drv-map-stage" class="daxi-map-stage">
     <div id="drv-map-placeholder" class="daxi-map-placeholder" aria-hidden="false"></div>
     <div id="map" class="daxi-map-live-layer"></div>
+    <div id="drv-client-gps-warn" role="status">
+        <div class="drv-gps-warn-title"><i class="ri-map-pin-range-line"></i> Localisation imprécise</div>
+        <div class="drv-gps-warn-body" id="drv-client-gps-warn-text"></div>
+        <button type="button" onclick="toggleChat(true)">Écrire au client</button>
+    </div>
 </div>
 
 
@@ -384,6 +409,7 @@
                 <span id="mission-price-extra" style="font-size:10px;color:#94a3b8;"></span>
             </div>
         </div>
+        <div id="mission-gps-accuracy"></div>
         <button id="mission-action-btn" onclick="missionAction()" style="width:100%;padding:14px;background:var(--amber);color:#000;border:none;border-radius:14px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;cursor:pointer;">Action</button>
     </div>
 </div>
@@ -815,6 +841,7 @@ let _pickupPolyGlow = null;
 let _tripPoly = null;
 let _tripPolyGlow = null;
 let _clientMarker = null;
+let _clientAccCircle = null;
 let _previewMkr = null;
 let _carMarker = null;
 let _carMarkerAdvanced = false;
@@ -1398,6 +1425,7 @@ function _drvDetachMapLayers() {
         if (_clientMarker.map != null) _clientMarker.map = null;
         else if (_clientMarker.setMap) _clientMarker.setMap(null);
     }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(null);
     if (_previewMkr) {
         if (_previewMkr.map != null) _previewMkr.map = null;
         else if (_previewMkr.setMap) _previewMkr.setMap(null);
@@ -1418,6 +1446,7 @@ function _drvReattachMapLayers() {
         if (_clientMarker.map != null) _clientMarker.map = map;
         else if (_clientMarker.setMap) _clientMarker.setMap(map);
     }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(map);
     if (_previewMkr) {
         if (_previewMkr.map != null) _previewMkr.map = map;
         else if (_previewMkr.setMap) _previewMkr.setMap(map);
@@ -1763,6 +1792,8 @@ function _initDriverWS() {
                 _driverRefreshAcceptedDrawer();
                 if (!activeOrder) _syncActiveOrderFromServer();
                 if (typeof showDriverToast === 'function') showDriverToast('Nouvelle activité commande', 'info');
+            } else if (ev === 'client_gps_updated') {
+                _applyClientGpsAccuracyUpdate(payload);
             } else if (ev === 'pickup_updated') {
                 if (activeOrder) _applyStateMachineRoutes();
             } else if (window.DaxiRealtime && (DaxiRealtime.isOrderEvent(ev) || (window.DaxiRealtimeSync && DaxiRealtimeSync.isRealtimeEvent(ev)))) {
@@ -2071,6 +2102,8 @@ function _initOrderWS(orderId) {
                 if (pos && pos[0]) _checkProximity(pos[1], pos[0]);
             } else if ((ev === 'danger_zone' || ev === 'zone_alert') && data) {
                 window._daxiDangerAlert && window._daxiDangerAlert(data.message || data.zone, data.distance_m, data);
+            } else if (ev === 'client_gps_updated') {
+                _applyClientGpsAccuracyUpdate(data);
             } else if (ev === 'status_updated' || ev === 'driver_assigned' || ev === 'driver_on_the_way' || ev === 'driver_arrived' || ev === 'in_progress' || ev === 'coords_set' || ev === 'order_updated' || ev === 'round_trip_pickup_requested') {
                 _driverRefreshActiveOrder(orderId);
                 _driverRefreshAcceptedDrawer();
@@ -2353,6 +2386,7 @@ async function _applyStateMachineRoutes() {
         _setRouteVisible('rt-pickup', false);
         _setRouteVisible('rt-trip', false);
         _hideClientPin();
+        _syncClientGpsAccuracyHint();
         return;
     }
     _pendingRouteApply = false;
@@ -2386,6 +2420,7 @@ async function _applyStateMachineRoutes() {
 
         if (hasPickup) _showClientPin(pLng, pLat);
         else _hideClientPin();
+        _syncClientGpsAccuracyHint();
 
         if (hasPickup) {
             const bounds = new google.maps.LatLngBounds();
@@ -2402,6 +2437,7 @@ async function _applyStateMachineRoutes() {
             _setRouteGeoJSON('rt-pickup-src', toPickup);
             _setRouteVisible('rt-pickup', !!toPickup);
             _showClientPin(pLng, pLat);
+            _syncClientGpsAccuracyHint();
         } else {
             _setRouteGeoJSON('rt-pickup-src', null);
             _setRouteVisible('rt-pickup', false);
@@ -2439,6 +2475,7 @@ async function _applyStateMachineRoutes() {
         _userZoom   = CFG.zoom;
         map.setOptions({ padding: { bottom: window.innerHeight * 0.4 } });
     }
+    _syncClientGpsAccuracyHint();
 
 }
 window._applyStateMachineRoutes = _applyStateMachineRoutes;
@@ -2495,6 +2532,80 @@ function _showClientPin(lng, lat) {
 
 function _hideClientPin() {
     if (_clientMarker) _clientMarker.setMap(null);
+}
+
+function _clientGpsAccuracyMeters(o) {
+    if (!o) return 0;
+    var acc = parseFloat(o.clientGpsAccuracy != null ? o.clientGpsAccuracy : o.client_gps_accuracy);
+    return Number.isFinite(acc) ? acc : 0;
+}
+
+function _shouldWarnDriverClientGps(o) {
+    if (!o || !_orderIsOperationallyActive(o)) return false;
+    var st = o.status || '';
+    if (st === 'in_progress' || st === 'waiting_return' || st === 'completed') return false;
+    return _clientGpsAccuracyMeters(o) > 100;
+}
+
+function _hideClientGpsAccuracyHint() {
+    var banner = document.getElementById('drv-client-gps-warn');
+    if (banner) banner.classList.remove('is-on');
+    var mission = document.getElementById('mission-gps-accuracy');
+    if (mission) {
+        mission.style.display = 'none';
+        mission.textContent = '';
+    }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(null);
+}
+
+function _syncClientGpsAccuracyHint() {
+    var o = activeOrder;
+    if (!_shouldWarnDriverClientGps(o)) {
+        _hideClientGpsAccuracyHint();
+        return;
+    }
+    var acc = Math.round(_clientGpsAccuracyMeters(o));
+    var msg = 'La précision de cette localisation est de ' + acc + ' m. Écrivez au client pour obtenir un point plus précis.';
+    var banner = document.getElementById('drv-client-gps-warn');
+    var text = document.getElementById('drv-client-gps-warn-text');
+    if (text) text.textContent = msg;
+    if (banner) banner.classList.add('is-on');
+    var mission = document.getElementById('mission-gps-accuracy');
+    if (mission) {
+        mission.textContent = 'Précision GPS : ~' + acc + ' m — écrivez au client pour un point plus précis.';
+        mission.style.display = 'block';
+    }
+    var lat = parseFloat(o.pickupLat);
+    var lng = parseFloat(o.pickupLng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !map || !window.google || !google.maps || !google.maps.Circle) return;
+    if (!_clientAccCircle) {
+        _clientAccCircle = new google.maps.Circle({
+            map: map,
+            center: { lat: lat, lng: lng },
+            radius: acc,
+            fillColor: '#f59e0b',
+            fillOpacity: 0.14,
+            strokeColor: '#f59e0b',
+            strokeOpacity: 0.7,
+            strokeWeight: 1,
+            clickable: false
+        });
+    } else {
+        _clientAccCircle.setCenter({ lat: lat, lng: lng });
+        _clientAccCircle.setRadius(acc);
+        if (!_clientAccCircle.getMap()) _clientAccCircle.setMap(map);
+    }
+}
+
+function _applyClientGpsAccuracyUpdate(payload) {
+    if (!activeOrder || !payload) return;
+    var oid = payload.order_id || payload.id;
+    if (oid && String(activeOrder.id) !== String(oid)) return;
+    if (payload.accuracy != null) {
+        var acc = parseFloat(payload.accuracy);
+        if (Number.isFinite(acc)) activeOrder.clientGpsAccuracy = acc;
+    }
+    _syncClientGpsAccuracyHint();
 }
 
 
@@ -2584,6 +2695,7 @@ function _parseAcceptedOrderCard(card, fallback) {
     o.destLng = parseFloat((card.dataset.destLng || o.destLng || '').toString().replace(',', '.')) || 0;
     o.clientName = card.dataset.clientName || o.clientName || 'Client';
     o.clientPhone = card.dataset.clientPhone || o.clientPhone || '';
+    o.clientGpsAccuracy = parseFloat(card.dataset.clientGpsAccuracy || o.clientGpsAccuracy || 0) || 0;
     o.isLater = card.dataset.isLater === 'true' || card.classList.contains('drv-oc--later');
     o.scheduledAt = card.getAttribute('data-scheduled-at') || o.scheduledAt || null;
     if (o.isPaused) o.pauseStartedAt = Date.now();
@@ -2611,6 +2723,7 @@ function _orderFromServerJson(d) {
         destLng: parseFloat(d.destination_lng) || 0,
         clientName: d.client_name || 'Client',
         clientPhone: d.client_phone || '',
+        clientGpsAccuracy: parseFloat(d.client_gps_accuracy) || 0,
         price: parseFloat(d.price) || 0,
         totalPrice: parseFloat(d.total_price != null ? d.total_price : d.price) || 0,
         extraKmPrice: parseFloat(d.extra_km_price) || 0,
@@ -2738,6 +2851,7 @@ function setActiveOrder(o) {
         }
         if (homePanelEarly) homePanelEarly.style.display = 'flex';
         hideChatFab();
+        _hideClientGpsAccuracyHint();
         _drvSyncSystemStatus('sync');
         return;
     }
@@ -2809,7 +2923,9 @@ function setActiveOrder(o) {
             activeOrder.totalPrice = p2.total;
             activeOrder.extraKmPrice = p2.extra;
             activeOrder.pausePrice = p2.pause;
+            if (fresh.clientGpsAccuracy) activeOrder.clientGpsAccuracy = fresh.clientGpsAccuracy;
             _setMissionPrice(p2.base, p2.extra, p2.pause);
+            _syncClientGpsAccuracyHint();
         });
     }
     _initOrderWS(o.id);
@@ -2820,6 +2936,7 @@ function setActiveOrder(o) {
     _updateExtraBanner();
     if (pos && pos[0]) _checkProximity(pos[1], pos[0]);
     if (o.status && o.status !== 'completed') _drvSyncSystemStatus('sync');
+    _syncClientGpsAccuracyHint();
 }
 
 function _isRoundTripOrder(o) {

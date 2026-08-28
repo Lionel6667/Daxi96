@@ -1384,6 +1384,11 @@ def _order_to_dict(o: Order, *, light: bool = False, for_driver: bool = False, f
         ),
         'client_gps_lat': o.client_gps_lat,
         'client_gps_lng': o.client_gps_lng,
+        'client_gps_accuracy': (
+            round(float(o.client_gps_accuracy))
+            if for_driver and getattr(o, 'driver_id', None) and o.client_gps_accuracy
+            else None
+        ),
         'meeting_lat': o.meeting_lat if o.meeting_lat is not None else pickup_lat,
         'meeting_lng': o.meeting_lng if o.meeting_lng is not None else pickup_lng,
         'date': o.date,
@@ -6634,6 +6639,14 @@ def client_create_order(request):
                                                             
     client_gps_lat = float(request.POST.get('client_gps_lat', 0) or 0) or None
     client_gps_lng = float(request.POST.get('client_gps_lng', 0) or 0) or None
+    from julmin_taxis.gps_accuracy import parse_client_gps_accuracy
+    client_gps_accuracy = parse_client_gps_accuracy(request.POST.get('client_gps_accuracy'))
+    posted_acc = (request.POST.get('client_gps_accuracy') or '').strip()
+    if posted_acc and client_gps_accuracy is None:
+        client_gps_lat = None
+        client_gps_lng = None
+    elif not client_gps_lat and pickup_lat and pickup_lng and client_gps_accuracy is not None:
+        client_gps_lat, client_gps_lng = pickup_lat, pickup_lng
 
     raw_trip = request.POST.get('trip_type', 'aller simple').strip()
     trip_type = 'round_trip' if 'retour' in raw_trip.lower() else 'one_way'
@@ -6767,6 +6780,7 @@ def client_create_order(request):
         client_gps_lat=client_gps_lat,
         client_gps_lng=client_gps_lng,
         client_gps_updated_at=timezone.now() if client_gps_lat else None,
+        client_gps_accuracy=client_gps_accuracy,
         notes=order_notes,
         vehicle_type=request.POST.get('vehicle_type', 'economy'),
         trip_type=trip_type,
