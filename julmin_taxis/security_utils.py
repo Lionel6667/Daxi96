@@ -127,10 +127,13 @@ def guest_ids_match(a: Optional[str], b: Optional[str]) -> bool:
                                                                                  
 
 ALLOWED_IMAGE_MIMES = frozenset({
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+    'application/octet-stream',
 })
 ALLOWED_AUDIO_MIMES = frozenset({
-    'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav', 'video/webm',
+    'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav',
+    'audio/aac', 'audio/x-m4a', 'audio/m4a', 'audio/3gpp', 'audio/amr',
+    'video/webm', 'video/mp4', 'application/octet-stream',
 })
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_AUDIO_BYTES = 12 * 1024 * 1024

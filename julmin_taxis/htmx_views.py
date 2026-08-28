@@ -5619,22 +5619,24 @@ def search_car_images(request):
     url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/{model_name}"
     headers = {"Authorization": f"Bearer {api_token}"}
 
-    save_dir = os.path.join(settings.MEDIA_ROOT, 'generated_cars')
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    from julmin_taxis.media_utils import cloudinary_configured, upload_image_bytes_to_cloudinary
+
+    save_dir = None
+    if not cloudinary_configured():
+        save_dir = os.path.join(settings.MEDIA_ROOT, 'generated_cars')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
     try:
-                               
         for i in range(4):
             payload = {
                 "prompt": prompt,
-                "num_steps": 4,                                 
+                "num_steps": 4,
                 "seed": random.randint(1, 9999999)
             }
             resp = requests.post(url, headers=headers, json=payload, timeout=20)
             
             if resp.status_code == 200:
-                                                                                         
                 content_type = resp.headers.get('Content-Type', '')
                 if 'application/json' in content_type:
                     try:
@@ -5652,11 +5654,18 @@ def search_car_images(request):
                     image_data = resp.content
 
                 filename = f"car_{uuid.uuid4().hex}.png"
-                filepath = os.path.join(save_dir, filename)
-                with open(filepath, 'wb') as f:
-                    f.write(image_data)
-                
-                img_url = f"{settings.MEDIA_URL}generated_cars/{filename}"
+                if cloudinary_configured():
+                    img_url, err = upload_image_bytes_to_cloudinary(
+                        image_data, filename=filename, folder='daxi/generated_cars',
+                    )
+                    if not img_url:
+                        print(f"Cloudinary generated car upload failed: {err}")
+                        continue
+                else:
+                    filepath = os.path.join(save_dir, filename)
+                    with open(filepath, 'wb') as f:
+                        f.write(image_data)
+                    img_url = f"{settings.MEDIA_URL}generated_cars/{filename}"
                 results.append({'url': img_url, 'thumb': img_url})
             else:
                 print(f"Cloudflare AI Error (Variation {i+1}): {resp.text}")

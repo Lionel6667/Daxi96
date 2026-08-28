@@ -92,6 +92,10 @@ class BlogArticleWriteSerializer(serializers.ModelSerializer):
             'seo_title', 'meta_description', 'meta_keywords', 'canonical_url',
         ]
 
+    def validate_content(self, value):
+        from julmin_taxis.media_utils import rewrite_html_data_images_to_cloudinary
+        return rewrite_html_data_images_to_cloudinary(value or '')
+
     def create(self, validated_data):
         tag_ids = validated_data.pop('tag_ids', [])
         category_id = validated_data.pop('category_id', None)

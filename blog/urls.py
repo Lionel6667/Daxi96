@@ -14,6 +14,7 @@ urlpatterns = [
     path('admin/articles/<int:pk>/duplicate/', views.AdminBlogArticleDuplicateView.as_view(), name='blog-admin-article-duplicate'),
     path('admin/articles/<int:pk>/preview/', views.AdminBlogArticlePreviewView.as_view(), name='blog-admin-article-preview'),
     path('admin/articles/bulk/', views.AdminBlogBulkActionView.as_view(), name='blog-admin-bulk'),
+    path('admin/inline-image/', views.AdminBlogInlineImageView.as_view(), name='blog-admin-inline-image'),
     path('admin/categories/', views.AdminBlogCategoryListCreateView.as_view(), name='blog-admin-categories'),
     path('admin/categories/<int:pk>/', views.AdminBlogCategoryDetailView.as_view(), name='blog-admin-category-detail'),
     path('admin/tags/', views.AdminBlogTagListCreateView.as_view(), name='blog-admin-tags'),

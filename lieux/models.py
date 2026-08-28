@@ -1,6 +1,10 @@
 from django.db import models
 
 from admin_panel.models import HAITI_DEPARTMENTS
+from julmin_taxis.cloudinary_storage import CloudinaryMediaStorage
+
+_lieux_cover_storage = CloudinaryMediaStorage(folder='daxi/lieux/covers')
+_lieux_gallery_storage = CloudinaryMediaStorage(folder='daxi/lieux/gallery')
 
 
 class LieuxCategory(models.Model):
@@ -33,7 +37,9 @@ class LieuxPlace(models.Model):
     address = models.CharField(max_length=400, blank=True, default='')
     hours = models.CharField(max_length=240, blank=True, default='', verbose_name='Horaires')
     description = models.TextField(blank=True, default='')
-    cover = models.ImageField(upload_to='lieux/covers/', blank=True, null=True)
+    cover = models.ImageField(
+        upload_to='lieux/covers/', blank=True, null=True, storage=_lieux_cover_storage,
+    )
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     is_published = models.BooleanField(default=False, verbose_name='Publié par l\'entreprise')
@@ -79,7 +85,7 @@ class LieuxPlace(models.Model):
 
 class LieuxPhoto(models.Model):
     place = models.ForeignKey(LieuxPlace, on_delete=models.CASCADE, related_name='photos')
-    image = models.ImageField(upload_to='lieux/gallery/')
+    image = models.ImageField(upload_to='lieux/gallery/', storage=_lieux_gallery_storage)
     caption = models.CharField(max_length=160, blank=True, default='')
     order = models.PositiveIntegerField(default=0)
 

@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
@@ -175,6 +176,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     """Get and update authenticated user profile."""
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self):
         return self.request.user

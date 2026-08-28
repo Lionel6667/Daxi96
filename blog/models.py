@@ -5,6 +5,11 @@ from django.conf import settings
 from django.utils import timezone
 from django.utils.text import slugify
 
+from julmin_taxis.cloudinary_storage import CloudinaryMediaStorage
+
+_blog_cover_storage = CloudinaryMediaStorage(folder='daxi/blog/covers')
+_blog_og_storage = CloudinaryMediaStorage(folder='daxi/blog/og')
+
 
 def _unique_slug(model_cls, base_slug, exclude_pk=None):
     slug = base_slug or 'article'
@@ -84,7 +89,9 @@ class BlogArticle(models.Model):
     slug = models.SlugField(max_length=320, unique=True, blank=True)
     excerpt = models.TextField(blank=True, help_text='Résumé court')
     content = models.TextField(blank=True, help_text='Contenu HTML riche')
-    cover_image = models.ImageField(upload_to='blog/covers/', blank=True, null=True)
+    cover_image = models.ImageField(
+        upload_to='blog/covers/', blank=True, null=True, storage=_blog_cover_storage,
+    )
     category = models.ForeignKey(
         BlogCategory,
         on_delete=models.SET_NULL,
@@ -102,7 +109,9 @@ class BlogArticle(models.Model):
     seo_title = models.CharField(max_length=300, blank=True)
     meta_description = models.TextField(blank=True, max_length=500)
     meta_keywords = models.CharField(max_length=500, blank=True)
-    og_image = models.ImageField(upload_to='blog/og/', blank=True, null=True)
+    og_image = models.ImageField(
+        upload_to='blog/og/', blank=True, null=True, storage=_blog_og_storage,
+    )
     canonical_url = models.URLField(blank=True, max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

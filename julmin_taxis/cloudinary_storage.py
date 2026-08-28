@@ -1,8 +1,10 @@
-"""Stockage Cloudinary pour fichiers média Django (avec repli local si non configuré)."""
+"""Stockage Cloudinary pour fichiers média Django (repli local uniquement si non configuré)."""
 from __future__ import annotations
 
 import os
+
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage, Storage
 from django.utils.deconstruct import deconstructible
 
@@ -21,7 +23,11 @@ class CloudinaryMediaStorage(Storage):
         self.folder = folder.strip('/') or 'daxi/media'
 
     def deconstruct(self):
-        return (self.__class__.__qualname__, [], {'folder': self.folder})
+        return (
+            'julmin_taxis.cloudinary_storage.CloudinaryMediaStorage',
+            [],
+            {'folder': self.folder},
+        )
 
     def _local_fallback(self):
         return FileSystemStorage(location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL)
@@ -33,19 +39,17 @@ class CloudinaryMediaStorage(Storage):
             )
         if name and not name.startswith('http') and '/' in name:
             delete_cloudinary_public_id(name)
-        url, public_id = upload_image_to_cloudinary(content, folder=self.folder)
-        if public_id:
-            return public_id
-        if url:
-            return url
-        return self._local_fallback().save(
-            os.path.join(self.folder, name or ''), content, max_length=max_length
+        url, public_id = upload_image_to_cloudinary(
+            content, folder=self.folder, validate=False,
         )
+        if url:
+            return public_id or url
+        raise IOError(f'Cloudinary upload failed: {public_id or "unknown error"}')
 
     def delete(self, name):
         if not name:
             return
-        if cloudinary_configured() and not name.startswith('http'):
+        if cloudinary_configured() and not str(name).startswith('http'):
             delete_cloudinary_public_id(name)
             return
         try:
@@ -59,6 +63,7 @@ class CloudinaryMediaStorage(Storage):
     def url(self, name):
         if not name:
             return ''
+        name = str(name)
         if name.startswith('http://') or name.startswith('https://'):
             return name
         if cloudinary_configured():
@@ -71,7 +76,20 @@ class CloudinaryMediaStorage(Storage):
         return 0
 
     def open(self, name, mode='rb'):
+        if not name:
+            raise FileNotFoundError(name)
+        if cloudinary_configured():
+            import requests
+            url = self.url(name)
+            if url.startswith('http'):
+                r = requests.get(url, timeout=30)
+                r.raise_for_status()
+                return ContentFile(r.content, name=os.path.basename(str(name)))
         return self._local_fallback().open(name, mode)
+
+
+def media_storage(folder: str) -> CloudinaryMediaStorage:
+    return CloudinaryMediaStorage(folder=folder)
 
 
 def driver_storage(subfolder: str) -> Storage:

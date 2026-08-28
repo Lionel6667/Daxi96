@@ -4,6 +4,10 @@ from django.utils import timezone
 import random
 import string
 
+from julmin_taxis.cloudinary_storage import CloudinaryMediaStorage
+
+_user_photo_storage = CloudinaryMediaStorage(folder='daxi/users')
+
 
 class CustomUser(AbstractUser):
     """Extended user model for DAXI platform."""
@@ -18,7 +22,9 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=100, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
-    photo = models.ImageField(upload_to='users/', blank=True, null=True)
+    photo = models.ImageField(
+        upload_to='users/', blank=True, null=True, storage=_user_photo_storage,
+    )
     language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default='fr')
     is_driver = models.BooleanField(default=False)
     is_blocked = models.BooleanField(default=False)

@@ -357,11 +357,20 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-             
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ImageFields + default_storage → Cloudinary when CLOUDINARY_* are set (Railway).
+# Local MEDIA_ROOT is only used when credentials are missing (dev / tests).
+STORAGES = {
+    'default': {
+        'BACKEND': 'julmin_taxis.cloudinary_storage.CloudinaryMediaStorage',
+        'OPTIONS': {'folder': 'daxi/media'},
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024

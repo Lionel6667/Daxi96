@@ -229,3 +229,19 @@ class AdminBlogBulkActionView(APIView):
         else:
             return Response({'error': 'Action inconnue'}, status=400)
         return Response({'message': 'OK', 'count': len(ids)})
+
+
+class AdminBlogInlineImageView(APIView):
+    """Upload an inline editor image to Cloudinary."""
+    permission_classes = [IsStaffMember]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        uploaded = request.FILES.get('image') or request.FILES.get('file')
+        if not uploaded:
+            return Response({'error': 'Aucune image fournie.'}, status=400)
+        from julmin_taxis.media_utils import upload_image_to_cloudinary
+        url, err = upload_image_to_cloudinary(uploaded, folder='daxi/blog/inline')
+        if not url:
+            return Response({'error': err or 'Upload Cloudinary échoué'}, status=400)
+        return Response({'url': url})

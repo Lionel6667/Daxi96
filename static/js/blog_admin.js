@@ -125,14 +125,41 @@ function blogInitEditor() {
   BLOG_ADMIN.quill = new Quill('#blog-quill-editor', {
     theme: 'snow',
     modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['blockquote', 'code-block'],
-        ['link', 'image', 'video'],
-        ['clean']
-      ]
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['blockquote', 'code-block'],
+          ['link', 'image', 'video'],
+          ['clean']
+        ],
+        handlers: {
+          image: function () {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+            input.onchange = async function () {
+              var file = input.files && input.files[0];
+              if (!file) return;
+              var fd = new FormData();
+              fd.append('image', file);
+              try {
+                var r = await adminFetch('/api/blog/admin/inline-image/', { method: 'POST', body: fd });
+                var data = {};
+                try { data = await r.json(); } catch (e) {}
+                if (!r.ok || !data.url) throw new Error(data.error || 'Upload image échoué');
+                var range = BLOG_ADMIN.quill.getSelection(true) || { index: BLOG_ADMIN.quill.getLength() };
+                BLOG_ADMIN.quill.insertEmbed(range.index, 'image', data.url, 'user');
+                BLOG_ADMIN.quill.setSelection(range.index + 1);
+              } catch (err) {
+                showToast(err.message || 'Upload image échoué', 'error');
+              }
+            };
+            input.click();
+          }
+        }
+      }
     }
   });
 }
