@@ -6487,6 +6487,21 @@ a{{display:inline-block;margin-top:20px;padding:12px 24px;background:linear-grad
     return HttpResponse(html)
 
 
+def driver_wa_accept_legacy_page(request, order_id):
+    """GET /wa/accept/<order_id>/ — anciens liens Meta sans token (évite 404)."""
+    html = f'''<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DAXI — Lien expiré</title>
+<style>body{{font-family:Inter,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}}
+.card{{max-width:420px;background:#1e293b;border-radius:20px;padding:32px;text-align:center;border:1px solid rgba(148,163,184,.2);}}
+h1{{font-size:20px;margin:0 0 12px;color:#fbbf24;}} p{{font-size:14px;line-height:1.6;color:#94a3b8;margin:0 0 10px;}}
+a{{display:inline-block;margin-top:18px;padding:12px 24px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;text-decoration:none;border-radius:12px;font-weight:800;}}</style></head>
+<body><div class="card"><h1>Lien à mettre à jour</h1>
+<p>Ce bouton WhatsApp est obsolète pour la course #{order_id}.</p>
+<p>Répondez <strong>J'accepte</strong> au message DAXI pour recevoir un nouveau lien, ou ouvrez l'app chauffeur.</p>
+<a href="/driver/#commande-{order_id}">Ouvrir l'app chauffeur</a></div></body></html>'''
+    return HttpResponse(html)
+
+
 def driver_accept_link_page(request, order_id):
     """GET /driver/accept/<order_id>/ — bouton WhatsApp « J'accepte » (session chauffeur)."""
     from django.shortcuts import redirect

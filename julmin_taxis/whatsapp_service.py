@@ -447,7 +447,7 @@ def send_accept_link_on_request(sender: str) -> bool:
             _graph_send_text(sender, 'Aucune course en attente pour le moment.')
             return True
         site_url = getattr(settings, 'SITE_URL', '').rstrip('/')
-        accept_url = f'{site_url}/driver/accept/{order.pk}' if site_url else f'driver/accept/{order.pk}'
+        accept_url = _accept_url(order.pk, driver.pk) if driver else _accept_url(order.pk)
         pickup, dest = _trip_addresses(order)
         distance_label = _format_distance_label(_driver_distance_to_pickup(driver, order))
         offer = {
@@ -485,21 +485,34 @@ def _maybe_handle_accept_intent(sender: str, payload_or_text: str = '') -> bool:
 
 
 def _accept_public_path(order_id: int) -> str:
-    """Chemin public pour le bouton Meta « J'accepte » (suffixe URL dynamique)."""
-    return f'driver/accept/{order_id}'
+    """Chemin public session (fallback web, pas le bouton Meta)."""
+    return f'driver/accept/{order_id}/'
+
+
+def _accept_wa_button_suffix(order_id: int, driver_id: int) -> str:
+    """Suffixe bouton Meta — URL modèle : {SITE_URL}/wa/accept/{{1}}"""
+    from django.core import signing
+    token = signing.dumps({'o': order_id, 'd': driver_id}, salt='daxi-wa-accept')
+    return f'{order_id}/{token}/'
 
 
 def _accept_url(order_id: int, driver_id: int = None) -> str:
-    """URL complète d'acceptation chauffeur (session ou lien signé legacy)."""
+    """URL complète d'acceptation chauffeur (lien signé WhatsApp)."""
     site = _site_url()
     if driver_id:
         suffix = _accept_url_suffix(order_id, driver_id)
         return f'{site}/{suffix}' if site else suffix
-    return f'{site}/{_accept_public_path(order_id)}' if site else _accept_public_path(order_id)
+    path = _accept_public_path(order_id)
+    return f'{site}/{path}' if site else path
 
 
 def _driver_order_public_path(order_id: int) -> str:
-    return f'driver/commande_{order_id}'
+    return f'driver/commande_{order_id}/'
+
+
+def _driver_order_button_suffix(order_id: int) -> str:
+    """Suffixe bouton Meta coords — URL modèle : {SITE_URL}/{{1}}"""
+    return _driver_order_public_path(order_id)
 
 
 def _receipt_public_path(order_id: int) -> str:
@@ -527,9 +540,12 @@ def _nouvelle_commande_params(order, recipient_name: str, driver=None) -> list:
 def _send_nouvelle_commande_template(to_phone: str, order, recipient_name: str, driver=None) -> bool:
     tpl = template_name('nouvelle_commande')
     body = _nouvelle_commande_params(order, recipient_name, driver)
+    suffix = str(order.pk)
+    if driver:
+        suffix = _accept_wa_button_suffix(order.pk, driver.pk)
     return send_template(
         to_phone, tpl, body,
-        button_url_suffix=str(order.pk),
+        button_url_suffix=suffix,
     )
 
 
@@ -700,7 +716,7 @@ def notify_client_trip_completed(order) -> bool:
         phone, 'course_terminee',
         [client_fn, pickup, dest],
         fallback,
-        button_url_suffix=str(order.pk),
+        button_url_suffix=f'compte/?order={order.pk}',
     )
 
 
@@ -964,7 +980,7 @@ def notify_coords_needed(order, admins_only: bool = False) -> int:
     def _coords_button_suffix(for_admin: bool = False) -> str:
         if for_admin:
             return 'admin-dashboard/#orders'
-        return f'commande_{order.pk}'
+        return _driver_order_button_suffix(order.pk)
 
     fallback_tpl = (
         f'🚖 *DAXI — Course {order_ref} sans GPS*\n\n'

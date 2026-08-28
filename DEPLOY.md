@@ -231,6 +231,20 @@ python manage.py seed_admin_test_data --clean --verify
 ```
 Puis Admin → Chauffeurs → **En attente**.
 
+### Liens boutons WhatsApp (Meta Business)
+
+URL de base à configurer dans chaque template Meta (suffixe dynamique = `{{1}}` côté Meta) :
+
+| Template | URL de base Meta | Suffixe Django |
+|----------|------------------|----------------|
+| `nouvelle_commande` | `https://daxipro.com/wa/accept/` | `{order_id}/{token_signé}/` |
+| `commande_attente_coords` (chauffeur) | `https://daxipro.com/` | `driver/commande_{id}/` |
+| `commande_attente_coords` (admin) | `https://daxipro.com/` | `admin-dashboard/#orders` |
+| `recu_course` | `https://daxipro.com/` | `recu_{id}.pdf` |
+| `course_terminee` | `https://daxipro.com/` | `compte/?order={id}` |
+
+Les anciens liens `/wa/accept/{id}` sans token affichent une page d’aide (plus de 404).
+
 ### Sauvegarde PostgreSQL (Railway)
 
 Le disque Railway est **éphémère** : les fichiers dans `backups/` disparaissent au redeploy.
