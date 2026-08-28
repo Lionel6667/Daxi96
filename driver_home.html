@@ -900,6 +900,10 @@ function _markSplashStep(id) {
     if (el) el.classList.add('done');
 }
 function _tryDismissSplash() {
+    if (window._daxiIntroPlaying && !window._daxiIntroDone) {
+        window.addEventListener('daxi:intro-complete', _tryDismissSplash, { once: true });
+        return;
+    }
     if (window._drvSplashMinUntil && Date.now() < window._drvSplashMinUntil) {
         setTimeout(_tryDismissSplash, window._drvSplashMinUntil - Date.now() + 40);
         return;

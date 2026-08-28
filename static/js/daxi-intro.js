@@ -141,7 +141,13 @@
     'html.daxi-intro-done #initialLoader .daxi-initial-loader__content' +
     '{visibility:hidden!important;opacity:0!important}' +
     'html.daxi-intro-playing #splash,html.daxi-intro-done #splash,' +
-    'html.daxi-intro-playing #daxi-web-radar,html.daxi-intro-done #daxi-web-radar' +
+    'html.daxi-intro-playing #daxi-web-radar,html.daxi-intro-done #daxi-web-radar,' +
+    'html.daxi-intro-playing #admin-app,html.daxi-intro-done #admin-app,' +
+    'html.daxi-intro-playing #admin-boot-overlay,html.daxi-intro-done #admin-boot-overlay,' +
+    'html.daxi-intro-playing #drv-map-stage,html.daxi-intro-done #drv-map-stage,' +
+    'html.daxi-intro-boot #admin-app,html.daxi-intro-boot #admin-boot-overlay,' +
+    'html.daxi-intro-boot #drv-map-stage,html.daxi-intro-boot #splash,' +
+    'html.daxi-intro-boot #daxi-web-radar' +
     '{display:none!important;opacity:0!important;visibility:hidden!important}'
     );
   }
@@ -400,6 +406,7 @@
         try {
           document.documentElement.classList.add('daxi-intro-done');
           document.documentElement.classList.remove('daxi-intro-playing');
+          document.documentElement.classList.remove('daxi-intro-boot');
         } catch (e) {}
         try {
           var el = document.getElementById('daxi-cinematic');

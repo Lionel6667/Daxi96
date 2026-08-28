@@ -23,6 +23,20 @@ NATIVE_BANNER_JS = '<script src="/static/js/daxi-network-banner.js?v=20260828d">
 NATIVE_OFFLINE_TAG = '<script src="/static/js/daxi-offline.js?v=20260828d"></script>\n'
 NATIVE_CAP_HEAD = NATIVE_ENV_HEAD + NATIVE_ROUTER_TAG + NATIVE_CAP_TAG
 
+INTRO_PATH_PREFIXES = (
+    '/admin-dashboard',
+    '/driver',
+    '/entreprise',
+)
+
+NATIVE_INTRO_PREHIDE = (
+    '<script>document.documentElement.classList.add("daxi-native-shell","daxi-intro-boot");</script>\n'
+    '<style id="daxi-intro-prehide">'
+    'html.daxi-intro-boot body{visibility:hidden!important}'
+    'html.daxi-intro-boot #daxi-cinematic{visibility:visible!important}'
+    'html.daxi-intro-playing body,html.daxi-intro-done body{visibility:visible!important}'
+    '</style>\n'
+)
 
 INTRO_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -56,6 +70,30 @@ def _intro_source():
 def _is_full_document(content):
     head = (content or '')[:2400].lower()
     return '<html' in head or '<!doctype' in head or '<head' in head
+
+
+def _normalize_path(path):
+    p = (path or '/').split('?', 1)[0].split('#', 1)[0].rstrip('/') or '/'
+    return p
+
+
+def _should_play_intro(path):
+    p = _normalize_path(path)
+    if p == '/':
+        return True
+    for prefix in INTRO_PATH_PREFIXES:
+        base = prefix.rstrip('/') or '/'
+        if p == base or p.startswith(base + '/'):
+            return True
+    return False
+
+
+def _inject_after_head_open(content, snippet):
+    match = re.search(r'(?is)<head\b[^>]*>', content)
+    if not match:
+        return content
+    pos = match.end()
+    return content[:pos] + '\n' + snippet + content[pos:]
 
 
 def _intro_boot_tags():
@@ -191,7 +229,6 @@ def inject_native_head(content, request=None):
     full = _is_full_document(content)
     if full:
         content = inline_intro(content)
-        content = inject_capacitor_after_intro(content)
     inject = ''
     if '<base ' not in content.lower():
         inject += '<base href="/" />\n'
@@ -199,7 +236,13 @@ def inject_native_head(content, request=None):
         inject += NATIVE_ENV_HEAD
     if 'daxi-deeplink-router.js' not in content:
         inject += NATIVE_ROUTER_TAG
-    if 'daxi-capacitor.js' not in content:
+    path = '/'
+    if request is not None:
+        path = request.path or '/'
+    play_intro = full and _should_play_intro(path)
+    has_intro = 'data-daxi-intro=' in content or 'daxi-intro.js' in content
+    will_inject_intro = play_intro and not has_intro
+    if 'daxi-capacitor.js' not in content and not will_inject_intro:
         inject += NATIVE_CAP_TAG
     if 'daxi-network-banner.css' not in content:
         inject += NATIVE_BANNER_CSS
@@ -209,17 +252,23 @@ def inject_native_head(content, request=None):
         inject += NATIVE_BANNER_JS
     if 'daxi-offline.js' not in content:
         inject += NATIVE_OFFLINE_TAG
-    path = '/'
-    if request is not None:
-        path = request.path or '/'
-    if full and path in ('/', '') and 'data-daxi-intro=' not in content and 'daxi-intro.js' not in content:
+    if (
+        play_intro
+        and 'daxi-intro-prehide' not in content
+        and 'daxi-booting' not in content
+    ):
+        content = _inject_after_head_open(content, NATIVE_INTRO_PREHIDE)
+    if will_inject_intro:
         inject += _intro_boot_tags()
-    if not inject:
-        return content
-    if '</head>' in content:
-        return content.replace('</head>', inject + '</head>', 1)
+    if inject:
+        if '</head>' in content:
+            content = content.replace('</head>', inject + '</head>', 1)
+        elif full:
+            content = inject + content
     if full:
-        return inject + content
+        content = inject_capacitor_after_intro(content)
+        if will_inject_intro and 'daxi-capacitor.js' not in content and '</head>' in content:
+            content = content.replace('</head>', NATIVE_CAP_TAG + '</head>', 1)
     return content
 
 

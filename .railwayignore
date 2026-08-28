@@ -1,0 +1,10 @@
+# Réduit la taille du build Railway (non utilisé au runtime Django)
+clients/
+legacy/
+services/whatsapp-webhook/node_modules/
+**/__pycache__/
+**/.venv/
+**/node_modules/
+*.apk
+*.aab
+.git/
