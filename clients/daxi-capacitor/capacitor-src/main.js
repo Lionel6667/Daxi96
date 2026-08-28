@@ -1416,15 +1416,38 @@ async function probeBackend() {
 }
 
 
+function bootMark(n) {
+  try {
+    if (typeof window._daxiBootMark === 'function') window._daxiBootMark(n);
+  } catch (e) {}
+}
+
+function waitIntroComplete() {
+  if (window._daxiIntroDone || !window._daxiIntroPlaying) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => resolve();
+    window.addEventListener('daxi:intro-complete', done, { once: true });
+    document.addEventListener('daxi:intro-complete', done, { once: true });
+    setTimeout(resolve, 8000);
+  });
+}
+
 function hideSplashWhenPainted() {
-  const hide = () => SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
-  if (window._daxiIntroFirstFrame) {
+  if (window._daxiSplashHidden) return;
+  const hide = () => {
+    if (window._daxiSplashHidden) return;
+    window._daxiSplashHidden = true;
+    bootMark('splash-hide');
+    SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
+  };
+  if (window._daxiIntroVisible) {
     hide();
     return;
   }
-  if (window._daxiIntroPlaying) {
-    document.addEventListener('daxi-intro-first-frame', hide, { once: true });
-    setTimeout(hide, 900);
+  if (window._daxiIntroPlaying || window._daxiIntroPromise) {
+    window.addEventListener('daxi:intro-visible', hide, { once: true });
+    document.addEventListener('daxi:intro-visible', hide, { once: true });
+    setTimeout(hide, 12000);
     return;
   }
   hide();
@@ -1444,6 +1467,7 @@ async function readLaunchUrl() {
 
 async function boot() {
   if (!Capacitor.isNativePlatform()) return;
+  bootMark('cap-js');
   markNative();
   hideSplashWhenPainted();
   const cfg = installDaxiApiGlobal();
@@ -1452,8 +1476,6 @@ async function boot() {
   installDaxiDeepLink();
   const launchUrl = await readLaunchUrl();
   if (launchUrl) handleDeepLink(launchUrl);
-  if (await restoreShellRoleAndRedirect(launchUrl)) return;
-  try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (eNav2) {}
   installNativeBridge();
   patchNetworking();
   wrapGetCsrfToken();
@@ -1468,7 +1490,13 @@ async function boot() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startMap);
   else startMap();
   await initNetwork();
+  await waitIntroComplete();
+  bootMark('intro-gate-open');
+  if (await restoreShellRoleAndRedirect(launchUrl)) return;
+  try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (eNav2) {}
+  bootMark('gps-start');
   await initGps();
+  bootMark('push-start');
   await initPush();
   await initDeepLinks();
   hookShareUi();

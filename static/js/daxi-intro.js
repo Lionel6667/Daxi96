@@ -3,6 +3,9 @@
   'use strict';
 
   var DAXI_INTRO_ENABLED = true;
+  try {
+    if (typeof global._daxiBootMark === 'function') global._daxiBootMark('intro-js');
+  } catch (eIntroJs) {}
 
   
   
@@ -132,6 +135,7 @@
     'letter-spacing:0.06em;color:' + p.letter + ';opacity:0;' +
     'will-change:transform,opacity;backface-visibility:hidden;' +
     '-webkit-font-smoothing:antialiased}' +
+    'html.daxi-intro-playing,html.daxi-intro-playing body{background:' + p.bg + '!important}' +
     'html.daxi-intro-playing #initialLoader,html.daxi-intro-done #initialLoader{background:' + p.bg + '!important}' +
     'html.daxi-intro-playing #initialLoader .daxi-initial-loader__content,' +
     'html.daxi-intro-done #initialLoader .daxi-initial-loader__content' +
@@ -156,15 +160,95 @@
     } catch (e) {}
   }
 
-  function signalFirstFrame() {
-    global._daxiIntroFirstFrame = true;
+  function bootMark(n) {
     try {
-      var plugins = global.Capacitor && global.Capacitor.Plugins;
-      if (plugins && plugins.SplashScreen) plugins.SplashScreen.hide({ fadeOutDuration: 220 });
+      if (typeof global._daxiBootMark === 'function') global._daxiBootMark(n);
     } catch (e) {}
+  }
+
+  function dispatchIntroEvent(name) {
+    try { document.dispatchEvent(new Event(name)); } catch (e) {}
+    try { global.dispatchEvent(new Event(name)); } catch (e2) {}
+  }
+
+  function persistBootLog() {
     try {
-      document.dispatchEvent(new Event('daxi-intro-first-frame'));
-    } catch (e2) {}
+      if (typeof global._daxiBootDump === 'function') global._daxiBootDump();
+      else if (global.localStorage) {
+        global.localStorage.setItem('daxi_boot_log', JSON.stringify(global._daxiBootLog || []));
+      }
+    } catch (e) {}
+  }
+
+  function hideNativeSplash() {
+    if (global._daxiSplashHidden) return;
+    var opts = { fadeOutDuration: 220 };
+    function attempt() {
+      if (global._daxiSplashHidden) return true;
+      try {
+        var C = global.Capacitor;
+        if (!C) return false;
+        if (C.Plugins && C.Plugins.SplashScreen && typeof C.Plugins.SplashScreen.hide === 'function') {
+          global._daxiSplashHidden = true;
+          bootMark('splash-hide');
+          C.Plugins.SplashScreen.hide(opts);
+          return true;
+        }
+        if (typeof C.nativePromise === 'function') {
+          global._daxiSplashHidden = true;
+          bootMark('splash-hide');
+          C.nativePromise('SplashScreen', 'hide', opts);
+          return true;
+        }
+        if (typeof C.toNative === 'function') {
+          global._daxiSplashHidden = true;
+          bootMark('splash-hide');
+          C.toNative('SplashScreen', 'hide', opts);
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+    if (attempt()) return;
+    var n = 0;
+    var id = setInterval(function () {
+      n += 1;
+      if (attempt() || n > 80) clearInterval(id);
+    }, 50);
+  }
+
+  function signalIntroVisible() {
+    if (global._daxiIntroVisible) return;
+    global._daxiIntroVisible = true;
+    global._daxiIntroFirstFrame = true;
+    bootMark('intro-visible');
+    hideNativeSplash();
+    dispatchIntroEvent('daxi:intro-visible');
+    persistBootLog();
+  }
+
+  function waitOverlayPainted(root, cb) {
+    var tries = 0;
+    function check() {
+      tries += 1;
+      var ready = false;
+      try {
+        ready = !!(root && root.isConnected && root.getBoundingClientRect().height > 40);
+        if (ready) {
+          var letter = root.querySelector('span');
+          if (letter && letter.getBoundingClientRect().width <= 0 && tries < 24) ready = false;
+        }
+      } catch (e) {}
+      if (ready || tries > 45) {
+        requestAnimationFrame(function () {
+          signalIntroVisible();
+          if (cb) cb();
+        });
+        return;
+      }
+      requestAnimationFrame(check);
+    }
+    requestAnimationFrame(function () { requestAnimationFrame(check); });
   }
 
   function isNativeShell() {
@@ -263,6 +347,7 @@
       parts.nodes[ch].style.opacity = '1';
       parts.nodes[ch].style.transform = 'none';
     }
+    waitOverlayPainted(root);
     return new Promise(function (resolve) {
       setTimeout(function () {
         if (root.parentNode) root.parentNode.removeChild(root);
@@ -271,7 +356,7 @@
     });
   }
 
-  function playWordIntro(root, onFirstFrame) {
+  function playWordIntro(root) {
     var parts = mountWord(root);
     var letters = INTRO.letters;
     var ch;
@@ -280,10 +365,7 @@
       playOn(parts.nodes[ch], letters[ch].keys, letters[ch].delay, letters[ch].duration, true);
     }
     playOn(parts.word, INTRO.chorus.keys, INTRO.chorus.delay, INTRO.chorus.duration, false);
-
-    requestAnimationFrame(function () {
-      if (onFirstFrame) onFirstFrame();
-    });
+    waitOverlayPainted(root);
   }
 
   function playDaxiIntro() {
@@ -299,6 +381,7 @@
     } catch (eTheme) {}
     injectCss();
     global._daxiIntroPlaying = true;
+    bootMark('intro-play');
     try {
       document.documentElement.classList.add('daxi-intro-playing');
     } catch (eEarly) {}
@@ -313,6 +396,7 @@
         if (killer) clearTimeout(killer);
         global._daxiIntroPlaying = false;
         global._daxiIntroDone = true;
+        bootMark('intro-complete');
         try {
           document.documentElement.classList.add('daxi-intro-done');
           document.documentElement.classList.remove('daxi-intro-playing');
@@ -323,6 +407,8 @@
           var loader = document.getElementById('initialLoader');
           if (loader) loader.classList.remove('daxi-intro-live');
         } catch (e2) {}
+        dispatchIntroEvent('daxi:intro-complete');
+        persistBootLog();
         resolve();
       };
 
@@ -344,7 +430,7 @@
         }
 
         try {
-          playWordIntro(root, signalFirstFrame);
+          playWordIntro(root);
           killer = setTimeout(done, INTRO.killMs);
           setTimeout(function () {
             if (settled || !root || typeof root.animate !== 'function') {
@@ -365,7 +451,7 @@
             }
           }, INTRO.durationMs);
         } catch (e) {
-          signalFirstFrame();
+          signalIntroVisible();
           done();
         }
       };

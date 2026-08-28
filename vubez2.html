@@ -22,7 +22,7 @@
     <meta name="theme-color" content="#070B14">
     <link rel="canonical" href="https://daxipro.com/">
 
-    <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <script>(function(){window._daxiBootT0=Date.now();window._daxiBootLog=[];window._daxiBootDump=function(){try{localStorage.setItem('daxi_boot_log',JSON.stringify(window._daxiBootLog||[]));}catch(e){}return window._daxiBootLog;};window._daxiBootMark=function(n){var rec={t:Date.now()-window._daxiBootT0,nav:(typeof performance!=='undefined'&&performance.now)?Math.round(performance.now()):0,n:n};(window._daxiBootLog=window._daxiBootLog||[]).push(rec);try{console.log('[DAXI BOOT]',rec.nav+'ms nav',rec.t+'ms parse',n);}catch(e){}};window._daxiBootMark('html-parse-start');if(typeof addEventListener==='function'){addEventListener('daxi:intro-complete',function(){try{window._daxiBootDump();}catch(e){}});addEventListener('load',function(){try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(!n)return;window._daxiBootMark('nav dns='+Math.round(n.domainLookupEnd-n.domainLookupStart)+' connect='+Math.round(n.connectEnd-n.connectStart)+' tls='+Math.round(Math.max(0,n.connectEnd-(n.secureConnectionStart||n.connectStart)))+' ttfb='+Math.round(n.responseStart-n.requestStart)+' download='+Math.round(n.responseEnd-n.responseStart)+' encoded='+Math.round(n.encodedBodySize||0)+' decoded='+Math.round(n.decodedBodySize||0)+' transfer='+Math.round(n.transferSize||0));try{window._daxiBootDump();}catch(e2){}}catch(e){}}); }try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
     <style id="daxi-critical-sheet-lock">
         html.daxi-booting .app-sheet .sheet-inner > section:not(#bookingSection),
         html.daxi-booting .app-sheet .sheet-inner > div:not(#daxiSheetBooking):not(#daxiSheetOrder) {
@@ -55,7 +55,7 @@
     })();
     </script>
     
-    <script src="/static/js/daxi-intro.js?v=20260828d"></script>
+    <script src="/static/js/daxi-intro.js?v=20260828g"></script>
     <script>
     try {
       if (window.DaxiIntro && typeof DaxiIntro.play === 'function') DaxiIntro.play();
@@ -26501,8 +26501,25 @@ document.addEventListener('DOMContentLoaded', function() {
     window._daxiLoaderDismissed = window._daxiLoaderDismissed || false;
     if (!window._daxiDismissInitialLoader) {
         window._daxiDismissInitialLoader = function() {
+            if (window._daxiIntroPlaying) {
+                window._daxiLoaderDismissQueued = true;
+                if (typeof window._daxiBootMark === 'function') window._daxiBootMark('loader-dismiss-deferred');
+                if (!window._daxiLoaderFlushBound) {
+                    window._daxiLoaderFlushBound = true;
+                    var flush = function() {
+                        if (window._daxiLoaderDismissQueued && window._daxiDismissInitialLoader) {
+                            window._daxiLoaderDismissQueued = false;
+                            window._daxiDismissInitialLoader();
+                        }
+                    };
+                    window.addEventListener('daxi:intro-complete', flush, { once: true });
+                    document.addEventListener('daxi:intro-complete', flush, { once: true });
+                }
+                return;
+            }
             if (window._daxiLoaderDismissed) return;
             window._daxiLoaderDismissed = true;
+            if (typeof window._daxiBootMark === 'function') window._daxiBootMark('loader-dismiss');
             document.documentElement.classList.remove('daxi-booting');
             var loader = document.getElementById('initialLoader');
             if (loader) {
@@ -29448,8 +29465,25 @@ window._daxiPersistLang = function(lang) {
   if (typeof _daxiBootLoadOrders === 'function') _daxiBootLoadOrders();
   if (!window._daxiDismissInitialLoader) {
     window._daxiDismissInitialLoader = function() {
+      if (window._daxiIntroPlaying) {
+        window._daxiLoaderDismissQueued = true;
+        if (typeof window._daxiBootMark === 'function') window._daxiBootMark('loader-dismiss-deferred');
+        if (!window._daxiLoaderFlushBound) {
+          window._daxiLoaderFlushBound = true;
+          var flush = function() {
+            if (window._daxiLoaderDismissQueued && window._daxiDismissInitialLoader) {
+              window._daxiLoaderDismissQueued = false;
+              window._daxiDismissInitialLoader();
+            }
+          };
+          window.addEventListener('daxi:intro-complete', flush, { once: true });
+          document.addEventListener('daxi:intro-complete', flush, { once: true });
+        }
+        return;
+      }
       if (window._daxiLoaderDismissed) return;
       window._daxiLoaderDismissed = true;
+      if (typeof window._daxiBootMark === 'function') window._daxiBootMark('loader-dismiss');
       document.documentElement.classList.remove('daxi-booting');
       var loader = document.getElementById('initialLoader');
       if (loader) {
@@ -29481,6 +29515,21 @@ window._daxiPersistLang = function(lang) {
     }
   }
   window._daxiFinishClientBootVisual = function() {
+    if (window._daxiIntroPlaying) {
+      window._daxiBootVisualQueued = true;
+      if (!window._daxiBootVisualIntroBound) {
+        window._daxiBootVisualIntroBound = true;
+        var resumeVisual = function() {
+          if (window._daxiBootVisualQueued && typeof window._daxiFinishClientBootVisual === 'function') {
+            window._daxiBootVisualQueued = false;
+            window._daxiFinishClientBootVisual();
+          }
+        };
+        window.addEventListener('daxi:intro-complete', resumeVisual, { once: true });
+        document.addEventListener('daxi:intro-complete', resumeVisual, { once: true });
+      }
+      return;
+    }
     var stage = document.getElementById('daxi-map-stage');
     var revealed = stage && stage.classList.contains('is-live');
     if (window._daxiBootVisualDone && revealed) return;
@@ -29526,6 +29575,18 @@ window._daxiPersistLang = function(lang) {
     };
   }
   window._daxiOnNativeAppRevealed = function() {
+    if (window._daxiIntroPlaying) {
+      if (!window._daxiNativeRevealQueued) {
+        window._daxiNativeRevealQueued = true;
+        var resumeReveal = function() {
+          window._daxiNativeRevealQueued = false;
+          if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
+        };
+        window.addEventListener('daxi:intro-complete', resumeReveal, { once: true });
+        document.addEventListener('daxi:intro-complete', resumeReveal, { once: true });
+      }
+      return;
+    }
     if (window._daxiNativeAppRevealed) return;
     window._daxiNativeAppRevealed = true;
     if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
@@ -33562,6 +33623,20 @@ function _absorbBestPosition(best, pos) {
 }
 
 function _showLocationSharePrompt(forceDenied) {
+    if (window._daxiIntroPlaying) {
+        window._daxiLocationPromptQueued = forceDenied || window._daxiLocationPromptQueued || true;
+        if (!window._daxiLocationPromptIntroBound) {
+            window._daxiLocationPromptIntroBound = true;
+            var resumeLoc = function() {
+                var queued = window._daxiLocationPromptQueued;
+                window._daxiLocationPromptQueued = false;
+                if (queued) _showLocationSharePrompt(queued === true ? false : queued);
+            };
+            window.addEventListener('daxi:intro-complete', resumeLoc, { once: true });
+            document.addEventListener('daxi:intro-complete', resumeLoc, { once: true });
+        }
+        return;
+    }
     if (window._daxiCapacitorApp || (window._daxiIsNativeApp && window._daxiIsNativeApp())) {
         if (!window._daxiUserAskedLocationPrompt) return;
     }
@@ -34510,6 +34585,11 @@ function requestMyLocation() {
 
 (function _daxiBootClientGpsWhenReady() {
     function go() {
+        if (window._daxiIntroPlaying) {
+            window.addEventListener('daxi:intro-complete', go, { once: true });
+            document.addEventListener('daxi:intro-complete', go, { once: true });
+            return;
+        }
         if (typeof _initClientLocationFlow === 'function') _initClientLocationFlow();
     }
     if (document.readyState === 'loading') {

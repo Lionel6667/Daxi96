@@ -16,7 +16,7 @@ NATIVE_ENV_HEAD = (
     '</script>\n'
 )
 NATIVE_ROUTER_TAG = '<script src="/static/js/daxi-deeplink-router.js?v=20260828d"></script>\n'
-NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828d"></script>\n'
+NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828g" data-daxi-cap-early async></script>\n'
 NATIVE_BANNER_CSS = '<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">\n'
 NATIVE_STATE_TAG = '<script src="/static/js/daxi-network-state.js?v=20260828d"></script>\n'
 NATIVE_BANNER_JS = '<script src="/static/js/daxi-network-banner.js?v=20260828d"></script>\n'
@@ -68,6 +68,25 @@ def _intro_boot_tags():
         'try{if(window.DaxiIntro&&DaxiIntro.play)DaxiIntro.play();}'
         'catch(e){}</script>\n'
     )
+
+
+def inject_capacitor_after_intro(content):
+    """Place le pont Capacitor juste après DaxiIntro.play(), pas à </head>.
+
+    Sinon le WebView télécharge tout le HTML (~1,47 Mo) avant même de
+    demander daxi-capacitor.js, et le splash natif recouvre l'intro.
+    """
+    if not content or 'daxi-capacitor.js' in content:
+        return content
+    marker = 'DaxiIntro.play();'
+    idx = content.find(marker)
+    if idx < 0:
+        return content
+    end = content.find('</script>', idx)
+    if end < 0:
+        return content
+    end += len('</script>')
+    return content[:end] + '\n' + NATIVE_CAP_TAG + content[end:]
 
 
 def inline_intro(content):
@@ -172,6 +191,7 @@ def inject_native_head(content, request=None):
     full = _is_full_document(content)
     if full:
         content = inline_intro(content)
+        content = inject_capacitor_after_intro(content)
     inject = ''
     if '<base ' not in content.lower():
         inject += '<base href="/" />\n'
