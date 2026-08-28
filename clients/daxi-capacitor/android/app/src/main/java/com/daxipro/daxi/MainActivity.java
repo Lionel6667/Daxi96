@@ -43,7 +43,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         if (connectivityManager != null && networkCallback != null) {
             try {
                 connectivityManager.unregisterNetworkCallback(networkCallback);
@@ -198,12 +198,12 @@ public class MainActivity extends BridgeActivity {
             return !isDeviceOnline();
         }
         int code = error.getErrorCode();
-        return code == WebView.ERROR_HOST_LOOKUP
-            || code == WebView.ERROR_CONNECT
-            || code == WebView.ERROR_TIMEOUT
-            || code == WebView.ERROR_IO
-            || code == WebView.ERROR_FAILED_SSL_HANDSHAKE
-            || code == WebView.ERROR_UNKNOWN;
+        return code == android.webkit.WebViewClient.ERROR_HOST_LOOKUP
+            || code == android.webkit.WebViewClient.ERROR_CONNECT
+            || code == android.webkit.WebViewClient.ERROR_TIMEOUT
+            || code == android.webkit.WebViewClient.ERROR_IO
+            || code == android.webkit.WebViewClient.ERROR_FAILED_SSL_HANDSHAKE
+            || code == android.webkit.WebViewClient.ERROR_UNKNOWN;
     }
 
     private void stayOnCachedShell(WebView view) {
