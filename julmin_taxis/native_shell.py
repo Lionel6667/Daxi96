@@ -16,7 +16,7 @@ NATIVE_ENV_HEAD = (
     '</script>\n'
 )
 NATIVE_ROUTER_TAG = '<script src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>\n'
-NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828a"></script>\n'
+NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828c"></script>\n'
 NATIVE_CAP_HEAD = NATIVE_ENV_HEAD + NATIVE_ROUTER_TAG + NATIVE_CAP_TAG
 
 

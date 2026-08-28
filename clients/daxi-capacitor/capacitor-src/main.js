@@ -138,7 +138,7 @@ function cacheKey(url) {
 let nativeOnline = true;
 let networkToastsReady = false;
 let offlineGraceTimer = null;
-const OFFLINE_GRACE_MS = 12000;
+const OFFLINE_GRACE_MS = 1800;
 
 function waitForOnline(maxMs) {
   const limit = maxMs == null ? 8000 : maxMs;
@@ -166,6 +166,12 @@ function commitOffline(opts) {
   nativeOnline = false;
   window._daxiNativeOnline = false;
   window.dispatchEvent(new Event('offline'));
+  try {
+    if (window.DaxiOffline) {
+      if (DaxiOffline.applyCachedUi) DaxiOffline.applyCachedUi('active');
+      if (DaxiOffline.ensureOfflineMap) DaxiOffline.ensureOfflineMap();
+    }
+  } catch (eOff) {}
   if (networkToastsReady && !(opts && opts.silent)) {
     toast(OFFLINE_MSG);
     haptic(ImpactStyle.Medium);
@@ -566,18 +572,20 @@ function patchNetworking() {
       const host = dest.hostname;
       const local = host === 'localhost' || host === '127.0.0.1' || host === '::1';
       if (!local && dest.origin === window.location.origin) {
-        if (!nativeOnline && /\/(entreprise|driver|admin)/i.test(dest.pathname)) {
+        if (!nativeOnline && dest.pathname !== (location.pathname || '/')) {
           evt.preventDefault();
           evt.stopPropagation();
-          toast('Connexion internet requise pour ouvrir cette page.');
+          if (dest.pathname.indexOf('/compte') === 0) location.hash = '#/compte';
+          else if (dest.pathname.indexOf('/assistance') === 0) location.hash = '#/assistance';
+          else toast('Hors ligne — cette page reste disponible une fois reconnecté.');
         }
         return;
       }
       if (!local && !/ngrok|daxipro\.com$/i.test(host) && dest.origin !== window.location.origin) return;
-      if (!nativeOnline && /\/(entreprise|driver|admin)/i.test(dest.pathname)) {
+      if (!nativeOnline) {
         evt.preventDefault();
         evt.stopPropagation();
-        toast('Connexion internet requise pour ouvrir cette page.');
+        toast('Hors ligne — cette page reste disponible une fois reconnecté.');
         return;
       }
       const next = nativePageUrl(dest.pathname + dest.search + dest.hash);

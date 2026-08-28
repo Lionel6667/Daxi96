@@ -1226,11 +1226,12 @@
             }
         });
         window.addEventListener('offline', function() {
-            if (window._daxiCapacitorApp) return;
             window._daxiNativeOnline = false;
             if (window.DaxiNetworkBanner && DaxiNetworkBanner.scheduleShowIfStillOffline) {
                 DaxiNetworkBanner.scheduleShowIfStillOffline();
             }
+            applyCachedUi('active');
+            ensureOfflineMap();
         });
 
         document.body.addEventListener('click', blockOrderIfOffline, true);

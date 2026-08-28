@@ -1627,7 +1627,7 @@
   var nativeOnline = true;
   var networkToastsReady = false;
   var offlineGraceTimer = null;
-  var OFFLINE_GRACE_MS = 12e3;
+  var OFFLINE_GRACE_MS = 1800;
   function waitForOnline(maxMs) {
     const limit = maxMs == null ? 8e3 : maxMs;
     if (nativeOnline || navigator.onLine) return Promise.resolve(true);
@@ -1653,6 +1653,13 @@
     nativeOnline = false;
     window._daxiNativeOnline = false;
     window.dispatchEvent(new Event("offline"));
+    try {
+      if (window.DaxiOffline) {
+        if (DaxiOffline.applyCachedUi) DaxiOffline.applyCachedUi("active");
+        if (DaxiOffline.ensureOfflineMap) DaxiOffline.ensureOfflineMap();
+      }
+    } catch (eOff) {
+    }
     if (networkToastsReady && !(opts && opts.silent)) {
       toast(OFFLINE_MSG);
       haptic(ImpactStyle.Medium);
@@ -2027,18 +2034,20 @@
         const host = dest.hostname;
         const local = host === "localhost" || host === "127.0.0.1" || host === "::1";
         if (!local && dest.origin === window.location.origin) {
-          if (!nativeOnline && /\/(entreprise|driver|admin)/i.test(dest.pathname)) {
+          if (!nativeOnline && dest.pathname !== (location.pathname || "/")) {
             evt.preventDefault();
             evt.stopPropagation();
-            toast("Connexion internet requise pour ouvrir cette page.");
+            if (dest.pathname.indexOf("/compte") === 0) location.hash = "#/compte";
+            else if (dest.pathname.indexOf("/assistance") === 0) location.hash = "#/assistance";
+            else toast("Hors ligne \u2014 cette page reste disponible une fois reconnect\xE9.");
           }
           return;
         }
         if (!local && !/ngrok|daxipro\.com$/i.test(host) && dest.origin !== window.location.origin) return;
-        if (!nativeOnline && /\/(entreprise|driver|admin)/i.test(dest.pathname)) {
+        if (!nativeOnline) {
           evt.preventDefault();
           evt.stopPropagation();
-          toast("Connexion internet requise pour ouvrir cette page.");
+          toast("Hors ligne \u2014 cette page reste disponible une fois reconnect\xE9.");
           return;
         }
         const next = nativePageUrl(dest.pathname + dest.search + dest.hash);

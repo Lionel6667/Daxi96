@@ -16288,7 +16288,7 @@ document.addEventListener('DOMContentLoaded', function () {
     <script src="static/js/daxi-network-state.js?v=20260809"></script>
     <script src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
     <script src="static/js/daxi-shell-role.js?v=20260820f"></script>
-    <script src="static/js/daxi-offline.js?v=20260827b"></script>
+    <script src="static/js/daxi-offline.js?v=20260828c"></script>
     <script src="static/js/daxi-countdown.js"></script>
     <script src="static/js/daxi-auto-i18n.js?v=20260737"></script>
     <script src="static/js/daxi-plan-wizard.js?v=20260721d"></script>
@@ -18885,21 +18885,27 @@ function _daxiCenterClientOnVisibleMap(lat, lng, opts) {
     var _traceMap = typeof _daxiPlacesTrace === 'function' && typeof _daxiPlacesTraceActive === 'function' && _daxiPlacesTraceActive();
     if (_traceMap) _daxiPlacesTrace('[MAP] center START', { lat: lat, lng: lng, zoom: opts.zoom });
     _syncSheetHeightVar(true);
+    _daxiApplyMapViewportPadding();
     if (_traceMap) _daxiPlacesTrace('[MAP] after _syncSheetHeightVar');
     try {
+        var pos = { lat: lat, lng: lng };
         if (opts.zoom != null && window._clientBgMap.setZoom) {
             if (_traceMap) _daxiPlacesTrace('[MAP] setZoom START', { zoom: opts.zoom });
             window._clientBgMap.setZoom(opts.zoom);
             if (_traceMap) _daxiPlacesTrace('[MAP] setZoom END');
         }
-        var offsetY = _daxiVisibleMapOffsetY();
-        if (_traceMap) _daxiPlacesTrace('[MAP] panTo START');
-        window._clientBgMap.panTo({ lat: lat, lng: lng });
-        if (_traceMap) _daxiPlacesTrace('[MAP] panTo END');
-        if (offsetY && window._clientBgMap.panBy) {
-            if (_traceMap) _daxiPlacesTrace('[MAP] panBy START', { offsetY: offsetY });
-            window._clientBgMap.panBy(0, offsetY);
-            if (_traceMap) _daxiPlacesTrace('[MAP] panBy END');
+        if (window._clientBgMap.setCenter) {
+            if (_traceMap) _daxiPlacesTrace('[MAP] setCenter START');
+            window._clientBgMap.setCenter(pos);
+            if (_traceMap) _daxiPlacesTrace('[MAP] setCenter END');
+        } else if (window._clientBgMap.panTo) {
+            if (_traceMap) _daxiPlacesTrace('[MAP] panTo START');
+            window._clientBgMap.panTo(pos);
+            if (_traceMap) _daxiPlacesTrace('[MAP] panTo END');
+        }
+        if (!_daxiMainMapIsGoogle() && window._clientBgMap.panBy) {
+            var offsetY = _daxiVisibleMapOffsetY();
+            if (offsetY) window._clientBgMap.panBy(0, offsetY);
         }
         if (!opts.skipPanMark) {
             _daxiLastAutoPanTs = Date.now();
@@ -29418,13 +29424,17 @@ window._daxiPersistLang = function(lang) {
   };
   window._daxiOnNativeGpsFix = function(p) {
     if (!p || p.lat == null || p.lng == null) return;
+    var firstFix = !window._clientGpsPannedOnce;
     if (typeof _placeClientPickupOnMap === 'function') {
         _placeClientPickupOnMap(+p.lat, +p.lng, {
             acc: p.accuracy != null ? +p.accuracy : 250,
             source: 'native_watch',
             allowStale: true,
-            forcePan: !!window._daxiForceGpsPanOnce
+            forcePan: firstFix || !!window._daxiForceGpsPanOnce
         });
+    }
+    if ((firstFix || window._daxiCommanderGpsFocusPending) && typeof _daxiFocusMapOnReadyGps === 'function') {
+        _daxiFocusMapOnReadyGps('native-gps');
     }
   };
   window._daxiOnNativeLocationDenied = function() {
@@ -33046,6 +33056,12 @@ function _daxiFocusMapOnReadyGps(source) {
     window._daxiCommanderGpsFocusPending = false;
     window._clientGpsPannedOnce = true;
     _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true, forcePan: true });
+    if (!window._daxiGpsFocusRetryTimer) {
+        window._daxiGpsFocusRetryTimer = setTimeout(function() {
+            window._daxiGpsFocusRetryTimer = null;
+            _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true, forcePan: true });
+        }, 420);
+    }
     return true;
 }
 window._daxiFocusMapOnReadyGps = _daxiFocusMapOnReadyGps;
