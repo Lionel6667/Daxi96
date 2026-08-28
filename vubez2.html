@@ -22765,6 +22765,8 @@ async function _daxiEnsureGoogleMapsReady() {
         if (typeof google.maps.importLibrary === 'function') {
             await google.maps.importLibrary('maps');
             await google.maps.importLibrary('geometry');
+            await google.maps.importLibrary('places');
+            await google.maps.importLibrary('marker');
         }
     } catch (e) {
         console.warn('[Daxi Maps] importLibrary(maps) failed — API legacy:', e);
@@ -29493,6 +29495,7 @@ window._daxiPersistLang = function(lang) {
     }
   }
   function _daxiClearFailedGmapsScript() {
+    if (window.google && window.google.maps) return;
     document.querySelectorAll('script[src*="maps.googleapis.com/maps/api/js"]').forEach(function(node) {
       try { node.remove(); } catch (e) {}
     });
@@ -29882,7 +29885,7 @@ window._daxiPersistLang = function(lang) {
     };
     var s = document.createElement('script');
     s.referrerPolicy = 'origin';
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&libraries=places,geometry,routes,marker&loading=async&callback=initPlacesAutocomplete';
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&loading=async&callback=initPlacesAutocomplete';
     s.async = true;
     s.onerror = function() {
       clearTimeout(window._daxiMapsLoadTimeoutId);
@@ -29905,6 +29908,8 @@ window._daxiPersistLang = function(lang) {
       window._daxiGmapsCallbackWrapped = true;
       var _origCallback = window.initPlacesAutocomplete;
       window.initPlacesAutocomplete = function() {
+        var self = this;
+        var args = arguments;
         clearTimeout(window._daxiMapsLoadTimeoutId);
         _daxiStopMapsRetryLoop();
         try { sessionStorage.removeItem('daxi_maps_probe_failed'); } catch (e) {}
@@ -29913,24 +29918,36 @@ window._daxiPersistLang = function(lang) {
         if (blocked) blocked.remove();
         var bgEl = document.getElementById('daxi-main-map');
         if (bgEl) bgEl._mapInit = false;
-        window.googleMapsLoaded = true;
         window._daxiMapsLoading = false;
-        if (typeof window._daxiMapDevLog === 'function') {
-          window._daxiMapDevLog('Google Maps script loaded');
-          if (window.google && window.google.maps) window._daxiMapDevLog('google.maps available');
-        }
-        try { sessionStorage.removeItem('daxi_maps_probe_failed'); sessionStorage.setItem('daxi_maps_ok', '1'); } catch (e) {}
-        if (typeof _daxiMapLog === 'function') _daxiMapLog('loadGoogleMaps-callback');
-        setTimeout(function() {
-          if (window.DaxiOrderCardMap && typeof DaxiOrderCardMap.init === 'function') {
-            DaxiOrderCardMap.init();
-          } else if (typeof initDaxiMaps3D === 'function') {
-            initDaxiMaps3D();
+        var finish = function() {
+          window.googleMapsLoaded = true;
+          if (typeof window._daxiMapDevLog === 'function') {
+            window._daxiMapDevLog('Google Maps script loaded');
+            if (window.google && window.google.maps) window._daxiMapDevLog('google.maps available');
           }
-          if (typeof _daxiScanLiveTracking === 'function') _daxiScanLiveTracking();
-          if (typeof _daxiNotifyGoogleMapsReady === 'function') _daxiNotifyGoogleMapsReady();
-        }, 120);
-        if (typeof _origCallback === 'function') return _origCallback.apply(this, arguments);
+          try { sessionStorage.removeItem('daxi_maps_probe_failed'); sessionStorage.setItem('daxi_maps_ok', '1'); } catch (e) {}
+          if (typeof _daxiMapLog === 'function') _daxiMapLog('loadGoogleMaps-callback');
+          setTimeout(function() {
+            if (window.DaxiOrderCardMap && typeof DaxiOrderCardMap.init === 'function') {
+              DaxiOrderCardMap.init();
+            } else if (typeof initDaxiMaps3D === 'function') {
+              initDaxiMaps3D();
+            }
+            if (typeof _daxiScanLiveTracking === 'function') _daxiScanLiveTracking();
+            if (typeof _daxiNotifyGoogleMapsReady === 'function') _daxiNotifyGoogleMapsReady();
+          }, 120);
+          if (typeof _origCallback === 'function') return _origCallback.apply(self, args);
+        };
+        if (window.google && window.google.maps && typeof google.maps.importLibrary === 'function' && typeof google.maps.Map !== 'function') {
+          Promise.all([
+            google.maps.importLibrary('maps'),
+            google.maps.importLibrary('geometry'),
+            google.maps.importLibrary('places'),
+            google.maps.importLibrary('marker')
+          ]).then(function() { finish(); }).catch(function() { finish(); });
+          return;
+        }
+        return finish();
       };
     }
     document.head.appendChild(s);
