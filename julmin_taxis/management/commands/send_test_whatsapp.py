@@ -78,7 +78,7 @@ class Command(BaseCommand):
 
         if ok:
             self.stdout.write(self.style.SUCCESS(
-                f'WhatsApp test ({mode}) → {phone}\n'
+                f'WhatsApp test ({mode}) -> {phone}\n'
                 f'  Commande #{order.pk}, chauffeur #{driver.pk} ({driver.get_full_name()})\n'
                 f'  Lien : {accept_url}'
             ))
