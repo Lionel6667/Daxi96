@@ -1,4 +1,4 @@
-"""Envoie un message WhatsApp test « nouvelle commande » ou lien d'acceptation signé."""
+"""Envoie un message WhatsApp test avec lien d'acceptation signe."""
 from django.core.management.base import BaseCommand, CommandError
 
 from drivers.models import Driver
@@ -8,33 +8,30 @@ from julmin_taxis.whatsapp_service import (
     _first_name,
     _graph_send_text,
     _send_nouvelle_commande_template,
+    send_template,
+    template_name,
 )
 
 
 class Command(BaseCommand):
-    help = 'Envoie un test WhatsApp avec lien d\'acceptation signé (template ou texte de secours).'
+    help = 'Test WhatsApp acceptation: template nouvelle_commande, sinon OTP avec lien signe.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--phone',
             default='+50940615883',
-            help='Numéro WhatsApp cible (défaut: +50940615883)',
+            help='Numero WhatsApp cible (defaut: +50940615883)',
         )
         parser.add_argument(
             '--order-id',
             type=int,
-            help='ID commande (sinon dernière price_confirmed ou dernière commande)',
-        )
-        parser.add_argument(
-            '--text-only',
-            action='store_true',
-            help='Force l\'envoi texte libre avec le lien signé (sans template Meta)',
+            help='ID commande (sinon derniere price_confirmed ou derniere commande)',
         )
 
     def handle(self, *args, **options):
         phone = (options['phone'] or '').strip()
         if not phone:
-            raise CommandError('Numéro requis')
+            raise CommandError('Numero requis')
 
         if options.get('order_id'):
             try:
@@ -55,26 +52,39 @@ class Command(BaseCommand):
             .first()
         )
         if not driver:
-            raise CommandError('Aucun chauffeur vérifié disponible pour signer le lien d\'acceptation')
+            raise CommandError('Aucun chauffeur verifie disponible pour signer le lien')
 
         name = _first_name(driver.firstname or driver.get_full_name() or 'Chauffeur', 'Test')
         accept_url = _accept_url(order.pk, driver.pk)
         ok = False
-        mode = 'texte'
+        mode = ''
 
-        if not options.get('text_only'):
-            ok = _send_nouvelle_commande_template(phone, order, name, driver)
+        ok = _send_nouvelle_commande_template(phone, order, name, driver)
+        if ok:
+            mode = 'template nouvelle_commande (bouton accept)'
+
+        if not ok:
+            info = (
+                f'Test acceptation course #{order.pk}. '
+                f'Cliquez pour accepter : {accept_url}'
+            )
+            ok = send_template(
+                phone,
+                template_name('otp_whatsapp'),
+                [name, info],
+                lang_fallback=True,
+            )
             if ok:
-                mode = 'template nouvelle_commande'
+                mode = 'template OTP (lien signe dans le message)'
 
         if not ok:
             msg = (
-                f'🚖 *DAXI — Test acceptation course #{order.pk}*\n\n'
-                f'Bonjour {name},\n\n'
-                f'Cliquez pour accepter cette course :\n{accept_url}'
+                f'DAXI test acceptation course #{order.pk}\n\n'
+                f'Lien : {accept_url}'
             )
             ok = _graph_send_text(phone, msg)
-            mode = 'texte libre (lien signé)'
+            if ok:
+                mode = 'texte libre (fenetre 24h requise)'
 
         if ok:
             self.stdout.write(self.style.SUCCESS(
@@ -84,6 +94,6 @@ class Command(BaseCommand):
             ))
         else:
             self.stdout.write(self.style.ERROR(
-                f'Échec envoi WhatsApp à {phone} — voir les logs serveur (token Meta, credentials)\n'
+                f'Echec envoi WhatsApp a {phone}\n'
                 f'  Lien attendu : {accept_url}'
             ))

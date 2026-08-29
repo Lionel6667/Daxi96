@@ -310,7 +310,15 @@ def _client_phone(order) -> str:
 
 
 def _site_url() -> str:
-    return (getattr(settings, 'SITE_URL', None) or 'https://daxipro.com').rstrip('/')
+    """URL publique pour liens WhatsApp / emails — jamais ngrok ou localhost."""
+    explicit = (getattr(settings, 'PUBLIC_SITE_URL', None) or '').strip().rstrip('/')
+    if explicit and 'ngrok' not in explicit.lower():
+        return explicit
+    raw = (getattr(settings, 'SITE_URL', None) or 'https://daxipro.com').strip().rstrip('/')
+    low = raw.lower()
+    if any(x in low for x in ('ngrok', 'localhost', '127.0.0.1', '0.0.0.0')):
+        return 'https://daxipro.com'
+    return raw
 
 
 def _order_coords_link(order, for_admin: bool = False) -> str:
@@ -831,8 +839,7 @@ def notify_driver_verified(driver) -> bool:
     name = _first_name(driver.firstname or driver.get_full_name() or 'Chauffeur', 'Chauffeur')
     if not phone:
         return False
-    # Meta : URL de base https://daxipro.com/ + suffixe « driver/ » (pas driver_home).
-    return send_situation(phone, 'chauffeur_valide', [name], button_url_suffix='driver/')
+    return send_situation(phone, 'chauffeur_valide', [name])
 
 
 def notify_driver_trip_completed(driver, earned_amount, wallet_balance) -> bool:

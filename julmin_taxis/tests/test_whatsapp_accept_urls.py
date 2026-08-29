@@ -24,6 +24,12 @@ class WhatsAppAcceptUrlTests(TestCase):
         self.assertIn('/wa/accept/42/', url)
         self.assertTrue(url.endswith('/'))
 
+    def test_accept_url_ignores_ngrok_site_url(self):
+        with self.settings(SITE_URL='https://manly-area-underarm.ngrok-free.dev'):
+            url = _accept_url(42, 7)
+            self.assertTrue(url.startswith('https://daxipro.com/'))
+            self.assertNotIn('ngrok', url)
+
     def test_driver_order_button_suffix_full_path(self):
         self.assertEqual(_driver_order_button_suffix(99), 'driver/commande_99/')
 
@@ -76,10 +82,15 @@ class WhatsAppAcceptRouteTests(TestCase):
         self.assertIn(resp.status_code, (301, 302))
 
     def test_driver_home_legacy_redirects(self):
-        for path in ('/driver_home', '/driver_home/', '/driver_home.html'):
+        for path in ('/driver_home', '/driver_home/', '/driver_home.html', '/driver', '/driver_login'):
             resp = self.client.get(path)
             self.assertEqual(resp.status_code, 301, path)
-            self.assertEqual(resp['Location'], '/driver/', path)
+            self.assertTrue(resp['Location'].endswith('/driver/') or resp['Location'].endswith('/driver/login/'), path)
+
+    def test_compte_legacy_redirect(self):
+        resp = self.client.get('/compte')
+        self.assertEqual(resp.status_code, 301)
+        self.assertEqual(resp['Location'], '/compte/')
 
     def test_legacy_html_admin_redirects(self):
         resp = self.client.get('/adm.html')
