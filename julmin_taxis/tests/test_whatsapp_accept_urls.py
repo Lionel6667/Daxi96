@@ -16,11 +16,14 @@ from julmin_taxis.whatsapp_service import (
 class WhatsAppAcceptUrlTests(TestCase):
     def test_wa_button_suffix_includes_signed_token(self):
         suffix = _accept_wa_button_suffix(42, 7)
-        self.assertTrue(suffix.startswith('42/'))
-        self.assertTrue(suffix.endswith('/'))
-        token_part = suffix.split('/', 1)[1].strip('/')
+        self.assertTrue(suffix.startswith('42/?sig='))
+        token_part = suffix.split('sig=', 1)[1]
         self.assertNotIn(':', token_part)
         self.assertNotIn('.', token_part)
+
+    def test_accept_url_uses_query_sig(self):
+        url = _accept_url(42, 7)
+        self.assertIn('/wa/accept/42/?sig=', url)
 
     def test_accept_token_url_safe_roundtrip(self):
         token = make_accept_token(42, 7)
@@ -30,8 +33,7 @@ class WhatsAppAcceptUrlTests(TestCase):
 
     def test_accept_url_uses_wa_path_with_driver(self):
         url = _accept_url(42, 7)
-        self.assertIn('/wa/accept/42/', url)
-        self.assertTrue(url.endswith('/'))
+        self.assertIn('/wa/accept/42/?sig=', url)
 
     def test_accept_url_ignores_ngrok_site_url(self):
         with self.settings(SITE_URL='https://manly-area-underarm.ngrok-free.dev'):
@@ -67,6 +69,11 @@ class WhatsAppAcceptRouteTests(TestCase):
         self.assertIn(b"Lien", resp.content)
 
     def test_wa_accept_signed_link(self):
+        token = make_accept_token(999, self.driver.pk)
+        resp = self.client.get(f'/wa/accept/999/?sig={token}')
+        self.assertIn(resp.status_code, (200, 302))
+
+    def test_wa_accept_signed_link_path_legacy(self):
         token = make_accept_token(999, self.driver.pk)
         resp = self.client.get(f'/wa/accept/999/{token}/')
         self.assertIn(resp.status_code, (200, 302))

@@ -6473,10 +6473,14 @@ def client_order_receipt_pdf(request, order_id):
     return response
 
 
-def driver_wa_accept_page(request, order_id, token):
-    """GET /wa/accept/<order_id>/<token>/ — driver accepts via WhatsApp signed link."""
+def driver_wa_accept_page(request, order_id, token=None):
+    """GET /wa/accept/<order_id>/[<token>/] — acceptation via lien WhatsApp signé."""
     from django.shortcuts import redirect
     from julmin_taxis.whatsapp_accept import accept_order_from_token
+
+    token = (token or request.GET.get('sig') or request.GET.get('t') or '').strip()
+    if not token:
+        return driver_wa_accept_legacy_page(request, order_id)
 
     ok, msg = accept_order_from_token(order_id, token)
     if ok:
@@ -6496,6 +6500,9 @@ a{{display:inline-block;margin-top:20px;padding:12px 24px;background:linear-grad
 
 def driver_wa_accept_legacy_page(request, order_id):
     """GET /wa/accept/<order_id>/ — anciens liens Meta sans token (évite 404)."""
+    sig = (request.GET.get('sig') or request.GET.get('t') or '').strip()
+    if sig:
+        return driver_wa_accept_page(request, order_id, sig)
     html = f'''<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DAXI — Lien expiré</title>
 <style>body{{font-family:Inter,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}}
@@ -6510,7 +6517,11 @@ a{{display:inline-block;margin-top:18px;padding:12px 24px;background:linear-grad
 
 
 def driver_accept_link_page(request, order_id):
-    """GET /driver/accept/<order_id>/ — bouton WhatsApp « J'accepte » (session chauffeur)."""
+    """GET /driver/accept/<order_id>/ — bouton WhatsApp « J'accepte » (session ou ?sig=)."""
+    sig = (request.GET.get('sig') or request.GET.get('t') or '').strip()
+    if sig:
+        return driver_wa_accept_page(request, order_id, sig)
+
     from django.shortcuts import redirect
     from drivers.models import Driver
     from orders.models import Order
