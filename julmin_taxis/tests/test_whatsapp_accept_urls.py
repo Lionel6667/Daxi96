@@ -3,7 +3,7 @@ from django.core import signing
 from django.test import Client, TestCase, override_settings
 
 from drivers.models import Driver
-from julmin_taxis.whatsapp_accept import make_accept_token, normalize_accept_token
+from julmin_taxis.whatsapp_accept import load_accept_token, make_accept_token
 from julmin_taxis.whatsapp_service import (
     _accept_url,
     _accept_wa_button_suffix,
@@ -20,15 +20,13 @@ class WhatsAppAcceptUrlTests(TestCase):
         self.assertTrue(suffix.endswith('/'))
         token_part = suffix.split('/', 1)[1].strip('/')
         self.assertNotIn(':', token_part)
-        self.assertIn('.', token_part)
+        self.assertNotIn('.', token_part)
 
     def test_accept_token_url_safe_roundtrip(self):
         token = make_accept_token(42, 7)
         self.assertNotIn(':', token)
-        restored = normalize_accept_token(token)
-        self.assertEqual(restored.count(':'), 2)
-        data = signing.loads(restored, salt='daxi-wa-accept')
-        self.assertEqual(data, {'o': 42, 'd': 7})
+        self.assertNotIn('.', token)
+        self.assertEqual(load_accept_token(token), {'o': 42, 'd': 7})
 
     def test_accept_url_uses_wa_path_with_driver(self):
         url = _accept_url(42, 7)

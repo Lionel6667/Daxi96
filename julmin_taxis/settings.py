@@ -8,7 +8,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
                              
 from dotenv import load_dotenv
-load_dotenv(BASE_DIR / '.env', override=True)
 
 # Railway (and similar) → production defaults: DEBUG off, brand hosts allowed.
 _ON_RAILWAY = bool(
@@ -16,6 +15,8 @@ _ON_RAILWAY = bool(
     or os.environ.get('RAILWAY_PUBLIC_DOMAIN')
     or os.environ.get('RAILWAY_PROJECT_ID')
 )
+# Sur Railway, ne jamais écraser les variables injectées par la plateforme.
+load_dotenv(BASE_DIR / '.env', override=not _ON_RAILWAY)
 _DEBUG_DEFAULT = 'False' if _ON_RAILWAY else 'True'
 
 

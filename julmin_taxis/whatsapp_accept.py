@@ -1,4 +1,5 @@
 """WhatsApp & web accept flow for driver order assignment."""
+import base64
 import logging
 
 from django.core import signing
@@ -11,22 +12,38 @@ ACCEPT_TOKEN_SALT = 'daxi-wa-accept'
 ACCEPT_TOKEN_MAX_AGE = 86400
 
 
+def _encode_opaque_token(raw: str) -> str:
+    """Un seul segment URL — évite troncature proxy sur « : » ou « . »."""
+    return base64.urlsafe_b64encode(raw.encode()).decode().rstrip('=')
+
+
+def _decode_opaque_token(raw: str) -> str:
+    padded = raw + ('=' * (-len(raw) % 4))
+    return base64.urlsafe_b64decode(padded.encode()).decode()
+
+
 def make_accept_token(order_id: int, driver_id: int) -> str:
-    """Token signé URL-safe (sans « : » — certains proxies tronquent le path)."""
+    """Token signé opaque pour chemins WhatsApp / Meta."""
     raw = signing.dumps({'o': order_id, 'd': driver_id}, salt=ACCEPT_TOKEN_SALT)
-    return raw.replace(':', '.')
+    return _encode_opaque_token(raw)
 
 
 def normalize_accept_token(raw: str) -> str:
-    """Rétablit le format Django signing depuis l'URL (points ou deux-points)."""
+    """Rétablit le token Django depuis l'URL (opaque, points ou deux-points)."""
     from urllib.parse import unquote
 
     token = unquote(raw or '').strip().strip('/')
     if not token:
         return token
-    if token.count(':') < 2:
-        token = token.replace('.', ':')
-    return token
+    # Legacy django signing in path (colon or dot separators)
+    if token.startswith('eyJ') and (':' in token or token.count('.') >= 2):
+        if token.count(':') < 2:
+            token = token.replace('.', ':')
+        return token
+    try:
+        return _decode_opaque_token(token)
+    except Exception:
+        return token
 
 
 def load_accept_token(raw: str) -> dict:
