@@ -546,6 +546,13 @@ urlpatterns = [
     path('blog/<slug:slug>/', blog_article_page, name='blog-article'),
     path('compte/', ServeOriginalPage.as_view(filename='compte.html', page_name='client'), name='compte'),
     path('admin-dashboard/', admin_dashboard_page, name='admin_dashboard'),
+    # Liens legacy Meta / Firebase → routes Django actuelles
+    re_path(r'^driver_home/?$', RedirectView.as_view(url='/driver/', permanent=True), name='driver-home-legacy'),
+    re_path(r'^driver_home\.html/?$', RedirectView.as_view(url='/driver/', permanent=True)),
+    re_path(r'^adm\.html/?$', RedirectView.as_view(url='/admin-dashboard/', permanent=True)),
+    re_path(r'^admt\.html/?$', RedirectView.as_view(url='/admin-dashboard/', permanent=True)),
+    re_path(r'^compte\.html/?$', RedirectView.as_view(url='/compte/', permanent=True)),
+    re_path(r'^vubez2\.html/?$', RedirectView.as_view(url='/', permanent=True)),
     path('driver/', ServeOriginalPage.as_view(filename='driver_home.html', page_name='driver'), name='driver_dashboard'),
     path('driver/login/', ServeOriginalPage.as_view(filename='driver_login.html', page_name='driver_login'), name='driver_login'),
     path('assistance/', TemplateView.as_view(template_name='assistance.html'), name='assistance'),

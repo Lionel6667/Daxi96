@@ -34,7 +34,7 @@ ERROR_CATALOG = {
         'title': 'Page introuvable',
         'lead': 'Cette adresse n’existe pas ou a été déplacée.',
         'hint': 'Vérifiez l’URL, ou retournez à l’accueil pour commander un taxi.',
-        'icon': 'ri-map-pin-off-line',
+        'icon': '',
     },
     405: {
         'title': 'Méthode non autorisée',

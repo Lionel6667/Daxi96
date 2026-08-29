@@ -74,3 +74,14 @@ class WhatsAppAcceptRouteTests(TestCase):
     def test_driver_accept_without_slash_redirects(self):
         resp = self.client.get('/driver/accept/888')
         self.assertIn(resp.status_code, (301, 302))
+
+    def test_driver_home_legacy_redirects(self):
+        for path in ('/driver_home', '/driver_home/', '/driver_home.html'):
+            resp = self.client.get(path)
+            self.assertEqual(resp.status_code, 301, path)
+            self.assertEqual(resp['Location'], '/driver/', path)
+
+    def test_legacy_html_admin_redirects(self):
+        resp = self.client.get('/adm.html')
+        self.assertEqual(resp.status_code, 301)
+        self.assertEqual(resp['Location'], '/admin-dashboard/')

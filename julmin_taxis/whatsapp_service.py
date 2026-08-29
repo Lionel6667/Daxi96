@@ -831,7 +831,8 @@ def notify_driver_verified(driver) -> bool:
     name = _first_name(driver.firstname or driver.get_full_name() or 'Chauffeur', 'Chauffeur')
     if not phone:
         return False
-    return send_situation(phone, 'chauffeur_valide', [name])
+    # Meta : URL de base https://daxipro.com/ + suffixe « driver/ » (pas driver_home).
+    return send_situation(phone, 'chauffeur_valide', [name], button_url_suffix='driver/')
 
 
 def notify_driver_trip_completed(driver, earned_amount, wallet_balance) -> bool:
