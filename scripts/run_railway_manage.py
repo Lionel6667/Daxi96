@@ -50,6 +50,11 @@ def main(argv: list[str]) -> int:
     env['DATABASE_URL'] = _database_url(pg)
     env.setdefault('DJANGO_SETTINGS_MODULE', 'julmin_taxis.settings')
 
+    # Toujours aligner la clé de signature sur Railway (évite tokens invalides en prod).
+    for key in ('SECRET_KEY',):
+        if isinstance(app.get(key), str) and app[key]:
+            env[key] = app[key]
+
     for key, value in app.items():
         if isinstance(value, str) and value and key not in env:
             env[key] = value

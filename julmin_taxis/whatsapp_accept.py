@@ -7,6 +7,32 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
+ACCEPT_TOKEN_SALT = 'daxi-wa-accept'
+ACCEPT_TOKEN_MAX_AGE = 86400
+
+
+def make_accept_token(order_id: int, driver_id: int) -> str:
+    """Token signé URL-safe (sans « : » — certains proxies tronquent le path)."""
+    raw = signing.dumps({'o': order_id, 'd': driver_id}, salt=ACCEPT_TOKEN_SALT)
+    return raw.replace(':', '.')
+
+
+def normalize_accept_token(raw: str) -> str:
+    """Rétablit le format Django signing depuis l'URL (points ou deux-points)."""
+    from urllib.parse import unquote
+
+    token = unquote(raw or '').strip().strip('/')
+    if not token:
+        return token
+    if token.count(':') < 2:
+        token = token.replace('.', ':')
+    return token
+
+
+def load_accept_token(raw: str) -> dict:
+    token = normalize_accept_token(raw)
+    return signing.loads(token, salt=ACCEPT_TOKEN_SALT, max_age=ACCEPT_TOKEN_MAX_AGE)
+
 
 def _normalize_phone(phone: str) -> str:
     from julmin_taxis.whatsapp_service import _normalize_phone as _n
@@ -93,7 +119,7 @@ def accept_order_from_token(order_id, token, phone_hint=None):
     from orders.models import Order
 
     try:
-        data = signing.loads(token, salt='daxi-wa-accept', max_age=86400)
+        data = load_accept_token(token)
     except signing.BadSignature:
         return False, 'Lien invalide ou expiré. Demandez une nouvelle notification.'
 
@@ -140,7 +166,6 @@ def handle_whatsapp_accept_reply(sender: str, payload: str) -> str:
     if not order_id:
         return 'Utilisez le bouton *J\'accepte* dans le message de nouvelle commande, ou le lien reçu.'
 
-    from django.core import signing
-    token = signing.dumps({'o': order_id, 'd': driver.pk}, salt='daxi-wa-accept')
+    token = make_accept_token(order_id, driver.pk)
     ok, msg = accept_order_from_token(order_id, token, phone_hint=sender)
     return msg

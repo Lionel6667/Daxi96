@@ -499,8 +499,8 @@ def _accept_public_path(order_id: int) -> str:
 
 def _accept_wa_button_suffix(order_id: int, driver_id: int) -> str:
     """Suffixe bouton Meta — URL modèle : {SITE_URL}/wa/accept/ (sans {{1}} dans Meta)."""
-    from django.core import signing
-    token = signing.dumps({'o': order_id, 'd': driver_id}, salt='daxi-wa-accept')
+    from julmin_taxis.whatsapp_accept import make_accept_token
+    token = make_accept_token(order_id, driver_id)
     return f'{order_id}/{token}/'
 
 
@@ -528,8 +528,8 @@ def _receipt_public_path(order_id: int) -> str:
 
 
 def _accept_url_suffix(order_id, driver_id) -> str:
-    from django.core import signing
-    token = signing.dumps({'o': order_id, 'd': driver_id}, salt='daxi-wa-accept')
+    from julmin_taxis.whatsapp_accept import make_accept_token
+    token = make_accept_token(order_id, driver_id)
     return f'wa/accept/{order_id}/{token}/'
 
 

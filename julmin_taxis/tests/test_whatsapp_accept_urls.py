@@ -3,6 +3,7 @@ from django.core import signing
 from django.test import Client, TestCase, override_settings
 
 from drivers.models import Driver
+from julmin_taxis.whatsapp_accept import make_accept_token, normalize_accept_token
 from julmin_taxis.whatsapp_service import (
     _accept_url,
     _accept_wa_button_suffix,
@@ -17,7 +18,17 @@ class WhatsAppAcceptUrlTests(TestCase):
         suffix = _accept_wa_button_suffix(42, 7)
         self.assertTrue(suffix.startswith('42/'))
         self.assertTrue(suffix.endswith('/'))
-        self.assertIn(':', suffix.split('/', 1)[1])
+        token_part = suffix.split('/', 1)[1].strip('/')
+        self.assertNotIn(':', token_part)
+        self.assertIn('.', token_part)
+
+    def test_accept_token_url_safe_roundtrip(self):
+        token = make_accept_token(42, 7)
+        self.assertNotIn(':', token)
+        restored = normalize_accept_token(token)
+        self.assertEqual(restored.count(':'), 2)
+        data = signing.loads(restored, salt='daxi-wa-accept')
+        self.assertEqual(data, {'o': 42, 'd': 7})
 
     def test_accept_url_uses_wa_path_with_driver(self):
         url = _accept_url(42, 7)
@@ -58,6 +69,11 @@ class WhatsAppAcceptRouteTests(TestCase):
         self.assertIn(b"Lien", resp.content)
 
     def test_wa_accept_signed_link(self):
+        token = make_accept_token(999, self.driver.pk)
+        resp = self.client.get(f'/wa/accept/999/{token}/')
+        self.assertIn(resp.status_code, (200, 302))
+
+    def test_wa_accept_legacy_colon_token_still_works(self):
         token = signing.dumps({'o': 999, 'd': self.driver.pk}, salt='daxi-wa-accept')
         resp = self.client.get(f'/wa/accept/999/{token}/')
         self.assertIn(resp.status_code, (200, 302))
@@ -68,12 +84,12 @@ class WhatsAppAcceptRouteTests(TestCase):
         self.assertIn('/driver/#commande-55', resp['Location'])
 
     def test_driver_accept_with_token_uses_wa_handler(self):
-        token = signing.dumps({'o': 999, 'd': self.driver.pk}, salt='daxi-wa-accept')
+        token = make_accept_token(999, self.driver.pk)
         resp = self.client.get(f'/driver/accept/999/{token}/')
         self.assertIn(resp.status_code, (200, 302))
 
     def test_driver_accept_meta_malformed_url(self):
-        token = signing.dumps({'o': 114, 'd': self.driver.pk}, salt='daxi-wa-accept')
+        token = make_accept_token(114, self.driver.pk)
         resp = self.client.get(f'/driver/accept/%7B%7B1%7D%7D114/{token}/')
         self.assertIn(resp.status_code, (200, 302))
 
