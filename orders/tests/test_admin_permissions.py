@@ -172,6 +172,42 @@ class AdminDriverReviewTests(TestCase):
         self.assertIn('driving_license_url', match)
         self.assertEqual(match['city'], 'Cap-Haïtien')
 
+    def test_staff_driver_list_never_exposes_password(self):
+        self.pending.password_hash = 'PlaintextDriverSecret99'
+        self.pending.save(update_fields=['password_hash'])
+        self.client.force_login(self.admin)
+        for url in ('/api/drivers/', '/api/admin-panel/drivers/'):
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200, url)
+            rows = resp.json()
+            if isinstance(rows, dict):
+                rows = rows.get('results') or []
+            match = next((r for r in rows if r.get('id') == self.pending.pk), None)
+            self.assertIsNotNone(match, url)
+            self.assertNotIn('password_hash', match)
+            self.assertNotIn('password', match)
+            blob = str(match)
+            self.assertNotIn('PlaintextDriverSecret99', blob)
+
+    def test_admin_enterprises_page_never_shows_password(self):
+        from enterprises.models import Enterprise
+
+        Enterprise.objects.create(
+            name='Entreprise Secrète',
+            phone='+50937009999',
+            email='secret.ent@daxi.ht',
+            password_hash='EnterprisePlainSecret88',
+            status='pending',
+            presentation='Test présentation',
+        )
+        self.client.force_login(self.admin)
+        resp = self.client.get('/htmx/admin/enterprises/?tab=pending')
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        self.assertIn('Entreprise Secrète', html)
+        self.assertNotIn('EnterprisePlainSecret88', html)
+        self.assertNotIn('password_hash', html)
+
     def test_public_driver_list_hides_unverified_and_docs(self):
         resp = self.client.get('/api/drivers/')
         self.assertEqual(resp.status_code, 200)

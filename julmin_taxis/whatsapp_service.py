@@ -542,7 +542,8 @@ def _send_nouvelle_commande_template(to_phone: str, order, recipient_name: str, 
     body = _nouvelle_commande_params(order, recipient_name, driver)
     suffix = str(order.pk)
     if driver:
-        suffix = _accept_wa_button_suffix(order.pk, driver.pk)
+        # Meta {{1}} = URL dynamique complète (pas un suffixe relatif).
+        suffix = f'{_site_url()}/driver/accept/{_accept_wa_button_suffix(order.pk, driver.pk)}'
     return send_template(
         to_phone, tpl, body,
         button_url_suffix=suffix,

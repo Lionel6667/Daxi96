@@ -1,5 +1,22 @@
 """Helpers for driver/enterprise registration approval and rejection messages."""
 
+SENSITIVE_REGISTRATION_FIELDS = frozenset({
+    'password',
+    'password_hash',
+    'password_confirm',
+    'new_password',
+    'old_password',
+})
+
+
+def strip_sensitive_registration_fields(data: dict) -> dict:
+    """Remove password fields from API/admin payloads — never expose credentials."""
+    if not isinstance(data, dict):
+        return data
+    for key in SENSITIVE_REGISTRATION_FIELDS:
+        data.pop(key, None)
+    return data
+
 
 def driver_rejection_reason(verification_notes: str) -> str:
     notes = (verification_notes or '').strip()

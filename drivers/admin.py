@@ -8,6 +8,7 @@ class DriverAdmin(admin.ModelAdmin):
     list_filter = ['status', 'is_verified', 'is_blocked']
     search_fields = ['firstname', 'lastname', 'email', 'phone', 'plate']
     ordering = ['-created_at']
+    exclude = ('password_hash', 'photo_base64', 'fcm_token')
     actions = ['verify_drivers', 'block_drivers', 'unblock_drivers']
 
     def verify_drivers(self, request, queryset):

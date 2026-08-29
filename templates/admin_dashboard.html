@@ -1917,7 +1917,15 @@ async function loadAdminDrivers() {
       return;
     }
     const payload = await res.json();
-    const drivers = Array.isArray(payload) ? payload : (payload.results || []);
+    const drivers = (Array.isArray(payload) ? payload : (payload.results || [])).map(function (d) {
+      const safe = Object.assign({}, d);
+      delete safe.password;
+      delete safe.password_hash;
+      delete safe.password_confirm;
+      delete safe.new_password;
+      delete safe.old_password;
+      return safe;
+    });
     ADMIN.allDrivers = drivers;
     syncAdminDriversTabCounts();
     applyAdminDriversTab();

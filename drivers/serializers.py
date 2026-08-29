@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import Driver, DriverReview
 from julmin_taxis.driver_presence import get_driver_presence
+from julmin_taxis.registration_utils import strip_sensitive_registration_fields
 
 ACTIVE_ORDER_STATUSES = ['driver_assigned', 'on_way', 'arrived', 'in_progress', 'waiting_return']
 
@@ -79,6 +80,7 @@ class DriverSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        strip_sensitive_registration_fields(data)
         if not self._is_staff_request():
             return data
         data.update({
@@ -99,7 +101,7 @@ class DriverSerializer(serializers.ModelSerializer):
             'has_dgi': bool(instance.dgi_card),
             'has_tint': bool(instance.tint_permit),
         })
-        return data
+        return strip_sensitive_registration_fields(data)
 
     def get_reviews_count(self, obj):
         return obj.reviews.count()
