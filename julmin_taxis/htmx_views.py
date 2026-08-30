@@ -6473,6 +6473,25 @@ def client_order_receipt_pdf(request, order_id):
     return response
 
 
+def _render_wa_accept_html(*, title, message, tone='error', order_id=None, icon=None):
+    """Page légère après clic lien WhatsApp (acceptation course)."""
+    tones = {
+        'error': ('#ef4444', icon or '❌'),
+        'warning': ('#fbbf24', icon or 'ℹ️'),
+        'success': ('#22c55e', icon or '✅'),
+    }
+    color, icon_char = tones.get(tone, tones['error'])
+    order_link = f'/driver/#commande-{order_id}' if order_id else '/driver/'
+    return f'''<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DAXI — {title}</title>
+<style>body{{font-family:Inter,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}}
+.card{{max-width:400px;background:#1e293b;border-radius:20px;padding:32px;text-align:center;border:1px solid rgba(148,163,184,.2);}}
+.icon{{font-size:48px;margin-bottom:12px;}} h1{{font-size:20px;margin:0 0 12px;color:{color};}} p{{font-size:14px;line-height:1.6;color:#94a3b8;}}
+a{{display:inline-block;margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;text-decoration:none;border-radius:12px;font-weight:800;}}</style></head>
+<body><div class="card"><div class="icon">{icon_char}</div><h1>{title}</h1><p>{message}</p>
+<a href="{order_link}">Ouvrir l'app chauffeur</a></div></body></html>'''
+
+
 def driver_wa_accept_page(request, order_id, token=None):
     """GET /wa/accept/<order_id>/[<token>/] — acceptation via lien WhatsApp signé."""
     from django.shortcuts import redirect
@@ -6482,19 +6501,31 @@ def driver_wa_accept_page(request, order_id, token=None):
     if not token:
         return driver_wa_accept_legacy_page(request, order_id)
 
-    ok, msg = accept_order_from_token(order_id, token)
+    ok, msg, code = accept_order_from_token(order_id, token)
     if ok:
         return redirect(f'/driver/#commande-{order_id}')
-    color = '#ef4444'
-    icon = '❌'
-    html = f'''<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DAXI — Acceptation course</title>
-<style>body{{font-family:Inter,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;}}
-.card{{max-width:400px;background:#1e293b;border-radius:20px;padding:32px;text-align:center;border:1px solid rgba(148,163,184,.2);}}
-.icon{{font-size:48px;margin-bottom:12px;}} h1{{font-size:20px;margin:0 0 12px;color:{color};}} p{{font-size:14px;line-height:1.6;color:#94a3b8;}}
-a{{display:inline-block;margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;text-decoration:none;border-radius:12px;font-weight:800;}}</style></head>
-<body><div class="card"><div class="icon">{icon}</div><h1>Acceptation impossible</h1><p>{msg}</p>
-<a href="/driver/">Ouvrir l'app chauffeur</a></div></body></html>'''
+    if code == 'already_taken':
+        html = _render_wa_accept_html(
+            title='Commande déjà acceptée',
+            message=msg or 'Cette commande a déjà été acceptée par un autre chauffeur.',
+            tone='warning',
+            order_id=order_id,
+        )
+        return HttpResponse(html)
+    if code == 'not_found':
+        html = _render_wa_accept_html(
+            title='Commande introuvable',
+            message=msg or 'Cette commande n\'existe plus ou a été annulée.',
+            tone='warning',
+            order_id=order_id,
+        )
+        return HttpResponse(html)
+    html = _render_wa_accept_html(
+        title='Acceptation impossible',
+        message=msg,
+        tone='error',
+        order_id=order_id,
+    )
     return HttpResponse(html)
 
 
@@ -6537,25 +6568,75 @@ def driver_accept_link_page(request, order_id):
     except (Driver.DoesNotExist, Order.DoesNotExist):
         return redirect('/driver/')
 
-    ok, _msg = _accept_order_for_driver(order, driver)
+    ok, _msg, _code = _accept_order_for_driver(order, driver)
     return redirect(f'/driver/#commande-{order_id}')
 
 
 def driver_accept_wa_from_raw(request, raw):
     """GET /driver/accept/<raw>/ — liens Meta mal formés ({{1}}114/token) ou sans route int."""
-    import re
-    from urllib.parse import unquote
+    from julmin_taxis.whatsapp_accept import parse_malformed_accept_raw
 
-    cleaned = unquote(raw or '').strip().strip('/')
-    cleaned = re.sub(r'\{\{1\}\}', '', cleaned)
-    m = re.match(r'^(\d+)/(.+)$', cleaned)
-    if not m:
-        m_id = re.match(r'^(\d+)$', cleaned)
-        if m_id:
-            return driver_wa_accept_legacy_page(request, int(m_id.group(1)))
+    order_id, token = parse_malformed_accept_raw(raw)
+    if order_id:
+        if token:
+            return driver_wa_accept_page(request, order_id, token)
+        return driver_wa_accept_legacy_page(request, order_id)
+
+    from julmin_taxis.error_views import page_not_found
+    return page_not_found(request)
+
+
+def wa_meta_link_dispatch(request, raw):
+    """Résout les liens Meta mal concaténés ({{1}} + suffixe ou URL double)."""
+    from django.shortcuts import redirect
+    from julmin_taxis.wa_meta_links import resolve_meta_link
+
+    resolved = resolve_meta_link(raw)
+    if not resolved:
         from julmin_taxis.error_views import page_not_found
         return page_not_found(request)
-    return driver_wa_accept_page(request, int(m.group(1)), m.group(2).strip('/'))
+
+    kind, payload = resolved
+    if kind == 'accept':
+        token = payload.get('token') or ''
+        if token:
+            return driver_wa_accept_page(request, payload['order_id'], token)
+        return driver_wa_accept_legacy_page(request, payload['order_id'])
+    if kind == 'commande':
+        return redirect(f'/driver/#commande-{payload["order_id"]}')
+    if kind == 'recu':
+        return client_receipt_short_link(request, payload['order_id'])
+    if kind == 'compte':
+        return redirect(f'/compte/?order={payload["order_id"]}')
+    if kind == 'admin':
+        return redirect('/admin-dashboard/#orders')
+    return page_not_found(request)
+
+
+def wa_accept_from_raw(request, raw):
+    """GET /wa/accept/<raw>/ — même parsing que driver/accept pour liens Meta."""
+    return wa_meta_link_dispatch(request, raw)
+
+
+def driver_commande_from_raw(request, raw):
+    """GET /driver/commande_<raw>/ — coords Meta mal formées."""
+    from django.shortcuts import redirect
+    from julmin_taxis.wa_meta_links import parse_malformed_commande_raw
+
+    order_id = parse_malformed_commande_raw(raw)
+    if order_id:
+        return redirect(f'/driver/#commande-{order_id}')
+    return wa_meta_link_dispatch(request, raw)
+
+
+def client_receipt_from_raw(request, raw):
+    """GET /recu_<raw>.pdf — reçu Meta mal formé."""
+    from julmin_taxis.wa_meta_links import parse_malformed_receipt_raw
+
+    order_id = parse_malformed_receipt_raw(raw)
+    if order_id:
+        return client_receipt_short_link(request, order_id)
+    return wa_meta_link_dispatch(request, raw)
 
 
 def driver_order_deep_link(request, order_id):

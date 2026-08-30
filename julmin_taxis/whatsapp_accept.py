@@ -1,6 +1,8 @@
 """WhatsApp & web accept flow for driver order assignment."""
 import base64
 import logging
+import re
+from urllib.parse import unquote
 
 from django.core import signing
 from django.db import transaction
@@ -51,13 +53,19 @@ def load_accept_token(raw: str) -> dict:
     return signing.loads(token, salt=ACCEPT_TOKEN_SALT, max_age=ACCEPT_TOKEN_MAX_AGE)
 
 
+def parse_malformed_accept_raw(raw: str):
+    """Compat — voir julmin_taxis.wa_meta_links."""
+    from julmin_taxis.wa_meta_links import parse_malformed_accept_raw as _parse
+    return _parse(raw)
+
+
 def _normalize_phone(phone: str) -> str:
     from julmin_taxis.whatsapp_service import _normalize_phone as _n
     return _n(phone)
 
 
 def _accept_order_for_driver(order, driver):
-    """Assign order to driver atomically. Returns (ok, message)."""
+    """Assign order to driver atomically. Returns (ok, message, code)."""
     from orders.models import Order
     from julmin_taxis.htmx_views import (
         _driver_can_accept_order,
@@ -66,31 +74,41 @@ def _accept_order_for_driver(order, driver):
         _order_ready_for_driver_accept,
     )
 
+    if order.status not in ('pending', 'price_proposed', 'price_confirmed'):
+        if order.driver_id == driver.pk:
+            return True, f'✅ Vous êtes déjà assigné à la course #{order.pk}.', 'already_self'
+        other = order.driver_name or 'un autre chauffeur'
+        return False, (
+            f'Cette commande (#{order.pk}) a déjà été acceptée par {other}.'
+        ), 'already_taken'
+
     if not _order_ready_for_driver_accept(order):
         return False, (
             '❌ Le client n\'a pas encore payé — la course n\'est pas disponible à l\'acceptation.'
-        )
+        ), 'not_ready'
 
     can, block_msg = _driver_can_accept_order(driver, order)
     if not can:
-        return False, f'❌ {block_msg}'
+        return False, f'❌ {block_msg}', 'blocked'
 
     with transaction.atomic():
         order = Order.objects.select_for_update().get(pk=order.pk)
         if order.status not in ('pending', 'price_proposed', 'price_confirmed'):
             if order.driver_id == driver.pk:
-                return True, f'✅ Vous êtes déjà assigné à la course #{order.pk}.'
+                return True, f'✅ Vous êtes déjà assigné à la course #{order.pk}.', 'already_self'
             other = order.driver_name or 'un autre chauffeur'
-            return False, f'❌ Désolé — {other} a déjà accepté cette course (#{order.pk}).'
+            return False, (
+                f'Cette commande (#{order.pk}) a déjà été acceptée par {other}.'
+            ), 'already_taken'
 
         if not _order_ready_for_driver_accept(order):
             return False, (
                 '❌ Le client n\'a pas encore payé — la course n\'est pas disponible à l\'acceptation.'
-            )
+            ), 'not_ready'
 
         can, block_msg = _driver_can_accept_order(driver, order)
         if not can:
-            return False, f'❌ {block_msg}'
+            return False, f'❌ {block_msg}', 'blocked'
 
         order.driver = driver
         from julmin_taxis.driver_display_utils import driver_public_dict
@@ -126,8 +144,8 @@ def _accept_order_for_driver(order, driver):
         return True, (
             f'✅ Course #{order.pk} acceptée ! '
             f'Ouvrez l\'app chauffeur et placez départ/destination sur la carte avant de partir.'
-        )
-    return True, f'✅ Course #{order.pk} acceptée ! Départ : {order.pickup}'
+        ), 'accepted'
+    return True, f'✅ Course #{order.pk} acceptée ! Départ : {order.pickup}', 'accepted'
 
 
 def accept_order_from_token(order_id, token, phone_hint=None):
@@ -138,29 +156,28 @@ def accept_order_from_token(order_id, token, phone_hint=None):
     try:
         data = load_accept_token(token)
     except signing.BadSignature:
-        return False, 'Lien invalide ou expiré. Demandez une nouvelle notification.'
+        return False, 'Lien invalide ou expiré. Demandez une nouvelle notification.', 'invalid_token'
 
     if int(data.get('o', 0)) != int(order_id):
-        return False, 'Lien invalide pour cette commande.'
+        return False, 'Lien invalide pour cette commande.', 'invalid_token'
 
     try:
         driver = Driver.objects.get(pk=int(data['d']))
     except (Driver.DoesNotExist, KeyError, ValueError):
-        return False, 'Chauffeur introuvable.'
+        return False, 'Chauffeur introuvable.', 'invalid_token'
 
     if phone_hint:
         norm_hint = _normalize_phone(phone_hint)
         norm_driver = _normalize_phone(driver.phone)
         if norm_hint and norm_driver and norm_hint != norm_driver:
-            return False, 'Ce lien est réservé à un autre chauffeur.'
+            return False, 'Ce lien est réservé à un autre chauffeur.', 'wrong_driver'
 
     try:
         order = Order.objects.get(pk=int(order_id))
     except Order.DoesNotExist:
-        return False, 'Commande introuvable.'
+        return False, 'Commande introuvable.', 'not_found'
 
-    ok, msg = _accept_order_for_driver(order, driver)
-    return ok, msg
+    return _accept_order_for_driver(order, driver)
 
 
 def handle_whatsapp_accept_reply(sender: str, payload: str) -> str:
@@ -184,5 +201,5 @@ def handle_whatsapp_accept_reply(sender: str, payload: str) -> str:
         return 'Utilisez le bouton *J\'accepte* dans le message de nouvelle commande, ou le lien reçu.'
 
     token = make_accept_token(order_id, driver.pk)
-    ok, msg = accept_order_from_token(order_id, token, phone_hint=sender)
+    ok, msg, _code = accept_order_from_token(order_id, token, phone_hint=sender)
     return msg

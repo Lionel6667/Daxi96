@@ -153,6 +153,11 @@ def _template_lang_candidates(preferred: str = None) -> list:
     return out
 
 
+def _normalize_meta_button_suffix(suffix: str) -> str:
+    from julmin_taxis.wa_meta_links import normalize_meta_button_suffix
+    return normalize_meta_button_suffix(suffix, _site_url())
+
+
 def send_template(
     to_phone: str,
     template_name: str,
@@ -190,11 +195,12 @@ def send_template(
                 'parameters': [{'type': 'coupon_code', 'coupon_code': str(copy_code)[:15]}],
             })
         elif button_url_suffix:
+            norm_suffix = _normalize_meta_button_suffix(button_url_suffix)
             components.append({
                 'type': 'button',
                 'sub_type': 'url',
                 'index': '0',
-                'parameters': [{'type': 'text', 'text': str(button_url_suffix)[:256]}],
+                'parameters': [{'type': 'text', 'text': norm_suffix}],
             })
 
         payload = {
@@ -498,10 +504,8 @@ def _accept_public_path(order_id: int) -> str:
 
 
 def _accept_wa_button_suffix(order_id: int, driver_id: int) -> str:
-    """Suffixe bouton Meta — URL modèle : {SITE_URL}/wa/accept/ (sans {{1}} dans Meta)."""
-    from julmin_taxis.whatsapp_accept import make_accept_token
-    token = make_accept_token(order_id, driver_id)
-    return f'{order_id}/?sig={token}'
+    from julmin_taxis.wa_meta_links import accept_button_suffix
+    return accept_button_suffix(order_id, driver_id)
 
 
 def _accept_url(order_id: int, driver_id: int = None) -> str:
@@ -519,12 +523,13 @@ def _driver_order_public_path(order_id: int) -> str:
 
 
 def _driver_order_button_suffix(order_id: int) -> str:
-    """Suffixe bouton Meta coords — URL modèle : {SITE_URL}/{{1}}"""
-    return _driver_order_public_path(order_id)
+    from julmin_taxis.wa_meta_links import commande_button_suffix
+    return commande_button_suffix(order_id)
 
 
 def _receipt_public_path(order_id: int) -> str:
-    return f'recu_{order_id}.pdf'
+    from julmin_taxis.wa_meta_links import receipt_button_suffix
+    return receipt_button_suffix(order_id)
 
 
 def _accept_url_suffix(order_id, driver_id) -> str:
@@ -550,8 +555,9 @@ def _send_nouvelle_commande_template(to_phone: str, order, recipient_name: str, 
     body = _nouvelle_commande_params(order, recipient_name, driver)
     suffix = str(order.pk)
     if driver:
-        # Meta {{1}} = URL dynamique complète (pas un suffixe relatif).
-        suffix = f'{_site_url()}/driver/accept/{_accept_wa_button_suffix(order.pk, driver.pk)}'
+        # Meta URL template : https://daxipro.com/driver/accept/{{1}}
+        # → {{1}} = « 111/?sig=TOKEN » uniquement (pas l'URL complète).
+        suffix = _accept_wa_button_suffix(order.pk, driver.pk)
     return send_template(
         to_phone, tpl, body,
         button_url_suffix=suffix,
@@ -710,6 +716,8 @@ def notify_client_trip_started(order) -> bool:
 
 
 def notify_client_trip_completed(order) -> bool:
+    from julmin_taxis.wa_meta_links import compte_order_button_suffix
+
     phone = _client_phone(order)
     if not phone:
         logger.info('[WhatsApp] skip course_terminee #%s — pas de téléphone client', order.pk)
@@ -725,7 +733,7 @@ def notify_client_trip_completed(order) -> bool:
         phone, 'course_terminee',
         [client_fn, pickup, dest],
         fallback,
-        button_url_suffix=f'compte/?order={order.pk}',
+        button_url_suffix=compte_order_button_suffix(order.pk),
     )
 
 
@@ -987,9 +995,10 @@ def notify_coords_needed(order, admins_only: bool = False) -> int:
         ]
 
     def _coords_button_suffix(for_admin: bool = False) -> str:
+        from julmin_taxis.wa_meta_links import admin_orders_button_suffix, commande_button_suffix
         if for_admin:
-            return 'admin-dashboard/#orders'
-        return _driver_order_button_suffix(order.pk)
+            return admin_orders_button_suffix()
+        return commande_button_suffix(order.pk)
 
     fallback_tpl = (
         f'🚖 *DAXI — Course {order_ref} sans GPS*\n\n'

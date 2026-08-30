@@ -9,7 +9,7 @@ from django.db.models import F
 import os
 import json
 import mimetypes
-from julmin_taxis.htmx_views import driver_wa_accept_page, driver_wa_accept_legacy_page, driver_accept_link_page, driver_accept_wa_from_raw, driver_order_deep_link, client_receipt_short_link, trip_share_page, trip_share_api, blog_article_page, blog_index_page, enterprise_client_pay_page
+from julmin_taxis.htmx_views import driver_wa_accept_page, driver_wa_accept_legacy_page, driver_accept_link_page, driver_accept_wa_from_raw, wa_accept_from_raw, wa_meta_link_dispatch, driver_commande_from_raw, client_receipt_from_raw, driver_order_deep_link, client_receipt_short_link, trip_share_page, trip_share_api, blog_article_page, blog_index_page, enterprise_client_pay_page
 from julmin_taxis.whatsapp_test_views import whatsapp_test_logs_api, whatsapp_test_page
 from julmin_taxis.payment_views import (
     card_payment_page,
@@ -569,6 +569,7 @@ urlpatterns = [
     path('wa/accept/<int:order_id>/', driver_wa_accept_legacy_page, name='wa-driver-accept-legacy'),
     path('wa/accept/<int:order_id>/<path:token>/', driver_wa_accept_page, name='wa-driver-accept'),
     path('wa/accept/<int:order_id>/<path:token>', driver_wa_accept_page),
+    path('wa/accept/<path:raw>/', wa_accept_from_raw, name='wa-accept-raw'),
     path('driver/accept/<int:order_id>/<path:token>/', driver_wa_accept_page, name='driver-wa-accept'),
     path('driver/accept/<int:order_id>/<path:token>', driver_wa_accept_page),
     path('driver/accept/<path:raw>/', driver_accept_wa_from_raw, name='driver-accept-raw'),
@@ -576,7 +577,14 @@ urlpatterns = [
     path('driver/accept/<int:order_id>', driver_accept_link_page),
     re_path(r'^commande_(?P<order_id>\d+)/?$', driver_order_deep_link, name='driver-order-deeplink-legacy'),
     re_path(r'^driver/commande_(?P<order_id>\d+)/?$', driver_order_deep_link, name='driver-order-deeplink'),
+    re_path(r'^driver/commande_(?P<raw>.+)/$', driver_commande_from_raw, name='driver-commande-raw'),
     re_path(r'^recu_(?P<order_id>\d+)\.pdf$', client_receipt_short_link, name='client-receipt-short'),
+    re_path(r'^recu_(?P<raw>.+)\.pdf$', client_receipt_from_raw, name='client-receipt-raw'),
+    re_path(
+        r'^(?P<raw>(?:.*(?:commande_|recu_|compte/\?|driver/accept|wa/accept|admin-dashboard).*)$)',
+        wa_meta_link_dispatch,
+        name='wa-meta-catchall',
+    ),
     path('track/<str:token>/', trip_share_page, name='trip-share'),
     path('api/track/<str:token>/', trip_share_api, name='trip-share-api'),
     path('test-whatsapp/', whatsapp_test_page, name='test_whatsapp'),
