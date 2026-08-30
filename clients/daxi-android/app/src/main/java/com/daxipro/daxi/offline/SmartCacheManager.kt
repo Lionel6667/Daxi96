@@ -9,9 +9,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 
-/**
- * Cache disque intelligent : télécharge uniquement les fichiers modifiés (manifest serveur).
- */
+
 class SmartCacheManager(
     private val context: Context,
     private val api: DaxiApiClient,

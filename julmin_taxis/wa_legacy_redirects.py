@@ -22,7 +22,7 @@ import re
 from django.shortcuts import redirect
 from django.views.decorators.http import require_GET
 
-# (regex path sans leading slash, destination)
+
 LEGACY_WA_REDIRECTS: tuple[tuple[str, str], ...] = (
     (r'^driver_home/?$', '/driver/'),
     (r'^driver_home\.html/?$', '/driver/'),

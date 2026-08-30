@@ -34,7 +34,7 @@ class DashboardStatsView(APIView):
         week_ago = now - timedelta(days=7)
         month_ago = now - timedelta(days=30)
 
-                     
+
         total_orders = Order.objects.count()
         order_filter_counts = {
             'all': Order.objects.exclude(status__in=['completed', 'cancelled']).count(),
@@ -60,7 +60,7 @@ class DashboardStatsView(APIView):
         today_orders = Order.objects.filter(created_at__date=today).count()
         week_orders = Order.objects.filter(created_at__gte=week_ago).count()
 
-                       
+
         total_revenue = Order.objects.filter(status='completed').aggregate(
             total=Sum('price')
         )['total'] or 0
@@ -74,25 +74,25 @@ class DashboardStatsView(APIView):
             status='completed', completed_at__gte=month_ago
         ).aggregate(total=Sum('price'))['total'] or 0
 
-                      
+
         total_drivers = Driver.objects.count()
         available_drivers = Driver.objects.filter(status='available', is_blocked=False).count()
         busy_drivers = Driver.objects.filter(status='busy').count()
         offline_drivers = Driver.objects.filter(status='offline').count()
         verified_drivers = Driver.objects.filter(is_verified=True).count()
 
-                    
+
         total_users = CustomUser.objects.filter(is_driver=False).count()
         new_users_week = CustomUser.objects.filter(date_inscription__gte=week_ago).count()
         new_users_month = CustomUser.objects.filter(date_inscription__gte=month_ago).count()
 
-                    
+
         escalated_chats = ChatSession.objects.filter(is_escalated=True, is_resolved=False).count()
 
-                              
+
         unread_notifications = Notification.objects.filter(is_read=False).count()
 
-                                     
+
         recent_orders = []
         for order in Order.objects.select_related('driver').order_by('-created_at')[:10]:
             recent_orders.append({
@@ -114,7 +114,7 @@ class DashboardStatsView(APIView):
                 'pause_price': str(order.pause_price) if order.pause_price else None,
             })
 
-                                              
+
         daily_orders = []
         for i in range(6, -1, -1):
             day = today - timedelta(days=i)
@@ -248,7 +248,7 @@ def compute_admin_badge_counts(request):
     if seen_loc:
         loc_qs = loc_qs.filter(location_help_requested_at__gt=seen_loc)
 
-    # Chauffeurs: le badge reste tant que le dossier n'est pas traité (pas « vu = zéro »).
+
     drivers_qs = Driver.objects.filter(is_verified=False, is_blocked=False)
 
     return {
@@ -307,7 +307,7 @@ class AdminUserListView(APIView):
 
         users = CustomUser.objects.filter(is_superuser=False).order_by('-date_inscription')
 
-                
+
         search = request.query_params.get('search', '')
         if search:
             users = users.filter(
@@ -494,7 +494,7 @@ class AdminLiveMapView(APIView):
                 },
             })
 
-                                                                             
+
         driver_ids_with_coords = list(
             Driver.objects.filter(
                 latitude__isnull=False,
@@ -851,7 +851,7 @@ def whatsapp_proxy(request):
     if not token or not phone_number_id or not payload:
         return JsonResponse({'error': 'token, phone_number_id and payload are required'}, status=400)
 
-                                                    
+
     if not phone_number_id.isdigit():
         return JsonResponse({'error': 'Invalid phone_number_id'}, status=400)
 
@@ -912,7 +912,7 @@ def whatsapp_discover(request):
 
     results = {'steps': [], 'phones': []}
 
-                       
+
     me, _ = _get(f'{base}/me?fields=id,name')
     results['me'] = me
     if 'error' in me:
@@ -921,12 +921,12 @@ def whatsapp_discover(request):
     uid = me.get('id')
     results['steps'].append(f'System User ID: {uid} ({me.get("name", "")})')
 
-                                                
+
     wabas_r, _ = _get(f'{base}/me/whatsapp_business_accounts?fields=id,name,currency,timezone_id')
     wabas = wabas_r.get('data', [])
     results['steps'].append(f'/me/whatsapp_business_accounts → {len(wabas)} WABA(s)')
 
-                                                                               
+
     if not wabas:
         biz_r, _ = _get(f'{base}/me/businesses?fields=id,name')
         bizs = biz_r.get('data', [])
@@ -937,7 +937,7 @@ def whatsapp_discover(request):
 
     results['wabas'] = wabas
 
-                                                                 
+
     for waba in wabas:
         phones_r, _ = _get(f'{base}/{waba["id"]}/phone_numbers?fields=id,display_phone_number,verified_name,status,quality_rating')
         phones = phones_r.get('data', [])
@@ -964,10 +964,10 @@ def whatsapp_discover(request):
             p['waba_name'] = waba.get('name', '')
             results['phones'].append(p)
 
-                                                               
+
     if not results['phones']:
-                                                                                      
-                                                              
+
+
         results['hint'] = (
             'Le System User a les bonnes permissions mais n\'est lié à aucun WABA. '
             'Va sur business.facebook.com/wa/manage/phone-numbers/ pour trouver '
@@ -975,7 +975,7 @@ def whatsapp_discover(request):
             '(pas "Test WhatsApp Business Account").'
         )
 
-                                
+
     debug_r, _ = _get(f'{base}/debug_token?input_token={_urllib_req.quote(token)}&access_token={_urllib_req.quote(token)}')
     results['token_debug'] = debug_r.get('data', debug_r)
 

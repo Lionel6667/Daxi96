@@ -8,9 +8,7 @@ import okhttp3.Request
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-/**
- * Télécharge le bootstrap DAXI (commandes, chauffeurs, carte Haïti) pour usage hors ligne.
- */
+
 class OfflineSyncManager(
     private val context: Context,
     private val baseUrl: String,

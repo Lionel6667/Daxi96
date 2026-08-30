@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Sert le www embarqué (assets/public) sous https://daxipro.com quand le réseau est coupé. */
+
 final class DaxiAssetShell {
     private DaxiAssetShell() {}
 

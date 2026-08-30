@@ -5,7 +5,7 @@ plugins {
     id("com.google.gms.google-services") version "4.5.0" apply false
 }
 
-// Build hors OneDrive (évite AccessDenied sur mergeDebugResources)
+
 val daxiBuildRoot = java.io.File(
     System.getenv("LOCALAPPDATA") ?: System.getProperty("user.home"),
     "daxi-android-build"

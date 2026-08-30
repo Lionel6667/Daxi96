@@ -1,4 +1,4 @@
-# Rebuild l'APK signe (debug) et le copie a la racine du projet Django (Daxi.apk)
+
 $ErrorActionPreference = "Stop"
 $android = Split-Path $PSScriptRoot -Parent
 $djangoRoot = Split-Path (Split-Path $android -Parent) -Parent

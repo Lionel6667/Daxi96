@@ -242,9 +242,11 @@ URL de base à configurer dans chaque template Meta (suffixe dynamique ajouté p
 | `commande_attente_coords` (admin) | `https://daxipro.com/` | `admin-dashboard/#orders` |
 | `recu_course` | `https://daxipro.com/` | `recu_{id}.pdf` |
 | `course_terminee` | `https://daxipro.com/` | `compte/?order={id}` |
-| `chauffeur_valide` | `https://daxipro.com/` | `driver/` |
+| `chauffeur_valide` | `https://daxipro.com/driver_home` (statique Meta) | *(aucun — redirect serveur)* |
 
-Les anciens liens `/driver_home` (Meta legacy) redirigent en **301** vers `/driver/`.
+**Aucune modification Meta requise** : les URLs legacy (`driver_home`, `adm.html`, etc.) redirigent en 301 côté Django.
+
+Les anciens liens `/driver_home` redirigent en **301** vers `/driver/`.
 
 Les anciens liens `/wa/accept/{id}` sans token affichent une page d’aide (plus de 404).
 

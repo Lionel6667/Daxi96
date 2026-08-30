@@ -7,9 +7,9 @@
     if (typeof global._daxiBootMark === 'function') global._daxiBootMark('intro-js');
   } catch (eIntroJs) {}
 
-  
-  
-  
+
+
+
 
   var EASE = {
     gravity: 'cubic-bezier(0.55, 0.06, 0.85, 0.28)',
@@ -25,7 +25,7 @@
     killMs: 4600,
     easing: EASE.rubber,
     letters: {
-      
+
       D: {
         delay: 0,
         duration: 1000,
@@ -40,7 +40,7 @@
           { t: 1.00, x: 0, y: 0, sx: 1.00, sy: 1.00, r: 0, o: 1 }
         ]
       },
-      
+
       A: {
         delay: 1000,
         duration: 1000,
@@ -54,7 +54,7 @@
           { t: 1.00, x: 0, y: 0, sx: 1.00, sy: 1.00, r: 0, o: 1 }
         ]
       },
-      
+
       X: {
         delay: 2000,
         duration: 1000,
@@ -68,7 +68,7 @@
           { t: 1.00, x: 0, y: 0, sx: 1.00, sy: 1.00, r: 0, o: 1 }
         ]
       },
-      
+
       I: {
         delay: 3000,
         duration: 700,
@@ -374,10 +374,23 @@
     waitOverlayPainted(root);
   }
 
+  function releaseWebBootingLock() {
+    if (isNativeShell()) return;
+    try {
+      document.documentElement.classList.remove('daxi-booting');
+    } catch (e) {}
+  }
+
   function playDaxiIntro() {
     if (typeof document === 'undefined') return Promise.resolve();
-    if (!DAXI_INTRO_ENABLED || global.DAXI_INTRO_DISABLED) return Promise.resolve();
-    if (!isNativeShell()) return Promise.resolve();
+    if (!DAXI_INTRO_ENABLED || global.DAXI_INTRO_DISABLED) {
+      releaseWebBootingLock();
+      return Promise.resolve();
+    }
+    if (!isNativeShell()) {
+      releaseWebBootingLock();
+      return Promise.resolve();
+    }
     if (global._daxiIntroPromise) return global._daxiIntroPromise;
 
     try {

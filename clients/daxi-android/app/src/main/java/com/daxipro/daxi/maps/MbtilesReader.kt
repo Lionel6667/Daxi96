@@ -3,9 +3,7 @@ package com.daxipro.daxi.maps
 import android.database.sqlite.SQLiteDatabase
 import java.io.File
 
-/**
- * Lecture minimale MBTiles (SQLite) pour servir les tuiles hors ligne.
- */
+
 class MbtilesReader(private val file: File) {
   private var db: SQLiteDatabase? = null
 

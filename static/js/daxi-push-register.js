@@ -35,7 +35,7 @@
         var opts = {};
         if (reg) opts.serviceWorkerRegistration = reg;
         var vapid = _vapidKey();
-        // Sans clé custom: FCM utilise la VAPID par défaut du projet (recommandé si Console non ouverte).
+
         if (vapid) opts.vapidKey = vapid;
         return opts;
     }

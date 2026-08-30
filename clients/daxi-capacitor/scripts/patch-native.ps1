@@ -1,4 +1,4 @@
-# Permissions Android / iOS + FCM after npx cap add.
+
 $ErrorActionPreference = "Continue"
 $capRoot = Split-Path $PSScriptRoot -Parent
 $djangoRoot = Split-Path (Split-Path $capRoot -Parent) -Parent

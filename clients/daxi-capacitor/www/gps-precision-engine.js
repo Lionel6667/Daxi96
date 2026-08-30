@@ -1,7 +1,4 @@
-/**
- * DAXI GPS Precision Engine — watchPosition acquisition + raw coords for lock
- * Google/MDN: enableHighAccuracy + maximumAge:0 + watchPosition for mobile GPS lock
- */
+
 (function (global) {
     'use strict';
 

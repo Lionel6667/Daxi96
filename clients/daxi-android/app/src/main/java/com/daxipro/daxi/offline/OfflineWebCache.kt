@@ -11,9 +11,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
-/**
- * Cache web embarqué (assets/webcache) + mise à jour disque quand en ligne.
- */
+
 class OfflineWebCache(private val context: Context) {
 
     private val prefetchClient = OkHttpClient.Builder()
@@ -40,7 +38,7 @@ class OfflineWebCache(private val context: Context) {
 
     fun ensureBundledWebCacheCopied() {
         val marker = File(webCacheDir, ".bundled_ok")
-        val wanted = BuildConfig.VERSION_NAME + "_offline_v9"
+        val wanted = BuildConfig.VERSION_NAME + "_offline_v10"
         if (marker.exists() && marker.readText() == wanted) return
         copyAssetTree("webcache", webCacheDir)
         marker.writeText(wanted)
@@ -69,7 +67,7 @@ class OfflineWebCache(private val context: Context) {
         return if (f.exists()) fileUrl(f) else null
     }
 
-    /** Charge directement depuis les assets embarqués (instantané, sans copie disque). */
+
     fun bestOfflineUrl(): String {
         if (hasBundledWebCacheAsset()) {
             return "file:///android_asset/webcache/index.html"
@@ -95,12 +93,33 @@ class OfflineWebCache(private val context: Context) {
         val root = baseUrl.trimEnd('/')
         val paths = listOf(
             "/",
+            "/assets/css/vubez2-core.css",
+            "/assets/css/vubez2-body.css",
+            "/assets/css/remixicon-vubez2.css",
+            "/assets/fonts/remixicon.woff2",
+            "/assets/css/tailwind-vubez2.css",
+            "/static/js/daxi-lazy-loader.js",
             "/static/js/daxi-offline.js",
             "/static/js/daxi-countdown.js",
-            "/assets/js/tailwindcss-3.4.16.js",
+            "/static/js/daxi-intro.js",
+            "/static/js/daxi-guest-id.js",
+            "/static/js/daxi-app-api.js",
+            "/static/js/daxi-realtime.js",
+            "/static/js/daxi-map-placeholder.js",
+            "/static/js/daxi-main-map-dual.js",
+            "/static/js/daxi-network-state.js",
+            "/static/js/vubez2/vubez2-inline-02.js",
+            "/static/js/vubez2/vubez2-inline-03.js",
+            "/static/js/vubez2/vubez2-inline-04.js",
+            "/static/js/vubez2/vubez2-inline-05.js",
+            "/static/js/vubez2/vubez2-inline-06.js",
+            "/static/js/vubez2/vubez2-inline-07.js",
             "/assets/images/daxi-icon-gold.png",
             "/assets/images/daxi-logo-gold.png",
+            "/assets/images/daxi-logo-gold.webp",
             "/assets/images/daxi-logo-dark.png",
+            "/assets/images/daxi-logo-dark.webp",
+            "/assets/images/daxi-map-placeholder-dark.webp",
             "/assets/images/img20.png",
             "/assets/images/img87.jpg",
             "/assets/images/img97.jpg",
@@ -118,6 +137,8 @@ class OfflineWebCache(private val context: Context) {
             "/gps-precision-engine.js",
             "/daxi-frequent-routes-data.js",
             "/daxi-frequent-routes-map.js",
+            "/daxi-haiti-explorer-data.js",
+            "/daxi-haiti-explorer-map.js",
             "/manifest.json",
         )
         var ok = false
@@ -149,7 +170,7 @@ class OfflineWebCache(private val context: Context) {
         return marker.exists() && File(webCacheDir, "index.html").exists()
     }
 
-    /** Sert le cache disque ou assets embarqués — jamais de réseau ici (instantané). */
+
     fun interceptCacheFirst(request: WebResourceRequest): WebResourceResponse? {
         val path = requestPath(request) ?: return null
         val file = cacheFileForPath(path)
@@ -157,7 +178,7 @@ class OfflineWebCache(private val context: Context) {
         return responseFromAsset(path)
     }
 
-    /** Précharge en arrière-plan (non bloquant pour la WebView). */
+
     fun prefetchPaths(liveBase: String, paths: List<String>) {
         val root = liveBase.trimEnd('/')
         for (path in paths) {

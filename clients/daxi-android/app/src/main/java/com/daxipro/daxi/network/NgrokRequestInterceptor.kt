@@ -1,7 +1,6 @@
 package com.daxipro.daxi.network
 
 
-
 import android.webkit.WebResourceRequest
 
 import android.webkit.WebResourceResponse
@@ -15,15 +14,7 @@ import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
 
 
-
-/**
-
- * Contourne la page d'avertissement ngrok (ERR_NGROK_6024) sur toutes les requêtes GET.
-
- */
-
 object NgrokRequestInterceptor {
-
 
 
     private val client = OkHttpClient.Builder()
@@ -37,7 +28,6 @@ object NgrokRequestInterceptor {
         .build()
 
 
-
     fun isNgrokHost(host: String): Boolean {
 
         return host.contains("ngrok-free.dev") ||
@@ -49,7 +39,6 @@ object NgrokRequestInterceptor {
     }
 
 
-
     fun intercept(request: WebResourceRequest): WebResourceResponse? {
 
         if (request.method != "GET") return null
@@ -57,7 +46,6 @@ object NgrokRequestInterceptor {
         val host = request.url.host ?: return null
 
         if (!isNgrokHost(host)) return null
-
 
 
         return try {
@@ -115,7 +103,6 @@ object NgrokRequestInterceptor {
     }
 
 
-
     private fun isTextMime(mime: String): Boolean {
 
         return mime.startsWith("text/") ||
@@ -127,7 +114,6 @@ object NgrokRequestInterceptor {
             mime.contains("xml")
 
     }
-
 
 
     private fun guessMime(path: String): String = when {

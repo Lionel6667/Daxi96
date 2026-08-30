@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-# Catalog of every status we surface to humans (standard + common gateway codes).
+
 ERROR_CATALOG = {
     400: {
         'title': 'Requête invalide',
@@ -210,5 +210,5 @@ def error_preview(request, code: int):
 def csrf_failure(request, reason=''):
     """Custom CSRF failure page (wired via CSRF_FAILURE_VIEW)."""
     resp = render_error(request, 403)
-    # Keep semantic 403; Django CSRF expects this view signature.
+
     return resp

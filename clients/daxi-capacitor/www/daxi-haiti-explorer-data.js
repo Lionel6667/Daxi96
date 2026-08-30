@@ -1,8 +1,8 @@
-/** Lieux classés du plus proche au plus loin (tournée Cap → Milot) + itinéraires intégrés */
+
 (function (global) {
     'use strict';
 
-    /* Ordre : Cathédrale → Vertières → Labadee → Sans-Souci → Citadelle */
+
     var PLACES = [
         {
             id: 'cathedrale',
@@ -92,7 +92,7 @@
             color: '#f59e0b',
             highlights: [
                 'Plus grande forteresse des Amériques',
-                'Vue panoramique à 910 m d\'altitude',
+                'Vue panoramique sur la plaine du Nord',
                 'Canons, casernes et remparts d\'époque',
                 'Patrimoine mondial UNESCO'
             ],
@@ -102,9 +102,9 @@
         }
     ];
 
-    /** Itinéraires prédéfinis [lat, lng] — routes[i] relie PLACES[i] → PLACES[i+1] */
+
     var ROUTES = [
-        /* Cathédrale → Vertières */
+
         [
             [19.760839, -72.200944],
             [19.7582, -72.2045],
@@ -114,7 +114,7 @@
             [19.7390, -72.2198],
             [19.736124, -72.220906]
         ],
-        /* Vertières → Labadee */
+
         [
             [19.736124, -72.220906],
             [19.7420, -72.2260],
@@ -123,7 +123,7 @@
             [19.7760, -72.2425],
             [19.786694, -72.243901]
         ],
-        /* Labadee → Sans-Souci */
+
         [
             [19.786694, -72.243901],
             [19.7780, -72.2380],
@@ -137,7 +137,7 @@
             [19.6200, -72.2187],
             [19.604803, -72.218663]
         ],
-        /* Sans-Souci → Citadelle */
+
         [
             [19.604803, -72.218663],
             [19.6000, -72.2205],

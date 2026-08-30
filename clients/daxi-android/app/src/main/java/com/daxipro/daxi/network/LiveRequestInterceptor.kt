@@ -7,10 +7,7 @@ import okhttp3.Request
 import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
 
-/**
- * Proxifie /api/ et /htmx/ vers le serveur live quand la WebView charge le shell file://.
- * GET/HEAD uniquement — POST/PUT/PATCH passent via fetch/XHR patché (absUrl).
- */
+
 object LiveRequestInterceptor {
 
     private val client = OkHttpClient.Builder()

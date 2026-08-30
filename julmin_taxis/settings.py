@@ -3,19 +3,19 @@ from decimal import Decimal
 from pathlib import Path
 from datetime import timedelta
 
-                                                                
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-                             
+
 from dotenv import load_dotenv
 
-# Railway (and similar) → production defaults: DEBUG off, brand hosts allowed.
+
 _ON_RAILWAY = bool(
     os.environ.get('RAILWAY_ENVIRONMENT')
     or os.environ.get('RAILWAY_PUBLIC_DOMAIN')
     or os.environ.get('RAILWAY_PROJECT_ID')
 )
-# Sur Railway, ne jamais écraser les variables injectées par la plateforme.
+
 load_dotenv(BASE_DIR / '.env', override=not _ON_RAILWAY)
 _DEBUG_DEFAULT = 'False' if _ON_RAILWAY else 'True'
 
@@ -43,18 +43,18 @@ _site_default = (
 )
 SITE_URL = os.environ.get('SITE_URL', _site_default)
 
-                                                                                
+
 TRANSAK_API_KEY     = os.environ.get('TRANSAK_API_KEY', '')
 TRANSAK_API_SECRET  = os.environ.get('TRANSAK_API_SECRET', '')
-                                                                                
+
 TRANSAK_WALLET_ADDRESS = os.environ.get('TRANSAK_WALLET_ADDRESS', '')
-                       
+
 TRANSAK_ENVIRONMENT = os.environ.get('TRANSAK_ENVIRONMENT', 'STAGING')
 
-                                                                                
+
 ADMIN_MONCASH_PHONE = os.environ.get('ADMIN_MONCASH_PHONE', '+509 4000-0000')
 
-                                                                              
+
 MONCASH_CONNECT_SECRET_KEY = os.environ.get('MONCASH_CONNECT_SECRET_KEY', '')
 MONCASH_CONNECT_WEBHOOK_SECRET = os.environ.get('MONCASH_CONNECT_WEBHOOK_SECRET', '')
 MONCASH_CONNECT_BASE_URL = os.environ.get(
@@ -62,22 +62,22 @@ MONCASH_CONNECT_BASE_URL = os.environ.get(
     'https://hvlmeoqyxaguzcujpmit.supabase.co/functions/v1',
 )
 
-                                                                              
+
 HATEXCARD_API_KEY = os.environ.get('HATEXCARD_API_KEY', '')
 HATEXCARD_WEBHOOK_SECRET = os.environ.get('HATEXCARD_WEBHOOK_SECRET', '')
 ADMIN_WHATSAPP_PHONES = os.environ.get('ADMIN_WHATSAPP_PHONES', '')
-                                                                                     
+
 ADMIN_FCM_TOKENS = os.environ.get('ADMIN_FCM_TOKENS', '')
 
-                                                                               
+
 CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', '')
 CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY', '')
 CLOUDINARY_API_SECRET = (
     os.environ.get('CLOUDINARY_API_SECRET', '')
-    or os.environ.get('CLOUDINARY_SECRET', '')  
+    or os.environ.get('CLOUDINARY_SECRET', '')
 )
 
-                                                                                
+
 _wa_verify = os.environ.get('WHATSAPP_VERIFY_TOKEN', '').strip()
 if not _wa_verify and (_env_is_debug() or _ON_RAILWAY):
     _wa_verify = 'daxi_verify_2026'
@@ -89,7 +89,7 @@ WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN', '')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID', '')
 WHATSAPP_WABA_ID = os.environ.get('WHATSAPP_WABA_ID', '')
 WHATSAPP_TEMPLATE_LANG = os.environ.get('WHATSAPP_TEMPLATE_LANG', 'fr')
-                                                                        
+
 WHATSAPP_TEMPLATES = {
     k: os.environ.get(env_key, '')
     for k, env_key in {
@@ -122,9 +122,9 @@ WHATSAPP_TEMPLATES = {
     }.items()
     if os.environ.get(env_key, '').strip()
 }
-                                                                               
 
-                                                                 
+
+
 DEBUG = _env_is_debug()
 
 _allowed_default = 'localhost,127.0.0.1,daxipro.com,www.daxipro.com'
@@ -148,7 +148,7 @@ if DEBUG:
         if _ngrok_host not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(_ngrok_host)
 
-                                                      
+
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 def _parse_database_url(url: str) -> dict:
@@ -189,26 +189,26 @@ if not _DATABASE_ENGINE:
         _DATABASE_ENGINE = 'postgis' if _DATABASE_URL.startswith('postgis://') else 'postgresql'
     else:
         _DATABASE_ENGINE = 'sqlite'
-# PostGIS = moteur GIS réel. Plain PostgreSQL (Railway) = pas d'extension PostGIS requise.
+
 USE_POSTGIS = _DATABASE_ENGINE == 'postgis' or _DATABASE_URL.startswith('postgis://')
 
 INSTALLED_APPS = [
-    'daphne',                                                                               
-    'julmin_taxis.apps.JulminTaxisConfig',                                                          
+    'daphne',
+    'julmin_taxis.apps.JulminTaxisConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-                 
+
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'channels',
     'django_filters',
-                
+
     'accounts',
     'orders',
     'drivers',
@@ -234,7 +234,7 @@ if USE_POSTGIS:
 MIDDLEWARE = [
     'julmin_taxis.wellknown_views.WellKnownAssociationMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    
+
     'julmin_taxis.security_middleware.CapacitorCrossOriginCookieMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.gzip.GZipMiddleware',
@@ -321,8 +321,8 @@ BACKUP_KEEP_DAYS = int(os.environ.get('BACKUP_KEEP_DAYS', '14') or '14')
 BACKUP_UPLOAD_CLOUDINARY = os.environ.get('BACKUP_UPLOAD_CLOUDINARY', 'True') == 'True'
 BACKUP_CLOUDINARY_FOLDER = os.environ.get('BACKUP_CLOUDINARY_FOLDER', 'daxi/backups/db')
 
-                              
-                                                                             
+
+
 REDIS_URL = os.environ.get('REDIS_URL', '')
 if REDIS_URL:
     CHANNEL_LAYERS = {
@@ -333,7 +333,7 @@ if REDIS_URL:
             },
         },
     }
-    # OTP inscription chauffeur + sessions cache — partagé entre workers Railway.
+
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -352,7 +352,7 @@ else:
         },
     }
 
-      
+
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -362,21 +362,20 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-                      
+
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'America/Port-au-Prince'
 USE_I18N = True
 USE_TZ = True
 
-              
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ImageFields + default_storage → Cloudinary when CLOUDINARY_* are set (Railway).
-# Local MEDIA_ROOT is only used when credentials are missing (dev / tests).
+
 STORAGES = {
     'default': {
         'BACKEND': 'julmin_taxis.cloudinary_storage.CloudinaryMediaStorage',
@@ -393,7 +392,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-                                                                    
+
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_AGE = 86400 * 7
 SESSION_COOKIE_HTTPONLY = True
@@ -404,7 +403,7 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
 
-                
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -413,8 +412,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    
-    
+
+
     'DEFAULT_THROTTLE_CLASSES': [],
     'DEFAULT_THROTTLE_RATES': {
         'anon': os.environ.get('DRF_THROTTLE_ANON', '120/hour'),
@@ -429,7 +428,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-     
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '60'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '7'))),
@@ -438,7 +437,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-                                                        
+
 _csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
 for _o in (
@@ -490,7 +489,7 @@ try:
 except Exception:
     pass
 
-       
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.zoho.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
@@ -499,29 +498,29 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'DAXI <info@daxipro.com>')
 
-             
+
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
-        
+
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
 
-         
+
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 
-                                                                                            
-                                                                                    
+
+
 DRIVER_REGISTRATION_STRICT_DOCS = os.environ.get('DRIVER_REGISTRATION_STRICT_DOCS', '').lower() in ('1', 'true', 'yes')
 DRIVER_DOC_ALLOW_MANUAL_REVIEW = os.environ.get(
     'DRIVER_DOC_ALLOW_MANUAL_REVIEW', 'true'
 ).lower() in ('1', 'true', 'yes')
 
-              
+
 OTP_EXPIRY_MINUTES = 10
 
-           
+
 SITE_NAME = 'DAXI'
 SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
 ANDROID_APP_PACKAGE = os.environ.get('ANDROID_APP_PACKAGE', 'com.daxipro.daxi')
@@ -535,19 +534,19 @@ ANDROID_APP_SHA256_PLAY = os.environ.get('ANDROID_APP_SHA256_PLAY', '')
 ANDROID_APP_SHA256_FINGERPRINTS = os.environ.get('ANDROID_APP_SHA256_FINGERPRINTS', '')
 IOS_APP_TEAM_ID = os.environ.get('IOS_APP_TEAM_ID', 'YOUR_APPLE_TEAM_ID')
 IOS_APP_BUNDLE_ID = os.environ.get('IOS_APP_BUNDLE_ID', 'com.daxipro.daxi')
-# Meta Sharing Debugger — optionnel (966242223397117 = ID par défaut Facebook, supprime l’avertissement)
+
 FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID', '966242223397117')
 
-                                               
+
 FCM_SERVER_KEY = os.environ.get('FCM_SERVER_KEY', '')
 FCM_PROJECT_ID = os.environ.get('FCM_PROJECT_ID', '')
-# Railway: coller le JSON du service account dans FCM_SERVICE_ACCOUNT_JSON (une ligne).
-# Local: fichier secrets/firebase-service-account.json
+
+
 FCM_SERVICE_ACCOUNT_JSON = (os.environ.get('FCM_SERVICE_ACCOUNT_JSON') or '').strip()
 _fcm_raw = os.environ.get('FCM_SERVICE_ACCOUNT_PATH', 'secrets/firebase-service-account.json')
 _fcm_path = Path(_fcm_raw)
 FCM_SERVICE_ACCOUNT_PATH = str(_fcm_path if _fcm_path.is_absolute() else BASE_DIR / _fcm_raw)
-# Env JSON prioritaire même si un ancien fichier corrompu existe encore sur disque.
+
 if FCM_SERVICE_ACCOUNT_JSON:
     try:
         _sa_dir = BASE_DIR / 'secrets'
@@ -558,7 +557,7 @@ if FCM_SERVICE_ACCOUNT_JSON:
     except Exception:
         pass
 
-                                                                          
+
 _FIREBASE_WEB_DEFAULTS = {
     'apiKey': 'AIzaSyCdGFcwfzj8b5eJXcmrS0LGRIxnTXZ6zac',
     'authDomain': 'julmin-taxis.firebaseapp.com',
@@ -581,7 +580,7 @@ FIREBASE_WEB_VAPID_KEY = (
     or 'BPsvNMF0v2XilPFDCMub9-F0Vao4lNw7bDlTZ_RuIneOy37xNkiXHr2WCidf_HD5kxOI9uiZ_7momDE5apV8shg'
 )
 
-                                                                               
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True') == 'True'
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -592,11 +591,11 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
-                                                          
+
     X_FRAME_OPTIONS = 'SAMEORIGIN'
     SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
-                                                                           
+
 _CSP_BASE = (
     "default-src 'self'; "
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' "
@@ -622,7 +621,7 @@ _CSP_BASE = (
     "form-action 'self'; "
     "frame-ancestors 'self';"
 )
-# Keep unsafe-eval / wasm-unsafe-eval in production: Google Maps WebGL label workers need them.
+
 CONTENT_SECURITY_POLICY = _CSP_BASE
 
 

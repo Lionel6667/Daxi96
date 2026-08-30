@@ -1,13 +1,8 @@
-/**
 
- * Enregistrement token FCM — push même quand l'app/site est fermé (Android natif + web).
-
- */
 
 (function (global) {
 
     'use strict';
-
 
 
     function _fcmConfig() {
@@ -27,13 +22,11 @@
     }
 
 
-
     function _guestId() {
 
         return global._daxiGuestId || localStorage.getItem('daxi_guest_id') || '';
 
     }
-
 
 
     function _csrf() {
@@ -45,7 +38,6 @@
         return m ? decodeURIComponent(m[1]) : '';
 
     }
-
 
 
     function registerPushToken(token, platform) {
@@ -89,7 +81,6 @@
     }
 
 
-
     function registerFromAndroid() {
 
         if (!global.DaxiAndroid || !global.DaxiAndroid.getFcmToken) return;
@@ -99,7 +90,6 @@
         if (token) registerPushToken(token, 'android');
 
     }
-
 
 
     function _loadScript(src) {
@@ -121,7 +111,6 @@
         });
 
     }
-
 
 
     function registerWebFcm() {
@@ -204,7 +193,6 @@
     }
 
 
-
     function ensurePushRegistration() {
         registerFromAndroid();
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -214,11 +202,9 @@
     }
 
 
-
     global._daxiRegisterPushToken = registerPushToken;
 
     global._daxiEnsurePushRegistration = ensurePushRegistration;
-
 
 
     if (document.readyState === 'loading') {

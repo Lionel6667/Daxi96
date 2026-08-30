@@ -224,6 +224,19 @@
   font-weight: 800;
   cursor: pointer;
 }
+.daxi-guest-phone-cancel {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.daxi-guest-phone-cancel:hover { color: #fca5a5; border-color: rgba(248, 113, 113, 0.45); }
 
 [data-theme="light"] .daxi-guest-phone-card {
   background: var(--daxi-surface) !important;

@@ -21,7 +21,7 @@ from julmin_taxis.whatsapp_templates import template_lang, template_name
 
 logger = logging.getLogger(__name__)
 
-                     
+
 TPL_NOUVELLE_COMMANDE = template_name('nouvelle_commande')
 TPL_CHAUFFEUR_ARRIVE = template_name('chauffeur_arrive')
 TPL_COURSE_TERMINEE = template_name('course_terminee')
@@ -555,8 +555,8 @@ def _send_nouvelle_commande_template(to_phone: str, order, recipient_name: str, 
     body = _nouvelle_commande_params(order, recipient_name, driver)
     suffix = str(order.pk)
     if driver:
-        # Meta URL template : https://daxipro.com/driver/accept/{{1}}
-        # → {{1}} = « 111/?sig=TOKEN » uniquement (pas l'URL complète).
+
+
         suffix = _accept_wa_button_suffix(order.pk, driver.pk)
     return send_template(
         to_phone, tpl, body,

@@ -1,7 +1,7 @@
 (function () {
     var KEY = 'daxi_native_shell';
     var KEY_LEGACY = 'daxi_app_shell';
-    
+
     var PICKUP = 'DAXI·ADM·ORIGIN·k7#Qx9Vm2LpR8wN4tYc6HzJb0QsE5uA1FdX3!CAPHT-9281';
     var DEST = 'DAXI·ADM·ARRIVAL·m9#Wq4Rn7BkP2yLc8TzG5HvJ1XsE6uA0FdY3!OPS-7743';
 
@@ -170,7 +170,7 @@
         backendAbs: backendAbs
     };
 
-    
+
     window.DaxiAppShell = {
         KEY: KEY,
         ADM_PICKUP: PICKUP,
@@ -191,7 +191,8 @@
     }
     onReady(function () {
         installTitleTapGate();
+        var root = document.getElementById('appSheet') || document.body;
         var obs = new MutationObserver(function () { installTitleTapGate(); });
-        try { obs.observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+        try { obs.observe(root, { childList: true, subtree: true }); } catch (e) {}
     });
 })();

@@ -1,4 +1,4 @@
-# Generated manually for public_code
+
 
 from django.db import migrations, models
 

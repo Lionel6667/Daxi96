@@ -2,7 +2,7 @@ package com.daxipro.daxi.network
 
 import org.json.JSONObject
 
-/** Client Kotlin de /api/app/ — une méthode par action de page. */
+
 class AppApi(private val http: DaxiApiClient) {
 
     fun home(): JSONObject? = http.appGet("/api/app/home/")

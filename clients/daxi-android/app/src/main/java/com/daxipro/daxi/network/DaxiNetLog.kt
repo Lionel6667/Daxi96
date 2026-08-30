@@ -2,7 +2,7 @@ package com.daxipro.daxi.network
 
 import android.util.Log
 
-/** Logs réseau horodatés pour diagnostiquer la chaîne WebView ↔ Android ↔ Django. */
+
 object DaxiNetLog {
     const val TAG = "DAXI_NET"
 

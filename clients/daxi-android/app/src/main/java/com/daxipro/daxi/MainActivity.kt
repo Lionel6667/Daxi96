@@ -248,8 +248,8 @@ class MainActivity : AppCompatActivity() {
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val url = request?.url?.toString() ?: return false
-                // Shell file:// only — never load the live website inside the WebView
-                // (Play Store / App Store reject wrapped-site apps).
+
+
                 if (url.startsWith("file://")) return false
                 if (url.startsWith("http://") || url.startsWith("https://")) {
                     if (request.isForMainFrame) return true
@@ -626,14 +626,14 @@ class MainActivity : AppCompatActivity() {
                     if (canShowRationale) {
                         notificationOnlyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
-                        // First-time ask: shouldShowRationale is false but permission not granted — launch directly
-                        // If previously permanently denied: shouldShowRationale is also false — open settings
+
+
                         val wasEverAsked = getSharedPreferences("daxi_prefs", MODE_PRIVATE)
                             .getBoolean("notif_perm_asked", false)
                         if (!wasEverAsked) {
                             notificationOnlyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
-                            // Permanently denied — guide to settings
+
                             showDaxiPermissionDialog(
                                 title = getString(R.string.perm_notif_title),
                                 message = getString(R.string.perm_notif_settings_message),
@@ -779,7 +779,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Shell embarqué file:// uniquement (pas de site web encapsulé — politique stores). */
+
     private fun startAppContent() {
         if (contentStarted && binding.webView.url?.startsWith("file://") == true) return
         contentStarted = true

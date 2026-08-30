@@ -37,7 +37,7 @@ def normalize_accept_token(raw: str) -> str:
     token = unquote(raw or '').strip().strip('/')
     if not token:
         return token
-    # Legacy django signing in path (colon or dot separators)
+
     if token.startswith('eyJ') and (':' in token or token.count('.') >= 2):
         if token.count(':') < 2:
             token = token.replace('.', ':')
@@ -73,6 +73,11 @@ def _accept_order_for_driver(order, driver):
         _order_has_full_coords,
         _order_ready_for_driver_accept,
     )
+
+    if order.status == 'cancelled':
+        return False, (
+            'Cette commande a été annulée par le client. Elle n\'est plus disponible.'
+        ), 'cancelled_by_client'
 
     if order.status not in ('pending', 'price_proposed', 'price_confirmed'):
         if order.driver_id == driver.pk:
@@ -175,7 +180,9 @@ def accept_order_from_token(order_id, token, phone_hint=None):
     try:
         order = Order.objects.get(pk=int(order_id))
     except Order.DoesNotExist:
-        return False, 'Commande introuvable.', 'not_found'
+        return False, (
+            'Cette commande a été annulée par le client. Elle n\'est plus disponible.'
+        ), 'cancelled_by_client'
 
     return _accept_order_for_driver(order, driver)
 

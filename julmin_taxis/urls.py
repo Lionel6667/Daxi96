@@ -28,7 +28,7 @@ from julmin_taxis.robots_views import robots_txt
 from julmin_taxis.wa_legacy_redirects import LEGACY_WA_REDIRECTS
 
 
-                                                                                             
+
 ORIGINAL_ROOT = str(settings.BASE_DIR)
 
 
@@ -43,7 +43,7 @@ def _get_django_context_script(page_name):
         from firebase_db.views import _order_to_firebase, _driver_to_firebase
         from django.db.models import Count, Q
 
-                                   
+
         pending_orders = {}
         for o in Order.objects.filter(
             status__in=['pending', 'price_proposed', 'price_confirmed']
@@ -51,7 +51,7 @@ def _get_django_context_script(page_name):
             key = o.firebase_uid if o.firebase_uid else f'django_{o.pk}'
             pending_orders[key] = _order_to_firebase(o)
 
-                                                      
+
         confirmed_orders = {}
         for o in Order.objects.filter(
             status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress']
@@ -59,7 +59,7 @@ def _get_django_context_script(page_name):
             key = o.firebase_uid if o.firebase_uid else f'django_{o.pk}'
             confirmed_orders[key] = _order_to_firebase(o)
 
-                                      
+
         completed_orders = {}
         for o in Order.objects.filter(
             status__in=['completed', 'cancelled']
@@ -67,7 +67,7 @@ def _get_django_context_script(page_name):
             key = o.firebase_uid if o.firebase_uid else f'django_{o.pk}'
             completed_orders[key] = _order_to_firebase(o)
 
-                                                               
+
         drivers = {}
         driver_qs = Driver.objects.filter(is_blocked=False).annotate(
             rides_done=Count('orders', filter=Q(orders__status='completed'))
@@ -99,13 +99,13 @@ def _get_django_context_script(page_name):
             f'window.DJANGO_PRELOAD.commande_completed = {json.dumps(completed_orders, default=str)};',
             f'window.DJANGO_PRELOAD.drivers = {json.dumps(drivers, default=str)};',
             f'window.DJANGO_CONFIG = {json.dumps(config)};',
-                                                                                           
+
             f'window.GOOGLE_MAPS_API_KEY = {json.dumps(settings.GOOGLE_MAPS_API_KEY)};',
             '</script>',
         ]
         return '\n'.join(lines)
     except Exception as e:
-                                                  
+
         return f'<script>/* Django preload error: {e} */window.DJANGO_PRELOAD={{}};</script>'
 
 
@@ -141,14 +141,14 @@ class ServeOriginalPage(View):
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-                                          
+
             inject = _get_django_context_script(self.page_name or self.filename)
 
-                                                                        
+
             from django.middleware.csrf import get_token
             csrf_token = get_token(request)
 
-                                           
+
             current_eid = request.session.get("current_enterprise_id") or request.session.get("enterprise_id")
             enterprise_ids = request.session.get("enterprise_ids", [current_eid] if current_eid else [])
             ent_status = None
@@ -164,7 +164,7 @@ class ServeOriginalPage(View):
                     _ent_obj = None
                     ent_status = None
                     ent_mode = None
-                                                                                                
+
             _linked_ent = None
             if request.user.is_authenticated and getattr(request.user, 'email', None):
                 try:
@@ -249,7 +249,7 @@ class ServeOriginalPage(View):
                 ),
                 "google_maps_key": getattr(__import__('django.conf', fromlist=['settings']).settings, 'GOOGLE_MAPS_API_KEY', ''),
             }
-                                                                                      
+
             _safe_json = json.dumps(session_data).replace('</', r'<\/')
             session_inject = f'<script>window.DJANGO_SESSION = {_safe_json};</script>'
             _maps_key = getattr(__import__('django.conf', fromlist=['settings']).settings, 'GOOGLE_MAPS_API_KEY', '')
@@ -271,15 +271,15 @@ class ServeOriginalPage(View):
                 favicon_inject = render_to_string('partials/daxi_favicon.html')
 
             if self.page_name == 'enterprise_dashboard':
-                                                       
+
                 if not current_eid or not _ent_obj:
                     return redirect('/entreprise/')
                 if _ent_obj.status != 'approved':
                     return redirect('/entreprise/')
-                                                                                           
+
 
             elif self.page_name == 'admin' and request.session.get('is_admin'):
-                                                       
+
                 content = content.replace(
                     '<div id="main-interface" class="hidden" style="display:none;">',
                     '<div id="main-interface" style="display:block;">',
@@ -292,7 +292,7 @@ class ServeOriginalPage(View):
                 )
 
             elif self.page_name == 'admin':
-                                                                                                  
+
                 content = content.replace(
                     '<div id="main-interface" class="hidden" style="display:none;">',
                     '<div id="main-interface" class="hidden" style="display:none;" hx-disable>',
@@ -302,10 +302,10 @@ class ServeOriginalPage(View):
             elif self.page_name == 'enterprise':
                 if current_eid and _ent_obj:
                     ent = _ent_obj
-                                                                      
+
                     if ent.status == 'approved':
                         return redirect('/entreprise/dashboard/')
-                                                      
+
                     content = content.replace(
                         '<div id="enterprise-hero">',
                         '<div id="enterprise-hero" style="display:none;">',
@@ -338,7 +338,7 @@ class ServeOriginalPage(View):
                             f'id="enterprise-rejection-reason">Votre demande de partenariat a été refusée.<br><strong>Motif :</strong> {reason_html}',
                             1
                         )
-                                                      
+
                     if ent.mode == 'self_order':
                         content = content.replace(
                             'id="ent-booking-section" style="display:none; padding:14px 16px 0;"',
@@ -359,7 +359,7 @@ class ServeOriginalPage(View):
                 )
 
             elif self.page_name == 'driver':
-                                                            
+
                 return redirect('/driver/login/')
 
             elif self.page_name == 'driver_login':
@@ -369,7 +369,7 @@ class ServeOriginalPage(View):
                     content = content.replace('<head>', '<head>\n    <base href="/">', 1)
 
 
-                                                                              
+
             if self.page_name == 'client':
                 ref_code = request.GET.get('ref', '').strip()
                 if ref_code:
@@ -389,8 +389,8 @@ class ServeOriginalPage(View):
                     except Exception:
                         pass
 
-                                                                                         
-                                                                                             
+
+
             from julmin_taxis.native_shell import inject_native_head, is_native_request
 
             cap_inject = is_native_request(request)
@@ -465,9 +465,9 @@ class ServeOriginalAsset(View):
                 break
 
         if not filepath:
-                                                                                
-                                                                                
-                                                                                
+
+
+
             ext = os.path.splitext(path)[1].lower()
             if ext in {'.png', '.jpg', '.jpeg', '.gif', '.jfif', '.webp', '.svg', '.ico'}:
                 transparent_png = (
@@ -488,17 +488,17 @@ urlpatterns = [
     path('.well-known/assetlinks.json/', android_assetlinks, name='android-assetlinks-slash'),
     path('.well-known/apple-app-site-association', apple_app_site_association, name='apple-app-site-association'),
     path('.well-known/apple-app-site-association/', apple_app_site_association, name='apple-app-site-association-slash'),
-                           
+
     path('webhook/', whatsapp_webhook, name='whatsapp_webhook'),
 
     path('favicon.ico', RedirectView.as_view(url='/assets/images/daxi-logo-gold.png', permanent=True)),
 
     path('django-admin/', admin.site.urls),
 
-                                                        
+
     path('htmx/', include('julmin_taxis.htmx_urls')),
 
-                   
+
     path('api/app/', include('julmin_taxis.app_api_urls')),
     path('api/auth/', include('accounts.urls')),
     path('api/orders/', include('orders.urls')),
@@ -510,10 +510,10 @@ urlpatterns = [
     path('api/chatbot/', include('chatbot.urls')),
     path('api/admin-panel/', include('admin_panel.urls')),
 
-                              
+
     path('api/fb/', include('firebase_db.urls')),
 
-                            
+
     path('api/pricing/', include('pricing.urls')),
     path('api/mobile/bootstrap/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_bootstrap']).mobile_bootstrap, name='mobile-bootstrap'),
     path('api/mobile/cache-manifest/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_cache_manifest']).mobile_cache_manifest, name='mobile-cache-manifest'),
@@ -529,12 +529,12 @@ urlpatterns = [
     path('api/geo/', include('geo.urls')),
     path('htmx/lieux/', include('lieux.urls')),
 
-                                   
+
     path('api/translations/', include('chatbot.translation_urls')),
 
-                                                                          
+
     path('', ServeOriginalPage.as_view(filename='vubez2.html', page_name='client'), name='home'),
-                                                                               
+
     path('payment/<int:order_id>/card/', card_payment_page, name='card-payment-page'),
     path('payment/<int:order_id>/card/charge/', card_payment_charge, name='card-payment-charge'),
     path('payment/<int:order_id>/moncash/return/', moncash_payment_return, name='moncash-payment-return'),
@@ -547,7 +547,7 @@ urlpatterns = [
     path('blog/<slug:slug>/', blog_article_page, name='blog-article'),
     path('compte/', ServeOriginalPage.as_view(filename='compte.html', page_name='client'), name='compte'),
     path('admin-dashboard/', admin_dashboard_page, name='admin_dashboard'),
-    # Liens legacy Meta / Firebase (URLs figées dans les templates WhatsApp)
+
     *[
         re_path(
             pattern,
@@ -591,7 +591,7 @@ urlpatterns = [
     path('test-whatsapp/logs/', whatsapp_test_logs_api, name='test_whatsapp_logs'),
     path('__errors__/<int:code>/', __import__('julmin_taxis.error_views', fromlist=['error_preview']).error_preview, name='error-preview'),
 
-                                                                        
+
     re_path(r'^(?P<path>(?!api/|static/|media/|django-admin/|\.well-known/).*\.(png|jpg|jpeg|gif|jfif|webp|svg|ico|js|css|json|txt|pdf|woff|woff2|ttf|eot|mp3|mp4|wav))$',
             ServeOriginalAsset.as_view(), name='original-asset'),
 ]
@@ -603,7 +603,7 @@ if settings.DEBUG:
 else:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# Branded HTTP error handlers (active when DEBUG=False)
+
 handler400 = 'julmin_taxis.error_views.bad_request'
 handler403 = 'julmin_taxis.error_views.permission_denied'
 handler404 = 'julmin_taxis.error_views.page_not_found'

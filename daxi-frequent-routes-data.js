@@ -72,7 +72,7 @@
         'Port de Paix': PORT_DE_PAIX_IMAGES
     };
 
-    /** 2 images par ville ; chaque apparition (from/to sur une route) prend la paire suivante du pool. */
+
     function pickCityImages(cityName, routeIndex, slot) {
         var pool = ROTATING_CITY_POOLS[cityName];
         if (pool && pool.length) {

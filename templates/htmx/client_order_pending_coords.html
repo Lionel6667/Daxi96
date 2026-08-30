@@ -1,7 +1,10 @@
 {% load static %}
 <div id="pending-coords-card" data-order-id="{{ order_id }}" data-daxi-checkout-flow="1" style="border-radius:16px;overflow:hidden;margin:0;background:rgba(8,14,35,0.98);border:1px solid rgba(148,163,184,0.22);">
   <div style="background:linear-gradient(135deg,#1e3a5f,#0f172a);padding:18px;text-align:center;color:#fff;">
-    <div style="font-size:15px;font-weight:800;">Commande {% firstof order.code order.ref_code order.public_code order_code %} enregistrée</div>
+    <div style="font-size:15px;font-weight:800;">Commande enregistrée</div>
+    {% if order.ref_tail %}
+    <div style="font-size:10px;opacity:.65;margin-top:4px;letter-spacing:.08em;">Réf. ···{{ order.ref_tail }}</div>
+    {% endif %}
     <div style="font-size:11px;opacity:.9;margin-top:6px;line-height:1.45;">
       Votre adresse n'est pas dans les suggestions Google — un chauffeur ou l'équipe DAXI<br>
       placera les lieux sur la carte et calculera le prix.
@@ -16,6 +19,16 @@
       <strong>En attente du prix.</strong> Vous le recevrez par WhatsApp dès qu'il sera calculé.
       Revenez sur le site pour l'accepter ou le refuser — ensuite un chauffeur prendra votre course.
     </div>
+    <button type="button"
+            class="daxi-guest-phone-cancel"
+            style="margin-top:14px;"
+            hx-post="/htmx/client/orders/{{ order_id }}/refuse-price/"
+            hx-target="#daxi-sheet-order-slot"
+            hx-swap="innerHTML"
+            hx-confirm="Annuler cette commande ?"
+            hx-include="#guestIdHidden, [name=csrfmiddlewaretoken]">
+      Annuler la commande
+    </button>
   </div>
 </div>
 <script>
@@ -23,6 +36,8 @@
   if (typeof _daxiSetSheetMode === 'function') _daxiSetSheetMode('order', { expand: true });
   if (typeof _daxiSetSheetCollapsed === 'function') _daxiSetSheetCollapsed(false);
   if (window._daxiOnSheetOrderSwap) window._daxiOnSheetOrderSwap('{{ order_id }}');
+  if (typeof _daxiCaptureBookingPlacesForOrder === 'function') _daxiCaptureBookingPlacesForOrder('{{ order_id }}');
+  if (typeof _daxiStartOrderCoordsBackfill === 'function') _daxiStartOrderCoordsBackfill('{{ order_id }}');
   if (typeof _loadDaxiSheetOrders === 'function') _loadDaxiSheetOrders({ metaOnly: true });
   if (window._daxiStartLiveTracking) setTimeout(function() { _daxiStartLiveTracking('{{ order_id }}'); }, 300);
 })();

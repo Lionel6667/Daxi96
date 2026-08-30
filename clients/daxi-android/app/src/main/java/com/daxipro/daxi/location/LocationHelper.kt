@@ -28,22 +28,19 @@ data class NativeLocation(
     fun isPrecise(): Boolean = accuracy <= LocationHelper.PRECISE_MAX_ACCURACY_M
 }
 
-/**
- * Acquisition GPS via FusedLocationProviderClient (Play services).
- * lastLocation → bootstrap rapide ; requestLocationUpdates → précision progressive.
- */
+
 class LocationHelper(private val context: Context) {
 
     companion object {
         private const val TAG = "DaxiLocation"
 
-        /** Au-delà : jamais « précis » (Wi-Fi / cellulaire grossier). */
+
         const val PRECISE_MAX_ACCURACY_M = 500f
 
-        /** Fixes de plusieurs km ignorés. */
+
         const val REJECT_ACCURACY_M = 5000f
 
-        /** Seuil bon aligné DaxiGpsEngine / WebView. */
+
         const val GOOD_ACCURACY_M = 120f
 
         private const val BEST_STALE_MS = 8_000L

@@ -1,0 +1,14 @@
+
+
+
+*, ::before, ::after {
+  --tw-gradient-from-position: ;
+  --tw-gradient-to-position: ;
+}
+
+@tailwind utilities;
+
+
+.hidden {
+  display: none !important;
+}

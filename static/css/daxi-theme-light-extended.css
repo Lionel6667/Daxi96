@@ -976,8 +976,6 @@ nav.nav-gradient #loginBtn.gold-button {
 }
 
 
-
-
 [data-theme="light"] #daxiSheetExpandFab {
   background: var(--daxi-surface) !important;
   border: 1.5px solid rgba(194, 120, 3, .45) !important;
@@ -1242,7 +1240,6 @@ nav.nav-gradient #loginBtn.gold-button {
 }
 
 
-/* Réservation client — attente aller-retour & programmation (thème clair) */
 [data-theme="light"] .daxi-rt-wait {
   background: rgba(99, 102, 241, 0.06) !important;
   border-color: rgba(99, 102, 241, 0.18) !important;

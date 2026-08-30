@@ -1,7 +1,6 @@
 package com.daxipro.daxi.maps
 
 
-
 import android.content.Context
 
 import android.util.Log
@@ -19,7 +18,6 @@ import org.json.JSONObject
 import java.io.File
 
 
-
 class OfflineMapManager(
 
     private val context: Context,
@@ -33,15 +31,12 @@ class OfflineMapManager(
         get() = File(context.filesDir, "maps").also { it.mkdirs() }
 
 
-
     @Volatile
 
     private var tileServer: LocalTileServer? = null
 
 
-
     private val startLock = Any()
-
 
 
     fun getTileBytes(z: Int, x: Int, y: Int): ByteArray? {
@@ -49,7 +44,6 @@ class OfflineMapManager(
         return activeReader?.getTile(z, x, y)
 
     }
-
 
 
     fun parseTilePath(path: String): Triple<Int, Int, Int>? {
@@ -69,11 +63,9 @@ class OfflineMapManager(
     }
 
 
-
     @Volatile
 
     private var activeReader: MbtilesReader? = null
-
 
 
     @Volatile
@@ -81,11 +73,9 @@ class OfflineMapManager(
     private var activePackId: String? = null
 
 
-
     @Volatile
 
     private var usingInterceptFallback = false
-
 
 
     fun hasOfflineTiles(): Boolean {
@@ -102,7 +92,6 @@ class OfflineMapManager(
 
 
 
-    /** Copie le pack Haïti embarqué dans l'APK (premier lancement). */
 
     fun ensureBundledMapCopied() {
 
@@ -135,7 +124,6 @@ class OfflineMapManager(
     }
 
 
-
     fun tileUrlTemplate(): String {
 
         val port = tileServer?.listeningPort ?: 8765
@@ -143,7 +131,6 @@ class OfflineMapManager(
         return "http://127.0.0.1:$port/tiles/{z}/{x}/{y}.png"
 
     }
-
 
 
     fun ensureStartedBlocking(): Boolean {
@@ -203,13 +190,11 @@ class OfflineMapManager(
     }
 
 
-
     suspend fun ensureStarted(): Boolean = withContext(Dispatchers.IO) {
 
         ensureStartedBlocking()
 
     }
-
 
 
     suspend fun syncPacksFromBootstrap(bootstrap: JSONObject): Boolean = withContext(Dispatchers.IO) {
@@ -265,7 +250,6 @@ class OfflineMapManager(
     }
 
 
-
     fun stop() {
 
         synchronized(startLock) {
@@ -285,7 +269,6 @@ class OfflineMapManager(
         }
 
     }
-
 
 
     companion object {

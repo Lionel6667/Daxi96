@@ -1,0 +1,78 @@
+
+module.exports = {
+  content: [
+    './vubez2.html',
+    './static/js/daxi-plan-wizard.js',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#f59e0b',
+      },
+    },
+  },
+  corePlugins: {
+    preflight: false,
+  },
+  safelist: [
+    
+    'hidden',
+    'mb-3',
+    'mb-6',
+    'mb-2',
+    'mb-5',
+    'px-4',
+    'py-2',
+    'px-6',
+    'py-3',
+    'rounded-xl',
+    'overflow-hidden',
+    'h-48',
+    'bg-cover',
+    'bg-center',
+    'p-5',
+    'text-2xl',
+    'font-bold',
+    'text-lg',
+    'font-semibold',
+    'bg-gray-100',
+    'text-gray-700',
+    
+    'md:grid-cols-2',
+    'lg:grid-cols-3',
+    'z-[9998]',
+    'z-[9999]',
+    'max-h-[90vh]',
+    
+    'focus:ring-primary',
+    'focus:ring-2',
+    'focus:outline-none',
+    'focus:border-transparent',
+    
+    'hover:bg-gray-200',
+    'hover:bg-gray-300',
+    'hover:bg-white',
+    'hover:from-green-600',
+    'hover:to-green-700',
+    'hover:scale-105',
+    'hover:text-blue-800',
+    'hover:text-gray-700',
+    
+    'bg-gradient-to-r',
+    'from-green-500',
+    'to-green-600',
+    'text-white',
+    'transform',
+    'transition-all',
+    'duration-200',
+    'shadow-lg',
+    'border-gray-300',
+    'text-gray-800',
+    'font-medium',
+    'rounded-lg',
+    'opacity-90',
+    'bg-opacity-50',
+    'shadow-2xl',
+    'overflow-y-auto',
+  ],
+};

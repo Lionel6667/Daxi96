@@ -175,6 +175,7 @@
     injectStyles();
     decorateButtons(document);
     bindHtmx();
+    var root = document.getElementById('appSheet') || document.body;
     var obs = new MutationObserver(function(muts) {
       muts.forEach(function(m) {
         m.addedNodes.forEach(function(node) {
@@ -182,7 +183,7 @@
         });
       });
     });
-    obs.observe(document.body, { childList: true, subtree: true });
+    obs.observe(root, { childList: true, subtree: true });
   }
 
   var api = {

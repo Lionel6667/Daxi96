@@ -16,10 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-/**
- * État réseau global : lien réseau, Internet, backend DAXI.
- * ONLINE = backend joignable ; OFFLINE = pas de réseau ; RECONNECTING = réseau mais backend pas encore OK.
- */
+
 class NetworkManager(context: Context) {
 
     enum class State {

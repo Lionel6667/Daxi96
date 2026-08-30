@@ -47,7 +47,7 @@ function isWrite(method, url) {
   const m = (method || 'GET').toUpperCase();
   if (!WRITE_RE.test(m)) return false;
   const s = String(url || '');
-  
+
   if (API_RE.test(s)) return true;
   if (/\/(order|payment|chat|login|register|wallet|sos|htmx|api)\//i.test(s)) return true;
   return false;
@@ -835,7 +835,7 @@ async function initPush() {
     pushLog('Permission status', { receive: permNow && permNow.receive });
     PushNotifications.addListener('registration', (token) => {
       let value = (token && token.value) || '';
-      // iOS Capacitor = APNs hex ; le vrai token FCM arrive via AppDelegate (Firebase Messaging).
+
       if (Capacitor.getPlatform() === 'ios') {
         if (window._daxiFcmTokenNative) {
           value = window._daxiFcmTokenNative;
@@ -869,7 +869,7 @@ async function initPush() {
       try {
         const data = (notif && notif.data) || {};
         if (data.order_id && typeof window._daxiFocusClientOrder === 'function' && document.visibilityState === 'visible') {
-          
+
         }
       } catch (e) {}
     });
@@ -1003,13 +1003,13 @@ function installNativeBridge() {
 }
 
 async function initGps() {
-  
-  
+
+
   try {
     let perm = await Geolocation.checkPermissions();
     let granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
     window._daxiGpsPerm = granted;
-    if (!granted) return; 
+    if (!granted) return;
     startGpsWatch();
     if (window._daxiOnNativeLocationGranted) {
       window._daxiOnNativeLocationGranted(undefined, undefined, undefined);

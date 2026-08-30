@@ -682,7 +682,7 @@
         if (typeof _syncMapFloatControls === 'function') _syncMapFloatControls();
     }
 
-    /** Redraw active route overlays on the current _clientBgMap (after dark/light Dual swap). */
+
     function refreshOnMap() {
         if (!document.body.classList.contains('daxi-routes-mode')) return false;
         if (!global._clientBgMap || _activeIdx < 0) return false;

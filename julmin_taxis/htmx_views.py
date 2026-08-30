@@ -1344,6 +1344,7 @@ def _order_to_dict(o: Order, *, light: bool = False, for_driver: bool = False, f
         'id': o.pk,
         'code': getattr(o, 'public_code', None) or getattr(o, 'ref_code', None) or f'DX-{o.pk}',
         'public_code': getattr(o, 'public_code', None) or '',
+        'ref_tail': client_order_ref_tail(o),
         'firebase_uid': o.firebase_uid or str(o.pk),
         'status': o.status,
         'status_pipeline_index': phase['pipeline_index'],
@@ -5822,6 +5823,20 @@ def _order_needs_coords(order):
     )
 
 
+def client_order_ref_tail(order):
+    """Affichage client : 4 derniers caractères (sans préfixe DX-)."""
+    if isinstance(order, dict):
+        code = (order.get('public_code') or order.get('code') or '').strip()
+        pk = order.get('id')
+    else:
+        code = (getattr(order, 'public_code', None) or getattr(order, 'ref_code', None) or '').strip()
+        pk = order.pk
+    if code:
+        raw = code.upper().replace('DX-', '').replace('DX', '')
+        return raw[-4:] if len(raw) >= 4 else raw
+    return str(pk or '')[-4:].rjust(4, '0')
+
+
 def _enterprise_checkout_phase(order):
     """Étape du parcours entreprise (prix → paiement → chauffeur)."""
     if not getattr(order, 'enterprise_id', None):
@@ -6512,10 +6527,10 @@ def driver_wa_accept_page(request, order_id, token=None):
             order_id=order_id,
         )
         return HttpResponse(html)
-    if code == 'not_found':
+    if code in ('not_found', 'cancelled_by_client'):
         html = _render_wa_accept_html(
-            title='Commande introuvable',
-            message=msg or 'Cette commande n\'existe plus ou a été annulée.',
+            title='Commande annulée',
+            message=msg or 'Le client a annulé cette commande. Elle n\'est plus disponible.',
             tone='warning',
             order_id=order_id,
         )
@@ -7045,6 +7060,131 @@ def client_create_order(request):
         'pickup': clean_address_display(pickup),
         'destination': clean_address_display(destination),
         'is_guest': not order_user,
+    })
+
+
+def client_submit_coords(request, order_id):
+    """POST /htmx/client/orders/<id>/coords/ — backfill GPS from client when connexion was unstable."""
+    from django.http import JsonResponse
+    from julmin_taxis.address_utils import coords_in_covered_zone
+
+    if request.method != 'POST':
+        return JsonResponse({'ok': False, 'reason': 'method'}, status=405)
+
+    order, err = _get_order_for_client(request, order_id)
+    if err:
+        return err
+
+    if order.status in ('completed', 'cancelled'):
+        return JsonResponse({'ok': False, 'reason': 'closed', 'status': order.status})
+
+    if _order_has_full_coords(order):
+        price = float(order.price) if order.price else None
+        return JsonResponse({
+            'ok': True,
+            'complete': True,
+            'status': order.status,
+            'price': price,
+        })
+
+    def _parse_coord(*keys):
+        for key in keys:
+            raw = request.POST.get(key, '').strip()
+            if raw:
+                try:
+                    return float(raw)
+                except ValueError:
+                    pass
+        return None
+
+    pickup_lat = _parse_coord('pickup_lat')
+    pickup_lng = _parse_coord('pickup_lng')
+    dest_lat = _parse_coord('dest_lat', 'destination_lat')
+    dest_lng = _parse_coord('dest_lng', 'destination_lng')
+
+    updated = False
+    update_fields = ['updated_at']
+
+    if not order.pickup_lat and pickup_lat is not None and pickup_lng is not None:
+        if not _gps_coords_valid(pickup_lat, pickup_lng):
+            return JsonResponse({'ok': False, 'reason': 'invalid_pickup'})
+        if not coords_in_covered_zone(pickup_lat, pickup_lng):
+            return JsonResponse({'ok': False, 'reason': 'pickup_outside_zone'})
+        order.pickup_lat = pickup_lat
+        order.pickup_lng = pickup_lng
+        if order.meeting_lat is None:
+            order.meeting_lat = pickup_lat
+            order.meeting_lng = pickup_lng
+            update_fields.extend(['meeting_lat', 'meeting_lng'])
+        update_fields.extend(['pickup_lat', 'pickup_lng'])
+        updated = True
+
+    if not order.destination_lat and dest_lat is not None and dest_lng is not None:
+        if not _gps_coords_valid(dest_lat, dest_lng):
+            return JsonResponse({'ok': False, 'reason': 'invalid_dest'})
+        if not coords_in_covered_zone(dest_lat, dest_lng):
+            return JsonResponse({'ok': False, 'reason': 'dest_outside_zone'})
+        order.destination_lat = dest_lat
+        order.destination_lng = dest_lng
+        update_fields.extend(['destination_lat', 'destination_lng'])
+        updated = True
+
+    if not updated:
+        return JsonResponse({'ok': False, 'reason': 'no_coords'})
+
+    order.save(update_fields=list(dict.fromkeys(update_fields)))
+
+    if not _order_has_full_coords(order):
+        _notify_ws(f'order_{order.pk}', 'coords_set', {
+            'order_id': order.pk,
+            'pickup_lat': order.pickup_lat,
+            'pickup_lng': order.pickup_lng,
+            'destination_lat': order.destination_lat,
+            'destination_lng': order.destination_lng,
+            'status': order.status,
+        })
+        return JsonResponse({'ok': True, 'partial': True, 'status': order.status})
+
+    coords_payload = {
+        'order_id': order.pk,
+        'pickup_lat': order.pickup_lat,
+        'pickup_lng': order.pickup_lng,
+        'destination_lat': order.destination_lat,
+        'destination_lng': order.destination_lng,
+    }
+
+    from julmin_taxis.service_plans import resolve_fixed_plan_price
+    fixed_plan = resolve_fixed_plan_price(order.service_plan or '')
+
+    if not fixed_plan and not _order_ready_for_driver_accept(order):
+        from pricing.services import apply_price_to_order
+        apply_price_to_order(order, propose=True, actor_request=request)
+        order.refresh_from_db()
+
+    _notify_ws(f'order_{order.pk}', 'coords_set', {
+        **coords_payload,
+        'status': order.status,
+        'price': float(order.price) if order.price else None,
+    })
+    if order.status == 'price_proposed' and order.price:
+        _notify_ws(f'order_{order.pk}', 'price_proposed', {
+            'price': float(order.price),
+            'total_price': _order_total_price_float(order),
+            'order_id': order.pk,
+            'status': 'price_proposed',
+        })
+        _notify_ws('admin', 'order_updated', {'order_id': order.pk, 'status': 'price_proposed'})
+        try:
+            from julmin_taxis.notify import notify_order_status_now
+            notify_order_status_now(order, 'price_proposed')
+        except Exception:
+            pass
+
+    return JsonResponse({
+        'ok': True,
+        'complete': True,
+        'status': order.status,
+        'price': float(order.price) if order.price else None,
     })
 
 

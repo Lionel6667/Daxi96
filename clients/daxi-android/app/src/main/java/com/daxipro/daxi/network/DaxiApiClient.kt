@@ -89,7 +89,7 @@ class DaxiApiClient(context: Context) {
         }
     }
 
-    /** Returns raw JSON string (object or array) for the given GET path, or null on failure. */
+
     fun getJson(path: String): String? {
         val t0 = System.currentTimeMillis()
         val url = baseUrl + path
@@ -170,10 +170,7 @@ class DaxiApiClient(context: Context) {
 
     fun fetchCacheManifest(): JSONObject? = get("/api/mobile/cache-manifest/")
 
-    /**
-     * Proxy HTTP générique pour le shell file:// (évite CORS WebView).
-     * Retourne Triple(status, body, contentType).
-     */
+
     fun proxyRaw(
         method: String,
         absoluteUrl: String,

@@ -544,7 +544,6 @@ html[data-theme="light"] #forgotPasswordModal .modal-header h3 {
 }
 
 
-/* Feuille de commande — attente aller-retour & programmation (priorité max) */
 html[data-theme="light"] .daxi-rt-wait {
   background: rgba(99, 102, 241, 0.06) !important;
   border-color: rgba(99, 102, 241, 0.2) !important;

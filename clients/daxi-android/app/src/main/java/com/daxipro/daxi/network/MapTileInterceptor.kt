@@ -7,11 +7,7 @@ import okhttp3.Request
 import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
 
-/**
- * Proxifie les tuiles carte (Carto / OSM) via OkHttp.
- * Nécessaire depuis le shell file:// : le WebView charge mal / bloque souvent
- * les <img> HTTPS cross-origin, ce qui laisse un fond noir.
- */
+
 object MapTileInterceptor {
 
     private val client = OkHttpClient.Builder()
@@ -42,7 +38,7 @@ object MapTileInterceptor {
         if (!isTileHost) return null
         val path = request.url.encodedPath.orEmpty()
         if (!path.endsWith(".png") && !path.contains("/tiles/") && !path.matches(Regex(".*/\\d+/\\d+/\\d+(\\.(png|jpg|jpeg))?$"))) {
-            // still allow typical xyz tile paths without extension
+
             if (!path.matches(Regex(".*/\\d+/\\d+/\\d+$"))) return null
         }
 

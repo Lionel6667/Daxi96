@@ -25,7 +25,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Splash Daxi (pas barre Chrome) -->
+
     <LinearLayout
         android:id="@+id/splashOverlay"
         android:layout_width="0dp"

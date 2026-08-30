@@ -1,4 +1,4 @@
-# Copie le front HTML/CSS/JS existant dans www/ (sans encapsuler le site live).
+
 $ErrorActionPreference = "Continue"
 $here = $PSScriptRoot
 $capRoot = Split-Path $here -Parent

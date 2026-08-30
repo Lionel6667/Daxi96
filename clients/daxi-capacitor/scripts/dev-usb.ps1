@@ -1,5 +1,5 @@
-# Ouvre le pont USB entre le telephone et le serveur Django local.
-# A relancer apres chaque rebranchement du cable.
+
+
 
 $ErrorActionPreference = 'Stop'
 

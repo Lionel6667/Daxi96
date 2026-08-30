@@ -1,0 +1,1414 @@
+.daxi-initial-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.55s ease, visibility 0.55s ease;
+            background: #070b14;
+            pointer-events: auto;
+        }
+        .daxi-initial-loader.is-dismissed {
+            pointer-events: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        #initialLoader.daxi-intro-live {
+            background: #05070d !important;
+        }
+        #initialLoader.daxi-intro-live .daxi-initial-loader__content {
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        [data-theme="light"] .daxi-initial-loader { background: #f0f4f9; }
+        .daxi-initial-loader__content {
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .daxi-initial-loader .daxi-gps-boot__stage {
+            width: min(200px, 52vw);
+            height: min(200px, 52vw);
+        }
+        .daxi-gps-boot__dot {
+            position: relative;
+            z-index: 2;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fbbf24;
+            box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.18);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.82; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes daxiMapLoadBar {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(320%); }
+        }
+        @keyframes daxiLostSpin {
+            to { transform: rotate(360deg); }
+        }
+        .daxi-lost-loader {
+            text-align: center;
+            padding: 48px 20px;
+            color: #64748b;
+        }
+        .daxi-lost-loader__ring {
+            width: 52px; height: 52px;
+            margin: 0 auto 16px;
+            border: 3px solid rgba(245,158,11,0.15);
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: daxiLostSpin 0.85s linear infinite;
+        }
+        .daxi-lost-loader__title {
+            font-size: 14px; font-weight: 800; color: #374151; margin-bottom: 4px;
+        }
+        .daxi-lost-loader__sub { font-size: 12px; color: #9ca3af; }
+
+.routes-maps-container {
+                    display: flex;
+                    gap: 16px;
+                    overflow-x: auto;
+                    scroll-snap-type: x mandatory;
+                    padding-bottom: 12px;
+                    scroll-behavior: smooth;
+                }
+                
+                .routes-maps-container::-webkit-scrollbar {
+                    height: 6px;
+                }
+                
+                .routes-maps-container::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 10px;
+                }
+                
+                .routes-maps-container::-webkit-scrollbar-thumb {
+                    background: #667eea;
+                    border-radius: 10px;
+                }
+                
+                
+                .route-map-card {
+                    flex: 0 0 360px;
+                    min-width: 360px;
+                    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                    border-radius: 16px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                    overflow: hidden;
+                    scroll-snap-align: center;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    position: relative;
+                }
+                
+                .route-map-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+                }
+                
+                .route-map-header {
+                    padding: 16px 20px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                
+                .route-map-header h4 {
+                    margin: 0;
+                    font-size: 17px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .route-map-header p {
+                    margin: 4px 0 0 0;
+                    font-size: 13px;
+                    opacity: 0.95;
+                }
+                
+                .route-svg-container {
+                    width: 100%;
+                    height: 240px;
+                    position: relative;
+                    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+                    overflow: hidden;
+                }
+                
+                .route-svg-container svg {
+                    width: 100%;
+                    height: 100%;
+                    display: block;
+                }
+                .route-city-photo-hit {
+                    cursor: pointer;
+                    pointer-events: all;
+                }
+                
+                
+                .map-background {
+                    fill: #f0f9ff;
+                }
+                
+                .map-terrain {
+                    fill: #d4f1de;
+                    opacity: 0.6;
+                }
+                
+                .map-water {
+                    fill: #93c5fd;
+                    opacity: 0.3;
+                }
+                
+                .map-roads {
+                    stroke: #cbd5e1;
+                    stroke-width: 1;
+                    fill: none;
+                    opacity: 0.5;
+                }
+                
+                .map-city-dot {
+                    fill: #64748b;
+                    opacity: 0.4;
+                }
+                
+                
+                .route-path {
+                    fill: none;
+                    stroke: #667eea;
+                    stroke-width: 4;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+                }
+                
+                .route-path-outline {
+                    fill: none;
+                    stroke: #ffffff;
+                    stroke-width: 6;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                    opacity: 0.8;
+                }
+                
+                
+                .marker-dot {
+                    animation: pulse-dot 2s ease-in-out infinite;
+                }
+                
+                @keyframes pulse-dot {
+                    0%, 100% { r: 8; opacity: 1; }
+                    50% { r: 10; opacity: 0.8; }
+                }
+                
+                
+                .moving-vehicle {
+                    animation: moveVehicle 4s ease-in-out infinite;
+                }
+                
+                @keyframes moveVehicle {
+                    0% { offset-distance: 0%; }
+                    100% { offset-distance: 100%; }
+                }
+                
+                
+                .city-label {
+                    font-size: 11px;
+                    font-weight: 600;
+                    fill: #1e293b;
+                }
+                
+                
+                .city-images-container {
+                    display: flex;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                    border-top: 2px solid #e2e8f0;
+                    overflow-x: auto;
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--daxi-scroll-thumb) var(--daxi-scroll-track);
+                }
+                
+                .city-images-container::-webkit-scrollbar {
+                    height: 6px;
+                }
+                
+                .city-images-container::-webkit-scrollbar-track {
+                    background: var(--daxi-scroll-track);
+                    border-radius: 3px;
+                }
+                
+                .city-images-container::-webkit-scrollbar-thumb {
+                    background: var(--daxi-scroll-thumb);
+                    border-radius: 3px;
+                }
+                
+                .city-images-container::-webkit-scrollbar-thumb:hover {
+                    background: var(--daxi-scroll-thumb-hover);
+                }
+                
+                .city-image-wrapper {
+                    position: relative;
+                    flex-shrink: 0;
+                    width: 90px;
+                    height: 90px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+                
+                .city-image-wrapper:hover {
+                    transform: translateY(-4px) scale(1.05);
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                }
+                
+                .city-image-wrapper img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+                
+                .city-image-wrapper:hover img {
+                    transform: scale(1.1);
+                }
+                
+                .city-image-label {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+                    color: white;
+                    padding: 6px 8px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    text-align: center;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+                }
+                
+                
+                .image-modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 10000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.95);
+                    animation: fadeIn 0.3s ease;
+                }
+                
+                .image-modal.active {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                
+                .modal-content-wrapper {
+                    position: relative;
+                    max-width: 90%;
+                    max-height: 90%;
+                    animation: zoomIn 0.3s ease;
+                    display: inline-block;
+                }
+                
+                @keyframes zoomIn {
+                    from { transform: scale(0.8); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                
+                .modal-image {
+                    max-width: 100%;
+                    max-height: 90vh;
+                    border-radius: 12px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                }
+                
+                .modal-close {
+                    position: absolute;
+                    top: -40px;
+                    right: 0;
+                    color: white;
+                    font-size: 36px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background: rgba(255, 255, 255, 0.1);
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    line-height: 1;
+                }
+                
+                .modal-close:hover {
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: rotate(90deg);
+                }
+                
+                .modal-city-name {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 20px;
+                    right: auto;
+                    max-width: min(70%, 420px);
+                    color: #fff;
+                    font-family: Georgia, 'Times New Roman', serif;
+                    font-size: clamp(1rem, 2.8vw, 1.65rem);
+                    font-weight: 400;
+                    letter-spacing: 0.12em;
+                    text-transform: uppercase;
+                    text-align: left;
+                    text-shadow: 0 2px 14px rgba(0,0,0,0.95);
+                    padding: 10px 16px 10px 14px;
+                    background: linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 72%, transparent 100%);
+                    border-left: 3px solid rgba(255,255,255,0.9);
+                    border-radius: 0 4px 4px 0;
+                    pointer-events: none;
+                    animation: daxiDocCaptionIn 0.55s ease 0.12s both;
+                }
+                
+                
+                @media (max-width: 1200px) {
+                    .route-map-card {
+                        flex: 0 0 340px;
+                        min-width: 340px;
+                    }
+                    
+                    .route-svg-container {
+                        height: 230px;
+                    }
+                }
+                
+                @media (max-width: 768px) {
+                    .route-map-card {
+                        flex: 0 0 320px;
+                        min-width: 320px;
+                    }
+                    
+                    .route-svg-container {
+                        height: 220px;
+                    }
+                    
+                    .route-map-header h4 {
+                        font-size: 16px;
+                    }
+                    
+                    .route-map-header p {
+                        font-size: 12px;
+                    }
+                }
+                
+                @media (max-width: 640px) {
+                    .routes-maps-container {
+                        gap: 12px;
+                    }
+                    
+                    .route-map-card {
+                        flex: 0 0 290px;
+                        min-width: 290px;
+                    }
+                    
+                    .route-svg-container {
+                        height: 200px;
+                    }
+                    
+                    .route-map-header {
+                        padding: 14px 16px;
+                    }
+                    
+                    .route-map-header h4 {
+                        font-size: 15px;
+                    }
+                    
+                    .route-map-header p {
+                        font-size: 11px;
+                    }
+                    
+                    .city-label {
+                        font-size: 9px;
+                    }
+                    
+                    .city-image-wrapper {
+                        width: 80px;
+                        height: 80px;
+                    }
+                    
+                    .city-image-label {
+                        font-size: 9px;
+                        padding: 5px 6px;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .route-map-card {
+                        flex: 0 0 270px;
+                        min-width: 270px;
+                    }
+                    
+                    .route-svg-container {
+                        height: 180px;
+                    }
+                    
+                    .route-map-header h4 {
+                        font-size: 14px;
+                    }
+                    
+                    .route-map-header p {
+                        font-size: 10px;
+                    }
+                    
+                    .city-label {
+                        font-size: 8px;
+                    }
+                    
+                    .city-image-wrapper {
+                        width: 70px;
+                        height: 70px;
+                    }
+                    
+                    .city-image-label {
+                        font-size: 8px;
+                        padding: 4px 5px;
+                    }
+                    
+                    .city-images-container {
+                        gap: 8px;
+                        padding: 10px 12px;
+                    }
+                }
+
+.forum-header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 16px;
+                    padding: 24px;
+                    color: white;
+                    margin-bottom: 20px;
+                    overflow: hidden;
+                    position: relative;
+                    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+                }
+
+                
+                .forum-fullscreen-header {
+                    background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #2d3748 100%);
+                    color: white;
+                    padding: 24px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .forum-header-content {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+
+                .forum-title {
+                    font-size: 28px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                    color: white;
+                }
+
+                .forum-subtitle {
+                    font-size: 14px;
+                    opacity: 0.8;
+                    margin-bottom: 12px;
+                }
+
+                .forum-stats {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #f7fafc;
+                }
+
+                .forum-main-content {
+                    padding: 32px 24px;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    min-height: calc(100vh - 120px);
+                }
+
+                .forum-description {
+                    margin-bottom: 32px;
+                    padding-left: 16px;
+                    border-left: 4px solid #e53e3e;
+                    background: #fed7d7;
+                    padding: 16px;
+                    border-radius: 8px;
+                    color: #742a2a;
+                    font-size: 15px;
+                    line-height: 1.5;
+                }
+
+                .forum-posts-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 24px;
+                }
+
+                
+                .forum-pub-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+                    gap: 24px;
+                    margin-top: 8px;
+                }
+
+                .forum-pub-grid .forum-pub-card {
+                    background: #fff;
+                    border-radius: 18px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.3s cubic-bezier(.25,.8,.25,1), box-shadow 0.3s ease;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                }
+
+                .forum-pub-grid .forum-pub-card:hover {
+                    transform: translateY(-6px) scale(1.01);
+                    box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+                }
+
+                
+                .forum-pub-grid .fpub-thumb {
+                    height: 180px;
+                    position: relative;
+                    overflow: hidden;
+                    background-size: cover;
+                    background-position: center;
+                    flex-shrink: 0;
+                }
+
+                .forum-pub-grid .fpub-thumb::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+                }
+
+                
+                .forum-pub-grid .fpub-date-badge {
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    background: rgba(255,255,255,0.92);
+                    backdrop-filter: blur(6px);
+                    color: #374151;
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 4px 10px;
+                    border-radius: 99px;
+                    z-index: 2;
+                    letter-spacing: 0.3px;
+                }
+
+                
+                .forum-pub-grid .fpub-title-overlay {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    z-index: 2;
+                    padding: 14px 16px 12px;
+                    color: #fff;
+                    font-size: 16px;
+                    font-weight: 800;
+                    line-height: 1.25;
+                    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+                }
+
+                
+                .forum-pub-grid .fpub-body {
+                    padding: 10px 14px 14px;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .forum-pub-grid .fpub-preview {
+                    font-size: 13.5px;
+                    color: #4b5563;
+                    line-height: 1.55;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 3;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    flex: 1;
+                }
+
+                .forum-pub-grid .fpub-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-top: auto;
+                }
+
+                .forum-pub-grid .fpub-blocks-tag {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #6b7280;
+                    background: #f3f4f6;
+                    padding: 3px 10px;
+                    border-radius: 99px;
+                }
+
+                
+                .forum-pub-grid .fpub-open-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                    color: #fff;
+                    font-size: 12px;
+                    font-weight: 700;
+                    padding: 6px 14px;
+                    border-radius: 99px;
+                    border: none;
+                    cursor: pointer;
+                    letter-spacing: 0.3px;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+
+                .forum-pub-grid .forum-pub-card:hover .fpub-open-btn {
+                    transform: scale(1.06);
+                    box-shadow: 0 4px 14px rgba(245,158,11,0.4);
+                }
+
+                .forum-empty-state {
+                    grid-column: 1 / -1;
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #718096;
+                }
+
+                .forum-empty-icon {
+                    font-size: 48px;
+                    margin-bottom: 16px;
+                    opacity: 0.6;
+                }
+
+                
+                .forum-posts-grid .forum-post-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .forum-posts-grid .forum-post-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                    border-color: #cbd5e0;
+                }
+
+                .forum-post-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
+
+                .forum-post-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                    color: white;
+                    flex-shrink: 0;
+                }
+
+                .forum-post-title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #2d3748;
+                    margin: 0;
+                    line-height: 1.3;
+                }
+
+                .forum-post-content {
+                    color: #4a5568;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    margin-bottom: 16px;
+                }
+
+                .forum-post-meta {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 12px;
+                    color: #718096;
+                }
+
+                .forum-post-date {
+                    font-weight: 500;
+                }
+
+                .forum-post-author {
+                    font-weight: 500;
+                }
+
+                .forum-header::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    right: -10%;
+                    width: 300px;
+                    height: 300px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 50%;
+                }
+
+                .forum-header::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -30%;
+                    left: -10%;
+                    width: 250px;
+                    height: 250px;
+                    background: rgba(255, 255, 255, 0.07);
+                    border-radius: 50%;
+                }
+
+                .forum-title-content {
+                    position: relative;
+                    z-index: 2;
+                }
+
+                .forum-publications-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+
+                .forum-pub-card {
+                    background: white;
+                    border-radius: 14px;
+                    overflow: hidden;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+                    cursor: pointer;
+                    position: relative;
+                    border: 2px solid transparent;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .forum-pub-card:hover {
+                    transform: translateY(-8px) scale(1.02);
+                    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+                    border-color: #667eea;
+                }
+
+                .forum-pub-header {
+                    height: 100px;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .forum-pub-header::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
+                    z-index: 1;
+                }
+
+                .forum-pub-color-indicator {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 0 14px 0 8px;
+                    z-index: 3;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                }
+
+                .forum-pub-content {
+                    padding: 16px;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .forum-pub-title {
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin-bottom: 8px;
+                    line-height: 1.3;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .forum-pub-blocks-preview {
+                    font-size: 13px;
+                    color: #6b7280;
+                    margin-bottom: 10px;
+                    line-height: 1.4;
+                    flex: 1;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .forum-pub-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding-top: 10px;
+                    border-top: 1px solid #f0f0f0;
+                    font-size: 12px;
+                    color: #9ca3af;
+                }
+
+                .forum-pub-meta {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+
+                .forum-pub-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    background: #f3f4f6;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #4b5563;
+                }
+
+                .forum-empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #9ca3af;
+                }
+
+                .forum-empty-icon {
+                    font-size: 48px;
+                    margin-bottom: 16px;
+                    opacity: 0.6;
+                }
+
+                @media (max-width: 640px) {
+                    .forum-publications-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .forum-header {
+                        padding: 16px;
+                    }
+                }
+
+.daxi-assist-page { padding: 16px 16px 32px; max-width: 520px; margin: 0 auto; }
+        .daxi-assist-hero {
+            background: linear-gradient(135deg, rgba(30,64,175,0.55), rgba(37,99,235,0.35));
+            border: 1px solid rgba(96,165,250,0.25);
+            border-radius: 18px;
+            padding: 20px 18px;
+            margin-bottom: 20px;
+        }
+        .daxi-assist-hero h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; color: #f8fafc; }
+        .daxi-assist-hero p { margin: 0; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.72); }
+        .daxi-assist-section-label {
+            font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.06em; color: rgba(148,163,184,0.9); margin: 0 0 10px;
+        }
+        .daxi-assist-card {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 14px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; text-decoration: none; color: inherit;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .daxi-assist-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); }
+        .daxi-assist-card > i:first-child { font-size: 22px; color: #60a5fa; flex-shrink: 0; }
+        .daxi-assist-card--wa { background: rgba(37,211,102,0.12); border-color: rgba(37,211,102,0.35); }
+        .daxi-assist-card--wa > i:first-child { color: #4ade80; }
+        .daxi-assist-card strong { display: block; font-size: 14px; color: #f1f5f9; }
+        .daxi-assist-card span { display: block; font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+        .daxi-assist-arrow { margin-left: auto; color: rgba(255,255,255,0.35); font-size: 18px; }
+        .daxi-assist-faq {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; overflow: hidden; margin-bottom: 16px;
+        }
+        .daxi-assist-faq details { border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .daxi-assist-faq details:last-child { border-bottom: none; }
+        .daxi-assist-faq summary {
+            padding: 13px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+            color: #f1f5f9; list-style: none;
+        }
+        .daxi-assist-faq summary::-webkit-details-marker { display: none; }
+        .daxi-assist-faq p {
+            margin: 0; padding: 0 14px 14px; font-size: 12px; line-height: 1.55;
+            color: rgba(255,255,255,0.62);
+        }
+        .daxi-assist-hours {
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.22);
+            border-radius: 14px; padding: 14px; text-align: center;
+        }
+        .daxi-assist-hours strong { display: block; font-size: 13px; color: #fbbf24; margin-bottom: 6px; }
+        .daxi-assist-hours p { margin: 0; font-size: 12px; line-height: 1.55; color: rgba(255,255,255,0.65); }
+
+.reviews-section {
+            background: transparent;
+            padding: 24px 16px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        #daxiPageBody .reviews-section,
+        .daxi-page-overlay .reviews-section {
+            background: transparent;
+            color: rgba(255,255,255,0.92);
+        }
+        .reviews-section::before {
+            content: '';
+            position: absolute;
+            top: -80px; left: 50%;
+            transform: translateX(-50%);
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .reviews-footer-integrated {
+            margin-top: 72px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            padding-top: 52px;
+            position: relative;
+            z-index: 1;
+        }
+        .rfi-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+        }
+        .rfi-logo {
+            width: 160px;
+            height: auto;
+            opacity: 0.92;
+            filter: drop-shadow(0 4px 16px rgba(245,158,11,0.22));
+        }
+        .rfi-contact {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px 28px;
+        }
+        .rfi-contact a, .rfi-contact span {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #9ca3af;
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .rfi-contact a:hover { color: #f59e0b; }
+        .rfi-contact i { color: #f59e0b; font-size: 15px; flex-shrink:0; }
+        .rfi-socials {
+            display: flex;
+            gap: 12px;
+        }
+        .rfi-social-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 18px;
+            text-decoration: none;
+            transition: all 0.25s;
+        }
+        .rfi-social-btn:hover {
+            background: rgba(245,158,11,0.14);
+            border-color: rgba(245,158,11,0.38);
+            color: #f59e0b;
+            transform: translateY(-3px);
+        }
+        .rfi-apk {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .rfi-copyright {
+            font-size: 12px;
+            color: #94a3b8;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            width: 100%;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        html.daxi-native-shell #downloadApkBtn,
+        html.daxi-native-shell #iosInstallBtn,
+        html.daxi-native-shell .rfi-apk {
+            display: none !important;
+        }
+        
+        .reviews-section::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, #10b981, #f59e0b, transparent);
+        }
+        .reviews-header {
+            text-align: center;
+            margin-bottom: 56px;
+            position: relative;
+        }
+        .reviews-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245,158,11,0.10);
+            border: 1px solid rgba(245,158,11,0.28);
+            color: #f59e0b;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 18px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+        }
+        .reviews-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(26px, 5vw, 42px);
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        .reviews-title span,
+        .reviews-title-accent {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .reviews-subtitle {
+            color: #9ca3af;
+            font-size: 15px;
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+        
+        .reviews-score-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 52px;
+        }
+        .score-big {
+            text-align: center;
+        }
+        .score-big .number {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 72px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+        .score-big .out-of {
+            color: #6b7280;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .score-stars-row {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin: 6px 0 4px;
+            font-size: 24px;
+        }
+        .score-stars-row i { color: #f59e0b; }
+        .score-count {
+            color: #6b7280;
+            font-size: 13px;
+        }
+        .score-divider {
+            width: 1px;
+            height: 70px;
+            background: rgba(255,255,255,0.08);
+        }
+        .score-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 180px;
+        }
+        .score-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .score-bar-row .label { width: 18px; text-align: right; color: #d1d5db; font-weight: 600; }
+        .score-bar-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        .score-bar-row .pct { width: 28px; text-align: right; font-size: 11px; }
+        
+        .reviews-ribbon-wrapper {
+            overflow: hidden;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        .reviews-ribbon-wrapper::before,
+        .reviews-ribbon-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 80px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .reviews-ribbon-wrapper::before { left: 0; background: linear-gradient(to right, #070b14, transparent); }
+        .reviews-ribbon-wrapper::after  { right: 0; background: linear-gradient(to left, #070b14, transparent); }
+        .reviews-ribbon {
+            display: flex;
+            gap: 20px;
+            width: max-content;
+            animation: reviewsScroll 40s linear infinite;
+        }
+        .reviews-ribbon:hover { animation-play-state: paused; }
+        @keyframes reviewsScroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        .review-card {
+            flex-shrink: 0;
+            width: 300px;
+            background: rgba(15,23,42,0.75);
+            border: 1px solid rgba(148,163,184,0.18);
+            border-radius: 20px;
+            padding: 24px;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            cursor: default;
+            backdrop-filter: blur(10px);
+            color: #e2e8f0;
+        }
+        .review-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(245,158,11,0.32);
+            box-shadow: 0 20px 40px rgba(245,158,11,0.10), 0 0 0 1px rgba(245,158,11,0.08);
+        }
+        .review-card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .review-avatar {
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .review-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #f1f5f9;
+        }
+        .review-location {
+            font-size: 11px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 2px;
+        }
+        .review-stars {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 12px;
+        }
+        .review-stars i { color: #f59e0b; font-size: 14px; }
+        .review-text {
+            font-size: 13px;
+            color: #d1d5db;
+            line-height: 1.75;
+        }
+        .review-date {
+            margin-top: 14px;
+            font-size: 11px;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .google-badge {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+        .google-badge .g-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: conic-gradient(#4285F4 0% 25%, #EA4335 25% 50%, #FBBC05 50% 75%, #34A853 75% 100%);
+            flex-shrink: 0;
+        }
+        
+        .reviews-cta {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .reviews-cta-inner {
+            display: inline-block;
+            background: rgba(15,23,42,0.75);
+            border: 1px solid rgba(148,163,184,0.18);
+            border-radius: 28px;
+            padding: 40px 48px;
+            max-width: 520px;
+            width: 100%;
+        }
+        .reviews-cta-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .reviews-cta-sub {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+        .btn-leave-review {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0a0f1a;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 16px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(245,158,11,0.35), 0 0 0 0 rgba(245,158,11,0.2);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-leave-review::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
+            border-radius: inherit;
+        }
+        .btn-leave-review:hover {
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 16px 48px rgba(245,158,11,0.45), 0 0 0 6px rgba(245,158,11,0.12);
+        }
+        .btn-leave-review:active { transform: scale(0.98); }
+        .btn-leave-review .star-anim {
+            font-size: 18px;
+            animation: starPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes starPulse {
+            0%,100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.25) rotate(15deg); }
+        }
+        .cta-stars-preview {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 18px;
+            font-size: 26px;
+        }
+        .cta-stars-preview i { color: #374151; transition: color 0.2s; }
+        .reviews-cta-inner:hover .cta-stars-preview i { color: #f59e0b; }
+        @media (max-width: 600px) {
+            .reviews-cta-inner { padding: 28px 24px; }
+            .score-divider { display: none; }
+            .score-bars { min-width: 140px; }
+        }

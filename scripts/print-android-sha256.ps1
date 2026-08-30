@@ -1,4 +1,4 @@
-# Affiche les empreintes SHA du keystore release DAXI (App Links + Firebase).
+
 $ErrorActionPreference = 'Stop'
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 if (-not (Test-Path (Join-Path $root 'manage.py'))) { $root = Split-Path $PSScriptRoot -Parent }

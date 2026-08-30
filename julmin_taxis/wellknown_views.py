@@ -15,7 +15,7 @@ from django.views.decorators.http import require_GET
 ANDROID_DEBUG_SHA256 = (
     '23:9A:2B:CA:63:B6:5F:AF:68:9E:92:88:47:22:A5:F0:64:E7:81:02:D6:64:FE:A0:2F:62:15:3D:8B:47:0F:A7'
 )
-# Certificat upload / release local (daxi-release.keystore, alias daxi).
+
 ANDROID_RELEASE_SHA256 = (
     '5B:9E:ED:7E:8B:C3:AC:85:90:81:5C:3C:BE:70:7B:D3:A8:FC:9B:35:83:42:04:12:89:89:9D:C6:D8:46:F2:47'
 )

@@ -125,6 +125,7 @@ urlpatterns = [
     path('client/order/create/',                     v.client_create_order,   name='htmx-client-create-order'),
     path('client/orders/<order_id>/confirm-price/',  v.client_confirm_price,  name='htmx-client-confirm-price'),
     path('client/orders/<order_id>/phone/',          v.client_save_phone,     name='htmx-client-save-phone'),
+    path('client/orders/<order_id>/coords/',         v.client_submit_coords,  name='htmx-client-submit-coords'),
     path('client/orders/<order_id>/refuse-price/',   v.client_refuse_price,   name='htmx-client-refuse-price'),
     path('client/orders/<order_id>/cancel/',         v.client_cancel_order,   name='htmx-client-cancel-order'),
     path('client/orders/<order_id>/receipt.pdf',          v.client_order_receipt_pdf, name='htmx-client-order-receipt'),

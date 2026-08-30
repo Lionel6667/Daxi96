@@ -16,9 +16,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
 
-/**
- * Pont JavaScript ↔ Kotlin exposé à la WebView sous le nom `DaxiAndroid`.
- */
+
 class DaxiJsBridge(
     private val context: Context,
     private val locationHelper: LocationHelper,
@@ -260,16 +258,8 @@ class DaxiJsBridge(
         }
     }
 
-    /**
-     * Fetches place details from our backend synchronously.
-     * Called from JS instead of the Google Maps Places JS API to avoid UI freeze on Android WebView.
-     * Returns JSON: { lat, lng, formatted_address, place_id, geometry_type, ... } or { error }
-     */
-    /**
-     * Fetches place details from our backend asynchronously.
-     * Bypasses Google Maps JS Places API to avoid UI freeze on Android WebView.
-     * Result is delivered via window._daxiOnPlaceDetailsResult(callbackId, jsonString).
-     */
+
+
     @JavascriptInterface
     fun fetchPlaceDetailsAsync(placeId: String, callbackId: String) {
         DaxiNetLog.i("Android", "REQUEST_START fetchPlaceDetailsAsync placeId=$placeId cb=$callbackId")
@@ -302,10 +292,7 @@ class DaxiJsBridge(
         onEvalJs?.invoke(js)
     }
 
-    /**
-     * Fetches autocomplete predictions from our backend asynchronously.
-     * Result is delivered via window._daxiOnPlacePredictionsResult(callbackId, jsonArray).
-     */
+
     @JavascriptInterface
     fun fetchPlacePredictionsAsync(query: String, callbackId: String) {
         DaxiNetLog.i("Android", "REQUEST_START fetchPlacePredictionsAsync q=${query.take(40)} cb=$callbackId")
@@ -328,10 +315,7 @@ class DaxiJsBridge(
         }
     }
 
-    /**
-     * Proxy HTTP async pour POST/PUT/PATCH depuis file:// (contourne CORS WebView).
-     * Résultat : window._daxiOnProxyHttpResult(requestId, status, bodyB64, contentType)
-     */
+
     @JavascriptInterface
     fun proxyHttpAsync(
         method: String,

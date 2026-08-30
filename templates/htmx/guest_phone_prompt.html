@@ -40,6 +40,15 @@
     <button type="submit" id="guest-phone-submit" class="daxi-guest-phone-submit">
       Terminer →
     </button>
+    <button type="button"
+            class="daxi-guest-phone-cancel"
+            hx-post="/htmx/client/orders/{{ order.id }}/refuse-price/"
+            hx-target="#daxi-sheet-order-slot"
+            hx-swap="innerHTML"
+            hx-confirm="Annuler cette commande ?"
+            hx-include="#guest-phone-card input[name=guest_id], #guestIdHidden, [name=csrfmiddlewaretoken]">
+      Annuler la commande
+    </button>
   </form>
 </div>
 <script>
@@ -54,5 +63,9 @@
     });
   }
   if (window._daxiOnSheetOrderSwap) window._daxiOnSheetOrderSwap('{{ order.id }}');
+  {% if pending_coords %}
+  if (typeof _daxiCaptureBookingPlacesForOrder === 'function') _daxiCaptureBookingPlacesForOrder('{{ order.id }}');
+  if (typeof _daxiStartOrderCoordsBackfill === 'function') _daxiStartOrderCoordsBackfill('{{ order.id }}');
+  {% endif %}
 })();
 </script>

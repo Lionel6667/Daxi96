@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tokenize
 from pathlib import Path
@@ -27,7 +28,8 @@ SKIP_DIR_PARTS = (
     "android/app/src/main/assets/public",
     "android/app/build/intermediates",
     "clients/daxi-capacitor/www",
-    "clients/daxi-android",
+    "clients/daxi-android/app/build",
+    "clients/daxi-android/.gradle",
     "static/vendor",
     "legacy/html",
     "legacy/phpscript/PHPMailer",
@@ -41,6 +43,7 @@ SKIP_FILES = {
     ".env", ".env.example", ".gitignore", "requirements.txt",
     "cerveau.json", "models.json", "manifest.json",
     "_strip_comments.py", "_strip_comments_report.json",
+    "vubez2.html.bak-pre-perf",
 }
 
 PY_EXTS = {".py"}
@@ -53,6 +56,7 @@ SH_EXTS = {".sh"}
 BAT_EXTS = {".bat", ".cmd"}
 JAVA_EXTS = {".java", ".kt", ".kts"}
 PHP_EXTS = {".php"}
+PS_EXTS = {".ps1", ".psm1"}
 
 JS_REGEX_OK_PREV = set("([{,;:=!&|?~+-*%^<>")
 
@@ -99,6 +103,8 @@ def lang_for(path: Path) -> str | None:
         return "java"
     if ext in PHP_EXTS:
         return "php"
+    if ext in PS_EXTS:
+        return "ps1"
     return None
 
 
@@ -547,6 +553,70 @@ def strip_sh(src: str) -> tuple[str, int]:
     return "".join(out), comments
 
 
+def strip_powershell(src: str) -> tuple[str, int]:
+    comments = 0
+    out = []
+    i = 0
+    n = len(src)
+    in_sq = in_dq = False
+    in_block = False
+    while i < n:
+        if in_block:
+            end = src.find("#>", i)
+            if end < 0:
+                comments += 1
+                break
+            comments += 1
+            i = end + 2
+            in_block = False
+            continue
+        if src.startswith("<#", i):
+            in_block = True
+            i += 2
+            continue
+        ch = src[i]
+        if in_sq:
+            out.append(ch)
+            if ch == "'" and (i + 1 >= n or src[i + 1] != "'"):
+                in_sq = False
+            elif ch == "'" and i + 1 < n and src[i + 1] == "'":
+                out.append(src[i + 1])
+                i += 2
+                continue
+            i += 1
+            continue
+        if in_dq:
+            out.append(ch)
+            if ch == "`" and i + 1 < n:
+                out.append(src[i + 1])
+                i += 2
+                continue
+            if ch == '"':
+                in_dq = False
+            i += 1
+            continue
+        if ch == "'":
+            in_sq = True
+            out.append(ch)
+            i += 1
+            continue
+        if ch == '"':
+            in_dq = True
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "#":
+            prev = src[i - 1] if i else "\n"
+            if prev in "\n\r \t":
+                comments += 1
+                while i < n and src[i] not in "\r\n":
+                    i += 1
+                continue
+        out.append(ch)
+        i += 1
+    return "".join(out), comments
+
+
 def strip_bat(src: str) -> tuple[str, int]:
     comments = 0
     out_lines = []
@@ -583,6 +653,8 @@ def strip_file(src: str, lang: str) -> tuple[str, int]:
         return strip_sh(src)
     if lang == "bat":
         return strip_bat(src)
+    if lang == "ps1":
+        return strip_powershell(src)
     return src, -1
 
 
@@ -592,7 +664,27 @@ def tidy_blank_runs(text: str) -> str:
 
 
 def collect_files() -> list[Path]:
-    files = []
+    files: dict[str, Path] = {}
+    git_args = [
+        ["git", "-C", str(ROOT), "ls-files", "-z"],
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--others", "--exclude-standard"],
+    ]
+    for args in git_args:
+        try:
+            out = subprocess.check_output(args, stderr=subprocess.DEVNULL)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+        for raw in out.split(b"\0"):
+            if not raw:
+                continue
+            rel = raw.decode("utf-8", errors="replace")
+            path = ROOT / rel
+            if should_skip_path(path):
+                continue
+            if lang_for(path):
+                files[rel] = path
+    if files:
+        return sorted(files.values())
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIR_NAMES]
         pdir = Path(dirpath)
@@ -610,6 +702,8 @@ def collect_files() -> list[Path]:
 
 
 def main() -> int:
+    dry_run = "--dry-run" in sys.argv
+    no_backup = "--no-backup" in sys.argv or dry_run
     files = collect_files()
     analyzed = len(files)
     modified = 0
@@ -647,15 +741,20 @@ def main() -> int:
         if ncom == 0 or new == src:
             continue
         new = tidy_blank_runs(new)
-        # sanity: don't empty a previously non-empty file
         if src.strip() and not new.strip():
             skipped_risky.append((str(path), lang, "would empty file"))
             continue
         rel = path.relative_to(ROOT)
-        bak = BACKUP / rel
-        bak.parent.mkdir(parents=True, exist_ok=True)
-        if not bak.exists():
-            shutil.copy2(path, bak)
+        if dry_run:
+            modified += 1
+            total_comments += ncom
+            report.append({"file": rel.as_posix(), "lang": lang, "comments": ncom})
+            continue
+        if not no_backup:
+            bak = BACKUP / rel
+            bak.parent.mkdir(parents=True, exist_ok=True)
+            if not bak.exists():
+                shutil.copy2(path, bak)
         path.write_text(new, encoding=used_enc if used_enc != "utf-8-sig" else "utf-8", newline="")
         modified += 1
         total_comments += ncom

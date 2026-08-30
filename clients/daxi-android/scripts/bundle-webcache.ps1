@@ -1,4 +1,4 @@
-# Télécharge un snapshot du site dans assets/webcache (à lancer avant release APK)
+
 param(
     [string]$BaseUrl = "",
     [string]$OutDir = "$PSScriptRoot\..\app\src\main\assets\webcache"
@@ -44,7 +44,13 @@ $paths = @(
     "/static/js/daxi-theme.js",
     "/static/js/gps-precision-engine.js",
     "/static/js/firebase-shim.js",
-    "/assets/js/tailwindcss-3.4.16.js",
+    "/assets/css/tailwind-vubez2.css",
+    "/assets/css/vubez2-core.css",
+    "/assets/css/vubez2-body.css",
+    "/assets/css/remixicon-vubez2.css",
+    "/static/js/daxi-lazy-loader.js",
+    "/static/js/daxi-intro.js",
+    "/static/js/daxi-guest-id.js",
     "/assets/js/htmx.min.js",
     "/assets/js/aos.js",
     "/assets/css/remixicon.min.css",
@@ -101,7 +107,7 @@ foreach ($path in $paths) {
     }
 }
 
-# Copier tous les JS locaux (priorité sur le serveur)
+
 $staticJs = Join-Path $projectRoot "static\js"
 if (Test-Path $staticJs) {
     $destJsDir = Join-Path $OutDir "static\js"
@@ -119,6 +125,28 @@ if (Test-Path $staticCss) {
     Get-ChildItem $staticCss -Filter "*.css" | ForEach-Object {
         Copy-Item -Force $_.FullName (Join-Path $destCssDir $_.Name)
         Write-Host "CSS local -> static/css/$($_.Name)"
+    }
+}
+
+
+$vubez2Js = Join-Path $projectRoot "static\js\vubez2"
+if (Test-Path $vubez2Js) {
+    $destVubez2 = Join-Path $OutDir "static\js\vubez2"
+    New-Item -ItemType Directory -Force -Path $destVubez2 | Out-Null
+    Get-ChildItem $vubez2Js -Filter "*.js" | ForEach-Object {
+        Copy-Item -Force $_.FullName (Join-Path $destVubez2 $_.Name)
+        Write-Host "vubez2 JS -> static/js/vubez2/$($_.Name)"
+    }
+}
+
+$assetsCss = Join-Path $projectRoot "assets\css"
+foreach ($css in @("vubez2-core.css", "vubez2-body.css", "remixicon-vubez2.css", "tailwind-vubez2.css")) {
+    $src = Join-Path $assetsCss $css
+    if (Test-Path $src) {
+        $dest = Join-Path $OutDir "assets\css\$css"
+        New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+        Copy-Item -Force $src $dest
+        Write-Host "assets/css/$css <- local"
     }
 }
 
