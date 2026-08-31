@@ -31,7 +31,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--daxi-map-ph-url, url('/assets/images/daxi-map-placeholder-dark.png')) center / cover no-repeat;
+  background: var(--daxi-map-ph-url, url('/assets/images/daxi-map-placeholder-dark.webp')) center / cover no-repeat;
 }
 
 .daxi-map-placeholder::after {

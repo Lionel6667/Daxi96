@@ -153,12 +153,31 @@
 [data-theme="light"] .plan-card--p6 .plan-header {
   background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%) !important;
 }
-[data-theme="light"] .daxi-plans-stage .plan-card {
-  filter: saturate(1) blur(0.3px);
+[data-theme="light"] .daxi-plans-stage .plan-card,
+[data-theme="light"] .daxi-plans-stage .plan-card:not(.active),
+[data-theme="light"] .daxi-plans-stage .plan-card.active {
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  background: var(--daxi-surface) !important;
+  border: 1px solid var(--daxi-border) !important;
 }
 [data-theme="light"] .daxi-plans-stage .plan-card.active {
-  filter: saturate(1.05) blur(0);
-  box-shadow: 0 16px 40px rgba(16, 42, 67, 0.14), 0 0 0 1px rgba(194, 120, 3, 0.35) !important;
+  box-shadow: 0 8px 20px rgba(16, 42, 67, 0.1) !important;
+  border: 2px solid rgba(194, 120, 3, 0.45) !important;
+}
+[data-theme="light"] .daxi-plans-stage .plan-preview-text {
+  color: #64748b !important;
+}
+[data-theme="light"] .daxi-plans-stage,
+[data-theme="light"] .daxi-plans-viewport,
+[data-theme="light"] .daxi-plans-stage .plans-container {
+  background: transparent !important;
+}
+[data-theme="light"] .daxi-plans-controls .nav-arrow {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(194, 120, 3, 0.35);
+  color: #b45309;
 }
 [data-theme="light"] .plan-card {
   filter: saturate(1) !important;

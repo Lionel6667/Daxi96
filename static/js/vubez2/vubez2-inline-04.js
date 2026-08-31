@@ -515,10 +515,12 @@ function initServicePlansSection() {
     function scrollCardToCenter(index, behavior) {
         var card = planCards[index];
         if (!card) return;
-        var target = card.offsetLeft - (plansContainer.clientWidth - card.offsetWidth) / 2;
         isProgrammatic = true;
         navLockUntil = Date.now() + (behavior === 'smooth' ? 700 : 80);
-        plansContainer.scrollTo({ left: Math.max(0, target), behavior: behavior || 'smooth' });
+        var containerRect = plansContainer.getBoundingClientRect();
+        var cardRect = card.getBoundingClientRect();
+        var delta = (cardRect.left + cardRect.width / 2) - (containerRect.left + containerRect.width / 2);
+        plansContainer.scrollBy({ left: delta, behavior: behavior || 'smooth' });
         setTimeout(function() { isProgrammatic = false; }, behavior === 'smooth' ? 700 : 80);
     }
 
@@ -576,15 +578,16 @@ function initServicePlansSection() {
         scrollSnapTimer = setTimeout(function() {
             if (isProgrammatic || Date.now() < navLockUntil) return;
             var idx = nearestIndex();
-            if (idx === currentPlanIndex) return;
-            currentPlanIndex = idx;
-            planCards.forEach(function(card, i) { card.classList.toggle('active', i === idx); });
-            dots.forEach(function(dot, i) { dot.classList.toggle('active', i === idx); });
-            var railLabel = document.getElementById('daxiPlansRailLabel');
-            var railFill = document.getElementById('daxiPlansRailFill');
-            if (railLabel) railLabel.textContent = (idx + 1) + ' / ' + total;
-            if (railFill) railFill.style.width = Math.round(((idx + 1) / total) * 100) + '%';
-        }, 150);
+            if (idx !== currentPlanIndex) {
+                currentPlanIndex = idx;
+                planCards.forEach(function(card, i) { card.classList.toggle('active', i === idx); });
+                dots.forEach(function(dot, i) { dot.classList.toggle('active', i === idx); });
+                var railLabel = document.getElementById('daxiPlansRailLabel');
+                var railFill = document.getElementById('daxiPlansRailFill');
+                if (railLabel) railLabel.textContent = (idx + 1) + ' / ' + total;
+                if (railFill) railFill.style.width = Math.round(((idx + 1) / total) * 100) + '%';
+            }
+        }, 80);
     }, { passive: true });
 
     if (leftArrow) {
@@ -611,11 +614,10 @@ function initServicePlansSection() {
     });
 
     stage.addEventListener('mouseenter', stopAutoScroll);
-    stage.addEventListener('mouseleave', startAutoScroll);
+    stage.addEventListener('mouseleave', function() {});
     stage.addEventListener('touchstart', stopAutoScroll, { passive: true });
 
     updateActivePlan(0, 'auto');
-    startAutoScroll();
 
     document.querySelectorAll('.learn-more-btn[data-plan]').forEach(function(button) {
         button.addEventListener('click', function () {

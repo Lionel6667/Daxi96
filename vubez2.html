@@ -31,7 +31,7 @@
         }
     </style>
     <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+9000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');}setTimeout(bootTimeout,2800);})();</script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
 
     <script>
     (function(){
@@ -159,9 +159,9 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260830c" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260830n" as="style">
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c">
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260830c">
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260830n">
     <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260830c">
 
 
@@ -177,13 +177,13 @@
 
 
 
-<script src="assets/js/htmx.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js'"></script>
+<script defer src="assets/js/htmx.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js'"></script>
 <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q">
 <link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760">
 <link rel="stylesheet" href="/static/css/daxi-assist-ai.css?v=20260814f" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260823q" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260827a" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260823c" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260830n" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260823c" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731">
 <link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260762" media="print" onload="this.media='all'">
@@ -191,24 +191,24 @@
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760" media="print" onload="this.media='all'">
 <script src="/static/js/daxi-app-api.js?v=20260813"></script>
 <script src="/static/js/daxi-realtime.js?v=20260738"></script>
-<script src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
-<script src="/static/js/daxi-notifications.js?v=20260823n"></script>
+<script defer src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
+<script defer src="/static/js/daxi-notifications.js?v=20260823n"></script>
 <script defer src="/static/js/daxi-realtime-sync.js?v=20260778"></script>
 <script defer src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
 <script defer src="/static/js/daxi-modal.js?v=20260820d"></script>
 
 
-<script src="/static/js/daxi-map-markers.js?v=20260749"></script>
-<script src="/static/js/daxi-map-theme.js?v=20260812"></script>
-<script src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
+<script defer src="/static/js/daxi-map-markers.js?v=20260749"></script>
+<script defer src="/static/js/daxi-map-theme.js?v=20260812"></script>
+<script defer src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
 <link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a">
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e">
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a" media="print" onload="this.media='all'">
-<script src="/static/js/daxi-network-banner.js?v=20260828d"></script>
+<script defer src="/static/js/daxi-network-banner.js?v=20260828d"></script>
 <script defer src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
-<script src="/static/js/daxi-maplibre.js?v=20260777"></script>
-<script src="/static/js/daxi-map-provider.js?v=20260777"></script>
+<script defer src="/static/js/daxi-maplibre.js?v=20260777"></script>
+<script defer src="/static/js/daxi-map-provider.js?v=20260777"></script>
 <script src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>
 <script defer src="/static/js/daxi-places-catalog.js?v=20260814b"></script>
 
@@ -249,8 +249,8 @@ window._DAXI_ASSET_V='20260830c';
 
     <div id="daxi-map-stage" class="daxi-map-stage">
         <div id="daxi-map-placeholder" class="daxi-map-placeholder" aria-hidden="false">
-            <img id="daxi-map-placeholder-img" alt="" decoding="async" aria-hidden="true"
-                 src="assets/images/daxi-map-placeholder-dark.png">
+            <img id="daxi-map-placeholder-img" alt="" decoding="async" fetchpriority="high" aria-hidden="true"
+                 src="assets/images/daxi-map-placeholder-dark.webp">
         </div>
         <div id="daxi-main-map" class="daxi-map-live-layer"></div>
     </div>
@@ -525,7 +525,7 @@ window._DAXI_ASSET_V='20260830c';
                             <div class="daxi-row-body">
                                 <span class="daxi-row-label" data-translate="label_departure_row">Départ</span>
                                 <input type="text" id="destinationAddress" name="daxi_pickup_address" placeholder="Adresse de départ"
-                                    autocomplete="section-daxi pickup street-address"
+                                    autocomplete="street-address"
                                     data-translate="pickup_address_placeholder" class="daxi-row-input booking-input">
                                 <div id="destinationAddressSuggestions" class="suggestions-container hidden" data-no-translate="1"></div>
                             </div>
@@ -752,13 +752,7 @@ window._DAXI_ASSET_V='20260830c';
                 Services</h2>
 
             <div class="daxi-plans-stage">
-            <div class="daxi-plans-stage__glow"></div>
-            <div class="plans-container-wrapper">
-
-                <button type="button" class="nav-arrow left" aria-label="Plan précédent">
-                    <i class="ri-arrow-left-s-line"></i>
-                </button>
-
+            <div class="daxi-plans-viewport">
                 <div class="plans-container">
 
                     <div class="plan-card active" data-plan="1" data-plan-slug="ville-a-ville">
@@ -954,15 +948,21 @@ window._DAXI_ASSET_V='20260830c';
                         </div>
                     </div>
                 </div>
+            </div>
 
-
-                <button type="button" class="nav-arrow right" aria-label="Plan suivant">
+            <div class="daxi-plans-controls">
+                <button type="button" class="nav-arrow left daxi-plans-nav-btn" aria-label="Plan précédent">
+                    <i class="ri-arrow-left-s-line"></i>
+                </button>
+                <div class="daxi-plans-controls__center">
+                    <div class="daxi-plans-rail">
+                        <span class="daxi-plans-rail__label" id="daxiPlansRailLabel">1 / 6</span>
+                        <div class="daxi-plans-rail__track"><div class="daxi-plans-rail__fill" id="daxiPlansRailFill" style="width:16.67%"></div></div>
+                    </div>
+                </div>
+                <button type="button" class="nav-arrow right daxi-plans-nav-btn" aria-label="Plan suivant">
                     <i class="ri-arrow-right-s-line"></i>
                 </button>
-            </div>
-            <div class="daxi-plans-rail">
-                <span class="daxi-plans-rail__label" id="daxiPlansRailLabel">1 / 6</span>
-                <div class="daxi-plans-rail__track"><div class="daxi-plans-rail__fill" id="daxiPlansRailFill" style="width:16.67%"></div></div>
             </div>
             </div>
 
@@ -2730,7 +2730,7 @@ window._DAXI_ASSET_V='20260830c';
 
     <script src="static/js/daxi-session-store.js?v=20260809"></script>
     <script src="static/js/daxi-network-state.js?v=20260828d"></script>
-    <script src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+    <script defer src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
     <script src="static/js/daxi-shell-role.js?v=20260820f"></script>
     <script src="static/js/daxi-offline.js?v=20260828d"></script>
     <script src="static/js/daxi-countdown.js"></script>
@@ -2791,7 +2791,7 @@ window._DAXI_ASSET_V='20260830c';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260830f" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260830m" defer></script>
 <script src="/static/js/daxi-client-gps-core.js?v=20260828a"></script>
 <script src="/static/js/daxi-gps-trace.js?v=20260805"></script>
 <script src="/static/js/gps-precision-engine.js?v=20260804g"></script>
@@ -2830,7 +2830,7 @@ window._DAXI_ASSET_V='20260830c';
 </nav>
 
 <script src="/static/js/vubez2/vubez2-inline-07.js?v=20260830c" defer></script>
-<script src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
+<script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>
 

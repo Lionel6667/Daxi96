@@ -3,7 +3,7 @@
   'use strict';
 
   var URLS = {
-    dark: '/assets/images/daxi-map-placeholder-dark.png',
+    dark: '/assets/images/daxi-map-placeholder-dark.webp',
     light: '/assets/images/daxi-map-placeholder-light.png'
   };
 

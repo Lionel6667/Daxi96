@@ -846,7 +846,7 @@
             ? DaxiMapPlaceholder.imageUrl(theme)
             : (theme === 'light'
                 ? 'assets/images/daxi-map-placeholder-light.png'
-                : 'assets/images/daxi-map-placeholder-dark.png');
+                : 'assets/images/daxi-map-placeholder-dark.webp');
         
         if (imgUrl.charAt(0) === '/') {
             imgUrl = imgUrl.replace(/^\//, '');

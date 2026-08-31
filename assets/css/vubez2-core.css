@@ -866,7 +866,13 @@
             font-size: 18px; font-weight: 800; color: #f8fafc; flex: 1;
         }
         .daxi-page-body {
-            padding: 16px 16px 60px;
+            padding: 16px 16px max(72px, calc(56px + env(safe-area-inset-bottom, 0px)));
+        }
+        .daxi-page-overlay #servicePlansSection.plans-section {
+            padding-bottom: 8px;
+        }
+        .daxi-page-overlay #servicePlansSection .daxi-plans-rail {
+            margin-bottom: 8px;
         }
         #daxiCardPaymentOverlay {
             display: none;
@@ -6655,8 +6661,11 @@
             }
 
             .plan-card {
-                min-height: 460px;
+                min-height: 0;
                 width: 280px;
+            }
+            .daxi-plans-stage .plan-card {
+                width: 300px;
             }
         }
 
@@ -6685,6 +6694,10 @@
                 padding-left: 70px;
                 padding-right: 70px;
             }
+            .daxi-plans-stage .plans-container {
+                padding-left: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) !important;
+                padding-right: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) !important;
+            }
 
             .nav-arrow.left {
                 left: 8px;
@@ -6701,7 +6714,12 @@
             }
 
             .plan-card {
-                min-height: 480px;
+                min-height: 0;
+            }
+            .daxi-plans-stage .plan-image {
+                height: 100px;
+                min-height: 100px;
+                max-height: 100px;
             }
         }
 
@@ -6720,7 +6738,7 @@
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            height: 620px;
+            height: auto;
         }
 
         .plan-card:hover {
@@ -6731,8 +6749,23 @@
         .plan-header {
             background: linear-gradient(135deg, var(--tropical-turquoise), var(--tropical-ocean));
             color: white;
-            padding: 20px;
-            text-align: center;
+            padding: 16px 18px;
+            text-align: left;
+            flex-shrink: 0;
+        }
+        .plan-header-row > div {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+        .plan-header-row h3 {
+            margin: 0;
+            line-height: 1.25;
+            font-size: 1.05rem;
+        }
+        .plan-header-row p {
+            margin: 4px 0 0;
+            line-height: 1.35;
         }
 
         .plan-content {
@@ -7635,8 +7668,11 @@
             flex: 0 0 auto;
             width: 300px;
             margin-right: 20px;
-            height: 550px;
-            overflow-y: auto;
+            height: auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .plans-container:hover {
@@ -7798,7 +7834,7 @@
         .plan-card {
             overflow: hidden;
             height: auto;
-            min-height: 520px;
+            min-height: 0;
             display: flex;
             flex-direction: column;
         }
@@ -7892,10 +7928,17 @@
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            height: 500px;
+            height: auto;
             opacity: 0.7;
             filter: blur(1px);
             transform: scale(0.95);
+        }
+        .daxi-plans-stage .plan-card {
+            opacity: 1;
+            filter: none;
+            -webkit-filter: none;
+            transform: none;
+            background: rgba(15, 23, 42, 0.75);
         }
 
         .plan-card.active {
@@ -7905,6 +7948,11 @@
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
             border: 2px solid #FFD700;
             animation: planFocus 450ms ease;
+        }
+        .daxi-plans-stage .plan-card.active {
+            border: 2px solid rgba(245, 158, 11, 0.55);
+            animation: none;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22) !important;
         }
 
         @keyframes planFocus {
@@ -8000,6 +8048,12 @@
         .plan-card:not(.active) {
             opacity: 0.6;
             transform: scale(0.98);
+        }
+        .daxi-plans-stage .plan-card:not(.active) {
+            opacity: 1;
+            filter: none;
+            -webkit-filter: none;
+            transform: none;
         }
 
 
@@ -9002,15 +9056,17 @@
 
         .daxi-plans-stage {
             position: relative;
-            margin: 0 -4px;
-            padding: 8px 0 4px;
+            margin: 0;
+            padding: 4px 0 8px;
+            background: transparent;
+            --daxi-plan-card-w: min(320px, calc(100vw - 52px));
         }
-        .daxi-plans-stage__glow {
-            position: absolute;
-            inset: 10% 5% 20%;
-            background: radial-gradient(ellipse at 50% 50%, rgba(245,158,11,0.12), transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+        .daxi-plans-viewport {
+            position: relative;
+            width: 100%;
+            overflow: visible;
+            z-index: 1;
+            background: transparent;
         }
         .daxi-plans-stage .plans-container-wrapper {
             position: relative;
@@ -9024,60 +9080,181 @@
             pointer-events: auto;
             touch-action: manipulation;
         }
+        .daxi-plans-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: min(100%, var(--daxi-plan-card-w));
+            max-width: var(--daxi-plan-card-w);
+            margin: 12px auto 0;
+            padding: 0;
+        }
+        .daxi-plans-controls__center {
+            flex: 1;
+            min-width: 0;
+        }
+        .daxi-plans-controls .daxi-plans-rail {
+            margin-top: 0;
+            gap: 10px;
+        }
+        .daxi-plans-controls .nav-arrow {
+            position: static;
+            transform: none;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+            color: #fbbf24;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+            font-size: 22px;
+            top: auto;
+            left: auto;
+            right: auto;
+        }
+        .daxi-plans-controls .nav-arrow:hover {
+            transform: scale(1.06);
+            background: rgba(245, 158, 11, 0.14);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.18);
+        }
+        .daxi-plans-stage .daxi-plans-controls .nav-arrow {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            transform: none;
+        }
+        .daxi-plans-stage .daxi-plans-controls .nav-arrow:hover {
+            transform: scale(1.06);
+        }
+        .plans-section .daxi-plans-stage + .dots-indicator {
+            display: none !important;
+        }
         .daxi-plans-stage .plans-container {
-            perspective: 1200px;
             width: 100%;
             max-width: 100%;
+            background: transparent;
             scroll-snap-type: x mandatory;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             touch-action: pan-x pan-y;
             overscroll-behavior-x: contain;
-            scroll-padding: 0 calc(50% - 150px);
-            gap: 16px;
-            padding: 24px calc(50% - 150px) 28px;
+            scroll-padding-inline: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2)));
+            gap: 14px;
+            padding: 12px max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) 20px !important;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: visible;
             display: flex;
+            align-items: stretch;
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
+        .daxi-plans-stage .plans-container::before,
+        .daxi-plans-stage .plans-container::after {
+            display: none !important;
+            content: none !important;
+            flex: none !important;
+        }
         .daxi-plans-stage .plans-container::-webkit-scrollbar { display: none; }
-        .daxi-plans-stage .plan-card {
-            flex: 0 0 300px;
-            width: 300px;
-            height: 500px;
-            min-height: 500px;
-            max-height: 500px;
+        .daxi-plans-stage .plan-card,
+        .daxi-plans-stage .plan-card:not(.active),
+        .daxi-plans-stage .plan-card.active {
+            flex: 0 0 var(--daxi-plan-card-w);
+            width: var(--daxi-plan-card-w);
+            height: auto;
+            min-height: 0;
+            max-height: none;
             flex-shrink: 0;
             scroll-snap-align: center;
             scroll-snap-stop: always;
-            transition: transform 0.5s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.4s ease, box-shadow 0.4s ease, filter 0.4s ease;
-            transform: scale(0.9);
-            opacity: 0.5;
-            filter: saturate(0.8) blur(0.3px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+            opacity: 1;
+            filter: none;
+            -webkit-filter: none;
+            transform: none;
+            animation: none !important;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
             pointer-events: auto;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
         }
         .daxi-plans-stage .plan-instant-contact {
             display: none !important;
         }
+        .daxi-plans-stage .plan-header {
+            text-align: left;
+            padding: 12px 14px;
+        }
         .daxi-plans-stage .plan-content {
-            padding: 16px 16px 20px;
+            flex: 0 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px 14px 14px;
+            overflow: visible;
+        }
+        .daxi-plans-stage .plan-image-wrapper {
+            flex-shrink: 0;
+            height: 96px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0;
+        }
+        .daxi-plans-stage .plan-image-wrapper .plan-image,
+        .daxi-plans-stage .plan-image {
+            width: 100%;
+            height: 100%;
+            min-height: 96px;
+            max-height: 96px;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            margin: 0;
         }
         .daxi-plans-stage .plan-preview-text {
-            flex: 1;
-            margin-bottom: 0;
+            flex: 0 1 auto;
+            margin: 0;
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.78);
+            overflow: visible;
+            display: block;
+            -webkit-line-clamp: unset;
+            line-clamp: unset;
+            max-height: none;
         }
         .daxi-plans-stage .plan-actions {
-            margin-top: auto;
-            padding-top: 14px;
+            flex-shrink: 0;
+            margin-top: 0;
+            padding-top: 8px;
+            padding-bottom: 0;
+            width: 100%;
+        }
+        .daxi-plans-stage .plan-actions .learn-more-btn {
+            width: 100%;
+            min-height: 40px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
         }
         .daxi-plans-stage .plan-card.active {
-            transform: scale(1);
+            transform: none;
             opacity: 1;
-            filter: saturate(1) blur(0);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(245,158,11,0.25);
-            z-index: 2;
+            filter: none;
+            -webkit-filter: none;
+            border: 2px solid rgba(245, 158, 11, 0.55);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22) !important;
+            z-index: 1;
             pointer-events: auto;
         }
         .daxi-plans-rail {
@@ -9107,6 +9284,12 @@
             color: rgba(255,255,255,0.5);
             min-width: 48px;
             text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .daxi-plans-stage .plans-container {
+                padding-bottom: 32px;
+            }
         }
 
 
