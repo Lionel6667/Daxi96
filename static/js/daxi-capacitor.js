@@ -14,12 +14,12 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-
+  // node_modules/@capacitor/core/dist/index.js
   var createCapacitorPlatforms, initPlatforms, CapacitorPlatforms, addPlatform, setPlatform, ExceptionCode, CapacitorException, getPlatformId, createCapacitor, initCapacitorGlobal, Capacitor, registerPlugin, Plugins, WebPlugin, encode, decode, CapacitorCookiesPluginWeb, CapacitorCookies, readBlobAsBase64, normalizeHttpHeaders, buildUrlParams, buildRequestInit, CapacitorHttpPluginWeb, CapacitorHttp;
   var init_dist = __esm({
     "node_modules/@capacitor/core/dist/index.js"() {
       createCapacitorPlatforms = (win) => {
-        const defaultPlatformMap =  new Map();
+        const defaultPlatformMap = /* @__PURE__ */ new Map();
         defaultPlatformMap.set("web", { name: "web" });
         const capPlatforms = win.CapacitorPlatforms || {
           currentPlatform: { name: "web" },
@@ -38,7 +38,7 @@
         return capPlatforms;
       };
       initPlatforms = (win) => win.CapacitorPlatforms = createCapacitorPlatforms(win);
-      CapacitorPlatforms =  initPlatforms(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
+      CapacitorPlatforms = /* @__PURE__ */ initPlatforms(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
       addPlatform = CapacitorPlatforms.addPlatform;
       setPlatform = CapacitorPlatforms.setPlatform;
       (function(ExceptionCode2) {
@@ -95,7 +95,7 @@
         const pluginMethodNoop = (_target, prop, pluginName) => {
           return Promise.reject(`${pluginName} does not have an implementation of "${prop}".`);
         };
-        const registeredPlugins =  new Map();
+        const registeredPlugins = /* @__PURE__ */ new Map();
         const defaultRegisterPlugin = (pluginName, jsImplementations = {}) => {
           const registeredPlugin = registeredPlugins.get(pluginName);
           if (registeredPlugin) {
@@ -179,7 +179,7 @@
           const proxy = new Proxy({}, {
             get(_, prop) {
               switch (prop) {
-
+                // https://github.com/facebook/react/issues/20030
                 case "$$typeof":
                   return void 0;
                 case "toJSON":
@@ -197,7 +197,7 @@
           registeredPlugins.set(pluginName, {
             name: pluginName,
             proxy,
-            platforms:  new Set([
+            platforms: /* @__PURE__ */ new Set([
               ...Object.keys(jsImplementations),
               ...pluginHeader ? [platform] : []
             ])
@@ -222,7 +222,7 @@
         return cap;
       };
       initCapacitorGlobal = (win) => win.Capacitor = createCapacitor(win);
-      Capacitor =  initCapacitorGlobal(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
+      Capacitor = /* @__PURE__ */ initCapacitorGlobal(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {});
       registerPlugin = Capacitor.registerPlugin;
       Plugins = Capacitor.Plugins;
       WebPlugin = class {
@@ -367,7 +367,7 @@
           try {
             const cookies = document.cookie.split(";") || [];
             for (const cookie of cookies) {
-              document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, `=;expires=${( new Date()).toUTCString()};path=/`);
+              document.cookie = cookie.replace(/^ +/, "").replace(/=.*/, `=;expires=${(/* @__PURE__ */ new Date()).toUTCString()};path=/`);
             }
           } catch (error) {
             return Promise.reject(error);
@@ -457,7 +457,10 @@
         return output;
       };
       CapacitorHttpPluginWeb = class extends WebPlugin {
-
+        /**
+         * Perform an Http request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async request(options) {
           const requestInit = buildRequestInit(options, options.webFetchExtra);
           const urlParams = buildUrlParams(options.params, options.shouldEncodeUrlParams);
@@ -495,23 +498,38 @@
             url: response.url
           };
         }
-
+        /**
+         * Perform an Http GET request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async get(options) {
           return this.request(Object.assign(Object.assign({}, options), { method: "GET" }));
         }
-
+        /**
+         * Perform an Http POST request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async post(options) {
           return this.request(Object.assign(Object.assign({}, options), { method: "POST" }));
         }
-
+        /**
+         * Perform an Http PUT request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async put(options) {
           return this.request(Object.assign(Object.assign({}, options), { method: "PUT" }));
         }
-
+        /**
+         * Perform an Http PATCH request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async patch(options) {
           return this.request(Object.assign(Object.assign({}, options), { method: "PATCH" }));
         }
-
+        /**
+         * Perform an Http DELETE request given a set of options
+         * @param options Options to build the HTTP request
+         */
         async delete(options) {
           return this.request(Object.assign(Object.assign({}, options), { method: "DELETE" }));
         }
@@ -522,7 +540,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/app/dist/esm/web.js
   var web_exports = {};
   __export(web_exports, {
     AppWeb: () => AppWeb
@@ -566,7 +584,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/geolocation/dist/esm/web.js
   var web_exports2 = {};
   __export(web_exports2, {
     Geolocation: () => Geolocation,
@@ -614,7 +632,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/haptics/dist/esm/definitions.js
   var ImpactStyle, NotificationType;
   var init_definitions = __esm({
     "node_modules/@capacitor/haptics/dist/esm/definitions.js"() {
@@ -631,7 +649,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/haptics/dist/esm/web.js
   var web_exports3 = {};
   __export(web_exports3, {
     HapticsWeb: () => HapticsWeb
@@ -696,7 +714,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/local-notifications/dist/esm/web.js
   var web_exports4 = {};
   __export(web_exports4, {
     LocalNotificationsWeb: () => LocalNotificationsWeb
@@ -825,7 +843,7 @@
         sendPending() {
           var _a;
           const toRemove = [];
-          const now = ( new Date()).getTime();
+          const now = (/* @__PURE__ */ new Date()).getTime();
           for (const notification of this.pending) {
             if (((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) && notification.schedule.at.getTime() <= now) {
               this.buildNotification(notification);
@@ -837,7 +855,7 @@
         sendNotification(notification) {
           var _a;
           if ((_a = notification.schedule) === null || _a === void 0 ? void 0 : _a.at) {
-            const diff = notification.schedule.at.getTime() - ( new Date()).getTime();
+            const diff = notification.schedule.at.getTime() - (/* @__PURE__ */ new Date()).getTime();
             this.pending.push(notification);
             setTimeout(() => {
               this.sendPending();
@@ -873,7 +891,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/network/dist/esm/web.js
   var web_exports5 = {};
   __export(web_exports5, {
     Network: () => Network,
@@ -885,7 +903,7 @@
     const type = connection ? connection.type || connection.effectiveType : null;
     if (type && typeof type === "string") {
       switch (type) {
-
+        // possible type values
         case "bluetooth":
         case "cellular":
           result = "cellular";
@@ -902,7 +920,7 @@
         case "unknown":
           result = "unknown";
           break;
-
+        // possible effectiveType values
         case "slow-2g":
         case "2g":
         case "3g":
@@ -961,7 +979,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/preferences/dist/esm/web.js
   var web_exports6 = {};
   __export(web_exports6, {
     PreferencesWeb: () => PreferencesWeb
@@ -1041,7 +1059,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/share/dist/esm/web.js
   var web_exports7 = {};
   __export(web_exports7, {
     ShareWeb: () => ShareWeb
@@ -1073,7 +1091,7 @@
     }
   });
 
-
+  // node_modules/@capacitor/splash-screen/dist/esm/web.js
   var web_exports8 = {};
   __export(web_exports8, {
     SplashScreenWeb: () => SplashScreenWeb
@@ -1093,19 +1111,19 @@
     }
   });
 
-
+  // capacitor-src/main.js
   init_dist();
 
-
+  // node_modules/@capacitor/app/dist/esm/index.js
   init_dist();
   var App = registerPlugin("App", {
     web: () => Promise.resolve().then(() => (init_web(), web_exports)).then((m) => new m.AppWeb())
   });
 
-
+  // node_modules/@capacitor/clipboard/dist/esm/index.js
   init_dist();
 
-
+  // node_modules/@capacitor/clipboard/dist/esm/web.js
   init_dist();
   var ClipboardWeb = class extends WebPlugin {
     async write(options) {
@@ -1182,28 +1200,28 @@
     }
   };
 
-
+  // node_modules/@capacitor/clipboard/dist/esm/index.js
   var Clipboard = registerPlugin("Clipboard", {
     web: () => new ClipboardWeb()
   });
 
-
+  // node_modules/@capacitor/geolocation/dist/esm/index.js
   init_dist();
   var Geolocation2 = registerPlugin("Geolocation", {
     web: () => Promise.resolve().then(() => (init_web2(), web_exports2)).then((m) => new m.GeolocationWeb())
   });
 
-
+  // node_modules/@capacitor/haptics/dist/esm/index.js
   init_dist();
   init_definitions();
   var Haptics = registerPlugin("Haptics", {
     web: () => Promise.resolve().then(() => (init_web3(), web_exports3)).then((m) => new m.HapticsWeb())
   });
 
-
+  // node_modules/@capacitor/local-notifications/dist/esm/index.js
   init_dist();
 
-
+  // node_modules/@capacitor/local-notifications/dist/esm/definitions.js
   var Weekday;
   (function(Weekday2) {
     Weekday2[Weekday2["Sunday"] = 1] = "Sunday";
@@ -1215,43 +1233,43 @@
     Weekday2[Weekday2["Saturday"] = 7] = "Saturday";
   })(Weekday || (Weekday = {}));
 
-
+  // node_modules/@capacitor/local-notifications/dist/esm/index.js
   var LocalNotifications = registerPlugin("LocalNotifications", {
     web: () => Promise.resolve().then(() => (init_web4(), web_exports4)).then((m) => new m.LocalNotificationsWeb())
   });
 
-
+  // node_modules/@capacitor/network/dist/esm/index.js
   init_dist();
   var Network2 = registerPlugin("Network", {
     web: () => Promise.resolve().then(() => (init_web5(), web_exports5)).then((m) => new m.NetworkWeb())
   });
 
-
+  // node_modules/@capacitor/preferences/dist/esm/index.js
   init_dist();
   var Preferences = registerPlugin("Preferences", {
     web: () => Promise.resolve().then(() => (init_web6(), web_exports6)).then((m) => new m.PreferencesWeb())
   });
 
-
+  // node_modules/@capacitor/push-notifications/dist/esm/index.js
   init_dist();
   var PushNotifications = registerPlugin("PushNotifications", {});
 
-
+  // node_modules/@capacitor/share/dist/esm/index.js
   init_dist();
   var Share = registerPlugin("Share", {
     web: () => Promise.resolve().then(() => (init_web7(), web_exports7)).then((m) => new m.ShareWeb())
   });
 
-
+  // node_modules/@capacitor/splash-screen/dist/esm/index.js
   init_dist();
   var SplashScreen = registerPlugin("SplashScreen", {
     web: () => Promise.resolve().then(() => (init_web8(), web_exports8)).then((m) => new m.SplashScreenWeb())
   });
 
-
+  // node_modules/@capacitor/status-bar/dist/esm/index.js
   init_dist();
 
-
+  // node_modules/@capacitor/status-bar/dist/esm/definitions.js
   var Style;
   (function(Style2) {
     Style2["Dark"] = "DARK";
@@ -1265,10 +1283,10 @@
     Animation2["Fade"] = "FADE";
   })(Animation || (Animation = {}));
 
-
+  // node_modules/@capacitor/status-bar/dist/esm/index.js
   var StatusBar = registerPlugin("StatusBar");
 
-
+  // capacitor-src/backend.js
   var DAXI_PATH_RE = /^\/(htmx|api|ws|accounts|media)(\/|$)/i;
   function apiDebugEnabled() {
     if (typeof window === "undefined") return false;
@@ -1510,10 +1528,10 @@
     return n;
   }
 
-
+  // capacitor-src/main.js
   var WRITE_RE = /^(POST|PUT|PATCH|DELETE)$/i;
   var API_RE = /\/(htmx|api)\//;
-  var BACKEND_FETCH_TIMEOUT_MS = 45e3;
+  var BACKEND_FETCH_TIMEOUT_MS = 8e3;
   function liveBase() {
     return getApiBase();
   }
@@ -1605,12 +1623,13 @@
   function cacheKey(url) {
     return pathOnly(url);
   }
-  var nativeOnline = true;
+  var nativeOnline = typeof navigator !== "undefined" ? navigator.onLine !== false : true;
   var networkToastsReady = false;
   var offlineGraceTimer = null;
-  var OFFLINE_GRACE_MS = 1800;
+  var OFFLINE_GRACE_MS = 400;
   function waitForOnline(maxMs) {
-    const limit = maxMs == null ? 8e3 : maxMs;
+    const limit = maxMs == null ? 1200 : maxMs;
+    if (!nativeOnline && navigator.onLine === false) return Promise.resolve(false);
     if (nativeOnline || navigator.onLine) return Promise.resolve(true);
     return new Promise((resolve) => {
       let done = false;
@@ -1684,7 +1703,7 @@
   async function initNetwork() {
     try {
       const status = await Network2.getStatus();
-      const on = status.connected !== false || navigator.onLine !== false;
+      const on = !!(status && status.connected);
       setOnline(on, { silent: true });
       Network2.addListener("networkStatusChange", (s) => {
         const pluginOn = !!s.connected;
@@ -1770,9 +1789,24 @@
         url = backendUrl(url);
         const method = (init.method || input && input.method || "GET").toUpperCase();
         const backend = isDaxiBackend(url);
-        if (backend && blockIfOffline(method, url)) {
-          rememberApiError("NETWORK_ERROR", url, { reason: "offline" });
-          return Promise.reject(new Error("offline_write_blocked"));
+        if (backend && !nativeOnline) {
+          if (blockIfOffline(method, url)) {
+            rememberApiError("NETWORK_ERROR", url, { reason: "offline" });
+            return Promise.reject(new Error("offline_write_blocked"));
+          }
+          if (method === "GET") {
+            return cacheGet(cacheKey(url)).then((cached) => {
+              if (cached != null) {
+                const ct = /\/api\//i.test(url) ? "application/json; charset=utf-8" : "text/html; charset=utf-8";
+                return new Response(cached, {
+                  status: 200,
+                  headers: { "Content-Type": ct }
+                });
+              }
+              rememberApiError("NETWORK_ERROR", url, { reason: "offline" });
+              return Promise.reject(new Error("offline"));
+            });
+          }
         }
         if (typeof input === "string") input = url;
         else if (input && input.url) input = new Request(url, input);
@@ -1825,8 +1859,8 @@
               return res;
             }).catch(async (err) => {
               clear();
-              if (method === "GET") {
-                const back = await waitForOnline(8e3);
+              if (method === "GET" && nativeOnline) {
+                const back = await waitForOnline(1200);
                 if (back) {
                   try {
                     const retryRes = await origFetch(input, init);
@@ -1838,9 +1872,10 @@
                 try {
                   const cached = await cacheGet(cacheKey(url));
                   if (cached != null) {
+                    const ct = /\/api\//i.test(url) ? "application/json; charset=utf-8" : "text/html; charset=utf-8";
                     return new Response(cached, {
                       status: 200,
-                      headers: { "Content-Type": "text/html; charset=utf-8" }
+                      headers: { "Content-Type": ct }
                     });
                   }
                 } catch (e3) {
@@ -2506,6 +2541,7 @@
     } catch (e2) {
     }
     if (role !== "driver" && role !== "admin" && role !== "enterprise") return false;
+    if (!nativeOnline) return false;
     try {
       localStorage.setItem("daxi_native_shell", role);
       localStorage.setItem("daxi_app_shell", role);
@@ -2631,7 +2667,7 @@
           next = next.replace(/\.png(\?|$)/i, ".svg$1");
         }
         el.removeAttribute("crossorigin");
-        waitForOnline(8e3).then(() => {
+        waitForOnline(1200).then(() => {
           if (next && next !== raw) el.setAttribute("src", next);
           else if (raw) el.setAttribute("src", raw.split("#")[0] + (raw.indexOf("?") >= 0 ? "&" : "?") + "_daxi_r=" + Date.now());
         });
@@ -2768,16 +2804,29 @@
     window.DAXI_USE_GOOGLE_MAPS = true;
     window.DAXI_USE_MAPLIBRE = false;
     window._DAXI_USE_MAPLIBRE = false;
-    mapLog("Starting Google Maps");
-    if (typeof window._daxiLoadGoogleMaps === "function") {
-      window._daxiLoadGoogleMaps();
-      return;
-    }
-    const retry = () => {
+    const start = () => {
+      if (!nativeOnline && navigator.onLine === false) {
+        mapLog("Maps deferred \u2014 offline");
+        try {
+          if (window.DaxiOffline && DaxiOffline.initSimpleMap) {
+            DaxiOffline.initSimpleMap("daxi-main-map", { force: true });
+          }
+          window._daxiBootState = window._daxiBootState || {};
+          window._daxiBootState.mapReady = true;
+          if (window._daxiTryDismissInitialLoader) window._daxiTryDismissInitialLoader();
+        } catch (e) {
+        }
+        return;
+      }
+      mapLog("Starting Google Maps");
       if (typeof window._daxiLoadGoogleMaps === "function") window._daxiLoadGoogleMaps();
     };
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", retry);
-    else setTimeout(retry, 0);
+    const later = () => {
+      if (typeof requestIdleCallback === "function") requestIdleCallback(start, { timeout: 1200 });
+      else setTimeout(start, 400);
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", later);
+    else later();
   }
   async function notifyLocal(title, body) {
     try {
@@ -2826,7 +2875,7 @@
     const url = backendUrl("/api/mobile/bootstrap/");
     apiLog("GET /api/mobile/bootstrap/");
     const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), 12e3) : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 5e3) : null;
     try {
       const res = await fetch(url, {
         method: "GET",
@@ -2861,35 +2910,26 @@
     } catch (e) {
     }
   }
-  function waitIntroComplete() {
-    if (window._daxiIntroDone || !window._daxiIntroPlaying) return Promise.resolve();
-    return new Promise((resolve) => {
-      const done = () => resolve();
-      window.addEventListener("daxi:intro-complete", done, { once: true });
-      document.addEventListener("daxi:intro-complete", done, { once: true });
-      setTimeout(resolve, 8e3);
-    });
-  }
   function hideSplashWhenPainted() {
     if (window._daxiSplashHidden) return;
-    const hide = () => {
-      if (window._daxiSplashHidden) return;
-      window._daxiSplashHidden = true;
-      bootMark("splash-hide");
-      SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {
-      });
-    };
-    if (window._daxiIntroVisible) {
-      hide();
-      return;
-    }
-    if (window._daxiIntroPlaying || window._daxiIntroPromise) {
-      window.addEventListener("daxi:intro-visible", hide, { once: true });
-      document.addEventListener("daxi:intro-visible", hide, { once: true });
-      setTimeout(hide, 12e3);
-      return;
-    }
-    hide();
+    window._daxiSplashHidden = true;
+    bootMark("splash-hide");
+    SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {
+    });
+  }
+  function bindIntroSplashHandoff() {
+    if (window._daxiIntroSplashBound) return;
+    window._daxiIntroSplashBound = true;
+    const onVisible = () => hideSplashWhenPainted();
+    window.addEventListener("daxi:intro-visible", onVisible, { once: true });
+    document.addEventListener("daxi:intro-visible", onVisible, { once: true });
+    window.addEventListener(
+      "daxi:intro-complete",
+      () => {
+        if (!window._daxiSplashHidden) hideSplashWhenPainted();
+      },
+      { once: true }
+    );
   }
   async function readLaunchUrl() {
     let url = "";
@@ -2910,45 +2950,62 @@
     if (!Capacitor.isNativePlatform()) return;
     bootMark("cap-js");
     markNative();
-    hideSplashWhenPainted();
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      nativeOnline = false;
+      window._daxiNativeOnline = false;
+    }
+    bindIntroSplashHandoff();
+    bootMark("shell-ready");
     const cfg = installDaxiApiGlobal();
     if (window.DaxiApi) window.DaxiApi.probe = probeBackend;
     if (!cfg.ok) toast("[DAXI API] " + (cfg.error || "configuration invalide"));
     installDaxiDeepLink();
-    const launchUrl = await readLaunchUrl();
-    if (launchUrl) handleDeepLink(launchUrl);
     installNativeBridge();
     patchNetworking();
+    try {
+      if (window.DaxiIntro && typeof window.DaxiIntro.play === "function" && !window._daxiIntroPromise) {
+        window.DaxiIntro.play();
+      }
+    } catch (eIntro) {
+    }
     wrapGetCsrfToken();
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", wrapGetCsrfToken);
     } else {
       wrapGetCsrfToken();
     }
+    hookShareUi();
+    initChrome().catch(() => {
+    });
+    initNetwork().then(() => restoreOfflineReads()).catch(() => {
+    });
+    readLaunchUrl().then((launchUrl) => {
+      if (launchUrl) handleDeepLink(launchUrl);
+      restoreShellRoleAndRedirect(launchUrl).then((redirected) => {
+        if (redirected) return;
+        try {
+          sessionStorage.setItem("daxi_shell_nav", "1");
+        } catch (eNav2) {
+        }
+      });
+    }).catch(() => {
+    });
+    setTimeout(() => initNativeMap(), 0);
+    bootMark("gps-start");
+    initGps().catch(() => {
+    });
+    bootMark("push-start");
+    initPush().catch(() => {
+    });
+    initDeepLinks().catch(() => {
+    });
     probeBackend().catch(() => {
     });
-    await initChrome();
-    const startMap = () => initNativeMap();
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startMap);
-    else startMap();
-    await initNetwork();
-    await waitIntroComplete();
-    bootMark("intro-gate-open");
-    if (await restoreShellRoleAndRedirect(launchUrl)) return;
-    try {
-      sessionStorage.setItem("daxi_shell_nav", "1");
-    } catch (eNav2) {
-    }
-    bootMark("gps-start");
-    await initGps();
-    bootMark("push-start");
-    await initPush();
-    await initDeepLinks();
-    hookShareUi();
-    await restoreOfflineReads();
     const gid = window._daxiGuestId || localStorage.getItem("daxi_guest_id") || "";
     if (gid) persistNative("guest_id", gid);
-    if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
+    setTimeout(() => {
+      if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
+    }, 0);
     let tries = 0;
     const flushLink = () => {
       tries += 1;
@@ -2966,3 +3023,8 @@
   }
   boot();
 })();
+/*! Bundled license information:
+
+@capacitor/core/dist/index.js:
+  (*! Capacitor: https://capacitorjs.com/ - MIT License *)
+*/

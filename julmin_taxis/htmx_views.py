@@ -6993,14 +6993,29 @@ def client_create_order(request):
         })
 
                                                                                 
+    distance_km = None
+    duration_min = None
+    if has_full_coords:
+        distance_km = _trip_distance_km(pickup_lat, pickup_lng, dest_lat, dest_lng)
+        duration_min = _trip_duration_min(
+            pickup_lat, pickup_lng, dest_lat, dest_lng,
+            trip_type=trip_type, wait_minutes=wait_minutes,
+        )
+
     if not fixed_price and has_full_coords:
         from pricing.services import apply_price_to_order
-        apply_price_to_order(
+        price_result = apply_price_to_order(
             order,
             propose=False,
             enterprise_commission_pct=enterprise_commission_pct,
             actor_request=request,
         )
+        if price_result:
+            if price_result.distance_km is not None:
+                distance_km = price_result.distance_km
+            if price_result.duration_min is not None:
+                duration_min = price_result.duration_min
+        order.refresh_from_db()
 
     _notify_ws('admin', 'new_order_pending_accept', {
         'order_id': order.pk,

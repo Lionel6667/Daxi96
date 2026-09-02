@@ -1,0 +1,9 @@
+html, body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.font-pacifico,
+.pacifico,
+[style*="Pacifico"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Georgia, serif;
+}

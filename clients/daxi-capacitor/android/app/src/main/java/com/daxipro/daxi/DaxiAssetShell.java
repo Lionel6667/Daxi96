@@ -4,18 +4,69 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
+import android.webkit.MimeTypeMap;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import android.webkit.MimeTypeMap;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-
 final class DaxiAssetShell {
     private DaxiAssetShell() {}
+
+    static boolean isCapacitorInternal(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+        String path = uri.getPath();
+        if (path == null) {
+            path = "";
+        }
+        String lower = path.toLowerCase();
+        return lower.contains("_capacitor")
+            || lower.contains("cordova")
+            || lower.startsWith("/plugins/")
+            || "capacitor".equalsIgnoreCase(uri.getScheme());
+    }
+
+    static boolean isDaxiHost(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        return "daxipro.com".equals(host) || "www.daxipro.com".equals(host);
+    }
+
+    static boolean isPassthroughPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        String p = path.toLowerCase();
+        if (p.startsWith("/api/") || p.equals("/api")
+            || p.startsWith("/htmx/") || p.equals("/htmx")
+            || p.startsWith("/ws/") || p.equals("/ws")
+            || p.startsWith("/accounts/") || p.equals("/accounts")
+            || p.startsWith("/media/") || p.equals("/media")
+            || p.startsWith("/admin-dashboard")
+            || p.startsWith("/driver")
+            || p.startsWith("/entreprise")
+            || p.startsWith("/admin/")) {
+            return true;
+        }
+        return false;
+    }
+
+    /** Static assets absent du bundle local : fallback réseau quand online. */
+    static boolean isRemoteFallbackPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        String p = path.toLowerCase();
+        return p.startsWith("/static/") || p.startsWith("/media/");
+    }
 
     static WebResourceResponse serve(Context context, WebResourceRequest request) {
         if (context == null || request == null) {
@@ -25,18 +76,14 @@ final class DaxiAssetShell {
             return null;
         }
         Uri uri = request.getUrl();
-        if (uri == null) {
-            return null;
-        }
-        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        if (!"daxipro.com".equals(host) && !"www.daxipro.com".equals(host)) {
+        if (uri == null || !isDaxiHost(uri)) {
             return null;
         }
         String path = uri.getPath();
         if (path == null || path.isEmpty() || "/".equals(path)) {
             path = "/index.html";
         }
-        if (path.contains("..") || path.startsWith("/api/") || path.startsWith("/ws/") || path.startsWith("/htmx/")) {
+        if (path.contains("..") || isPassthroughPath(path) || isCapacitorInternal(uri)) {
             return null;
         }
         String asset = "public" + path;
@@ -47,9 +94,6 @@ final class DaxiAssetShell {
             path = "/index.html";
         }
         if (stream == null) {
-            if (isDocument(path)) {
-                return html(fallbackHtml());
-            }
             return null;
         }
         String mime = guessMime(path);
@@ -63,9 +107,21 @@ final class DaxiAssetShell {
         return new WebResourceResponse(mime, encoding, stream);
     }
 
+    static WebResourceResponse unavailable(String message) {
+        String json = "{\"ok\":false,\"offline\":true,\"error\":\"" + message.replace("\"", "'") + "\"}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cache-Control", "no-store");
+        headers.put("Content-Type", "application/json; charset=utf-8");
+        if (Build.VERSION.SDK_INT >= 21) {
+            return new WebResourceResponse("application/json", "utf-8", 503, "Unavailable", headers, in);
+        }
+        return new WebResourceResponse("application/json", "utf-8", in);
+    }
+
     private static boolean isDocument(String path) {
         String p = path.toLowerCase();
-        return p.equals("/index.html") || p.endsWith(".html") || p.equals("/driver/") || path.endsWith("/");
+        return p.equals("/index.html") || p.endsWith(".html") || path.endsWith("/");
     }
 
     private static InputStream open(AssetManager assets, String name) {
@@ -94,27 +150,8 @@ final class DaxiAssetShell {
         if (lower.endsWith(".json")) return "application/json";
         if (lower.endsWith(".svg")) return "image/svg+xml";
         if (lower.endsWith(".woff2")) return "font/woff2";
+        if (lower.endsWith(".webp")) return "image/webp";
         if (lower.endsWith(".html")) return "text/html";
         return "application/octet-stream";
-    }
-
-    private static WebResourceResponse html(String html) {
-        ByteArrayInputStream in = new ByteArrayInputStream(html.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Cache-Control", "no-store");
-        if (Build.VERSION.SDK_INT >= 21) {
-            return new WebResourceResponse("text/html", "utf-8", 200, "OK", headers, in);
-        }
-        return new WebResourceResponse("text/html", "utf-8", in);
-    }
-
-    static String fallbackHtml() {
-        return "<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
-            + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-            + "<title>DAXI</title><style>body{margin:0;background:#070B14;color:#e2e8f0;"
-            + "font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;"
-            + "justify-content:center;text-align:center;padding:24px}h1{color:#f5c14b}</style></head>"
-            + "<body><div><h1>DAXI</h1><p>Hors ligne — la dernière version de l’app reste disponible "
-            + "dès qu’une page a été ouverte en ligne.</p></div></body></html>";
     }
 }

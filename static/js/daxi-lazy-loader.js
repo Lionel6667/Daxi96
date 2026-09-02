@@ -54,10 +54,22 @@
     return chain;
   }
 
+  function loadRoutesOfflineUi() {
+    return loadMany(['daxi-frequent-routes-data.js', 'daxi-haiti-explorer-data.js', 'daxi-frequent-routes-map.js']).then(function () {
+      return loadScript('/static/js/vubez2/vubez2-inline-03.js?v=' + (global._DAXI_ASSET_V || '20260902b'));
+    });
+  }
+
+  function ensureRoutesMap() {
+    return loadMany(['daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js']);
+  }
+
+  function ensureExplorerMap() {
+    return loadMany(['daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js']);
+  }
+
   function loadRoutesSection() {
-    return loadMany(['daxi-frequent-routes-data.js', 'daxi-haiti-explorer-data.js']).then(function () {
-      return loadScript('/static/js/vubez2/vubez2-inline-03.js');
-    }).catch(function () {});
+    return loadRoutesOfflineUi().catch(function () {});
   }
 
   function onHash() {
@@ -86,6 +98,7 @@
         loadMany(['daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js']).catch(function () {});
       }
       if (/itinéraire|route/i.test(txt)) {
+        ensureRoutesMap().catch(function () {});
         loadRoutesSection();
       }
       if (/tarif|plan|forfait/i.test(txt)) {
@@ -206,6 +219,9 @@
   global.DaxiLazy = {
     load: loadScript,
     loadMany: loadMany,
+    ensureExplorerMap: ensureExplorerMap,
+    ensureRoutesMap: ensureRoutesMap,
+    loadRoutesOfflineUi: loadRoutesOfflineUi,
     ensureAssistAI: ensureAssistAI,
     preload: function () {
       idle(function () {

@@ -19,16 +19,17 @@
       <strong>En attente du prix.</strong> Vous le recevrez par WhatsApp dès qu'il sera calculé.
       Revenez sur le site pour l'accepter ou le refuser — ensuite un chauffeur prendra votre course.
     </div>
-    <button type="button"
-            class="daxi-guest-phone-cancel"
-            style="margin-top:14px;"
-            hx-post="/htmx/client/orders/{{ order_id }}/refuse-price/"
-            hx-target="#daxi-sheet-order-slot"
-            hx-swap="innerHTML"
-            hx-confirm="Annuler cette commande ?"
-            hx-include="#guestIdHidden, [name=csrfmiddlewaretoken]">
-      Annuler la commande
-    </button>
+    <div class="daxi-guest-phone-cancel-wrap">
+      <button type="button"
+              class="daxi-guest-phone-cancel"
+              hx-post="/htmx/client/orders/{{ order_id }}/refuse-price/"
+              hx-target="#daxi-sheet-order-slot"
+              hx-swap="innerHTML"
+              hx-confirm="Annuler cette commande ?"
+              hx-include="#guestIdHidden, [name=csrfmiddlewaretoken]">
+        Annuler la commande
+      </button>
+    </div>
   </div>
 </div>
 <script>

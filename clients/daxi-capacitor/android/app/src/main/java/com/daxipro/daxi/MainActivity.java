@@ -12,6 +12,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -24,25 +26,27 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
-    private static final String SITE = "https://daxipro.com/";
+    private static final String TAG = "DAXI_BOOT";
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private int siteLoadAttempts = 0;
-    private boolean consumedDeepLink = false;
-    private String lastGoodUrl = SITE;
-    private volatile boolean deviceOnline = true;
-    private volatile boolean bootNetworkReady = false;
+    private long t0;
+    private volatile boolean deviceOnline = false;
     private ConnectivityManager connectivityManager;
     private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        t0 = SystemClock.elapsedRealtime();
+        Log.i(TAG, "T0 android-start");
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "T1 capacitor-super " + ms() + "ms");
         applySystemBars();
         installWebClient();
         watchNetwork();
         mainHandler.postDelayed(() -> loadDeepLink(getIntent()), 250);
-        mainHandler.postDelayed(() -> bootNetworkReady = true, 3000);
-        watchBlankFirstLoad();
+    }
+
+    private long ms() {
+        return SystemClock.elapsedRealtime() - t0;
     }
 
     @Override
@@ -74,42 +78,20 @@ public class MainActivity extends BridgeActivity {
         if (url == null) {
             return;
         }
+        Uri parsed = Uri.parse(url);
+        String path = parsed.getPath() == null ? "/" : parsed.getPath();
+        if ("/".equals(path) || path.isEmpty()) {
+            return;
+        }
         WebView webView = getBridge().getWebView();
         if (webView == null) {
             return;
         }
-        consumedDeepLink = true;
-        lastGoodUrl = url;
-        if (!isDeviceOnline()) {
-            stayOnCachedShell(webView);
+        if (!isDeviceOnline() || !DaxiAssetShell.isPassthroughPath(path)) {
+            notifyJsDeepLink(webView, url);
             return;
         }
         webView.post(() -> webView.loadUrl(url));
-    }
-
-    private void watchBlankFirstLoad() {
-        mainHandler.postDelayed(() -> {
-            if (consumedDeepLink || getBridge() == null) {
-                return;
-            }
-            WebView webView = getBridge().getWebView();
-            if (webView == null) {
-                return;
-            }
-            if (!looksLikeErrorPage(webView)) {
-                return;
-            }
-            if (isDeviceOnline()) {
-                webView.loadUrl(SITE);
-            } else {
-                stayOnCachedShell(webView);
-            }
-        }, 4000);
-    }
-
-    private boolean looksLikeErrorPage(WebView view) {
-        String title = view.getTitle() == null ? "" : view.getTitle().toLowerCase();
-        return title.contains("disponible") || title.contains("not available") || title.contains("erreur") || title.contains("error");
     }
 
     private String toSiteUrl(Uri data) {
@@ -144,28 +126,50 @@ public class MainActivity extends BridgeActivity {
             return;
         }
         webView.post(() -> {
+            Log.i(TAG, "T2 webview-ready " + ms() + "ms");
             WebSettings settings = webView.getSettings();
             settings.setDomStorageEnabled(true);
             applyCacheMode(webView, isDeviceOnline());
             webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
                 @Override
                 public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                    if (!isDeviceOnline()) {
+                    if (request == null) {
+                        return super.shouldInterceptRequest(view, request);
+                    }
+                    Uri uri = request.getUrl();
+                    if (DaxiAssetShell.isCapacitorInternal(uri)) {
+                        return super.shouldInterceptRequest(view, request);
+                    }
+                    String path = uri == null || uri.getPath() == null ? "" : uri.getPath();
+                    if (DaxiAssetShell.isDaxiHost(uri) && DaxiAssetShell.isPassthroughPath(path)) {
+                        if (!isDeviceOnline()) {
+                            return DaxiAssetShell.unavailable("offline");
+                        }
+                        return null;
+                    }
+                    if (DaxiAssetShell.isDaxiHost(uri)) {
                         WebResourceResponse local = DaxiAssetShell.serve(getApplicationContext(), request);
                         if (local != null) {
                             return local;
                         }
+                        if (DaxiAssetShell.isRemoteFallbackPath(path)) {
+                            if (!isDeviceOnline()) {
+                                return DaxiAssetShell.unavailable("offline");
+                            }
+                            return null;
+                        }
                     }
-                    return super.shouldInterceptRequest(view, request);
+                    WebResourceResponse cap = super.shouldInterceptRequest(view, request);
+                    if (cap != null) {
+                        return cap;
+                    }
+                    return DaxiAssetShell.serve(getApplicationContext(), request);
                 }
 
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    if (url != null && url.startsWith("http") && url.contains("daxipro.com")) {
-                        lastGoodUrl = url;
-                        siteLoadAttempts = 0;
-                    }
+                    Log.i(TAG, "T3 html-loaded " + ms() + "ms url=" + url);
                     if (!isDeviceOnline()) {
                         notifyJsOffline(view);
                     }
@@ -175,22 +179,12 @@ public class MainActivity extends BridgeActivity {
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                     if (request != null && request.isForMainFrame() && !isDeviceOnline()) {
                         Uri uri = request.getUrl();
-                        if (isDaxiHttp(uri)) {
-                            stayOnCachedShell(view);
+                        if (DaxiAssetShell.isDaxiHost(uri) && DaxiAssetShell.isPassthroughPath(uri.getPath())) {
+                            notifyJsOffline(view);
                             return true;
                         }
                     }
                     return super.shouldOverrideUrlLoading(view, request);
-                }
-
-                @Override
-                @SuppressWarnings("deprecation")
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    if (!isDeviceOnline() && url != null && url.startsWith("http")) {
-                        stayOnCachedShell(view);
-                        return true;
-                    }
-                    return super.shouldOverrideUrlLoading(view, url);
                 }
 
                 @Override
@@ -200,36 +194,23 @@ public class MainActivity extends BridgeActivity {
                         return;
                     }
                     if (!isDeviceOnline() || isNetworkError(error)) {
-                        stayOnCachedShell(view);
+                        notifyJsOffline(view);
                         return;
                     }
                     super.onReceivedError(view, request, error);
-                    retrySiteLoad(view, request.getUrl() != null ? request.getUrl().toString() : null);
                 }
 
                 @Override
                 @SuppressWarnings("deprecation")
                 public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                    if (view != null && (!isDeviceOnline() || errorCode == ERROR_HOST_LOOKUP || errorCode == ERROR_CONNECT || errorCode == ERROR_TIMEOUT || errorCode == ERROR_IO || errorCode == ERROR_UNKNOWN)) {
-                        stayOnCachedShell(view);
+                    if (view != null && !isDeviceOnline()) {
+                        notifyJsOffline(view);
                         return;
                     }
                     super.onReceivedError(view, errorCode, description, failingUrl);
                 }
             });
         });
-    }
-
-    private boolean isDaxiHttp(Uri uri) {
-        if (uri == null) {
-            return false;
-        }
-        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
-        if (!"http".equals(scheme) && !"https".equals(scheme)) {
-            return false;
-        }
-        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        return "daxipro.com".equals(host) || "www.daxipro.com".equals(host);
     }
 
     private boolean isNetworkError(WebResourceError error) {
@@ -245,23 +226,18 @@ public class MainActivity extends BridgeActivity {
             || code == android.webkit.WebViewClient.ERROR_UNKNOWN;
     }
 
-    private long lastShellLoadAt = 0;
-
-    private void stayOnCachedShell(WebView view) {
-        if (view == null) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now - lastShellLoadAt < 900) {
-            return;
-        }
-        lastShellLoadAt = now;
-        applyCacheMode(view, false);
-        view.stopLoading();
-        view.loadUrl(SITE);
+    private void notifyJsDeepLink(WebView view, String url) {
+        String safe = url.replace("\\", "\\\\").replace("'", "\\'");
+        view.evaluateJavascript(
+            "(function(){try{if(window.DaxiDeepLink&&DaxiDeepLink.handle)DaxiDeepLink.handle('" + safe + "');}catch(e){}})();",
+            null
+        );
     }
 
     private void notifyJsOffline(WebView view) {
+        if (view == null) {
+            return;
+        }
         view.evaluateJavascript(
             "(function(){"
                 + "window._daxiNativeOnline=false;"
@@ -330,11 +306,12 @@ public class MainActivity extends BridgeActivity {
         }
         applyCacheMode(webView, online);
         if (!online) {
-            if (looksLikeErrorPage(webView)) {
-                stayOnCachedShell(webView);
-            } else {
-                notifyJsOffline(webView);
-            }
+            notifyJsOffline(webView);
+        } else {
+            webView.evaluateJavascript(
+                "(function(){window._daxiNativeOnline=true;try{window.dispatchEvent(new Event('online'));}catch(e){}})();",
+                null
+            );
         }
     }
 
@@ -344,40 +321,21 @@ public class MainActivity extends BridgeActivity {
             cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         }
         if (cm == null) {
-            return true;
+            return false;
         }
         if (Build.VERSION.SDK_INT >= 23) {
             Network network = cm.getActiveNetwork();
             if (network == null) {
-                return !bootNetworkReady;
+                return false;
             }
             NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-            return caps != null && (
-                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    || caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                    || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-            );
+            if (caps == null) {
+                return false;
+            }
+            return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
         }
         android.net.NetworkInfo info = cm.getActiveNetworkInfo();
         return info != null && info.isConnected();
-    }
-
-    private void retrySiteLoad(WebView view, String url) {
-        if (siteLoadAttempts >= 4 || view == null || !isDeviceOnline()) {
-            return;
-        }
-        String target = url;
-        if (target == null || target.isEmpty()) {
-            target = SITE;
-        }
-        siteLoadAttempts += 1;
-        long delay = 600L * siteLoadAttempts;
-        String loadUrl = target;
-        mainHandler.postDelayed(() -> {
-            if (isDeviceOnline()) {
-                view.loadUrl(loadUrl);
-            }
-        }, delay);
     }
 
     @Override

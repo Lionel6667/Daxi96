@@ -95,14 +95,14 @@ function _daxiClientBlueDotEl(opts) {
     opts = opts || {};
     var el = document.createElement('div');
     if (opts.overlay) {
-        el.style.cssText = 'position:relative;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;';
+        el.style.cssText = 'position:relative;width:16px;height:16px;transform:translate(-50%,-50%);pointer-events:none;';
     } else {
-        el.style.cssText = 'position:relative;width:22px;height:22px;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+        el.style.cssText = 'position:relative;width:16px;height:16px;pointer-events:none;display:flex;align-items:center;justify-content:center;';
     }
     var pulse = document.createElement('div');
-    pulse.style.cssText = 'position:absolute;inset:-6px;border-radius:50%;background:rgba(59,130,246,0.2);animation:daxiSpin 4s linear infinite reverse;';
+    pulse.style.cssText = 'position:absolute;inset:-4px;border-radius:50%;background:rgba(59,130,246,0.18);animation:daxiSpin 4s linear infinite reverse;';
     var dot = document.createElement('div');
-    dot.style.cssText = 'position:relative;width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #ffffff;box-shadow:0 0 8px rgba(59,130,246,0.6);flex-shrink:0;';
+    dot.style.cssText = 'position:relative;width:11px;height:11px;border-radius:50%;background:#3b82f6;border:2px solid #ffffff;box-shadow:0 0 6px rgba(59,130,246,0.55);flex-shrink:0;';
     el.appendChild(pulse);
     el.appendChild(dot);
     return el;
@@ -1541,15 +1541,16 @@ function daxiMapOpenOnMainMap(id) {
         daxiMapExitFs(id);
     }
     if (typeof closeDaxiPage === 'function') closeDaxiPage();
+    window._daxiDraftSuspendsOrderMap = false;
     window._daxiMainMapFocusOrderId = id;
     var pLa = _df(el.dataset.meetingLat) || _df(el.dataset.pickupLat);
     var pLo = _df(el.dataset.meetingLng) || _df(el.dataset.pickupLng);
     var dLa = _df(el.dataset.destLat), dLo = _df(el.dataset.destLng);
     if (!isFinite(pLa) || !isFinite(pLo)) return;
     if (typeof _setMainMapBookingPoint === 'function') {
-        _setMainMapBookingPoint('pickup', pLa, pLo, '', '', '', { silent: true });
+        _setMainMapBookingPoint('pickup', pLa, pLo, '', '', '', { silent: true, mapOnly: true });
         if (isFinite(dLa) && isFinite(dLo)) {
-            _setMainMapBookingPoint('dest', dLa, dLo, '', '', '', { silent: true });
+            _setMainMapBookingPoint('dest', dLa, dLo, '', '', '', { silent: true, mapOnly: true });
         }
     }
     window._daxiSuppressGpsRepan = true;
@@ -1575,9 +1576,9 @@ function _daxiUpdateMainMapForOrder(orderId) {
     var dLa = _df(el.dataset.destLat), dLo = _df(el.dataset.destLng);
     if (!isFinite(pLa) || !isFinite(pLo)) return;
     if (typeof _setMainMapBookingPoint === 'function') {
-        _setMainMapBookingPoint('pickup', pLa, pLo, '', '', '', { silent: true });
+        _setMainMapBookingPoint('pickup', pLa, pLo, '', '', '', { silent: true, mapOnly: true });
         if (isFinite(dLa) && isFinite(dLo)) {
-            _setMainMapBookingPoint('dest', dLa, dLo, '', '', '', { silent: true });
+            _setMainMapBookingPoint('dest', dLa, dLo, '', '', '', { silent: true, mapOnly: true });
         }
     }
     if (document.body.classList.contains('daxi-sheet-collapsed-mode') ||

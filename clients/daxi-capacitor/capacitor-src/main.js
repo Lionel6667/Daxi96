@@ -33,7 +33,7 @@ const OFFLINE_MSG =
 
 const WRITE_RE = /^(POST|PUT|PATCH|DELETE)$/i;
 const API_RE = /\/(htmx|api)\//;
-const BACKEND_FETCH_TIMEOUT_MS = 45000;
+const BACKEND_FETCH_TIMEOUT_MS = 8000;
 
 function liveBase() {
   return getApiBase();
@@ -135,13 +135,14 @@ function cacheKey(url) {
   return pathOnly(url);
 }
 
-let nativeOnline = true;
+let nativeOnline = typeof navigator !== 'undefined' ? navigator.onLine !== false : true;
 let networkToastsReady = false;
 let offlineGraceTimer = null;
-const OFFLINE_GRACE_MS = 1800;
+const OFFLINE_GRACE_MS = 400;
 
 function waitForOnline(maxMs) {
-  const limit = maxMs == null ? 8000 : maxMs;
+  const limit = maxMs == null ? 1200 : maxMs;
+  if (!nativeOnline && navigator.onLine === false) return Promise.resolve(false);
   if (nativeOnline || navigator.onLine) return Promise.resolve(true);
   return new Promise((resolve) => {
     let done = false;
@@ -217,7 +218,7 @@ window.DaxiNetworkState = {
 async function initNetwork() {
   try {
     const status = await Network.getStatus();
-    const on = status.connected !== false || navigator.onLine !== false;
+    const on = !!(status && status.connected);
     setOnline(on, { silent: true });
     Network.addListener('networkStatusChange', (s) => {
       const pluginOn = !!s.connected;
@@ -309,9 +310,24 @@ function patchNetworking() {
       url = backendUrl(url);
       const method = (init.method || (input && input.method) || 'GET').toUpperCase();
       const backend = isDaxiBackend(url);
-      if (backend && blockIfOffline(method, url)) {
-        rememberApiError('NETWORK_ERROR', url, { reason: 'offline' });
-        return Promise.reject(new Error('offline_write_blocked'));
+      if (backend && !nativeOnline) {
+        if (blockIfOffline(method, url)) {
+          rememberApiError('NETWORK_ERROR', url, { reason: 'offline' });
+          return Promise.reject(new Error('offline_write_blocked'));
+        }
+        if (method === 'GET') {
+          return cacheGet(cacheKey(url)).then((cached) => {
+            if (cached != null) {
+              const ct = /\/api\//i.test(url) ? 'application/json; charset=utf-8' : 'text/html; charset=utf-8';
+              return new Response(cached, {
+                status: 200,
+                headers: { 'Content-Type': ct },
+              });
+            }
+            rememberApiError('NETWORK_ERROR', url, { reason: 'offline' });
+            return Promise.reject(new Error('offline'));
+          });
+        }
       }
       if (typeof input === 'string') input = url;
       else if (input && input.url) input = new Request(url, input);
@@ -363,8 +379,8 @@ function patchNetworking() {
             })
             .catch(async (err) => {
               clear();
-              if (method === 'GET') {
-                const back = await waitForOnline(8000);
+              if (method === 'GET' && nativeOnline) {
+                const back = await waitForOnline(1200);
                 if (back) {
                   try {
                     const retryRes = await origFetch(input, init);
@@ -375,9 +391,10 @@ function patchNetworking() {
                 try {
                   const cached = await cacheGet(cacheKey(url));
                   if (cached != null) {
+                    const ct = /\/api\//i.test(url) ? 'application/json; charset=utf-8' : 'text/html; charset=utf-8';
                     return new Response(cached, {
                       status: 200,
-                      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+                      headers: { 'Content-Type': ct },
                     });
                   }
                 } catch (e3) {}
@@ -1052,6 +1069,7 @@ async function restoreShellRoleAndRedirect(launchUrl) {
     if (pref && pref.value) role = pref.value;
   } catch (e2) {}
   if (role !== 'driver' && role !== 'admin' && role !== 'enterprise') return false;
+  if (!nativeOnline) return false;
   try {
     localStorage.setItem('daxi_native_shell', role);
     localStorage.setItem('daxi_app_shell', role);
@@ -1180,7 +1198,7 @@ function installMediaRewriter() {
         next = next.replace(/\.png(\?|$)/i, '.svg$1');
       }
       el.removeAttribute('crossorigin');
-      waitForOnline(8000).then(() => {
+      waitForOnline(1200).then(() => {
         if (next && next !== raw) el.setAttribute('src', next);
         else if (raw) el.setAttribute('src', raw.split('#')[0] + (raw.indexOf('?') >= 0 ? '&' : '?') + '_daxi_r=' + Date.now());
       });
@@ -1323,16 +1341,28 @@ function initNativeMap() {
   window.DAXI_USE_GOOGLE_MAPS = true;
   window.DAXI_USE_MAPLIBRE = false;
   window._DAXI_USE_MAPLIBRE = false;
-  mapLog('Starting Google Maps');
-  if (typeof window._daxiLoadGoogleMaps === 'function') {
-    window._daxiLoadGoogleMaps();
-    return;
-  }
-  const retry = () => {
+  const start = () => {
+    if (!nativeOnline && navigator.onLine === false) {
+      mapLog('Maps deferred — offline');
+      try {
+        if (window.DaxiOffline && DaxiOffline.initSimpleMap) {
+          DaxiOffline.initSimpleMap('daxi-main-map', { force: true });
+        }
+        window._daxiBootState = window._daxiBootState || {};
+        window._daxiBootState.mapReady = true;
+        if (window._daxiTryDismissInitialLoader) window._daxiTryDismissInitialLoader();
+      } catch (e) {}
+      return;
+    }
+    mapLog('Starting Google Maps');
     if (typeof window._daxiLoadGoogleMaps === 'function') window._daxiLoadGoogleMaps();
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', retry);
-  else setTimeout(retry, 0);
+  const later = () => {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(start, { timeout: 1200 });
+    else setTimeout(start, 400);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later);
+  else later();
 }
 
 async function initLocalAlerts() {}
@@ -1385,7 +1415,7 @@ async function probeBackend() {
   const url = backendUrl('/api/mobile/bootstrap/');
   apiLog('GET /api/mobile/bootstrap/');
   const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timer = ctrl ? setTimeout(() => ctrl.abort(), 12000) : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 5000) : null;
   try {
     const res = await fetch(url, {
       method: 'GET',
@@ -1434,23 +1464,24 @@ function waitIntroComplete() {
 
 function hideSplashWhenPainted() {
   if (window._daxiSplashHidden) return;
-  const hide = () => {
-    if (window._daxiSplashHidden) return;
-    window._daxiSplashHidden = true;
-    bootMark('splash-hide');
-    SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
-  };
-  if (window._daxiIntroVisible) {
-    hide();
-    return;
-  }
-  if (window._daxiIntroPlaying || window._daxiIntroPromise) {
-    window.addEventListener('daxi:intro-visible', hide, { once: true });
-    document.addEventListener('daxi:intro-visible', hide, { once: true });
-    setTimeout(hide, 12000);
-    return;
-  }
-  hide();
+  window._daxiSplashHidden = true;
+  bootMark('splash-hide');
+  SplashScreen.hide({ fadeOutDuration: 220 }).catch(() => {});
+}
+
+function bindIntroSplashHandoff() {
+  if (window._daxiIntroSplashBound) return;
+  window._daxiIntroSplashBound = true;
+  const onVisible = () => hideSplashWhenPainted();
+  window.addEventListener('daxi:intro-visible', onVisible, { once: true });
+  document.addEventListener('daxi:intro-visible', onVisible, { once: true });
+  window.addEventListener(
+    'daxi:intro-complete',
+    () => {
+      if (!window._daxiSplashHidden) hideSplashWhenPainted();
+    },
+    { once: true },
+  );
 }
 
 async function readLaunchUrl() {
@@ -1469,41 +1500,55 @@ async function boot() {
   if (!Capacitor.isNativePlatform()) return;
   bootMark('cap-js');
   markNative();
-  hideSplashWhenPainted();
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    nativeOnline = false;
+    window._daxiNativeOnline = false;
+  }
+  bindIntroSplashHandoff();
+  bootMark('shell-ready');
   const cfg = installDaxiApiGlobal();
   if (window.DaxiApi) window.DaxiApi.probe = probeBackend;
   if (!cfg.ok) toast('[DAXI API] ' + (cfg.error || 'configuration invalide'));
   installDaxiDeepLink();
-  const launchUrl = await readLaunchUrl();
-  if (launchUrl) handleDeepLink(launchUrl);
   installNativeBridge();
   patchNetworking();
+  try {
+    if (window.DaxiIntro && typeof window.DaxiIntro.play === 'function' && !window._daxiIntroPromise) {
+      window.DaxiIntro.play();
+    }
+  } catch (eIntro) {}
   wrapGetCsrfToken();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wrapGetCsrfToken);
   } else {
     wrapGetCsrfToken();
   }
-  probeBackend().catch(() => {});
-  await initChrome();
-  const startMap = () => initNativeMap();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startMap);
-  else startMap();
-  await initNetwork();
-  await waitIntroComplete();
-  bootMark('intro-gate-open');
-  if (await restoreShellRoleAndRedirect(launchUrl)) return;
-  try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (eNav2) {}
-  bootMark('gps-start');
-  await initGps();
-  bootMark('push-start');
-  await initPush();
-  await initDeepLinks();
   hookShareUi();
-  await restoreOfflineReads();
+  initChrome().catch(() => {});
+  initNetwork()
+    .then(() => restoreOfflineReads())
+    .catch(() => {});
+  readLaunchUrl()
+    .then((launchUrl) => {
+      if (launchUrl) handleDeepLink(launchUrl);
+      restoreShellRoleAndRedirect(launchUrl).then((redirected) => {
+        if (redirected) return;
+        try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (eNav2) {}
+      });
+    })
+    .catch(() => {});
+  setTimeout(() => initNativeMap(), 0);
+  bootMark('gps-start');
+  initGps().catch(() => {});
+  bootMark('push-start');
+  initPush().catch(() => {});
+  initDeepLinks().catch(() => {});
+  probeBackend().catch(() => {});
   const gid = window._daxiGuestId || localStorage.getItem('daxi_guest_id') || '';
   if (gid) persistNative('guest_id', gid);
-  if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
+  setTimeout(() => {
+    if (window._daxiOnNativeAppRevealed) window._daxiOnNativeAppRevealed();
+  }, 0);
   let tries = 0;
   const flushLink = () => {
     tries += 1;

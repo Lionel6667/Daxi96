@@ -120,6 +120,8 @@ CAPACITOR_ORIGINS = frozenset({
     'http://localhost',
     'capacitor://localhost',
     'ionic://localhost',
+    'https://daxipro.com',
+    'https://www.daxipro.com',
 })
 
 
@@ -140,6 +142,10 @@ class CapacitorCrossOriginCookieMiddleware:
     def __call__(self, request):
         origin = request.META.get('HTTP_ORIGIN', '') or ''
         capacitor = origin in CAPACITOR_ORIGINS
+        if not capacitor and request.META.get('HTTP_X_DAXI_NATIVE') == '1':
+            capacitor = True
+        if not capacitor and request.META.get('HTTP_X_DAXI_HYBRID') == '1':
+            capacitor = True
         if capacitor and request.method in ('GET', 'HEAD'):
             from django.middleware.csrf import get_token
             get_token(request)

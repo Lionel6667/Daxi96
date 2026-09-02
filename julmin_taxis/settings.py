@@ -372,6 +372,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+WHITENOISE_MAX_AGE = 31536000
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -471,6 +472,8 @@ _CAPACITOR_ORIGINS = (
     'http://localhost',
     'capacitor://localhost',
     'ionic://localhost',
+    'https://daxipro.com',
+    'https://www.daxipro.com',
 )
 for _o in _CAPACITOR_ORIGINS:
     if _o not in CORS_ALLOWED_ORIGINS:

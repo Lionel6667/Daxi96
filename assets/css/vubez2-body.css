@@ -1412,3 +1412,475 @@
             .score-divider { display: none; }
             .score-bars { min-width: 140px; }
         }
+
+/* Offline frequent routes — premium pro cards */
+.daxi-routes-offline-page {
+    --daxi-route-pro-bg: #0c1224;
+    --daxi-route-pro-surface: rgba(255, 255, 255, 0.04);
+    --daxi-route-pro-border: rgba(245, 158, 11, 0.22);
+    --daxi-route-pro-text: #f8fafc;
+    --daxi-route-pro-muted: #94a3b8;
+    --daxi-route-pro-gold: #f59e0b;
+    --daxi-route-pro-gold-soft: rgba(245, 158, 11, 0.14);
+    padding: 0 0 28px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+html[data-theme="light"] .daxi-routes-offline-page {
+    --daxi-route-pro-bg: #ffffff;
+    --daxi-route-pro-surface: rgba(16, 42, 67, 0.04);
+    --daxi-route-pro-border: rgba(16, 42, 67, 0.1);
+    --daxi-route-pro-text: #102a43;
+    --daxi-route-pro-muted: #64748b;
+    --daxi-route-pro-gold-soft: rgba(245, 158, 11, 0.1);
+}
+.daxi-routes-offline-page .routes-maps-container,
+.daxi-routes-offline-page .daxi-routes-offline-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    scroll-snap-type: none !important;
+    padding: 0 2px 12px !important;
+}
+.daxi-routes-offline-hero {
+    text-align: center;
+    padding: 4px 16px 22px;
+}
+.daxi-routes-offline-kicker {
+    margin: 0 0 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--daxi-route-pro-gold);
+}
+.daxi-routes-offline-title {
+    margin: 0 0 8px;
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 900;
+    color: var(--daxi-route-pro-text);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+}
+.daxi-routes-offline-sub {
+    margin: 0 auto;
+    font-size: clamp(12px, 3.2vw, 14px);
+    line-height: 1.55;
+    color: var(--daxi-route-pro-muted);
+    max-width: 34ch;
+}
+.daxi-route-pro {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: none !important;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--daxi-route-pro-bg);
+    border: 1px solid var(--daxi-route-pro-border);
+    box-shadow:
+        0 4px 6px rgba(0, 0, 0, 0.04),
+        0 20px 48px rgba(0, 0, 0, 0.22);
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+}
+.daxi-route-pro:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.06),
+        0 28px 56px rgba(245, 158, 11, 0.1);
+}
+.daxi-route-pro__visual {
+    position: relative;
+    width: 100%;
+    height: clamp(168px, 44vw, 220px);
+    overflow: hidden;
+    background: #0a0f1e;
+}
+.daxi-route-pro__img {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.daxi-route-pro__img--from {
+    width: 58%;
+    clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
+}
+.daxi-route-pro__img--to {
+    left: auto;
+    right: 0;
+    width: 58%;
+    clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%);
+}
+.daxi-route-pro:hover .daxi-route-pro__img--from { transform: scale(1.04); }
+.daxi-route-pro:hover .daxi-route-pro__img--to { transform: scale(1.04); }
+.daxi-route-pro__visual-shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.15) 45%,
+        rgba(0, 0, 0, 0.55) 100%
+    );
+    pointer-events: none;
+}
+.daxi-route-pro__price {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    font-size: 15px;
+    font-weight: 900;
+    color: #111827;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fcd34d, #f59e0b);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+}
+.daxi-route-pro__body {
+    padding: clamp(14px, 4vw, 20px);
+}
+.daxi-route-pro__route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.daxi-route-pro__endpoint {
+    min-width: 0;
+}
+.daxi-route-pro__endpoint--dest {
+    text-align: right;
+}
+.daxi-route-pro__endpoint-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--daxi-route-pro-muted);
+    margin-bottom: 4px;
+}
+.daxi-route-pro__endpoint-name {
+    display: block;
+    font-size: clamp(14px, 3.8vw, 17px);
+    font-weight: 800;
+    color: var(--daxi-route-pro-text);
+    line-height: 1.25;
+    word-break: break-word;
+}
+.daxi-route-pro__route-arrow {
+    color: var(--daxi-route-pro-gold);
+    font-size: 18px;
+    padding-bottom: 2px;
+    flex-shrink: 0;
+}
+.daxi-route-pro__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.daxi-route-pro__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 64px;
+    padding: 10px 6px;
+    border-radius: 14px;
+    background: var(--daxi-route-pro-surface);
+    border: 1px solid var(--daxi-route-pro-border);
+    text-align: center;
+}
+.daxi-route-pro__stat i {
+    font-size: 16px;
+    color: var(--daxi-route-pro-gold);
+    line-height: 1;
+}
+.daxi-route-pro__stat i::before {
+    display: inline-block;
+}
+.daxi-route-pro__stat span {
+    font-size: clamp(10px, 2.8vw, 11px);
+    font-weight: 700;
+    color: var(--daxi-route-pro-text);
+    line-height: 1.3;
+    word-break: break-word;
+}
+.daxi-route-pro__stat--accent i { color: #34d399; }
+.daxi-route-pro__mosaic {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+}
+.daxi-route-pro__mosaic::-webkit-scrollbar { display: none; }
+.daxi-route-pro__mosaic-item {
+    flex: 0 0 clamp(100px, 28vw, 128px);
+    scroll-snap-align: start;
+    position: relative;
+    border: none;
+    padding: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    cursor: pointer;
+    background: #0f172a;
+}
+.daxi-route-pro__mosaic-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+.daxi-route-pro__mosaic-item:hover img { transform: scale(1.06); }
+.daxi-route-pro__mosaic-item span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px 8px 8px;
+    font-size: 9px;
+    font-weight: 800;
+    color: #fff;
+    text-align: left;
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.75));
+}
+.daxi-route-pro__cta {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 48%, #d97706 100%);
+    color: #111827;
+    box-shadow: 0 10px 28px rgba(245, 158, 11, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.daxi-route-pro__cta:active { transform: scale(0.98); }
+.daxi-route-pro__cta-text {
+    font-size: clamp(13px, 3.5vw, 15px);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    text-align: left;
+}
+.daxi-route-pro__cta i {
+    font-size: 18px;
+    line-height: 1;
+}
+.daxi-route-pro__cta i::before {
+    display: inline-block;
+}
+.daxi-page-overlay .daxi-route-pro {
+    background: var(--daxi-route-pro-bg) !important;
+    border-color: var(--daxi-route-pro-border) !important;
+    color: var(--daxi-route-pro-text) !important;
+}
+.daxi-page-overlay .daxi-routes-offline-title,
+.daxi-page-overlay .daxi-route-pro__endpoint-name {
+    color: var(--daxi-route-pro-text) !important;
+}
+.daxi-page-overlay .daxi-routes-offline-sub,
+.daxi-page-overlay .daxi-route-pro__endpoint-label {
+    color: var(--daxi-route-pro-muted) !important;
+}
+@media (max-width: 380px) {
+    .daxi-route-pro__stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    .daxi-route-pro__stat--accent {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        min-height: 44px;
+    }
+}
+@media (min-width: 520px) {
+    .daxi-routes-offline-page .daxi-routes-offline-grid {
+        max-width: 520px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Offline Découvrir Haïti */
+.daxi-explorer-offline-page {
+    --daxi-explorer-text: #f8fafc;
+    --daxi-explorer-muted: #94a3b8;
+    --daxi-explorer-card-border: rgba(148, 163, 184, 0.16);
+    padding: 0 4px 28px;
+}
+html[data-theme="light"] .daxi-explorer-offline-page {
+    --daxi-explorer-text: #102a43;
+    --daxi-explorer-muted: #64748b;
+    --daxi-explorer-card-border: rgba(16, 42, 67, 0.1);
+}
+.daxi-explorer-offline-hero {
+    text-align: center;
+    padding: 4px 12px 22px;
+}
+.daxi-explorer-offline-kicker {
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #f59e0b;
+}
+.daxi-explorer-offline-title {
+    margin: 0 0 8px !important;
+    font-size: 26px !important;
+    font-weight: 900 !important;
+    color: var(--daxi-explorer-text) !important;
+    line-height: 1.15;
+}
+.daxi-explorer-offline-sub {
+    margin: 0 auto;
+    max-width: 340px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--daxi-explorer-muted);
+}
+.daxi-explorer-offline-grid {
+    gap: 14px !important;
+}
+.daxi-explorer-offline-card {
+    position: relative;
+    min-height: 248px;
+    border-radius: 22px !important;
+    overflow: hidden;
+    border: none !important;
+    background: #0b1224 !important;
+    background-image: none !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    opacity: 1 !important;
+    transform: none !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    isolation: isolate;
+}
+.daxi-explorer-offline-media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.05);
+    transition: transform 0.45s ease;
+}
+.daxi-explorer-offline-card:hover .daxi-explorer-offline-media {
+    transform: scale(1.09);
+}
+.daxi-explorer-offline-shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.2) 35%,
+        rgba(0, 0, 0, 0.75) 72%,
+        rgba(0, 0, 0, 0.92) 100%);
+    pointer-events: none;
+}
+.daxi-explorer-offline-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(8, 14, 35, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+}
+.daxi-explorer-offline-card .attraction-overlay {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    background: transparent !important;
+}
+.daxi-explorer-offline-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: flex-end !important;
+    padding: 18px 16px 16px !important;
+    background: transparent !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+.daxi-explorer-offline-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 22px 48px rgba(245, 158, 11, 0.14) !important;
+}
+.daxi-explorer-offline-card h3 {
+    margin: 0 0 6px !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
+.daxi-explorer-offline-card p {
+    margin: 0 0 12px !important;
+    color: rgba(255,255,255,0.88) !important;
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+.daxi-explorer-offline-cta {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    top: 0 !important;
+    margin-top: 0 !important;
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+.daxi-page-overlay .daxi-explorer-offline-title {
+    color: var(--daxi-explorer-text) !important;
+}
+.daxi-page-overlay .daxi-explorer-offline-sub {
+    color: var(--daxi-explorer-muted) !important;
+}
+@media (min-width: 768px) {
+    .daxi-explorer-offline-card.md\:col-span-2 {
+        min-height: 220px;
+    }
+}

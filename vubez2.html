@@ -31,7 +31,7 @@
         }
     </style>
     <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+9000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');}setTimeout(bootTimeout,2800);})();</script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <script>
     (function(){
@@ -55,15 +55,18 @@
     })();
     </script>
 
-    <script src="/static/js/daxi-intro.js?v=20260830c"></script>
+    <script defer src="/static/js/daxi-intro.js?v=20260831a"></script>
     <script>
-    try {
-      if (window.DaxiIntro && typeof DaxiIntro.play === 'function') DaxiIntro.play();
-    } catch (e) {}
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        if (window.DaxiIntro && typeof DaxiIntro.play === 'function') DaxiIntro.play();
+      } catch (e) {}
+    });
     </script>
     <link rel="icon" type="image/png" href="assets/images/daxi-logo-gold.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
-    <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816">
+    <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816"></noscript>
     <link rel="apple-touch-icon" sizes="152x152" href="assets/images/daxi-app-icon.png">
     <link rel="apple-touch-icon" sizes="167x167" href="assets/images/daxi-app-icon.png">
 
@@ -81,11 +84,11 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <script src="static/js/daxi-guest-id.js?v=20260809"></script>
+    <script defer src="static/js/daxi-guest-id.js?v=20260809"></script>
     <script>
-    (function() {
+    document.addEventListener('DOMContentLoaded', function() {
       if (window.DaxiGuestId && DaxiGuestId.ensure) DaxiGuestId.ensure();
-    })();
+    });
     </script>
     <script>
     (function(){
@@ -159,38 +162,47 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260830n" as="style">
-    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c">
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260830n">
-    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260830c">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902g" as="style">
+    <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
+    <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902g">
+    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
 
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260830e">
-    <link href="assets/css/aos.css" rel="stylesheet" onerror="this.onerror=null;this.href='https://unpkg.com/aos@2.3.1/dist/aos.css'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"></noscript>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260830e" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260830e"></noscript>
+    <link rel="stylesheet" href="assets/css/aos.css" media="print" onload="this.media='all'" onerror="this.onerror=null;this.href='https://unpkg.com/aos@2.3.1/dist/aos.css';this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/aos.css"></noscript>
 
 
 
 
 <script defer src="assets/js/htmx.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/htmx.org@2.0.2/dist/htmx.min.js'"></script>
-<link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q">
-<link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760">
+<link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q"></noscript>
+<link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-assist-ai.css?v=20260814f" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260823q" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260827a" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260830n" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260823c" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731">
+<link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260762" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260762" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g">
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760" media="print" onload="this.media='all'">
-<script src="/static/js/daxi-app-api.js?v=20260813"></script>
-<script src="/static/js/daxi-realtime.js?v=20260738"></script>
+<script defer src="/static/js/daxi-app-api.js?v=20260813"></script>
+<script defer src="/static/js/daxi-realtime.js?v=20260738"></script>
 <script defer src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
 <script defer src="/static/js/daxi-notifications.js?v=20260823n"></script>
 <script defer src="/static/js/daxi-realtime-sync.js?v=20260778"></script>
@@ -201,15 +213,17 @@
 <script defer src="/static/js/daxi-map-markers.js?v=20260749"></script>
 <script defer src="/static/js/daxi-map-theme.js?v=20260812"></script>
 <script defer src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
-<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">
+<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a">
-<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e">
+<link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a" media="print" onload="this.media='all'">
 <script defer src="/static/js/daxi-network-banner.js?v=20260828d"></script>
 <script defer src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
 <script defer src="/static/js/daxi-maplibre.js?v=20260777"></script>
 <script defer src="/static/js/daxi-map-provider.js?v=20260777"></script>
-<script src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>
+<script defer src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>
 <script defer src="/static/js/daxi-places-catalog.js?v=20260814b"></script>
 
 <script defer src="/static/js/daxi-routes.js?v=20260803r"></script>
@@ -225,9 +239,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260830c';
+window._DAXI_ASSET_V='20260902g';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260830c" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902g" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -1065,83 +1079,84 @@ window._DAXI_ASSET_V='20260830c';
         </section>
 
 
-        <section class="mb-8" id="explorerSection" data-aos="fade-up" style="display:none">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center" data-translate="discover_haiti">Découvrez
-                Haïti</h2>
+        <section class="mb-8 daxi-explorer-offline-page" id="explorerSection" data-aos="fade-up" style="display:none">
+            <div class="daxi-explorer-offline-hero">
+                <p class="daxi-explorer-offline-kicker" data-translate="explorer_offline_kicker">Patrimoine &amp; nature</p>
+                <h2 class="daxi-explorer-offline-title text-2xl font-bold mb-2 text-center" data-translate="discover_haiti">Découvrez Haïti</h2>
+                <p class="daxi-explorer-offline-sub" data-translate="explorer_offline_sub">Forts, plages et monuments emblématiques à explorer avec DAXI</p>
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 daxi-explorer-offline-grid">
 
-                <div class="attraction-card"
-                    style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/img.jpg')"
-                    data-aos="fade-up">
-                    <div class="attraction-overlay">
+                <article class="attraction-card daxi-explorer-offline-card" data-aos="fade-up">
+                    <div class="daxi-explorer-offline-media" style="background-image:url('assets/images/img.jpg')"></div>
+                    <div class="daxi-explorer-offline-shade" aria-hidden="true"></div>
+                    <span class="daxi-explorer-offline-badge" data-translate="explorer_badge_fort">Forteresse</span>
+                    <div class="attraction-overlay daxi-explorer-offline-overlay">
                         <h3 class="text-xl font-bold" data-translate="citadelle_name">Citadelle La Ferrière</h3>
-                        <p class="text-sm mt-2" data-translate="citadelle_desc">Forteresse historique perchée sur une
-                            montagne</p>
-                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow"
+                        <p class="text-sm mt-2" data-translate="citadelle_desc">Forteresse historique perchée sur une montagne</p>
+                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow daxi-explorer-offline-cta"
                             data-attraction="citadelle">
-                            <span data-translate="learn_more">En savoir plus</span>
+                            <span data-translate="learn_more">En savoir plus</span> <i class="ri-arrow-right-line"></i>
                         </button>
                     </div>
-                </div>
+                </article>
 
-
-                <div class="attraction-card"
-                    style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/img7.jpg')"
-                    data-aos="fade-up" data-aos-delay="100">
-                    <div class="attraction-overlay">
+                <article class="attraction-card daxi-explorer-offline-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="daxi-explorer-offline-media" style="background-image:url('assets/images/img7.jpg')"></div>
+                    <div class="daxi-explorer-offline-shade" aria-hidden="true"></div>
+                    <span class="daxi-explorer-offline-badge" data-translate="explorer_badge_beach">Plage</span>
+                    <div class="attraction-overlay daxi-explorer-offline-overlay">
                         <h3 class="text-xl font-bold" data-translate="labadee_name">Labadee</h3>
-                        <p class="text-sm mt-2" data-translate="labadee_desc">Plages paradisiaques et eaux cristallines
-                        </p>
-                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow"
+                        <p class="text-sm mt-2" data-translate="labadee_desc">Plages paradisiaques et eaux cristallines</p>
+                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow daxi-explorer-offline-cta"
                             data-attraction="labadee">
-                            <span data-translate="learn_more">En savoir plus</span>
+                            <span data-translate="learn_more">En savoir plus</span> <i class="ri-arrow-right-line"></i>
                         </button>
                     </div>
-                </div>
+                </article>
 
-
-                <div class="attraction-card"
-                    style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/img8.jpg')"
-                    data-aos="fade-up" data-aos-delay="200">
-                    <div class="attraction-overlay">
+                <article class="attraction-card daxi-explorer-offline-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="daxi-explorer-offline-media" style="background-image:url('assets/images/img8.jpg')"></div>
+                    <div class="daxi-explorer-offline-shade" aria-hidden="true"></div>
+                    <span class="daxi-explorer-offline-badge" data-translate="explorer_badge_history">Histoire</span>
+                    <div class="attraction-overlay daxi-explorer-offline-overlay">
                         <h3 class="text-xl font-bold" data-translate="verrieres_name">Monuments de Vertière</h3>
-                        <p class="text-sm mt-2" data-translate="verrieres_desc">Mémorial historique de la bataille de
-                            Vertière</p>
-                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow"
+                        <p class="text-sm mt-2" data-translate="verrieres_desc">Mémorial historique de la bataille de Vertière</p>
+                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow daxi-explorer-offline-cta"
                             data-attraction="verrieres">
-                            <span data-translate="learn_more">En savoir plus</span>
+                            <span data-translate="learn_more">En savoir plus</span> <i class="ri-arrow-right-line"></i>
                         </button>
                     </div>
-                </div>
+                </article>
 
-
-                <div class="attraction-card"
-                    style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/img6.jpg')"
-                    data-aos="fade-up" data-aos-delay="300">
-                    <div class="attraction-overlay">
+                <article class="attraction-card daxi-explorer-offline-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="daxi-explorer-offline-media" style="background-image:url('assets/images/img6.jpg')"></div>
+                    <div class="daxi-explorer-offline-shade" aria-hidden="true"></div>
+                    <span class="daxi-explorer-offline-badge" data-translate="explorer_badge_architecture">Architecture</span>
+                    <div class="attraction-overlay daxi-explorer-offline-overlay">
                         <h3 class="text-xl font-bold" data-translate="cathedrale_name">Cathédrale de Cap-Haïtien</h3>
                         <p class="text-sm mt-2" data-translate="cathedrale_desc">Joyau architectural du nord d'Haïti</p>
-                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow"
+                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow daxi-explorer-offline-cta"
                             data-attraction="cathedrale">
-                            <span data-translate="learn_more">En savoir plus</span>
+                            <span data-translate="learn_more">En savoir plus</span> <i class="ri-arrow-right-line"></i>
                         </button>
                     </div>
-                </div>
+                </article>
 
-
-                <div class="attraction-card"
-                    style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('assets/images/img15.webp.jpg')"
-                    data-aos="fade-up" data-aos-delay="400">
-                    <div class="attraction-overlay">
+                <article class="attraction-card daxi-explorer-offline-card md:col-span-2" data-aos="fade-up" data-aos-delay="400">
+                    <div class="daxi-explorer-offline-media" style="background-image:url('assets/images/img15.webp.jpg')"></div>
+                    <div class="daxi-explorer-offline-shade" aria-hidden="true"></div>
+                    <span class="daxi-explorer-offline-badge" data-translate="explorer_badge_royal">Palais royal</span>
+                    <div class="attraction-overlay daxi-explorer-offline-overlay">
                         <h3 class="text-xl font-bold" data-translate="palais_name">Palais Sans Souci</h3>
                         <p class="text-sm mt-2" data-translate="palais_desc">Ancien palais royal d'Henri Christophe</p>
-                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow"
+                        <button class="mt-4 gold-button px-4 py-2 !rounded-button font-medium learn-more-btn btn-glow daxi-explorer-offline-cta"
                             data-attraction="palais">
-                            <span data-translate="learn_more">En savoir plus</span>
+                            <span data-translate="learn_more">En savoir plus</span> <i class="ri-arrow-right-line"></i>
                         </button>
                     </div>
-                </div>
+                </article>
             </div>
 
 
@@ -1186,15 +1201,13 @@ window._DAXI_ASSET_V='20260830c';
 
 
 
-        <section class="mb-6" id="frequentRoutesSection" aria-labelledby="frequentRoutesTitle" data-aos="fade-up" style="display:none">
-            <div class="flex items-center justify-between mb-3">
-                <h3 id="frequentRoutesTitle" class="text-lg font-semibold text-gray-800" data-translate="frequent_routes">Itinéraires fréquents</h3>
+        <section class="mb-6 daxi-routes-offline-page" id="frequentRoutesSection" aria-labelledby="frequentRoutesTitle" data-aos="fade-up" style="display:none">
+            <div class="daxi-routes-offline-hero">
+                <p class="daxi-routes-offline-kicker" data-translate="routes_offline_kicker">Trajets populaires</p>
+                <h3 id="frequentRoutesTitle" class="daxi-routes-offline-title" data-translate="frequent_routes">Itinéraires fréquents</h3>
+                <p class="daxi-routes-offline-sub" data-translate="routes_offline_sub">Les liaisons les plus demandées entre les grandes villes d'Haïti</p>
             </div>
-
-
-
-            <div id="routesMapsContainer" class="routes-maps-container" role="list"></div>
-
+            <div id="routesMapsContainer" class="daxi-routes-offline-grid routes-maps-container" role="list"></div>
         </section>
 
 
@@ -2146,6 +2159,7 @@ window._DAXI_ASSET_V='20260830c';
             <p id="otpModalDesc" class="text-sm text-gray-600 mb-2">Un code à 6 chiffres a été envoyé sur votre WhatsApp.</p>
             <button type="button" id="sendOtpBtn" class="otp-send-btn"><i class="ri-send-plane-fill"></i> Envoyer le code</button>
             <div class="otp-boxes" id="otpBoxes">
+                <input type="text" id="otpAutofillBridge" class="otp-autofill-bridge" autocomplete="one-time-code" inputmode="numeric" maxlength="6" aria-hidden="true" tabindex="-1">
                 <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Chiffre 1">
                 <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Chiffre 2">
                 <input type="tel" class="otp-box" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Chiffre 3">
@@ -2728,12 +2742,12 @@ window._DAXI_ASSET_V='20260830c';
 
     <script defer src="static/js/daxi-phone.js?v=20260702"></script>
 
-    <script src="static/js/daxi-session-store.js?v=20260809"></script>
-    <script src="static/js/daxi-network-state.js?v=20260828d"></script>
+    <script defer src="static/js/daxi-session-store.js?v=20260809"></script>
+    <script defer src="static/js/daxi-network-state.js?v=20260828d"></script>
     <script defer src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
-    <script src="static/js/daxi-shell-role.js?v=20260820f"></script>
-    <script src="static/js/daxi-offline.js?v=20260828d"></script>
-    <script src="static/js/daxi-countdown.js"></script>
+    <script defer src="static/js/daxi-shell-role.js?v=20260820f"></script>
+    <script defer src="static/js/daxi-offline.js?v=20260828d"></script>
+    <script defer src="static/js/daxi-countdown.js"></script>
     <script defer src="static/js/daxi-auto-i18n.js?v=20260737"></script>
 
     <link rel="stylesheet" href="static/css/daxi-plan-wizard.css?v=20260721d" media="print" onload="this.media='all'">
@@ -2791,12 +2805,12 @@ window._DAXI_ASSET_V='20260830c';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260830m" defer></script>
-<script src="/static/js/daxi-client-gps-core.js?v=20260828a"></script>
-<script src="/static/js/daxi-gps-trace.js?v=20260805"></script>
-<script src="/static/js/gps-precision-engine.js?v=20260804g"></script>
-<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260830c" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260830f" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902g" defer></script>
+<script defer src="/static/js/daxi-client-gps-core.js?v=20260831b"></script>
+<script defer src="/static/js/daxi-gps-trace.js?v=20260805"></script>
+<script defer src="/static/js/gps-precision-engine.js?v=20260804g"></script>
+<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260831a" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902g" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
@@ -2829,7 +2843,7 @@ window._DAXI_ASSET_V='20260830c';
     </div>
 </nav>
 
-<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260830c" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902g" defer></script>
 <script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>

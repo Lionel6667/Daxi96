@@ -40,6 +40,46 @@
 
     function _places() { return global.DAXI_HAITI_PLACES || []; }
 
+    function _placeIndexFromId(placeId) {
+        if (global._daxiPlaceIndexFromId) {
+            var idx = global._daxiPlaceIndexFromId(placeId);
+            if (idx >= 0) return idx;
+        }
+        var list = _places();
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === placeId) return i;
+        }
+        return -1;
+    }
+
+    function _syncExplorerUrl(idx) {
+        if (global._daxiRouteFromNav && global._daxiRouteFromNav()) return;
+        var place = _places()[idx];
+        if (!place || typeof global.daxiSetRoute !== 'function') return;
+        global.daxiSetRoute('explorer', place.id || '');
+    }
+
+    function focusPlaceById(placeId) {
+        var idx = _placeIndexFromId(placeId);
+        if (idx < 0) return false;
+        if (idx === _activeIdx) {
+            _focusPlace(idx, true);
+            _syncExplorerUrl(idx);
+            return true;
+        }
+        _activatePlace(idx, true);
+        _focusPlace(idx, true);
+        _syncExplorerUrl(idx);
+        return true;
+    }
+
+    function _applyPendingExplorerPlace() {
+        var placeId = global._daxiPendingExplorerPlace;
+        if (!placeId) return;
+        global._daxiPendingExplorerPlace = null;
+        focusPlaceById(placeId);
+    }
+
     function _tabBarH() {
         return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--daxi-tab-bar-height'), 10) || 60;
     }
@@ -1075,6 +1115,7 @@
         _drawAllMarkers();
         _updatePlaceBar();
         if (!skipFocus && !_traveling) _focusPlace(idx, true);
+        _syncExplorerUrl(idx);
     }
 
     function travelToIndex(targetIdx) {
@@ -1246,24 +1287,23 @@
         travelToIndex(next);
     }
 
+    function _isMapExperienceOffline() {
+        if (global._daxiForceOfflineUiPreview) return true;
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+        if (global.DaxiOffline && global.DaxiOffline.isReadOnly && global.DaxiOffline.isReadOnly()) return true;
+        return false;
+    }
+
     function enter() {
         if (!_places().length) return;
 
-        var offline = (typeof navigator !== 'undefined' && navigator.onLine === false) ||
-            (global.DaxiOffline && DaxiOffline.isReadOnly && DaxiOffline.isReadOnly()) ||
-            !!global._daxiOfflineMapMode || !!global._daxiExternalMapsBlocked;
-        if (offline) {
-            if (typeof global._daxiShowMapNeedOnline === 'function') {
-                global._daxiShowMapNeedOnline('explorer');
-            } else {
-                alert('Connexion internet requise pour Découvrir Haïti (carte interactive).');
+        if (_isMapExperienceOffline()) {
+            if (typeof global._daxiOpenExplorerFallback === 'function') {
+                global._daxiOpenExplorerFallback();
+            } else if (typeof global.openDaxiPage === 'function') {
+                global.openDaxiPage('explorerSection', 'Découvrez Haïti');
+                if (typeof global.showExplorerMain === 'function') global.showExplorerMain();
             }
-            var onBack = function () {
-                window.removeEventListener('online', onBack);
-                if (global.DaxiNetworkState && DaxiNetworkState.isOnline && !DaxiNetworkState.isOnline()) return;
-                enter();
-            };
-            window.addEventListener('online', onBack);
             return;
         }
 
@@ -1272,8 +1312,8 @@
         if (!mapsReady || !_map()) {
             _enterAttempts++;
             if (_enterAttempts > 80) {
-                if (typeof global._daxiShowMapNeedOnline === 'function') {
-                    global._daxiShowMapNeedOnline('explorer');
+                if (typeof global._daxiOpenExplorerFallback === 'function') {
+                    global._daxiOpenExplorerFallback();
                 } else {
                     console.warn('[DaxiExplorer] Carte indisponible — réessayez dans un instant.');
                 }
@@ -1338,6 +1378,7 @@
             return _cinematicOrbit(_ll(_places()[0]), 24, 58, 1800);
         }).then(function () {
             _prefetchAdjacent(0);
+            _applyPendingExplorerPlace();
             if (typeof global._syncMapFloatControls === 'function') global._syncMapFloatControls();
             if (typeof global.applyDaxiTranslations === 'function') global.applyDaxiTranslations();
         });
@@ -1372,6 +1413,7 @@
         enter: enter,
         exit: exit,
         travelToIndex: travelToIndex,
+        focusPlaceById: focusPlaceById,
         goNext: function () { goRelative(1); },
         goPrev: function () { goRelative(-1); },
         preload: function () { return _prefetchImages(0); }

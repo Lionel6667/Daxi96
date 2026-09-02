@@ -40,15 +40,17 @@
     <button type="submit" id="guest-phone-submit" class="daxi-guest-phone-submit">
       Terminer →
     </button>
-    <button type="button"
-            class="daxi-guest-phone-cancel"
-            hx-post="/htmx/client/orders/{{ order.id }}/refuse-price/"
-            hx-target="#daxi-sheet-order-slot"
-            hx-swap="innerHTML"
-            hx-confirm="Annuler cette commande ?"
-            hx-include="#guest-phone-card input[name=guest_id], #guestIdHidden, [name=csrfmiddlewaretoken]">
-      Annuler la commande
-    </button>
+    <div class="daxi-guest-phone-cancel-wrap">
+      <button type="button"
+              class="daxi-guest-phone-cancel"
+              hx-post="/htmx/client/orders/{{ order.id }}/refuse-price/"
+              hx-target="#daxi-sheet-order-slot"
+              hx-swap="innerHTML"
+              hx-confirm="Annuler cette commande ?"
+              hx-include="#guest-phone-card input[name=guest_id], #guestIdHidden, [name=csrfmiddlewaretoken]">
+        Annuler la commande
+      </button>
+    </div>
   </form>
 </div>
 <script>

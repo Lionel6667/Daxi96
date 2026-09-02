@@ -19,6 +19,44 @@
 
     function _routes() { return global.DAXI_FREQUENT_ROUTES || []; }
 
+    function _routeSlug(route) {
+        if (global._daxiRouteSlug) return global._daxiRouteSlug(route);
+        return String((route && route.from) || '') + '-' + String((route && route.to) || '');
+    }
+
+    function _syncRouteUrl(idx) {
+        if (global._daxiRouteFromNav && global._daxiRouteFromNav()) return;
+        var route = _routes()[idx];
+        if (!route || typeof global.daxiSetRoute !== 'function') return;
+        global.daxiSetRoute('itineraires', _routeSlug(route));
+    }
+
+    function _applyPendingRouteSlug() {
+        var slug = global._daxiPendingRouteSlug;
+        if (!slug) return;
+        global._daxiPendingRouteSlug = null;
+        var idx = global._daxiRouteIndexFromSlug ? global._daxiRouteIndexFromSlug(slug) : -1;
+        if (idx < 0) {
+            _routes().some(function(route, i) {
+                if (_routeSlug(route) === slug) { idx = i; return true; }
+                return false;
+            });
+        }
+        if (idx >= 0) selectRoute(idx);
+    }
+
+    function selectRouteBySlug(slug) {
+        var idx = global._daxiRouteIndexFromSlug ? global._daxiRouteIndexFromSlug(slug) : -1;
+        if (idx < 0) {
+            _routes().some(function(route, i) {
+                if (_routeSlug(route) === slug) { idx = i; return true; }
+                return false;
+            });
+        }
+        if (idx >= 0) selectRoute(idx);
+        return idx;
+    }
+
     function _tabBarH() {
         return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--daxi-tab-bar-height'), 10) || 60;
     }
@@ -566,6 +604,7 @@
         _drawRoute(route, idx, global._clientBgMap, global._daxiAdvancedMarkerElement);
 
         if (scrollToCenter) _scrollCardToCenter(idx, 'smooth');
+        _syncRouteUrl(idx);
     }
 
     function selectRoute(idx) {
@@ -588,8 +627,19 @@
         var destIn = document.getElementById('destinationAddressArrival');
         var ph = document.getElementById('pickupHidden');
         var dh = document.getElementById('destinationHidden');
-        if (pickupIn) { pickupIn.value = route.from; pickupIn.dataset.placeSelected = '1'; }
-        if (destIn) { destIn.value = route.to; destIn.dataset.placeSelected = '1'; }
+        if (pickupIn) {
+            pickupIn.value = route.from;
+            pickupIn.dataset.placeSelected = '1';
+            pickupIn.dataset.daxiUncovered = '';
+            pickupIn.dataset.daxiGpsUncovered = '';
+            if (typeof global._clearUncoveredBlock === 'function') global._clearUncoveredBlock(pickupIn);
+        }
+        if (destIn) {
+            destIn.value = route.to;
+            destIn.dataset.placeSelected = '1';
+            destIn.dataset.daxiUncovered = '';
+            if (typeof global._clearUncoveredBlock === 'function') global._clearUncoveredBlock(destIn);
+        }
         if (ph) ph.value = route.from;
         if (dh) dh.value = route.to;
         var plat = document.getElementById('pickupLatHidden');
@@ -612,28 +662,28 @@
         if (typeof _daxiSetSheetMode === 'function') _daxiSetSheetMode('form');
     }
 
+    function _isMapExperienceOffline() {
+        if (global._daxiForceOfflineUiPreview) return true;
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+        if (global.DaxiOffline && global.DaxiOffline.isReadOnly && global.DaxiOffline.isReadOnly()) return true;
+        return false;
+    }
+
     function enter() {
-        var offline = (typeof navigator !== 'undefined' && navigator.onLine === false) ||
-            (global.DaxiOffline && DaxiOffline.isReadOnly && DaxiOffline.isReadOnly()) ||
-            !!global._daxiOfflineMapMode || !!global._daxiExternalMapsBlocked;
-        if (offline) {
-            if (typeof global._daxiShowMapNeedOnline === 'function') {
-                global._daxiShowMapNeedOnline('routes');
-            } else {
-                alert('Connexion internet requise pour les itinéraires (carte).');
+        if (!_routes().length) return;
+
+        if (_isMapExperienceOffline()) {
+            if (typeof global._daxiOpenRoutesFallback === 'function') {
+                global._daxiOpenRoutesFallback();
+            } else if (typeof global.openDaxiPage === 'function') {
+                global.openDaxiPage('frequentRoutesSection', 'Itinéraires fréquents');
             }
-            var onBack = function () {
-                window.removeEventListener('online', onBack);
-                enter();
-            };
-            window.addEventListener('online', onBack);
             return;
         }
         if (!global._clientBgMap || !global.google) {
             setTimeout(enter, 200);
             return;
         }
-        if (!_routes().length) return;
 
         if (global.DaxiExplorerMap && typeof global.DaxiExplorerMap.exit === 'function') {
             try { global.DaxiExplorerMap.exit(); } catch (e) {}
@@ -655,7 +705,11 @@
             setTimeout(function () {
                 if (typeof _syncMapFloatControls === 'function') _syncMapFloatControls();
                 _applyTrackPadding();
-                _scrollCardToCenter(0, 'auto');
+                if (global._daxiPendingRouteSlug) {
+                    _applyPendingRouteSlug();
+                } else {
+                    _scrollCardToCenter(0, 'auto');
+                }
             }, 80);
         }
 
@@ -682,7 +736,7 @@
         if (typeof _syncMapFloatControls === 'function') _syncMapFloatControls();
     }
 
-    /** Redraw active route overlays on the current _clientBgMap (after dark/light Dual swap). */
+
     function refreshOnMap() {
         if (!document.body.classList.contains('daxi-routes-mode')) return false;
         if (!global._clientBgMap || _activeIdx < 0) return false;
@@ -698,6 +752,7 @@
         enter: enter,
         exit: exit,
         selectRoute: selectRoute,
+        selectRouteBySlug: selectRouteBySlug,
         bookRoute: bookRoute,
         preloadImages: preloadImages,
         warmup: warmup,

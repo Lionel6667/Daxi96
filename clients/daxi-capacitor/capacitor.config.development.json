@@ -3,11 +3,10 @@
   "appName": "Daxi",
   "webDir": "www",
   "server": {
-    "url": "https://repacking-shorts-vocalist.ngrok-free.dev",
     "cleartext": true,
     "androidScheme": "https",
     "iosScheme": "https",
-    "hostname": "repacking-shorts-vocalist.ngrok-free.dev",
+    "hostname": "localhost",
     "allowNavigation": [
       "localhost",
       "localhost:8000",
@@ -25,8 +24,8 @@
       "presentationOptions": ["badge", "sound", "alert"]
     },
     "SplashScreen": {
-      "launchShowDuration": 6000,
-      "launchAutoHide": true,
+      "launchShowDuration": 0,
+      "launchAutoHide": false,
       "backgroundColor": "#070B14",
       "androidSplashResourceName": "splash",
       "androidScaleType": "CENTER_CROP",
@@ -42,7 +41,7 @@
   "android": {
     "allowMixedContent": false,
     "backgroundColor": "#070B14",
-    "overrideUserAgent": "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36 DaxiAndroid/1.6.0 Capacitor"
+    "overrideUserAgent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36 DaxiAndroid/1.6.5 Capacitor"
   },
   "ios": {
     "backgroundColor": "#070B14",

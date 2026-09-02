@@ -3,7 +3,6 @@
   "appName": "Daxi",
   "webDir": "www",
   "server": {
-    "url": "https://daxipro.com",
     "cleartext": false,
     "androidScheme": "https",
     "iosScheme": "https",

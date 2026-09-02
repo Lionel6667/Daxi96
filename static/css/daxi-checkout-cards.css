@@ -223,20 +223,60 @@
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 8px 22px rgba(16, 185, 129, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.daxi-guest-phone-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(16, 185, 129, 0.28);
+}
+
+.daxi-guest-phone-cancel-wrap {
+  margin-top: 4px;
+  padding-top: 2px;
+  text-align: center;
+}
+
 .daxi-guest-phone-cancel {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0 auto;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
-  color: #94a3b8;
-  font-size: 13px;
-  font-weight: 700;
+  color: rgba(148, 163, 184, 0.5);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
   cursor: pointer;
+  text-decoration: none;
+  width: auto;
+  max-width: 100%;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
-.daxi-guest-phone-cancel:hover { color: #fca5a5; border-color: rgba(248, 113, 113, 0.45); }
+.daxi-guest-phone-cancel:hover,
+.daxi-guest-phone-cancel:focus-visible {
+  color: rgba(148, 163, 184, 0.78);
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(148, 163, 184, 0.35);
+}
+.daxi-guest-phone-cancel:active {
+  opacity: 0.72;
+}
+
+#pending-coords-card .daxi-guest-phone-cancel-wrap {
+  margin-top: 10px;
+  padding-top: 0;
+}
 
 [data-theme="light"] .daxi-guest-phone-card {
   background: var(--daxi-surface) !important;
@@ -258,6 +298,14 @@
   color: var(--daxi-text) !important;
 }
 [data-theme="light"] .daxi-guest-phone-input::placeholder { color: #9fb3c8 !important; }
+[data-theme="light"] .daxi-guest-phone-cancel {
+  color: rgba(100, 116, 139, 0.58) !important;
+}
+[data-theme="light"] .daxi-guest-phone-cancel:hover,
+[data-theme="light"] .daxi-guest-phone-cancel:focus-visible {
+  color: rgba(71, 85, 105, 0.82) !important;
+  text-decoration-color: rgba(100, 116, 139, 0.35) !important;
+}
 
 
 [data-theme="light"] .daxi-pay-wrap {

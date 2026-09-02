@@ -479,7 +479,14 @@ class ServeOriginalAsset(View):
             return HttpResponse(f'Not found: {path}', status=404)
         mime_type, _ = mimetypes.guess_type(filepath)
         mime_type = mime_type or 'application/octet-stream'
-        return FileResponse(open(filepath, 'rb'), content_type=mime_type)
+        response = FileResponse(open(filepath, 'rb'), content_type=mime_type)
+        if request.GET.get('v'):
+            response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        elif path.startswith(('assets/', 'static/')) or os.path.splitext(path)[1].lower() in {
+            '.js', '.css', '.woff2', '.woff', '.webp', '.png', '.jpg', '.jpeg', '.svg', '.gif', '.ico'
+        }:
+            response['Cache-Control'] = 'public, max-age=86400'
+        return response
 
 
 urlpatterns = [

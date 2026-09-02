@@ -64,10 +64,11 @@
     function shouldReplaceValidated(candidateAcc, candidateLat, candidateLng, candidateTs) {
         var cur = state.validated;
         if (!cur) return true;
+        var dist = haversineM(cur.lat, cur.lng, candidateLat, candidateLng);
+        if (dist >= 4 && candidateAcc <= cur.acc * 1.35) return true;
         if (candidateAcc > cur.acc + 0.5) return false;
         if (candidateAcc < cur.acc - 0.5) return true;
         if (candidateTs && cur.ts && candidateTs + 500 < cur.ts) return false;
-        var dist = haversineM(cur.lat, cur.lng, candidateLat, candidateLng);
         if (dist > Math.max(80, cur.acc * 2) && candidateAcc >= cur.acc) return false;
         if (dist > 1.5) return true;
         return candidateAcc <= cur.acc;

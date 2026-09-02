@@ -361,13 +361,16 @@ function handleTouristAttractions() {
     function showExplorerMain() {
         var explorer = document.getElementById('explorerSection');
         if (!explorer) return;
-        var grid = explorer.querySelector('.grid');
+        var hero = explorer.querySelector('.daxi-explorer-offline-hero');
+        var grid = explorer.querySelector('.grid') || explorer.querySelector('.daxi-explorer-offline-grid');
         var title = explorer.querySelector('h2');
+        if (hero) hero.style.display = '';
         if (grid) grid.style.display = '';
         if (title) title.style.display = '';
         explorer.querySelectorAll('.attraction-detail').forEach(function(detail) {
             detail.style.display = 'none';
         });
+        if (window.daxiSetRoute) daxiSetRoute('explorer', '');
     }
 
     function showMainPage() {
@@ -402,8 +405,10 @@ function handleTouristAttractions() {
         }
 
         if (explorer) {
-            var grid = explorer.querySelector('.grid');
+            var hero = explorer.querySelector('.daxi-explorer-offline-hero');
+            var grid = explorer.querySelector('.grid') || explorer.querySelector('.daxi-explorer-offline-grid');
             var title = explorer.querySelector('h2');
+            if (hero) hero.style.display = 'none';
             if (grid) grid.style.display = 'none';
             if (title) title.style.display = 'none';
         } else {
@@ -415,11 +420,8 @@ function handleTouristAttractions() {
         }
 
             detailContainer.style.display = 'block';
+            if (window.daxiSetRoute) daxiSetRoute('explorer', attractionId);
             detailContainer.innerHTML = `
-                <button type="button" class="mb-6 bg-gray-100 text-gray-700 px-4 py-2 !rounded-button font-medium cursor-pointer back-to-main-btn btn-glow" style="background:rgba(255,255,255,0.08)!important;color:#e2e8f0!important;border:1px solid rgba(148,163,184,0.2);">
-                    <i class="ri-arrow-left-line"></i> <span data-translate="back">Retour</span>
-                </button>
-
                 <div class="rounded-xl overflow-hidden" style="background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.15);">
                     <div class="h-48 bg-cover bg-center" style="background-image: url('assets/images/${attractionId === 'citadelle' ? 'img12.jpg' :
                                                                                       attractionId === 'labadee' ? 'img9.webp.jpg' :
@@ -516,12 +518,34 @@ function initServicePlansSection() {
         var card = planCards[index];
         if (!card) return;
         isProgrammatic = true;
-        navLockUntil = Date.now() + (behavior === 'smooth' ? 700 : 80);
-        var containerRect = plansContainer.getBoundingClientRect();
-        var cardRect = card.getBoundingClientRect();
-        var delta = (cardRect.left + cardRect.width / 2) - (containerRect.left + containerRect.width / 2);
-        plansContainer.scrollBy({ left: delta, behavior: behavior || 'smooth' });
-        setTimeout(function() { isProgrammatic = false; }, behavior === 'smooth' ? 700 : 80);
+        var beh = behavior === 'auto' ? 'auto' : 'smooth';
+        var dur = beh === 'smooth' ? 820 : 120;
+        navLockUntil = Date.now() + dur;
+        var container = plansContainer;
+        var maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+        var prevSnap = container.style.scrollSnapType;
+        container.style.scrollSnapType = 'none';
+
+        function targetScroll() {
+            var cardRect = card.getBoundingClientRect();
+            var containerRect = container.getBoundingClientRect();
+            var cardCenter = container.scrollLeft + (cardRect.left - containerRect.left) + cardRect.width / 2;
+            return Math.max(0, Math.min(cardCenter - container.clientWidth / 2, maxScroll));
+        }
+
+        function finish() {
+            container.scrollLeft = targetScroll();
+            container.style.scrollSnapType = prevSnap || '';
+            isProgrammatic = false;
+        }
+
+        if (beh === 'auto') {
+            container.scrollLeft = targetScroll();
+            requestAnimationFrame(finish);
+        } else {
+            container.scrollTo({ left: targetScroll(), behavior: 'smooth' });
+            setTimeout(finish, dur);
+        }
     }
 
     function nearestIndex() {
@@ -587,7 +611,13 @@ function initServicePlansSection() {
                 if (railLabel) railLabel.textContent = (idx + 1) + ' / ' + total;
                 if (railFill) railFill.style.width = Math.round(((idx + 1) / total) * 100) + '%';
             }
-        }, 80);
+            var card = planCards[idx];
+            if (!card) return;
+            var cardRect = card.getBoundingClientRect();
+            var containerRect = plansContainer.getBoundingClientRect();
+            var drift = (cardRect.left + cardRect.width / 2) - (containerRect.left + containerRect.width / 2);
+            if (Math.abs(drift) > 6) scrollCardToCenter(idx, 'smooth');
+        }, 120);
     }, { passive: true });
 
     if (leftArrow) {
@@ -618,6 +648,17 @@ function initServicePlansSection() {
     stage.addEventListener('touchstart', stopAutoScroll, { passive: true });
 
     updateActivePlan(0, 'auto');
+
+    window._daxiRecenterPlanCarousel = function() {
+        updateActivePlan(currentPlanIndex, 'auto');
+    };
+    window.addEventListener('resize', function() {
+        if (!stage || !stage.offsetParent && stage.closest && !stage.closest('#daxiPageBody')) return;
+        clearTimeout(window._daxiPlansResizeTimer);
+        window._daxiPlansResizeTimer = setTimeout(function() {
+            if (window._daxiRecenterPlanCarousel) window._daxiRecenterPlanCarousel();
+        }, 120);
+    });
 
     document.querySelectorAll('.learn-more-btn[data-plan]').forEach(function(button) {
         button.addEventListener('click', function () {
@@ -837,6 +878,7 @@ function _daxiOnPlaceSelected(inputEl, place, opts, displayValue, extra) {
     var latElDest = document.getElementById('destLatHidden');
     var lngElDest = document.getElementById('destLngHidden');
     if (inputId === 'destinationAddress') {
+        window._daxiPickupFromGps = false;
         if (latElPick) latElPick.value = parts.lat;
         if (lngElPick) lngElPick.value = parts.lng;
         if (typeof _daxiPlacesTrace === 'function') _daxiPlacesTrace('[MAP] setBookingPoint pickup (deferred, skipResize)');
@@ -1009,9 +1051,11 @@ function _showUncoveredBlock(anchorEl) {
 function _clearUncoveredBlock(anchorEl) {
     if (!anchorEl) return;
     anchorEl.dataset.daxiUncovered = '';
+    anchorEl.dataset.daxiGpsUncovered = '';
     var el = document.getElementById('daxi-uncovered-' + (anchorEl.id || 'field'));
     if (el) el.remove();
 }
+window._clearUncoveredBlock = _clearUncoveredBlock;
 
 function _rejectUncoveredPlace(inputEl, parts) {
     _clearPlaceCoordsForInput(inputEl);
@@ -1091,22 +1135,108 @@ function _daxiPromoteMainMapMarkers() {
 }
 window._daxiPromoteMainMapMarkers = _daxiPromoteMainMapMarkers;
 
+function _daxiBookingFieldConfirmed(inputId) {
+    var el = document.getElementById(inputId);
+    if (!el) return false;
+    var val = (el.value || '').trim();
+    if (!val) return false;
+    if (inputId === 'destinationAddress' && window._daxiPickupFromGps) return true;
+    var sel = el.dataset.placeSelected || '';
+    return sel === '1' || sel === 'pending';
+}
+
+function _daxiClearBookingFieldCoords(kind, opts) {
+    opts = opts || {};
+    if (kind === 'pickup') {
+        ['pickupLatHidden', 'pickupLngHidden'].forEach(function(id) {
+            var e = document.getElementById(id);
+            if (e) e.value = '';
+        });
+        if (opts.clearMarker !== false && window._bookingMarkers && window._bookingMarkers.pickup) {
+            var m = window._bookingMarkers.pickup;
+            if (m.map != null) m.map = null;
+            else if (m.setMap) m.setMap(null);
+            else if (m.overlay) m.overlay.setMap(null);
+            window._bookingMarkers.pickup = null;
+        }
+    } else if (kind === 'dest') {
+        ['destLatHidden', 'destLngHidden'].forEach(function(id) {
+            var e = document.getElementById(id);
+            if (e) e.value = '';
+        });
+        if (opts.clearMarker !== false && window._bookingMarkers && window._bookingMarkers.dest) {
+            var dm = window._bookingMarkers.dest;
+            if (dm.map != null) dm.map = null;
+            else if (dm.setMap) dm.setMap(null);
+            else if (dm.overlay) dm.overlay.setMap(null);
+            window._bookingMarkers.dest = null;
+        }
+    }
+}
+
+function _daxiPruneStaleBookingCoords() {
+    var orderOnMap = !window._daxiDraftSuspendsOrderMap && !!window._daxiMainMapFocusOrderId;
+    var markerOpts = { clearMarker: !orderOnMap };
+    if (!_daxiBookingFieldConfirmed('destinationAddress')) {
+        if (!window._daxiPickupFromGps) {
+            _daxiClearBookingFieldCoords('pickup', markerOpts);
+            var pickup = document.getElementById('destinationAddress');
+            if (pickup) {
+                pickup.dataset.placeSelected = '';
+                pickup.dataset.lat = '';
+                pickup.dataset.lng = '';
+            }
+            var ph = document.getElementById('pickupHidden');
+            if (ph) ph.value = '';
+        }
+    }
+    if (!_daxiBookingFieldConfirmed('destinationAddressArrival')) {
+        _daxiClearBookingFieldCoords('dest', markerOpts);
+        var dest = document.getElementById('destinationAddressArrival');
+        if (dest) {
+            dest.dataset.placeSelected = '';
+            dest.dataset.lat = '';
+            dest.dataset.lng = '';
+        }
+        var dh = document.getElementById('destinationHidden');
+        if (dh) dh.value = '';
+    }
+}
+window._daxiPruneStaleBookingCoords = _daxiPruneStaleBookingCoords;
+
+function _daxiWriteBookingCoordsToForm(latFieldId, lngFieldId, lat, lng, opts) {
+    if (!latFieldId || !lngFieldId || !opts || opts.silent || opts.mapOnly) return;
+    var latEl = document.getElementById(latFieldId);
+    var lngEl = document.getElementById(lngFieldId);
+    if (latEl) latEl.value = lat;
+    if (lngEl) lngEl.value = lng;
+}
+
 function _daxiSyncBookingMarkersFromForm() {
     if (!_daxiMainMapIsGoogle()) return;
+    _daxiPruneStaleBookingCoords();
     function _num(id) {
         var el = document.getElementById(id);
         var v = el && el.value != null ? parseFloat(el.value) : NaN;
         return isFinite(v) ? v : null;
     }
-    var pLa = _num('pickupLatHidden');
-    var pLo = _num('pickupLngHidden');
-    if (pLa != null && pLo != null) {
-        _setMainMapBookingPoint('pickup', pLa, pLo, 'pickupLatHidden', 'pickupLngHidden', 'destinationAddress', { silent: true });
+    if (_daxiBookingFieldConfirmed('destinationAddress')) {
+        var pLa = _num('pickupLatHidden');
+        var pLo = _num('pickupLngHidden');
+        if (pLa != null && pLo != null) {
+            if (window._daxiPickupFromGps) {
+                _hideGpsPickupMarker();
+            } else {
+                _setMainMapBookingPoint('pickup', pLa, pLo, 'pickupLatHidden', 'pickupLngHidden', 'destinationAddress', { silent: true, mapOnly: false });
+            }
+        }
     }
-    var dLa = _num('destLatHidden');
-    var dLo = _num('destLngHidden');
-    if (dLa != null && dLo != null) {
-        _setMainMapBookingPoint('dest', dLa, dLo, 'destLatHidden', 'destLngHidden', 'destinationAddressArrival', { silent: true });
+    if (_daxiBookingFieldConfirmed('destinationAddressArrival')) {
+        var dLa = _num('destLatHidden');
+        var dLo = _num('destLngHidden');
+        if (dLa != null && dLo != null) {
+            _setMainMapBookingPoint('dest', dLa, dLo, 'destLatHidden', 'destLngHidden', 'destinationAddressArrival', { silent: true, mapOnly: false });
+        }
     }
 }
 window._daxiSyncBookingMarkersFromForm = _daxiSyncBookingMarkersFromForm;
@@ -1278,6 +1408,7 @@ function _daxiCreateBookingMapMarker(type, pos, markersLocked, onDragEnd) {
         try {
         var pinColor = type === 'pickup' ? '#22c55e' : '#eab308';
         var content;
+        var pinUsed = false;
         if (window._daxiPinElement) {
             try {
                 var pin = new window._daxiPinElement({
@@ -1287,12 +1418,14 @@ function _daxiCreateBookingMapMarker(type, pos, markersLocked, onDragEnd) {
                     scale: 1.15
                 });
                 content = pin.element;
+                pinUsed = true;
             } catch (pinErr) {
                 content = _daxiPinMarkerEl(type);
             }
         } else {
             content = _daxiPinMarkerEl(type);
         }
+        if (!pinUsed && content) content = _daxiMarkerAnchorWrap(content, 'bottom');
         var adv = new window._daxiAdvancedMarkerElement({
             map: window._clientBgMap,
             position: pos,
@@ -1365,13 +1498,25 @@ function _daxiMapCenteredDot(innerStyle) {
     return wrap;
 }
 
+function _daxiMarkerAnchorWrap(content, mode) {
+    var wrap = document.createElement('div');
+    wrap.style.pointerEvents = 'auto';
+    if (mode === 'center') {
+        wrap.style.cssText = 'transform:translate(-50%,-50%);pointer-events:auto;';
+    } else {
+        wrap.style.cssText = 'transform:translate(-50%,-100%);pointer-events:auto;';
+    }
+    wrap.appendChild(content);
+    return wrap;
+}
+
 function _daxiPickupGreenDotEl() {
     var el = document.createElement('div');
     el.style.cssText = 'position:relative;width:30px;height:30px;pointer-events:auto;';
     var pulse = document.createElement('div');
     pulse.style.cssText = 'position:absolute;inset:-8px;border-radius:50%;background:rgba(34,197,94,0.22);';
     var dot = document.createElement('div');
-    dot.style.cssText = 'position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#22c55e;border:3px solid #ffffff;box-shadow:0 2px 12px rgba(34,197,94,0.75);';
+    dot.style.cssText = 'position:absolute;left:50%;bottom:0;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#22c55e;border:3px solid #ffffff;box-shadow:0 2px 12px rgba(34,197,94,0.75);';
     el.appendChild(pulse);
     el.appendChild(dot);
     return el;
@@ -1383,7 +1528,7 @@ function _daxiPinMarkerEl(type) {
     var glow = '#fde047';
     var half = 13;
     return _daxiMapCenteredDot(
-        'position:absolute;left:-' + half + 'px;top:-' + half + 'px;width:26px;height:26px;border-radius:50%;' +
+        'position:absolute;left:-' + half + 'px;bottom:0;width:26px;height:26px;border-radius:50%;' +
         'border:3px solid #fff;background:radial-gradient(circle at 32% 28%,' + glow + ',' + color + ' 72%);' +
         'box-shadow:0 0 0 5px rgba(234,179,8,0.35),0 6px 18px rgba(0,0,0,0.5);'
     );
@@ -1514,8 +1659,13 @@ function _daxiAnimateMapToUser(lat, lng, acc, opts) {
     opts = opts || {};
     if (_daxiShouldThrottleAutoPan(lat, lng, opts)) return;
     if (!_shouldAutoPanMap(opts) && !opts.forceCenter && !opts.forcePan) return;
-    var targetZoom = _getClientGpsZoom(acc || 60);
-    _daxiCenterClientOnVisibleMap(lat, lng, { zoom: targetZoom });
+    var zoom;
+    if (opts.zoom != null) {
+        zoom = opts.zoom;
+    } else if (opts.forceCenter || opts.forcePan || !window._clientGpsPannedOnce) {
+        zoom = _getClientGpsZoom(acc || 60);
+    }
+    _daxiCenterClientOnVisibleMap(lat, lng, { zoom: zoom, skipPanMark: opts.skipPanMark });
 }
 
 function _finalizeClientGpsScan(acc) {
@@ -1531,25 +1681,25 @@ function _finalizeClientGpsScan(acc) {
     }
 }
 
-function _syncSheetHeightVar(skipRepan) {
+function _daxiReadSheetHeightPx() {
     var sheet = document.getElementById('appSheet');
-    if (!sheet) return;
-    var h = sheet.offsetHeight;
+    if (!sheet) return 0;
     if (document.body.classList.contains('daxi-sheet-collapsed-mode') ||
         (sheet.classList && sheet.classList.contains('daxi-sheet-hidden'))) {
-        h = 0;
+        return 0;
     }
+    return sheet.offsetHeight || 0;
+}
+
+function _syncSheetHeightVar(skipRepan) {
+    var h = _daxiReadSheetHeightPx();
     document.documentElement.style.setProperty('--daxi-sheet-height', h + 'px');
     _syncMapFloatControls();
     _syncMapTapZone();
     _daxiApplyMapViewportPadding();
-    if (skipRepan) return;
-    if (!document.body.classList.contains('daxi-sheet-order-mode') && !window._daxiMainMapFocusOrderId) {
-        if (window._daxiMapFocusLockUntil && Date.now() < window._daxiMapFocusLockUntil) {
-            _daxiRepanBookingPointForSheet();
-        } else if (window._lastClientGpsPos && typeof _daxiRepanClientGpsForSheet === 'function' && !_daxiHasManualPickup()) {
-            _daxiRepanClientGpsForSheet();
-        }
+    if (!skipRepan) {
+        if (typeof _daxiRepanBookingPointForSheet === 'function') _daxiRepanBookingPointForSheet();
+        else if (typeof _daxiRepanClientGpsForSheet === 'function') _daxiRepanClientGpsForSheet();
     }
 }
 
@@ -1756,6 +1906,7 @@ function _daxiCollapseSheetFromMapTap(e) {
         return;
     }
     if (!_daxiCanCollapseSheetFromMap()) return;
+    if (document.body.classList.contains('daxi-sheet-collapsed-mode')) return;
     _daxiSetSheetCollapsed(true);
 }
 
@@ -1848,7 +1999,7 @@ function _daxiOpenSheetOrder(source) {
     _daxiMarkSheetUserOpen();
     window._daxiSheetPreferredMode = 'order';
     _daxiPrepareSheetVisible();
-    _daxiSetSheetMode('order', { expand: true });
+    _daxiSetSheetMode('order');
     _daxiSetSheetCollapsed(false);
     if (typeof _daxiBootstrapOrdersFromCache === 'function') _daxiBootstrapOrdersFromCache();
     var slot = document.getElementById('daxi-sheet-order-slot');
@@ -1955,7 +2106,7 @@ function _daxiOpenSheetForm(source) {
     _daxiMarkSheetUserOpen();
     window._daxiSheetPreferredMode = 'form';
     _daxiPrepareSheetVisible();
-    _daxiSetSheetMode('form', { expand: true });
+    _daxiSetSheetMode('form');
     _daxiSetSheetCollapsed(false);
     var sheet = document.getElementById('appSheet');
     if (sheet) {
@@ -1965,10 +2116,6 @@ function _daxiOpenSheetForm(source) {
         sheet.style.pointerEvents = '';
     }
     _daxiUpdateSheetSwitcher();
-    if (typeof _syncSheetHeightVar === 'function') _syncSheetHeightVar();
-    if (typeof _daxiRequestCommanderGpsFocus === 'function') {
-        _daxiRequestCommanderGpsFocus(source || 'sheet-form');
-    }
 }
 window._daxiOpenSheetForm = _daxiOpenSheetForm;
 
@@ -2040,25 +2187,21 @@ function _daxiSetSheetCollapsed(collapsed) {
     window._daxiSheetDragOffset = 0;
     document.body.classList.toggle('daxi-sheet-collapsed-mode', !!collapsed);
     _daxiUpdateExpandFab();
-    _syncSheetHeightVar();
+    _syncSheetHeightVar(true);
     if (collapsed) {
         _daxiUpdateOrderMini();
-        var activeMeta = (window._daxiSheetOrderList || []).find(function(o) { return o.active; })
-            || (window._daxiSheetOrderList || [])[0];
-        if (activeMeta && activeMeta.id) {
-            window._daxiMainMapFocusOrderId = String(activeMeta.id);
-            var mapEl = document.getElementById('daximap-' + activeMeta.id);
-            if (mapEl && window._daxiUpdateMainMapForOrder) _daxiUpdateMainMapForOrder(activeMeta.id);
-            else if (mapEl && window._daxiSyncMainMapOrderTracking) _daxiSyncMainMapOrderTracking(mapEl);
+        if (!window._daxiDraftSuspendsOrderMap) {
+            var activeMeta = (window._daxiSheetOrderList || []).find(function(o) { return o.active; })
+                || (window._daxiSheetOrderList || [])[0];
+            if (activeMeta && activeMeta.id) {
+                window._daxiMainMapFocusOrderId = String(activeMeta.id);
+                var mapEl = document.getElementById('daximap-' + activeMeta.id);
+                if (mapEl && window._daxiUpdateMainMapForOrder) _daxiUpdateMainMapForOrder(activeMeta.id);
+                else if (mapEl && window._daxiSyncMainMapOrderTracking) _daxiSyncMainMapOrderTracking(mapEl);
+            }
         }
-    } else {
-        if (sheet) sheet.classList.remove('daxi-sheet-hidden');
-        if (!document.body.classList.contains('daxi-sheet-order-mode') && window._bookingMarkers) {
-            setTimeout(function() { _fitMapToBookingMarkers(); }, 180);
-        }
-    }
-    if (!document.body.classList.contains('daxi-sheet-order-mode') && !window._daxiMainMapFocusOrderId) {
-        _daxiRepanClientGpsForSheet();
+    } else if (sheet) {
+        sheet.classList.remove('daxi-sheet-hidden');
     }
 }
 function _daxiShowSheetOrderFromMemory(orderId) {
@@ -2333,13 +2476,15 @@ function _daxiMapPadding(extraBottom) {
     } catch (e) {}
     var hudExtra = document.body.classList.contains('daxi-route-hud-visible') ? 44 : 0;
     var orderExtra = document.body.classList.contains('daxi-sheet-order-mode') ? 72 : 0;
+    var markerLift = sheetH > 0 ? Math.min(140, Math.round(sheetH * 0.22) + 56) : 24;
     return {
-        top: navH + 8 + hudExtra,
+        top: navH + 12 + hudExtra,
         right: 24,
-        bottom: tabH + sheetH + (extraBottom != null ? extraBottom : 20) + orderExtra,
+        bottom: tabH + sheetH + (extraBottom != null ? extraBottom : 28) + orderExtra + markerLift,
         left: 24
     };
 }
+window._daxiMapPadding = _daxiMapPadding;
 
 function _daxiApplyMapViewportPadding() {
     if (!window._clientBgMap || typeof window._clientBgMap.setOptions !== 'function') return;
@@ -2479,7 +2624,6 @@ function _daxiFitBothBookingMarkersVisible(retry) {
 window._daxiFitBothBookingMarkersVisible = _daxiFitBothBookingMarkersVisible;
 
 function _daxiVisibleMapMidY() {
-    _syncSheetHeightVar();
     var vh = window.innerHeight || document.documentElement.clientHeight || 600;
     var nav = document.querySelector('nav.nav-gradient');
     var navH = nav ? nav.offsetHeight : 56;
@@ -2488,11 +2632,7 @@ function _daxiVisibleMapMidY() {
         var tv = getComputedStyle(document.documentElement).getPropertyValue('--daxi-tab-bar-height').trim();
         if (tv) tabH = parseInt(tv, 10) || tabH;
     } catch (e) {}
-    var sheetH = 0;
-    var sheet = document.getElementById('appSheet');
-    if (sheet && !document.body.classList.contains('daxi-sheet-collapsed-mode') && !sheet.classList.contains('daxi-sheet-hidden')) {
-        sheetH = sheet.offsetHeight || 0;
-    }
+    var sheetH = _daxiReadSheetHeightPx();
     var visibleTop = navH + 8;
     var visibleBottom = vh - tabH - sheetH - 8;
     if (visibleBottom < visibleTop + 60) visibleBottom = visibleTop + 60;
@@ -2530,9 +2670,16 @@ function _daxiSmartPanForClientGps(lat, lng, acc, opts) {
     }
     _daxiIsClientDotInVisibleStrip(lat, lng, function(visible) {
         if (!visible && !_daxiShouldThrottleAutoPan(lat, lng, opts)) {
-            _daxiAnimateMapToUser(lat, lng, acc, opts);
+            _daxiCenterClientOnVisibleMap(lat, lng, { skipPanMark: true });
         }
     });
+}
+
+function _daxiNudgeMapCenterForSheet() {
+    if (!window._clientBgMap || typeof window._clientBgMap.panBy !== 'function') return;
+    var offsetY = _daxiVisibleMapOffsetY();
+    if (!offsetY) return;
+    try { window._clientBgMap.panBy(0, offsetY); } catch (e) {}
 }
 
 function _daxiCenterClientOnVisibleMap(lat, lng, opts) {
@@ -2559,9 +2706,10 @@ function _daxiCenterClientOnVisibleMap(lat, lng, opts) {
             window._clientBgMap.panTo(pos);
             if (_traceMap) _daxiPlacesTrace('[MAP] panTo END');
         }
-        if (window._clientBgMap.panBy) {
-            var offsetY = _daxiVisibleMapOffsetY();
-            if (offsetY) window._clientBgMap.panBy(0, offsetY);
+        if (!opts.skipNudge) {
+            requestAnimationFrame(function() {
+                _daxiNudgeMapCenterForSheet();
+            });
         }
         if (!opts.skipPanMark) {
             _daxiLastAutoPanTs = Date.now();
@@ -2733,11 +2881,22 @@ function _validateBookingForm() {
     var destVal = dest ? dest.value.trim() : '';
 
     if (!pickupVal) return 'Veuillez indiquer votre point de départ.';
-    if (pLat && pLat.value.trim() && pLng && pLng.value.trim() && pickup && pickup.dataset.daxiUncovered === '1') {
-        return 'DAXI ne couvre pas encore le point de départ sélectionné.';
+    if (pLat && pLat.value.trim() && pLng && pLng.value.trim() && pickup) {
+        var pLatN = parseFloat(pLat.value);
+        var pLngN = parseFloat(pLng.value);
+        if (pickup.dataset.daxiUncovered === '1') {
+            if (_isPlaceCovered(pLatN, pLngN)) {
+                _clearUncoveredBlock(pickup);
+            } else {
+                return 'DAXI ne couvre pas encore le point de départ sélectionné.';
+            }
+        }
     }
     if (pickup && pickup.dataset.daxiGpsUncovered === '1') {
-        return 'DAXI ne couvre pas encore votre zone actuelle.';
+        if (window._daxiPickupFromGps) {
+            return 'DAXI ne couvre pas encore votre zone actuelle.';
+        }
+        _clearUncoveredBlock(pickup);
     }
     if (!destVal) return 'Veuillez saisir votre destination.';
     if (dLat && dLat.value.trim() && dLng && dLng.value.trim() && dest && dest.dataset.daxiUncovered === '1') {
@@ -2979,16 +3138,17 @@ function _daxiSetSheetMode(mode, opts) {
     if (swForm) swForm.classList.toggle('active', !isOrder);
     if (swOrder) swOrder.classList.toggle('active', isOrder);
     _daxiUpdateSheetSwitcher();
-    _syncSheetHeightVar();
+    _syncSheetHeightVar(true);
     _daxiUpdateExpandFab();
     if (opts.expand) {
-        _daxiSetSheetCollapsed(false);
         var sheetEl = document.getElementById('appSheet');
         if (sheetEl) sheetEl.classList.remove('daxi-sheet-hidden');
+        if (document.body.classList.contains('daxi-sheet-collapsed-mode')) {
+            _daxiSetSheetCollapsed(false);
+        }
     }
     if (isOrder) {
         _daxiUpdateOrderMini();
-        _daxiRepanClientGpsForSheet();
         var card = document.querySelector('#daxi-sheet-order-slot [data-status]');
         var st = card ? card.getAttribute('data-status') : '';
         if (card && st && window._daxiScanLiveTracking) {
@@ -4170,9 +4330,8 @@ function _daxiApplySheetOrdersMeta(data, opts) {
     _daxiUpdateSheetSwitcher();
     _daxiRenderOrderPills();
     _daxiUpdateOrderMini();
-    _syncSheetHeightVar();
+    _syncSheetHeightVar(true);
     _daxiCheckPendingPickupPrompts(data.orders);
-    _daxiRepanClientGpsForSheet();
     var activeId = (window._daxiSheetOrderList.find(function(o) { return o.active; }) || {}).id;
     if (activeId) {
         window._daxiMainMapFocusOrderId = String(activeId);
@@ -4724,6 +4883,18 @@ function _reverseGeocodeToInput(lat, lng, inputId) {
 
 function _updateBookingRoute() {
     if (!window._clientBgMap || !window.google || !google.maps) return;
+    if (typeof _daxiBookingFieldConfirmed === 'function') {
+        if (!_daxiBookingFieldConfirmed('destinationAddress') || !_daxiBookingFieldConfirmed('destinationAddressArrival')) {
+            if (window._bookingRouteLine) window._bookingRouteLine.setMap(null);
+            if (window._bookingRouteGlow) window._bookingRouteGlow.setMap(null);
+            if (window.DaxiMapSnap && DaxiMapSnap.setActiveRoutePath) DaxiMapSnap.setActiveRoutePath(null);
+            else window._daxiActiveRoutePath = null;
+            document.body.classList.remove('daxi-route-hud-visible');
+            var hud = document.getElementById('daxiRouteStatsHud');
+            if (hud) { hud.innerHTML = ''; hud.style.display = 'none'; }
+            return;
+        }
+    }
     if (window._planWaypoints && window._planWaypoints.length) {
         _drawMultiStopRoute();
         return;
@@ -5058,6 +5229,10 @@ function _hideGpsPickupMarker() {
 
 function _setMainMapBookingPoint(type, lat, lng, latFieldId, lngFieldId, inputId, opts) {
     opts = opts || {};
+    if (!opts.silent && !opts.mapOnly) {
+        _daxiSuspendActiveOrderOnMainMap();
+        _daxiPruneStaleBookingCoords();
+    }
     if (typeof _daxiPlacesTrace === 'function' && typeof _daxiPlacesTraceActive === 'function' && _daxiPlacesTraceActive()) {
         _daxiPlacesTrace('[MAP] _setMainMapBookingPoint', { type: type, defer: !!opts.deferMapOps, skipResize: !!opts.skipMapResize, silent: !!opts.silent });
     }
@@ -5090,10 +5265,7 @@ function _setMainMapBookingPoint(type, lat, lng, latFieldId, lngFieldId, inputId
         if (typeof window._updateOfflineBookingMarker === 'function') {
             window._updateOfflineBookingMarker(type, lat, lng);
         }
-        var latEl0 = document.getElementById(latFieldId);
-        var lngEl0 = document.getElementById(lngFieldId);
-        if (latEl0) latEl0.value = lat;
-        if (lngEl0) lngEl0.value = lng;
+        _daxiWriteBookingCoordsToForm(latFieldId, lngFieldId, lat, lng, opts);
         if (type === 'dest') {
             if (!opts.silent && typeof _triggerDestRoutePreview === 'function') {
                 if (opts.deferMapOps) _daxiDeferAfterPaint(function() { _triggerDestRoutePreview(); });
@@ -5138,6 +5310,7 @@ function _setMainMapBookingPoint(type, lat, lng, latFieldId, lngFieldId, inputId
     if (!window._clientBgMap || !window.google || !google.maps) return;
     function _applyBookingMarkerOnMap() {
     window._bookingMarkers = window._bookingMarkers || { pickup: null, dest: null };
+    if (type === 'pickup' && !opts.gpsLabel) window._daxiPickupFromGps = false;
     var pos = { lat: lat, lng: lng };
     var key = type === 'pickup' ? 'pickup' : 'dest';
     var marker = window._bookingMarkers[key];
@@ -5198,10 +5371,7 @@ function _setMainMapBookingPoint(type, lat, lng, latFieldId, lngFieldId, inputId
         else if (marker.map != null) marker.map = window._clientBgMap;
         else if (marker.setMap) marker.setMap(window._clientBgMap);
     }
-    var latEl = document.getElementById(latFieldId);
-    var lngEl = document.getElementById(lngFieldId);
-    if (latEl) latEl.value = lat;
-    if (lngEl) lngEl.value = lng;
+    _daxiWriteBookingCoordsToForm(latFieldId, lngFieldId, lat, lng, opts);
     function _runHeavyMapOps() {
         if (typeof _daxiPlacesTrace === 'function') _daxiPlacesTrace('[MAP] update START', { type: type, silent: !!opts.silent });
         if (type === 'dest') {
@@ -6383,10 +6553,50 @@ function _daxiCleanupGmpWidget(inputEl) {
     });
 }
 
+function _daxiSuspendActiveOrderOnMainMap() {
+    var hadOrder = !!(window._daxiMainMapFocusOrderId ||
+        (window._daxiMainOrderTrack && window._daxiMainOrderTrack.orderId));
+    if (!hadOrder) {
+        _daxiPruneStaleBookingCoords();
+        return;
+    }
+    if (window._daxiDraftSuspendsOrderMap) {
+        _daxiPruneStaleBookingCoords();
+        return;
+    }
+    window._daxiDraftSuspendsOrderMap = true;
+    window._daxiMainMapFocusOrderId = null;
+    if (typeof _daxiClearMainMapOrderTrack === 'function') _daxiClearMainMapOrderTrack();
+    if (window._bookingMarkers) {
+        ['pickup', 'dest'].forEach(function(key) {
+            var m = window._bookingMarkers[key];
+            if (!m) return;
+            if (m.map != null) m.map = null;
+            else if (m.setMap) m.setMap(null);
+            else if (m.overlay) m.overlay.setMap(null);
+            window._bookingMarkers[key] = null;
+        });
+    }
+    if (typeof _daxiClearBookingRouteHud === 'function') _daxiClearBookingRouteHud();
+    _daxiPruneStaleBookingCoords();
+    if (typeof _daxiApplyMapViewportPadding === 'function') _daxiApplyMapViewportPadding();
+}
+window._daxiSuspendActiveOrderOnMainMap = _daxiSuspendActiveOrderOnMainMap;
+
+function _daxiSuspendActiveOrderOnMainMapForDraft(inputEl) {
+    if (!inputEl) return;
+    if (inputEl.id !== 'destinationAddress' && inputEl.id !== 'destinationAddressArrival') return;
+    if (!(inputEl.value || '').trim()) return;
+    _daxiPruneStaleBookingCoords();
+    _daxiSuspendActiveOrderOnMainMap();
+}
+window._daxiSuspendActiveOrderOnMainMapForDraft = _daxiSuspendActiveOrderOnMainMapForDraft;
+
 function _daxiBindPlacesSuggestHandlers(inputEl, opts, suggestionsId, hasGmp) {
     var activeEl = _daxiGetPlacesActiveInput(inputEl) || inputEl;
     function onInput() {
         if (activeEl !== inputEl) inputEl.value = activeEl.value;
+        _daxiSuspendActiveOrderOnMainMapForDraft(inputEl);
         _clearPlaceCoordsForInput(inputEl);
         _clearUncoveredBlock(inputEl);
         var q = activeEl.value || '';
@@ -6998,7 +7208,8 @@ function _daxiRecoverLiveGoogleMap(reason) {
         sessionStorage.removeItem('daxi_maps_probe_failed');
         sessionStorage.removeItem('daxi_skip_tile_prefetch');
     } catch (e) {}
-    if (typeof window._daxiLoadGoogleMaps === 'function') window._daxiLoadGoogleMaps();
+    if (typeof window._daxiLoadGoogleMapsNow === 'function') window._daxiLoadGoogleMapsNow();
+    else if (typeof window._daxiLoadGoogleMaps === 'function') window._daxiLoadGoogleMaps({ immediate: true });
     return true;
 }
 window._daxiRecoverLiveGoogleMap = _daxiRecoverLiveGoogleMap;
@@ -7213,6 +7424,7 @@ function _daxiReattachMainMapOverlays() {
     if (!map) return;
     if (window._bookingMarkers) {
         ['pickup', 'dest'].forEach(function(k) {
+            if (k === 'pickup' && window._daxiPickupFromGps) return;
             var m = window._bookingMarkers[k];
             if (!m) return;
             if (m._dom && m.overlay) m.overlay.setMap(map);
@@ -7239,15 +7451,17 @@ function _daxiWireOneMainMapGmapsListeners(map) {
         window._daxiMapUserInteracting = true;
         window._daxiMapDidDrag = true;
         window._daxiMapUserInteractedAt = Date.now();
+        window._daxiMapUserPanCooldownUntil = Date.now() + 12000;
     });
     map.addListener('zoom_changed', function() {
         window._daxiMapUserInteractedAt = Date.now();
     });
     map.addListener('dragend', function() {
+        window._daxiMapUserPanCooldownUntil = Date.now() + 12000;
         setTimeout(function() {
             window._daxiMapUserInteracting = false;
             window._daxiMapDidDrag = false;
-        }, 120);
+        }, 500);
     });
     map.addListener('idle', function() {
         if (typeof _daxiRedrawBookingMarkers === 'function') _daxiRedrawBookingMarkers();
@@ -7434,6 +7648,7 @@ window._daxiApplyClientMapsTheme = function(theme) {
     }
     theme = theme || document.documentElement.getAttribute('data-theme') || 'dark';
     window._daxiPendingMapTheme = theme;
+    window._clientGpsMarkerAnchorFixed = false;
     _daxiApplyMapContainerTheme(theme);
     if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.applyTheme) {
         DaxiMapPlaceholder.applyTheme('daxi-map-stage', theme);
@@ -7445,7 +7660,11 @@ window._daxiApplyClientMapsTheme = function(theme) {
         if (_daxiApplyClientBgMapTheme(theme)) {
             if (typeof _daxiReattachMainMapOverlays === 'function') _daxiReattachMainMapOverlays();
             if (typeof _daxiFlushPendingBookingMarkers === 'function') _daxiFlushPendingBookingMarkers();
-            if (typeof _daxiSyncBookingMarkersFromForm === 'function') _daxiSyncBookingMarkersFromForm();
+            if (!window._daxiPickupFromGps && typeof _daxiSyncBookingMarkersFromForm === 'function') {
+                _daxiSyncBookingMarkersFromForm();
+            } else if (window._daxiPickupFromGps && typeof _hideGpsPickupMarker === 'function') {
+                _hideGpsPickupMarker();
+            }
         }
         return;
     }
@@ -7819,14 +8038,14 @@ async function _initPlacesAutocompleteAsync() {
         });
     });
 
-    _syncSheetHeightVar();
+    _syncSheetHeightVar(true);
     window.addEventListener('resize', function() {
-        _syncSheetHeightVar();
+        _syncSheetHeightVar(true);
         _syncMapFloatControls();
     });
     var appSheet = document.getElementById('appSheet');
     if (appSheet && window.ResizeObserver) {
-        new ResizeObserver(_syncSheetHeightVar).observe(appSheet);
+        new ResizeObserver(function() { _syncSheetHeightVar(true); }).observe(appSheet);
     }
     _initDaxiSheetUi();
     _initPlan5AirportStepper();
@@ -8082,6 +8301,16 @@ function _setOrderBtnLoading(loading) {
     }
 }
 
+function _daxiExtractHtmxErrorMessage(html) {
+    if (!html) return '';
+    var text = String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!text) return '';
+    if (html.indexOf('daxi-htmx-error') >= 0 || html.indexOf('bg-red-500') >= 0 || html.indexOf('ri-error-warning') >= 0) {
+        return text;
+    }
+    return '';
+}
+
 function _daxiIsOrderCreateHtmx(evt) {
     var elt = evt.detail && evt.detail.elt;
     if (!elt) return false;
@@ -8097,7 +8326,8 @@ document.body.addEventListener('htmx:responseError', function(evt) {
     }
     _daxiResetOrderCreateLoading('responseError_' + (xhr && xhr.status));
     if (xhr && xhr.status !== 429) {
-        _showBookingValidationErr('Impossible de créer la commande (erreur réseau). Réessayez.');
+        var serverMsg = _daxiExtractHtmxErrorMessage(xhr && xhr.responseText);
+        _showBookingValidationErr(serverMsg || 'Impossible de créer la commande (erreur réseau). Réessayez.');
     }
 });
 
@@ -11405,9 +11635,29 @@ window._daxiSyncSidebarEnterprise = _daxiSyncSidebarEnterprise;
             });
         }
 
+        function _otpFillFromDigits(digits) {
+            digits = String(digits || '').replace(/\D/g, '').slice(0, 6);
+            for (var i = 0; i < boxes.length; i++) boxes[i].value = digits[i] || '';
+            if (digits.length >= 6) _otpAutoSubmitIfComplete();
+            else if (digits.length && boxes[digits.length]) boxes[digits.length].focus();
+        }
+
+        var autofillBridge = document.getElementById('otpAutofillBridge');
+        if (autofillBridge) {
+            autofillBridge.addEventListener('input', function() {
+                _otpFillFromDigits(autofillBridge.value);
+                autofillBridge.value = '';
+            });
+        }
+
         boxes.forEach(function(box, idx) {
             box.addEventListener('input', function() {
-                this.value = (this.value || '').replace(/\D/g, '').slice(0, 1);
+                var v = (this.value || '').replace(/\D/g, '');
+                if (v.length > 1) {
+                    _otpFillFromDigits(v);
+                    return;
+                }
+                this.value = v.slice(0, 1);
                 if (this.value && boxes[idx + 1]) boxes[idx + 1].focus();
                 _otpAutoSubmitIfComplete();
             });
@@ -11415,13 +11665,6 @@ window._daxiSyncSidebarEnterprise = _daxiSyncSidebarEnterprise;
                 if (e.key === 'Backspace' && !this.value && boxes[idx - 1]) {
                     boxes[idx - 1].focus();
                 }
-            });
-            box.addEventListener('paste', function(e) {
-                e.preventDefault();
-                var pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
-                for (var i = 0; i < pasted.length && i < boxes.length; i++) boxes[i].value = pasted[i];
-                if (pasted.length >= 6) _otpAutoSubmitIfComplete();
-                else if (boxes[pasted.length]) boxes[pasted.length].focus();
             });
         });
 
@@ -11607,6 +11850,19 @@ window._daxiPersistLang = function(lang) {
             water_service: 'Bouteille d\'eau disponible',
             water_desc: 'Une bouteille d\'eau est disponible à bord pour vous rafraîchir durant votre trajet.',
             frequent_routes: 'Itinéraires fréquents',
+            routes_offline_kicker: 'Trajets populaires',
+            routes_offline_sub: 'Les liaisons les plus demandées entre les grandes villes d\'Haïti',
+            routes_offline_book: 'Commander ce trajet',
+            routes_from: 'Départ',
+            routes_to: 'Arrivée',
+            routes_pro_badge: 'Trajet vérifié',
+            explorer_offline_kicker: 'Patrimoine & nature',
+            explorer_offline_sub: 'Forts, plages et monuments emblématiques à explorer avec DAXI',
+            explorer_badge_fort: 'Forteresse',
+            explorer_badge_beach: 'Plage',
+            explorer_badge_history: 'Histoire',
+            explorer_badge_architecture: 'Architecture',
+            explorer_badge_royal: 'Palais royal',
             forum_title: 'Forum Communauté',
             blog_title: 'Blog Daxi',
             blog_subtitle: 'Actualités, conseils voyage et découvertes',
@@ -12017,6 +12273,12 @@ window._daxiPersistLang = function(lang) {
             water_service: 'Boutèy dlo disponib',
             water_desc: 'Gen yon boutèy dlo nan veyikil la pou ou rafraîchi pandan vwayaj ou.',
             frequent_routes: 'Wout frekant',
+            routes_offline_kicker: 'Wout popilè',
+            routes_offline_sub: 'Lyen ki pi mande ant gwo vil yo ann Ayiti',
+            routes_offline_book: 'Kòmande wout sa a',
+            routes_from: 'Depa',
+            routes_to: 'Arive',
+            routes_pro_badge: 'Wout verifye',
             forum_title: 'Fowòm Kominote',
             forum_subtitle: 'Dekouvri dènye anons ak diskisyon yo',
             trip_history: 'Istorik vwayaj',
@@ -12427,6 +12689,12 @@ window._daxiPersistLang = function(lang) {
             water_service: 'Water bottle available',
             water_desc: 'A water bottle is available on board to refresh you during your trip.',
             frequent_routes: 'Frequent routes',
+            routes_offline_kicker: 'Popular trips',
+            routes_offline_sub: 'The most requested connections between Haiti\'s major cities',
+            routes_offline_book: 'Book this route',
+            routes_from: 'From',
+            routes_to: 'To',
+            routes_pro_badge: 'Verified route',
             forum_title: 'Community Forum',
             forum_subtitle: 'Discover the latest announcements and discussions',
             trip_history: 'Trip history',
@@ -12812,6 +13080,12 @@ window._daxiPersistLang = function(lang) {
             water_service: 'Botella de agua disponible',
             water_desc: 'Hay una botella de agua disponible a bordo para refrescarse durante el viaje.',
             frequent_routes: 'Rutas frecuentes',
+            routes_offline_kicker: 'Viajes populares',
+            routes_offline_sub: 'Las conexiones más solicitadas entre las grandes ciudades de Haití',
+            routes_offline_book: 'Reservar esta ruta',
+            routes_from: 'Salida',
+            routes_to: 'Llegada',
+            routes_pro_badge: 'Ruta verificada',
             forum_title: 'Foro Comunidad',
             forum_subtitle: 'Descubra los últimos anuncios y debates',
             trip_history: 'Historial de viajes',
