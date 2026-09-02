@@ -65,11 +65,11 @@
   ].forEach(stub);
 
   function shouldArm(e) {
-    if (!e || !e.target || !e.target.closest) return true;
+    if (!e || !e.target || !e.target.closest) return false;
     return !!e.target.closest(
-      'body, #appSheet, .app-sheet, #bookingSection, #mainTabBar, ' +
+      '#appSheet, .app-sheet, #bookingSection, #mainTabBar, ' +
       '#destinationAddress, #destinationAddressArrival, #orderTaxiBtn, ' +
-      '#daxi-map-stage, #daxiMenuFab, .daxi-map-placeholder'
+      '#daxi-map-stage, #daxiMenuFab, .daxi-map-placeholder, #myPositionBtn'
     );
   }
 
@@ -81,7 +81,6 @@
     document.addEventListener('pointerdown', function (e) {
       if (shouldArm(e)) ensure();
     }, once);
-    document.addEventListener('keydown', function () { ensure(); }, once);
     document.addEventListener('focusin', function (e) {
       var id = e.target && e.target.id;
       if (id === 'destinationAddress' || id === 'destinationAddressArrival') ensure();
