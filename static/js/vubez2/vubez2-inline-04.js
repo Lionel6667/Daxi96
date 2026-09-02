@@ -10556,6 +10556,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window._daxiLoaderDismissed = true;
             if (typeof window._daxiBootMark === 'function') window._daxiBootMark('loader-dismiss');
             document.documentElement.classList.remove('daxi-booting');
+            document.documentElement.classList.remove('daxi-intro-boot');
             var loader = document.getElementById('initialLoader');
             if (loader) {
                 loader.classList.add('is-dismissed');

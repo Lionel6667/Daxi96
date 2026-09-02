@@ -12,7 +12,6 @@
     <link rel="icon" href="/assets/images/daxi-logo-gold.png">
     <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260820f">
     <link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
-    <link rel="stylesheet" href="/static/css/daxi-assist-ai.css?v=20260814f">
     <script>
     window._gmapsLoaded = false;
     window._pageLoaded = false;
@@ -4575,20 +4574,5 @@ function haversineKm(lat1,lon1,lat2,lon2) {
 })();
 </script>
 <script src="/static/js/daxi-countdown.js"></script>
-<script src="/static/js/daxi-assist-ai.js?v=20260814f"></script>
-<button type="button" id="daxi-drv-ai-fab" aria-label="Assistant chauffeur" style="position:fixed;right:14px;bottom:86px;z-index:80;width:52px;height:52px;border:none;border-radius:50%;background:linear-gradient(135deg,#2563eb,#10b981);color:#fff;box-shadow:0 10px 28px rgba(37,99,235,.4);font-size:20px;cursor:pointer;"><i class="ri-sparkling-2-fill"></i></button>
-<div id="daxi-drv-ai-sheet" style="display:none;position:fixed;left:12px;right:12px;bottom:150px;z-index:81;max-height:52vh;overflow:auto;">
-  <div id="daxi-drv-ai-host"></div>
-</div>
-<script>
-(function(){
-  var fab = document.getElementById('daxi-drv-ai-fab');
-  var sheet = document.getElementById('daxi-drv-ai-sheet');
-  if (window.DaxiAssistAI) window.DaxiAssistAI.mount({ host: '#daxi-drv-ai-host', audience: 'driver' });
-  if (fab && sheet) fab.onclick = function(){
-    sheet.style.display = sheet.style.display === 'none' ? 'block' : 'none';
-  };
-})();
-</script>
 </body>
 </html>

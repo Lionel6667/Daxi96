@@ -23,14 +23,93 @@
     <link rel="canonical" href="https://daxipro.com/">
 
     <script>(function(){window._daxiBootT0=Date.now();window._daxiBootLog=[];window._daxiBootDump=function(){try{localStorage.setItem('daxi_boot_log',JSON.stringify(window._daxiBootLog||[]));}catch(e){}return window._daxiBootLog;};window._daxiBootMark=function(n){var rec={t:Date.now()-window._daxiBootT0,nav:(typeof performance!=='undefined'&&performance.now)?Math.round(performance.now()):0,n:n};(window._daxiBootLog=window._daxiBootLog||[]).push(rec);try{console.log('[DAXI BOOT]',rec.nav+'ms nav',rec.t+'ms parse',n);}catch(e){}};window._daxiBootMark('html-parse-start');if(typeof addEventListener==='function'){addEventListener('daxi:intro-complete',function(){try{window._daxiBootDump();}catch(e){}});addEventListener('load',function(){try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(!n)return;window._daxiBootMark('nav dns='+Math.round(n.domainLookupEnd-n.domainLookupStart)+' connect='+Math.round(n.connectEnd-n.connectStart)+' tls='+Math.round(Math.max(0,n.connectEnd-(n.secureConnectionStart||n.connectStart)))+' ttfb='+Math.round(n.responseStart-n.requestStart)+' download='+Math.round(n.responseEnd-n.responseStart)+' encoded='+Math.round(n.encodedBodySize||0)+' decoded='+Math.round(n.decodedBodySize||0)+' transfer='+Math.round(n.transferSize||0));try{window._daxiBootDump();}catch(e2){}}catch(e){}}); }try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
-    <style id="daxi-critical-sheet-lock">
+    <style id="daxi-critical-boot">
+        html.daxi-booting, html.daxi-booting body {
+            background: #070b14;
+            overflow: hidden;
+        }
+        html[data-theme="light"].daxi-booting,
+        html[data-theme="light"].daxi-booting body {
+            background: #f0f4f9;
+        }
+        html.daxi-booting #daxi-map-stage,
+        html.daxi-booting .app-sheet,
+        html.daxi-booting #daxiMenuFab,
+        html.daxi-booting #daxiMapTapZone,
+        html.daxi-booting .daxi-sheet-chrome,
+        html.daxi-booting #daxi-web-radar,
+        html.daxi-booting .daxi-page-overlay {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
         html.daxi-booting .app-sheet .sheet-inner > section:not(#bookingSection),
         html.daxi-booting .app-sheet .sheet-inner > div:not(#daxiSheetBooking):not(#daxiSheetOrder) {
             display: none !important;
             visibility: hidden !important;
         }
+        html.daxi-intro-boot body {
+            visibility: hidden !important;
+        }
+        html.daxi-intro-boot #daxi-cinematic,
+        html.daxi-intro-playing #daxi-cinematic {
+            visibility: visible !important;
+        }
+        html.daxi-intro-playing body,
+        html.daxi-intro-done body {
+            visibility: visible !important;
+        }
+        #initialLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #070b14;
+            pointer-events: auto;
+        }
+        [data-theme="light"] #initialLoader { background: #f0f4f9; }
+        #initialLoader .daxi-gps-boot__stage {
+            position: relative;
+            width: min(200px, 52vw);
+            height: min(200px, 52vw);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #initialLoader .daxi-gps-boot__ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1.5px solid rgba(251, 191, 36, 0.28);
+            animation: daxiGpsBootPulseCrit 2.2s ease-out infinite;
+        }
+        #initialLoader .daxi-gps-boot__ring.r2 {
+            inset: 14%;
+            animation-delay: 0.35s;
+            border-color: rgba(34, 211, 238, 0.32);
+        }
+        #initialLoader .daxi-gps-boot__ring.r3 {
+            inset: 28%;
+            animation-delay: 0.7s;
+            border-color: rgba(251, 191, 36, 0.18);
+        }
+        #initialLoader .daxi-gps-boot__dot {
+            position: relative;
+            z-index: 2;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fbbf24;
+            box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.18);
+        }
+        @keyframes daxiGpsBootPulseCrit {
+            0% { transform: scale(0.78); opacity: 0.15; }
+            45% { transform: scale(1); opacity: 0.85; }
+            100% { transform: scale(1.12); opacity: 0; }
+        }
     </style>
-    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+9000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');}setTimeout(bootTimeout,2800);})();</script>
+    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+20000;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}if(!window._daxiLoaderDismissed&&Date.now()<deadline){setTimeout(bootTimeout,300);return;}document.documentElement.classList.remove('daxi-booting');document.documentElement.classList.remove('daxi-intro-boot');}setTimeout(bootTimeout,3200);})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <script>
@@ -41,6 +120,7 @@
         var isFile = location.protocol === 'file:';
         if (isNative || isFile) {
             document.documentElement.classList.add('daxi-native-shell');
+            document.documentElement.classList.add('daxi-intro-boot');
         }
         if (isFile && !document.querySelector('base')) {
             var base = document.createElement('base');
@@ -55,14 +135,7 @@
     })();
     </script>
 
-    <script defer src="/static/js/daxi-intro.js?v=20260831a"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        if (window.DaxiIntro && typeof DaxiIntro.play === 'function') DaxiIntro.play();
-      } catch (e) {}
-    });
-    </script>
+    <script defer src="/static/js/daxi-intro.js?v=20260902i"></script>
     <link rel="icon" type="image/png" href="assets/images/daxi-logo-gold.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
     <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816" media="print" onload="this.media='all'">
@@ -162,14 +235,12 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902h" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902i" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902h">
-    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
+    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c">
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902i">
+    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b">
 
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -239,9 +310,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902h';
+window._DAXI_ASSET_V='20260902i';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902h" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902i" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -2805,12 +2876,12 @@ window._DAXI_ASSET_V='20260902h';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902h" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902i" defer></script>
 <script defer src="/static/js/daxi-client-gps-core.js?v=20260831b"></script>
 <script defer src="/static/js/daxi-gps-trace.js?v=20260805"></script>
 <script defer src="/static/js/gps-precision-engine.js?v=20260804g"></script>
 <script src="/static/js/vubez2/vubez2-inline-05.js?v=20260831a" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902h" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902i" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
@@ -2843,7 +2914,7 @@ window._DAXI_ASSET_V='20260902h';
     </div>
 </nav>
 
-<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902h" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902i" defer></script>
 <script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>

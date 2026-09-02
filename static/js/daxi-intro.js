@@ -378,17 +378,16 @@
     if (isNativeShell()) return;
     try {
       document.documentElement.classList.remove('daxi-booting');
+      document.documentElement.classList.remove('daxi-intro-boot');
     } catch (e) {}
   }
 
   function playDaxiIntro() {
     if (typeof document === 'undefined') return Promise.resolve();
     if (!DAXI_INTRO_ENABLED || global.DAXI_INTRO_DISABLED) {
-      releaseWebBootingLock();
       return Promise.resolve();
     }
     if (!isNativeShell()) {
-      releaseWebBootingLock();
       return Promise.resolve();
     }
     if (global._daxiIntroPromise) return global._daxiIntroPromise;
@@ -525,4 +524,20 @@
     motion: INTRO,
     ease: EASE
   };
+
+  try {
+    if (isNativeShell()) injectCss();
+  } catch (eBootCss) {}
+
+  function bootIntroWhenReady() {
+    if (!isNativeShell() || global.DAXI_INTRO_DISABLED || !DAXI_INTRO_ENABLED) return;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        playDaxiIntro();
+      });
+    } else {
+      playDaxiIntro();
+    }
+  }
+  bootIntroWhenReady();
 })(typeof window !== 'undefined' ? window : this);
