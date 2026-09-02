@@ -145,8 +145,9 @@
         .ri-map-pin-line::before{content:"📍"}.ri-flag-line::before{content:"🏁"}.ri-focus-3-line::before{content:"◎"}.ri-search-line::before{content:"🔎"}
         .ri-chat-3-line::before{content:"💬"}.ri-arrow-right-s-line::before{content:"›"}.ri-user-3-fill::before{content:"👤"}.ri-car-line::before{content:"🚗"}
         .ri-arrow-left-right-line::before{content:"⇄"}.ri-flashlight-line::before{content:"⚡"}.ri-calendar-line::before{content:"📅"}.ri-question-line::before{content:"?"}.ri-close-line::before{content:"×"}.ri-menu-line::before{content:"☰"}
-        .daxi-map-placeholder{position:absolute;inset:0;background:#070b14 center/cover no-repeat}
+        .daxi-map-placeholder{position:absolute;inset:0;background:#070b14 url('/assets/images/daxi-map-placeholder-dark.webp') center/cover no-repeat}
         #daxi-map-placeholder-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+        html:not(.daxi-native-shell) #initialLoader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
         #initialLoader.is-dismissed,#initialLoader[hidden]{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}
         #locationSharePrompt,.location-share-prompt{display:none!important}
         #locationSharePrompt.show{display:flex!important;position:fixed;inset:0;z-index:10020;align-items:center;justify-content:center}
@@ -158,21 +159,21 @@
         .hidden{display:none!important}
     </style>
     <script>
-    document.documentElement.classList.add('daxi-booting');
     (function(){
       var web = !(window.Capacitor || window._daxiCapacitorApp || window.DaxiAndroid || /DaxiApp|DaxiNative/i.test(navigator.userAgent||''));
+      if (web) {
+        window._daxiLoaderDismissed = true;
+        return;
+      }
+      document.documentElement.classList.add('daxi-booting');
       function killLoader(){
         document.documentElement.classList.remove('daxi-booting','daxi-intro-boot');
         var l=document.getElementById('initialLoader');
         if(l){l.hidden=true;l.classList.add('is-dismissed');l.style.display='none';}
         window._daxiLoaderDismissed=true;
       }
-      if(web){
-        killLoader();
-      } else {
-        setTimeout(killLoader, 350);
-        addEventListener('DOMContentLoaded', function(){ setTimeout(killLoader, 500); });
-      }
+      setTimeout(killLoader, 350);
+      addEventListener('DOMContentLoaded', function(){ setTimeout(killLoader, 500); });
     })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -189,7 +190,7 @@
         }
         if (isNative) {
             var intro = document.createElement('script');
-            intro.src = '/static/js/daxi-intro.js?v=20260902q';
+            intro.src = '/static/js/daxi-intro.js?v=20260902r';
             intro.defer = true;
             document.head.appendChild(intro);
         }
@@ -227,7 +228,7 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <script defer src="static/js/daxi-guest-id.js?v=20260902q"></script>
+    <script defer src="static/js/daxi-guest-id.js?v=20260902r"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.DaxiGuestId && DaxiGuestId.ensure) DaxiGuestId.ensure();
@@ -312,11 +313,11 @@
 <noscript><link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a"></noscript>
-<script defer src="/static/js/daxi-map-placeholder.js?v=20260902q"></script>
-<script defer src="/static/js/daxi-vubez2-chunks.js?v=20260902q"></script>
-<script defer src="/static/js/daxi-interaction-boot.js?v=20260902q"></script>
+<script defer src="/static/js/daxi-map-placeholder.js?v=20260902r"></script>
+<script defer src="/static/js/daxi-vubez2-chunks.js?v=20260902r"></script>
+<script defer src="/static/js/daxi-interaction-boot.js?v=20260902r"></script>
 <script src="/static/js/vubez2/vubez2-inline-02.js?v=20260830c" defer></script>
-<script src="/static/js/daxi-theme.js?v=20260902q" defer></script>
+<script src="/static/js/daxi-theme.js?v=20260902r" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (window.DaxiTheme && typeof DaxiTheme.remount === 'function') DaxiTheme.remount();
@@ -325,9 +326,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902q';
+window._DAXI_ASSET_V='20260902r';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902q" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902r" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -1562,8 +1563,8 @@ window._DAXI_ASSET_V='20260902q';
 
         <div class="reviews-footer-integrated" data-aos="fade-up" data-aos-delay="250">
             <div class="rfi-inner">
-                <img src="assets/images/daxi-logo-gold.png" alt="Daxi Logo" class="rfi-logo daxi-brand-logo daxi-brand-logo--gold">
-                <img src="assets/images/daxi-logo-dark.png" alt="Daxi Logo" class="rfi-logo daxi-brand-logo daxi-brand-logo--dark">
+                <img data-src="assets/images/daxi-logo-gold.png" alt="Daxi Logo" width="120" height="40" loading="lazy" class="rfi-logo daxi-brand-logo daxi-brand-logo--gold">
+                <img data-src="assets/images/daxi-logo-dark.png" alt="Daxi Logo" width="120" height="40" loading="lazy" class="rfi-logo daxi-brand-logo daxi-brand-logo--dark">
 
                 <div class="rfi-contact">
                     <span><i class="ri-map-pin-line"></i>Adresse zo Vincent #36 Cap-Haïtien</span>
@@ -2711,7 +2712,7 @@ window._DAXI_ASSET_V='20260902q';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902q" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902r" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
