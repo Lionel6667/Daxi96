@@ -191,6 +191,7 @@ def _mobile_bootstrap_impl(request):
         departments = []
 
     from django.middleware.csrf import get_token
+    from julmin_taxis.shell_context import build_shell_session
 
     payload = {
         'ok': True,
@@ -204,10 +205,7 @@ def _mobile_bootstrap_impl(request):
             'phone': getattr(client_user, 'phone', '') if client_user else '',
             'user_id': getattr(client_user, 'firebase_user_id', None) if client_user else None,
         },
-        'session': {
-            'is_admin': bool(request.session.get('is_admin')),
-            'driver_id': request.session.get('driver_id'),
-        },
+        'session': build_shell_session(request, page_name='client'),
         'guest_id': guest_id,
         'guest_id_merged': {'from': merged_from} if merged_from else None,
         'orders': orders,

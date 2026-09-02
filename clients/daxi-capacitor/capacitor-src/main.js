@@ -301,6 +301,28 @@ function enableHtmxCredentials() {
   if (window.htmx && window.htmx.config) window.htmx.config.withCredentials = true;
 }
 
+function maybePatchJsonFetchResponse(res, text, url, method) {
+  if (!res || !res.ok || method !== 'GET') return res;
+  const ct = (res.headers && res.headers.get('content-type')) || '';
+  if (ct.indexOf('json') < 0) return res;
+  try {
+    const data = JSON.parse(text);
+    const patched = rewriteJsonMediaDeep(data);
+    if (url.indexOf('/api/mobile/bootstrap/') >= 0 && window.DaxiSessionStore) {
+      rememberCsrfFromPayload(data);
+      window.DaxiSessionStore.saveFromBootstrap(data, true);
+    }
+    const headers = new Headers(res.headers);
+    return new Response(JSON.stringify(patched), {
+      status: res.status,
+      statusText: res.statusText,
+      headers: headers,
+    });
+  } catch (e) {
+    return res;
+  }
+}
+
 function patchNetworking() {
   const origFetch = window.fetch;
   if (origFetch) {
@@ -352,19 +374,13 @@ function patchNetworking() {
               const kind = classifyHttpStatus(res.status);
               if (!res.ok) rememberApiError(kind, url, { status: res.status });
               else apiLog('Response: ' + res.status);
-              if (res.ok && method === 'GET' && API_RE.test(url)) {
+              if (res.ok && method === 'GET' && backend) {
                 try {
                   const clone = res.clone();
                   const text = await clone.text();
                   captureCsrfFromBody(text);
-                  cachePut(cacheKey(url), text);
-                  if (url.indexOf('/api/mobile/bootstrap/') >= 0 && window.DaxiSessionStore) {
-                    try {
-                      const data = JSON.parse(text);
-                      rememberCsrfFromPayload(data);
-                      window.DaxiSessionStore.saveFromBootstrap(data, true);
-                    } catch (e) {}
-                  }
+                  if (API_RE.test(url)) cachePut(cacheKey(url), text);
+                  return maybePatchJsonFetchResponse(res, text, url, method);
                 } catch (e) {}
               } else {
                 try {
@@ -406,19 +422,13 @@ function patchNetworking() {
       }
       return origFetch(input, init).then(async (res) => {
         if (backend) rememberCsrfFromResponse(res);
-        if (backend && res.ok && method === 'GET' && API_RE.test(url)) {
+        if (backend && res.ok && method === 'GET') {
           try {
             const clone = res.clone();
             const text = await clone.text();
             captureCsrfFromBody(text);
-            cachePut(cacheKey(url), text);
-            if (url.indexOf('/api/mobile/bootstrap/') >= 0 && window.DaxiSessionStore) {
-              try {
-                const data = JSON.parse(text);
-                rememberCsrfFromPayload(data);
-                window.DaxiSessionStore.saveFromBootstrap(data, true);
-              } catch (e) {}
-            }
+            if (API_RE.test(url)) cachePut(cacheKey(url), text);
+            return maybePatchJsonFetchResponse(res, text, url, method);
           } catch (e) {}
         }
         return res;
@@ -609,6 +619,16 @@ function patchNetworking() {
           if (dest.pathname.indexOf('/compte') === 0) location.hash = '#/compte';
           else if (dest.pathname.indexOf('/assistance') === 0) location.hash = '#/assistance';
           else notifyOfflineBlocked('Cette page');
+        }
+        return;
+      }
+      const sameDaxiHost = /daxipro\.com$/i.test(host) && /daxipro\.com$/i.test(window.location.hostname || '');
+      if (sameDaxiHost && (dest.pathname.indexOf('/driver') === 0 || dest.pathname.indexOf('/entreprise') === 0 || dest.pathname.indexOf('/admin-dashboard') === 0)) {
+        const localNext = dest.pathname + dest.search + dest.hash;
+        if (localNext !== location.pathname + location.search + location.hash) {
+          evt.preventDefault();
+          evt.stopPropagation();
+          window.location.assign(localNext);
         }
         return;
       }
@@ -1069,25 +1089,23 @@ async function restoreShellRoleAndRedirect(launchUrl) {
     if (pref && pref.value) role = pref.value;
   } catch (e2) {}
   if (role !== 'driver' && role !== 'admin' && role !== 'enterprise') return false;
-  if (!nativeOnline) return false;
   try {
     localStorage.setItem('daxi_native_shell', role);
     localStorage.setItem('daxi_app_shell', role);
   } catch (e3) {}
   const path = String(location.pathname || '').toLowerCase();
-  const base = getApiBase().replace(/\/$/, '');
   if (role === 'driver') {
     if (path.indexOf('/driver') >= 0) return false;
-    location.replace(base ? base + '/driver/' : '/driver/');
+    location.replace('/driver/');
     return true;
   }
   if (role === 'admin') {
     if (path.indexOf('/admin') >= 0) return false;
-    location.replace(base ? base + '/admin-dashboard/' : '/admin-dashboard/');
+    location.replace('/admin-dashboard/');
     return true;
   }
   if (path.indexOf('/entreprise/dashboard') >= 0) return false;
-  location.replace(base ? base + '/entreprise/dashboard/' : '/entreprise/dashboard/');
+  location.replace('/entreprise/dashboard/');
   return true;
 }
 
@@ -1116,14 +1134,62 @@ function rewriteMediaUrl(val) {
       if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
         return (base || window.location.origin) + u.pathname + u.search;
       }
+      const apiHost = base ? new URL(base).hostname : '';
+      if (apiHost && u.hostname === apiHost && u.pathname) {
+        return u.toString();
+      }
       return s;
     }
     const origin = base || (typeof location !== 'undefined' ? location.origin : '');
     if (!origin) return s;
     if (s.startsWith('/')) return origin + s;
-    if (/^(media|static|assets|uploads)\//i.test(s)) return origin + '/' + s;
+    if (/^(media|static|assets|uploads|villes)\//i.test(s)) return origin + '/' + s;
   } catch (e) {}
   return s;
+}
+
+function isRemoteMediaUrl(url) {
+  const s = String(url || '');
+  if (!s || /^(blob:|data:)/i.test(s)) return false;
+  if (/cloudinary\.com/i.test(s)) return true;
+  const base = getApiBase();
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      const apiHost = base ? new URL(base).hostname : '';
+      if (apiHost && u.hostname === apiHost) {
+        return /\/(media|assets|villes)\//i.test(u.pathname);
+      }
+      return true;
+    } catch (e) {
+      return true;
+    }
+  }
+  return /^(media|assets|villes)\//i.test(s) || /^\/(media|assets|villes)\//i.test(s);
+}
+
+function rewriteJsonMediaDeep(value) {
+  if (value == null) return value;
+  if (typeof value === 'string') {
+    const t = value.trim();
+    if (
+      /^(media|static|assets|uploads|villes)\//i.test(t) ||
+      /^\/(media|static|assets|uploads|villes)\//i.test(t) ||
+      (/^https?:\/\//i.test(t) && /\/(media|assets|villes)\//i.test(t))
+    ) {
+      return rewriteMediaUrl(t);
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(rewriteJsonMediaDeep);
+  if (typeof value === 'object') {
+    const out = {};
+    Object.keys(value).forEach((k) => {
+      out[k] = rewriteJsonMediaDeep(value[k]);
+    });
+    return out;
+  }
+  return value;
 }
 
 function rewriteStyleUrls(el) {
@@ -1167,8 +1233,13 @@ function rewriteMediaIn(root) {
       if (next !== v) el.setAttribute(attr, next);
     });
     if (el.tagName === 'IMG') {
-      el.setAttribute('loading', 'eager');
-      el.setAttribute('fetchpriority', 'high');
+      const src = el.getAttribute('src') || '';
+      if (isRemoteMediaUrl(src)) {
+        if (!el.getAttribute('loading')) el.setAttribute('loading', 'lazy');
+        el.setAttribute('decoding', 'async');
+      } else if (!el.getAttribute('loading')) {
+        el.setAttribute('loading', 'eager');
+      }
     }
     rewriteStyleUrls(el);
   });

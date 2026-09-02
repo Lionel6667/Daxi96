@@ -71,24 +71,44 @@
         }
     }
 
+    function nativeLocalPath(path) {
+        var p = String(path || '');
+        if (!p) return '/';
+        if (/^https?:\/\//i.test(p)) {
+            try {
+                var u = new URL(p);
+                var host = (u.hostname || '').toLowerCase();
+                if (host === 'daxipro.com' || host === 'www.daxipro.com' || host === 'localhost') {
+                    return u.pathname + u.search + u.hash;
+                }
+            } catch (e) {}
+            return p;
+        }
+        return p.charAt(0) === '/' ? p : '/' + p;
+    }
+
+    function isNativeApp() {
+        try {
+            return !!(window._daxiCapacitorApp || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+        } catch (e) {
+            return false;
+        }
+    }
+
     function goDriver() {
-        window.location.href = backendAbs('/driver/login/');
+        window.location.href = isNativeApp() ? '/driver/login/' : backendAbs('/driver/login/');
     }
 
     function goAdmin() {
-        window.location.href = backendAbs('/admin-dashboard/');
+        window.location.href = isNativeApp() ? '/admin-dashboard/' : backendAbs('/admin-dashboard/');
     }
 
     function goEnterprise() {
-        window.location.href = backendAbs('/entreprise/');
+        window.location.href = isNativeApp() ? '/entreprise/' : backendAbs('/entreprise/');
     }
 
     function goClient() {
-        var native = false;
-        try {
-            native = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
-        } catch (e) {}
-        window.location.href = native ? 'https://localhost/' : '/';
+        window.location.href = isNativeApp() ? '/' : '/';
     }
 
     function matchesAdminGate(pickup, dest) {
@@ -133,17 +153,17 @@
             var path = (location.pathname || '').toLowerCase();
             if (role === 'driver') {
                 if (path.indexOf('/driver') >= 0) return false;
-                window.location.href = backendAbs('/driver/');
+                window.location.href = isNativeApp() ? '/driver/' : backendAbs('/driver/');
                 return true;
             }
             if (role === 'admin') {
                 if (path.indexOf('/admin') >= 0) return false;
-                goAdmin();
+                window.location.href = isNativeApp() ? '/admin-dashboard/' : backendAbs('/admin-dashboard/');
                 return true;
             }
             if (role === 'enterprise') {
                 if (path.indexOf('/entreprise/dashboard') >= 0) return false;
-                window.location.href = backendAbs('/entreprise/dashboard/');
+                window.location.href = isNativeApp() ? '/entreprise/dashboard/' : backendAbs('/entreprise/dashboard/');
                 return true;
             }
             return false;
@@ -167,7 +187,8 @@
         tryOpenAdminFromBooking: tryOpenAdminFromBooking,
         installTitleTapGate: installTitleTapGate,
         bootRedirectIfNeeded: bootRedirectIfNeeded,
-        backendAbs: backendAbs
+        backendAbs: backendAbs,
+        nativeLocalPath: nativeLocalPath
     };
 
 

@@ -523,6 +523,7 @@ urlpatterns = [
 
     path('api/pricing/', include('pricing.urls')),
     path('api/mobile/bootstrap/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_bootstrap']).mobile_bootstrap, name='mobile-bootstrap'),
+    path('api/mobile/shell-context/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_shell_context']).mobile_shell_context, name='mobile-shell-context'),
     path('api/mobile/cache-manifest/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_cache_manifest']).mobile_cache_manifest, name='mobile-cache-manifest'),
     path('api/mobile/gps-batch/', __import__('julmin_taxis.mobile_views', fromlist=['mobile_gps_batch']).mobile_gps_batch, name='mobile-gps-batch'),
     path('api/mobile/outbox/', __import__('julmin_taxis.mobile_outbox', fromlist=['mobile_outbox']).mobile_outbox, name='mobile-outbox'),

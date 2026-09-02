@@ -242,7 +242,7 @@ def inject_native_head(content, request=None):
     play_intro = full and _should_play_intro(path)
     has_intro = 'data-daxi-intro=' in content or 'daxi-intro.js' in content
     will_inject_intro = play_intro and not has_intro
-    if 'daxi-capacitor.js' not in content and not will_inject_intro:
+    if 'daxi-capacitor.js' not in content:
         inject += NATIVE_CAP_TAG
     if 'daxi-network-banner.css' not in content:
         inject += NATIVE_BANNER_CSS
@@ -267,8 +267,29 @@ def inject_native_head(content, request=None):
             content = inject + content
     if full:
         content = inject_capacitor_after_intro(content)
-        if will_inject_intro and 'daxi-capacitor.js' not in content and '</head>' in content:
+        if 'daxi-capacitor.js' not in content and '</head>' in content:
             content = content.replace('</head>', NATIVE_CAP_TAG + '</head>', 1)
+    path = '/'
+    if request is not None:
+        path = request.path or '/'
+    if (
+        request is not None
+        and path.startswith('/admin-dashboard')
+        and 'daxi-shell-context' not in content
+        and '</head>' in content
+    ):
+        shell_tag = (
+            '<script>'
+            'window.DAXI_API_ENV=window.DAXI_API_ENV||"production";'
+            'window.DAXI_API_BASE_URL=window.DAXI_API_BASE_URL||"https://daxipro.com";'
+            'window._daxiLiveBaseUrl=window.DAXI_API_BASE_URL;'
+            'window._daxiCapacitorApp=true;'
+            'window._daxiShellPage="admin_dashboard";'
+            '</script>\n'
+            '<script src="/static/js/daxi-shell-context.js"></script>\n'
+            '<script src="/static/js/daxi-role-boot.js"></script>\n'
+        )
+        content = content.replace('</head>', shell_tag + '</head>', 1)
     return content
 
 

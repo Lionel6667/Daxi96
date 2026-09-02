@@ -51,21 +51,42 @@ final class DaxiAssetShell {
             || p.startsWith("/accounts/") || p.equals("/accounts")
             || p.startsWith("/media/") || p.equals("/media")
             || p.startsWith("/admin-dashboard")
-            || p.startsWith("/driver")
-            || p.startsWith("/entreprise")
             || p.startsWith("/admin/")) {
             return true;
         }
         return false;
     }
 
-    /** Static assets absent du bundle local : fallback réseau quand online. */
+    static String mapRoleDocumentPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        String p = path.toLowerCase();
+        if (p.equals("/driver") || p.equals("/driver/")) {
+            return "/driver/index.html";
+        }
+        if (p.equals("/driver/login") || p.equals("/driver/login/")) {
+            return "/driver/login/index.html";
+        }
+        if (p.equals("/entreprise") || p.equals("/entreprise/")) {
+            return "/entreprise/index.html";
+        }
+        if (p.startsWith("/entreprise/dashboard")) {
+            return "/entreprise/dashboard/index.html";
+        }
+        return null;
+    }
+
+    /** Assets absents du bundle local : fallback réseau quand online. */
     static boolean isRemoteFallbackPath(String path) {
         if (path == null || path.isEmpty()) {
             return false;
         }
         String p = path.toLowerCase();
-        return p.startsWith("/static/") || p.startsWith("/media/");
+        return p.startsWith("/static/")
+            || p.startsWith("/media/")
+            || p.startsWith("/assets/")
+            || p.startsWith("/villes/");
     }
 
     static WebResourceResponse serve(Context context, WebResourceRequest request) {
@@ -82,6 +103,10 @@ final class DaxiAssetShell {
         String path = uri.getPath();
         if (path == null || path.isEmpty() || "/".equals(path)) {
             path = "/index.html";
+        }
+        String roleDoc = mapRoleDocumentPath(path);
+        if (roleDoc != null) {
+            path = roleDoc;
         }
         if (path.contains("..") || isPassthroughPath(path) || isCapacitorInternal(uri)) {
             return null;
