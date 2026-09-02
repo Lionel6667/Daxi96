@@ -1657,6 +1657,7 @@ function _daxiShouldThrottleAutoPan(lat, lng, opts) {
 function _daxiAnimateMapToUser(lat, lng, acc, opts) {
     if (!window._clientBgMap || lat == null || lng == null) return;
     opts = opts || {};
+    if (typeof window._daxiGpsPanLocked === 'function' && window._daxiGpsPanLocked(opts)) return;
     if (_daxiShouldThrottleAutoPan(lat, lng, opts)) return;
     if (!_shouldAutoPanMap(opts) && !opts.forceCenter && !opts.forcePan) return;
     var zoom;
@@ -1665,19 +1666,20 @@ function _daxiAnimateMapToUser(lat, lng, acc, opts) {
     } else if (opts.forceCenter || opts.forcePan || !window._clientGpsPannedOnce) {
         zoom = _getClientGpsZoom(acc || 60);
     }
-    _daxiCenterClientOnVisibleMap(lat, lng, { zoom: zoom, skipPanMark: opts.skipPanMark });
+    _daxiCenterClientOnVisibleMap(lat, lng, { zoom: zoom, skipPanMark: opts.skipPanMark, skipNudge: opts.skipNudge });
 }
 
 function _finalizeClientGpsScan(acc) {
     acc = Math.round(acc || 999);
     if (acc > DAXI_GPS_VALIDATED_MAX_M) return;
     _gpsScanDone = true;
-    if (!window._clientGpsPannedOnce) {
-        var p = window._lastClientGpsPos;
-        if (p && window._clientBgMap) {
-            _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true });
-            window._clientGpsPannedOnce = true;
-        }
+    if (window._clientGpsPannedOnce) return;
+    if (typeof window._daxiGpsPanLocked === 'function' && window._daxiGpsPanLocked()) return;
+    var p = window._lastClientGpsPos;
+    if (p && window._clientBgMap) {
+        _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true, skipNudge: true });
+        window._clientGpsPannedOnce = true;
+        if (typeof window._daxiLockGpsPan === 'function') window._daxiLockGpsPan();
     }
 }
 
@@ -2660,6 +2662,7 @@ function _daxiIsClientDotInVisibleStrip(lat, lng, cb) {
 function _daxiSmartPanForClientGps(lat, lng, acc, opts) {
     opts = opts || {};
     if (!window._clientBgMap || lat == null || lng == null) return;
+    if (typeof window._daxiGpsPanLocked === 'function' && window._daxiGpsPanLocked(opts)) return;
     if (!_shouldAutoPanMap(opts) && !opts.forceCenter && !opts.forcePan) return;
     if (opts.forceCenter || opts.forcePan || !window._clientGpsPannedOnce) {
         if (!_daxiShouldThrottleAutoPan(lat, lng, opts)) {

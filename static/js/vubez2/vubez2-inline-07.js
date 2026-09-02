@@ -1167,6 +1167,8 @@ function _daxiCommitGpsMapPoint(lat, lng, acc, opts) {
         if (typeof _syncGpsPickupHiddenFields === 'function') _syncGpsPickupHiddenFields(lat, lng);
         if (typeof _hideGpsPickupMarker === 'function') _hideGpsPickupMarker();
     }
+    _daxiCancelGpsFailureNotice();
+    _daxiClearPickupWatchdog();
     return true;
 }
 
@@ -1192,6 +1194,61 @@ function _daxiFinishPickupInputState(inp, btn, ok) {
 }
 window._daxiResetGpsMapCommit = _daxiResetGpsMapCommit;
 window._daxiCommitGpsMapPoint = _daxiCommitGpsMapPoint;
+
+var _daxiGpsFailureTimer = null;
+var _daxiPickupWatchdogTimer = null;
+
+function _daxiGpsHasUsableFix() {
+    if (typeof _daxiGpsMarkerVisible === 'function' && _daxiGpsMarkerVisible()) return true;
+    if (_daxiGpsMapCommitted) return true;
+    var p = window._lastClientGpsPos;
+    if (p && p.lat != null && p.lng != null && (p.acc || 999) <= DAXI_GPS_VALIDATED_MAX_M) return true;
+    if (window.DaxiClientGps) {
+        var v = DaxiClientGps.getValidated();
+        if (v && v.lat != null) return true;
+        var d = DaxiClientGps.getDisplay && DaxiClientGps.getDisplay();
+        if (d && d.lat != null && (d.acc || 999) <= DAXI_GPS_VALIDATED_MAX_M) return true;
+    }
+    return false;
+}
+
+function _daxiCancelGpsFailureNotice() {
+    if (_daxiGpsFailureTimer) {
+        clearTimeout(_daxiGpsFailureTimer);
+        _daxiGpsFailureTimer = null;
+    }
+}
+
+function _daxiScheduleGpsFailureNotice(fn, delayMs) {
+    _daxiCancelGpsFailureNotice();
+    _daxiGpsFailureTimer = setTimeout(function() {
+        _daxiGpsFailureTimer = null;
+        if (_daxiGpsHasUsableFix()) return;
+        if (typeof fn === 'function') fn();
+    }, delayMs || 10000);
+}
+
+function _daxiClearPickupWatchdog() {
+    if (_daxiPickupWatchdogTimer) {
+        clearTimeout(_daxiPickupWatchdogTimer);
+        _daxiPickupWatchdogTimer = null;
+    }
+}
+
+function _daxiLockGpsPan(ms) {
+    window._daxiGpsPanLockUntil = Date.now() + (ms || 14000);
+    window._clientGpsPannedOnce = true;
+}
+window._daxiLockGpsPan = _daxiLockGpsPan;
+window._daxiGpsHasUsableFix = _daxiGpsHasUsableFix;
+window._daxiCancelGpsFailureNotice = _daxiCancelGpsFailureNotice;
+
+function _daxiGpsPanLocked(opts) {
+    opts = opts || {};
+    if (opts.forceUserRecenter) return false;
+    return !!(window._daxiGpsPanLockUntil && Date.now() < window._daxiGpsPanLockUntil);
+}
+window._daxiGpsPanLocked = _daxiGpsPanLocked;
 
 function _daxiValidateGeoPos(pos, source) {
     if (!pos || !pos.coords) return null;
@@ -1454,10 +1511,12 @@ function _scheduleGpsScanDeadline(ms) {
     if (_daxiPageGpsTimer) { clearTimeout(_daxiPageGpsTimer); _daxiPageGpsTimer = null; }
     _daxiPageGpsTimer = setTimeout(function() {
         _daxiPageGpsTimer = null;
+        if (window._clientGpsPannedOnce || _daxiGpsPanLocked()) return;
         var p = window.DaxiClientGps ? DaxiClientGps.getValidated() : null;
         if (!p) p = window._lastClientGpsPos;
-        if (p && (p.acc || 999) <= DAXI_GPS_VALIDATED_MAX_M && window._clientBgMap && !_clientGpsPannedOnce) {
+        if (p && (p.acc || 999) <= DAXI_GPS_VALIDATED_MAX_M && window._clientBgMap) {
             _daxiSmartPanForClientGps(p.lat, p.lng, p.acc || 999, { forcePan: true });
+            if (typeof _daxiLockGpsPan === 'function') _daxiLockGpsPan();
         }
     }, ms || 5000);
 }
@@ -1579,8 +1638,11 @@ function _daxiFocusMapOnReadyGps(source) {
         _updateClientLocationVisual(p.lat, p.lng, acc, false);
     }
     window._daxiCommanderGpsFocusPending = false;
-    window._clientGpsPannedOnce = true;
-    _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true, forcePan: true });
+    if (!_daxiGpsPanLocked()) {
+        window._clientGpsPannedOnce = true;
+        _daxiAnimateMapToUser(p.lat, p.lng, acc, { forceCenter: true, forcePan: true, skipNudge: true });
+        if (typeof _daxiLockGpsPan === 'function') _daxiLockGpsPan();
+    }
     if (typeof window._daxiRevealLiveMap === 'function') window._daxiRevealLiveMap();
     return true;
 }
@@ -1588,13 +1650,16 @@ window._daxiFocusMapOnReadyGps = _daxiFocusMapOnReadyGps;
 
 function _daxiSyncClientGpsOnMapReady(source) {
     source = source || 'map-ready';
-    function tick() {
+    function tick(allowPan) {
         if (typeof _daxiFlushClientGpsToMap === 'function') _daxiFlushClientGpsToMap();
-        if (typeof _daxiFocusMapOnReadyGps === 'function') _daxiFocusMapOnReadyGps(source);
+        if (!allowPan || _daxiGpsPanLocked()) return;
+        if (typeof _daxiFocusMapOnReadyGps === 'function' && !window._clientGpsPannedOnce) {
+            _daxiFocusMapOnReadyGps(source);
+        }
     }
-    tick();
-    [120, 350, 700, 1200].forEach(function(ms) {
-        setTimeout(tick, ms);
+    tick(true);
+    [350, 900].forEach(function(ms) {
+        setTimeout(function() { tick(false); }, ms);
     });
 }
 window._daxiSyncClientGpsOnMapReady = _daxiSyncClientGpsOnMapReady;
@@ -1656,8 +1721,9 @@ function _placeClientPickupOnMap(lat, lng, opts) {
             if (!DaxiClientGps.getValidated() && evaluated.allowVisual) {
                 _daxiQuartierCenter = { lat: lat, lng: lng, acc: acc };
                 _daxiCommitGpsMapPoint(lat, lng, acc, opts);
-                if (_shouldAutoPanMap(opts) && !DaxiClientGps.getValidated()) {
-                    _daxiSmartPanForClientGps(lat, lng, acc, opts);
+                if (_shouldAutoPanMap(opts) && !DaxiClientGps.getValidated() && !_daxiGpsPanLocked(opts)) {
+                    _daxiSmartPanForClientGps(lat, lng, acc, Object.assign({}, opts, { skipNudge: true }));
+                    if (typeof _daxiLockGpsPan === 'function') _daxiLockGpsPan();
                 }
             }
             _ensureClientGpsLiveRunning();
@@ -1699,28 +1765,29 @@ function _placeClientPickupOnMap(lat, lng, opts) {
     var canShowValidated = acc <= DAXI_GPS_VALIDATED_MAX_M;
 
     if (!canShowValidated && !opts.force) {
-        _daxiNotifyGpsUnavailable();
         return false;
     }
 
     var mapCommitted = _daxiCommitGpsMapPoint(lat, lng, acc, opts);
     _ensureClientGpsRefineLoop();
 
+    if (opts.refineOnly) return isExact;
+
     if (canShowValidated && (mapCommitted || opts.forcePan || opts.forceCenter)) {
-        if (opts.forcePan || opts.forceCenter) {
+        if (!_daxiGpsPanLocked(opts) && (opts.forcePan || opts.forceCenter)) {
             if (window._clientBgMap) {
-                _daxiSmartPanForClientGps(lat, lng, acc, opts);
+                _daxiSmartPanForClientGps(lat, lng, acc, Object.assign({}, opts, { skipNudge: true }));
+                if (typeof _daxiLockGpsPan === 'function') _daxiLockGpsPan();
             } else {
                 window._daxiCommanderGpsFocusPending = true;
             }
-        } else if (window._daxiCommanderGpsFocusPending) {
+        } else if (window._daxiCommanderGpsFocusPending && !_daxiGpsPanLocked()) {
             _daxiFocusMapOnReadyGps('gps-ready');
-        } else if (mapCommitted) {
-            _daxiSmartPanForClientGps(lat, lng, acc, opts);
+        } else if (mapCommitted && !_daxiGpsPanLocked() && !window._clientGpsPannedOnce) {
+            _daxiSmartPanForClientGps(lat, lng, acc, { skipNudge: true });
+            if (typeof _daxiLockGpsPan === 'function') _daxiLockGpsPan();
         }
     }
-
-    if (opts.refineOnly) return isExact;
 
     var shouldPlacePickup = window._daxiPickupFromGps;
     if (shouldPlacePickup) {
@@ -1892,16 +1959,38 @@ function _requestPickupGps(onSuccess, onError, opts) {
     var pickupTimedOut = false;
     var pickupTimer = setTimeout(function() {
         pickupTimedOut = true;
+        if (_daxiGpsHasUsableFix()) {
+            var cached = window._lastClientGpsPos;
+            if (cached) {
+                _pickupGpsSuccess({
+                    coords: { latitude: cached.lat, longitude: cached.lng, accuracy: cached.acc || 60 },
+                    timestamp: cached.ts || Date.now()
+                });
+                return;
+            }
+        }
         _pickupGpsFail({ code: 3, message: 'timeout' });
-    }, opts.timeoutMs || 22000);
+    }, opts.timeoutMs || 28000);
     var wrappedSuccess = function(pos) {
-        if (pickupTimedOut) return;
         clearTimeout(pickupTimer);
+        if (pickupTimedOut && !_daxiGpsHasUsableFix()) return;
+        pickupTimedOut = false;
         _pickupGpsSuccess(pos);
     };
     var wrappedFail = function(err) {
-        if (pickupTimedOut) return;
+        if (_daxiGpsHasUsableFix()) {
+            clearTimeout(pickupTimer);
+            var cached = window._lastClientGpsPos;
+            if (cached) {
+                wrappedSuccess({
+                    coords: { latitude: cached.lat, longitude: cached.lng, accuracy: cached.acc || 60 },
+                    timestamp: cached.ts || Date.now()
+                });
+            }
+            return;
+        }
         clearTimeout(pickupTimer);
+        if (pickupTimedOut) return;
         _pickupGpsFail(err);
     };
     _requestBestClientPosition(wrappedSuccess, wrappedFail, scanOpts);
@@ -1965,7 +2054,7 @@ function _bootClientGps() {
             setTimeout(_bootClientGps, 1200);
             return;
         }
-        _daxiNotifyGpsUnavailable();
+        _daxiScheduleGpsFailureNotice(_daxiNotifyGpsUnavailable, 12000);
         _endGpsScanVisual();
     }, { source: 'boot', forcePan: !orderFocused, forceScan: false });
     setTimeout(function() { if (typeof _endGpsScanVisual === 'function') _endGpsScanVisual(); }, 4200);
@@ -2279,6 +2368,9 @@ function _onClientGpsLiveFix(fix) {
     var acc = evaluated ? evaluated.acc : p.acc;
     window._lastClientGpsPos = { lat: lat, lng: lng, acc: acc, ts: Date.now() };
     _daxiCommitGpsMapPoint(lat, lng, acc, { source: 'engine-live' });
+    _daxiCancelGpsFailureNotice();
+    _daxiClearPickupWatchdog();
+    if (typeof _daxiTryCompleteLocatingPickupFromGps === 'function') _daxiTryCompleteLocatingPickupFromGps();
     if (window.DaxiClientGps) {
         var validated = evaluated && evaluated.decision === 'ACCEPT';
         DaxiClientGps.setDisplay(lat, lng, acc, validated);
@@ -2743,27 +2835,54 @@ function toggleClientMapTilt() {
     try { window._clientBgMap.setTilt(next); } catch (e) {}
 }
 
+function _daxiTryCompleteLocatingPickupFromGps() {
+    if (!_daxiGpsHasUsableFix()) return;
+    var inp = document.getElementById('destinationAddress');
+    if (!inp || !inp.classList.contains('daxi-pickup-locating')) return;
+    var p = window._lastClientGpsPos;
+    if (!p || p.lat == null) return;
+    var btn = document.getElementById('myPositionBtn');
+    _applyClientGpsSuccess({
+        coords: { latitude: p.lat, longitude: p.lng, accuracy: p.acc || 60 },
+        timestamp: p.ts || Date.now()
+    }, btn, inp);
+}
+
 function _daxiGpsFailInput(inp, btn, msg) {
-    _daxiFinishPickupInputState(inp, btn, false);
-    if (inp) {
-        inp.value = '';
-        delete inp.dataset.lat;
-        delete inp.dataset.lng;
-        delete inp.dataset.placeSelected;
-        if (typeof _daxiSyncPlacesInputDisplay === 'function') {
-            _daxiSyncPlacesInputDisplay(inp, '');
-        }
-        if (inp.id === 'destinationAddress') {
-            window._daxiPickupFromGps = false;
-            var ph = document.getElementById('pickupHidden');
-            if (ph) ph.value = '';
-            var latEl = document.getElementById('pickupLatHidden');
-            var lngEl = document.getElementById('pickupLngHidden');
-            if (latEl) latEl.value = '';
-            if (lngEl) lngEl.value = '';
-        }
+    if (_daxiGpsHasUsableFix()) {
+        _daxiTryCompleteLocatingPickupFromGps();
+        if (inp && inp.classList.contains('daxi-pickup-locating')) return;
+        _daxiFinishPickupInputState(inp, btn, true);
+        var noteOk = document.getElementById('gpsUnavailableNote');
+        if (noteOk) noteOk.remove();
+        return;
     }
-    _daxiNotifyGpsUnavailable(msg);
+    _daxiScheduleGpsFailureNotice(function() {
+        if (_daxiGpsHasUsableFix()) {
+            _daxiTryCompleteLocatingPickupFromGps();
+            return;
+        }
+        _daxiFinishPickupInputState(inp, btn, false);
+        if (inp) {
+            inp.value = '';
+            delete inp.dataset.lat;
+            delete inp.dataset.lng;
+            delete inp.dataset.placeSelected;
+            if (typeof _daxiSyncPlacesInputDisplay === 'function') {
+                _daxiSyncPlacesInputDisplay(inp, '');
+            }
+            if (inp.id === 'destinationAddress') {
+                window._daxiPickupFromGps = false;
+                var ph = document.getElementById('pickupHidden');
+                if (ph) ph.value = '';
+                var latEl = document.getElementById('pickupLatHidden');
+                var lngEl = document.getElementById('pickupLngHidden');
+                if (latEl) latEl.value = '';
+                if (lngEl) lngEl.value = '';
+            }
+        }
+        _daxiNotifyGpsUnavailable(msg);
+    }, 5000);
 }
 
 function _initDaxiSheetHandleDrag() {
@@ -2879,6 +2998,8 @@ window._daxiUseMyPositionForInput = function(inputEl, btnEl) {
             window._daxiPickupFromGps = true;
             window._daxiForceGpsPanOnce = true;
             window._daxiMapUserInteracting = false;
+            window._daxiGpsPanLockUntil = 0;
+            window._clientGpsPannedOnce = false;
             _daxiGpsFinalized = false;
             _daxiGpsLocked = false;
             _daxiGpsScanStartedAt = 0;
@@ -2890,10 +3011,16 @@ window._daxiUseMyPositionForInput = function(inputEl, btnEl) {
         inputEl.value = locatingLabel;
         if (typeof _daxiSyncPlacesInputDisplay === 'function') _daxiSyncPlacesInputDisplay(inputEl, locatingLabel);
         if (btnEl) btnEl.classList.add('loading');
-        var pickupWatchdog = setTimeout(function() {
+        _daxiClearPickupWatchdog();
+        _daxiPickupWatchdogTimer = setTimeout(function() {
+            _daxiPickupWatchdogTimer = null;
+            if (_daxiGpsHasUsableFix()) {
+                _daxiTryCompleteLocatingPickupFromGps();
+                return;
+            }
             _daxiGpsFailInput(inputEl, btnEl);
-        }, 25000);
-        function clearPickupWatchdog() { clearTimeout(pickupWatchdog); }
+        }, 35000);
+        function clearPickupWatchdog() { _daxiClearPickupWatchdog(); }
         _requestPickupGps(function(pos) {
             clearPickupWatchdog();
             if (isMainPickup) {
@@ -2915,14 +3042,24 @@ window._daxiUseMyPositionForInput = function(inputEl, btnEl) {
             });
         }, function() {
             clearPickupWatchdog();
+            if (_daxiGpsHasUsableFix()) {
+                if (isMainPickup) {
+                    var cachedPos = window._lastClientGpsPos;
+                    if (cachedPos) {
+                        _applyClientGpsSuccess({
+                            coords: { latitude: cachedPos.lat, longitude: cachedPos.lng, accuracy: cachedPos.acc || 60 },
+                            timestamp: cachedPos.ts || Date.now()
+                        }, btnEl, inputEl);
+                    }
+                    return;
+                }
+            }
             if (isMainPickup) {
                 _stopDaxiGpsScan();
                 window._daxiPickupFromGps = false;
-                _daxiGpsFailInput(inputEl, btnEl);
-                return;
             }
             _daxiGpsFailInput(inputEl, btnEl);
-        }, { forceScan: false, source: 'my-position-btn', timeoutMs: 25000 });
+        }, { forceScan: false, source: 'my-position-btn', timeoutMs: 35000 });
     });
 };
 
