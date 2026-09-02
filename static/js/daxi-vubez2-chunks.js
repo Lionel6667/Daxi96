@@ -3,7 +3,7 @@
 
   var loaded = false;
   var loading = null;
-  var v = function () { return global._DAXI_ASSET_V || '20260902m'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902n'; };
 
   var CHUNKS = [
     '/static/js/vubez2/vubez2-inline-04.js',
@@ -67,9 +67,9 @@
   function shouldArm(e) {
     if (!e || !e.target || !e.target.closest) return false;
     return !!e.target.closest(
-      '#appSheet, .app-sheet, #bookingSection, #mainTabBar, ' +
-      '#destinationAddress, #destinationAddressArrival, #orderTaxiBtn, ' +
-      '#daxi-map-stage, #daxiMenuFab, .daxi-map-placeholder, #myPositionBtn'
+      '#mainTabBar, #orderTaxiBtn, #daxiMenuFab, #daxiMapTapZone, ' +
+      '.daxi-map-placeholder, #myPositionBtn, #daxi-map-placeholder-img, ' +
+      '.tab-bar-btn[data-tab]'
     );
   }
 
@@ -81,9 +81,11 @@
     document.addEventListener('pointerdown', function (e) {
       if (shouldArm(e)) ensure();
     }, once);
-    document.addEventListener('focusin', function (e) {
+    document.addEventListener('input', function (e) {
       var id = e.target && e.target.id;
-      if (id === 'destinationAddress' || id === 'destinationAddressArrival') ensure();
+      if ((id === 'destinationAddress' || id === 'destinationAddressArrival') && e.target.value && e.target.value.length >= 2) {
+        ensure();
+      }
     }, { once: true, capture: true });
     document.addEventListener('click', function (e) {
       var btn = e.target && e.target.closest && e.target.closest('.tab-bar-btn[data-tab]');
