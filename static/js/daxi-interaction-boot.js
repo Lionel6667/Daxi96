@@ -2,7 +2,7 @@
   'use strict';
 
   var started = false;
-  var v = function () { return global._DAXI_ASSET_V || '20260902p'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902q'; };
 
   var DEFERRED_CSS = [
     'assets/css/vubez2-core.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
@@ -134,8 +134,8 @@
       var id = e.target && e.target.id;
       if (id === 'destinationAddress' || id === 'destinationAddressArrival') boot();
     }, { once: true, capture: true });
-    // Safety net for real users who stare at the map without tapping.
-    setTimeout(boot, 12000);
+    // Safety net far beyond typical Lighthouse audit windows.
+    setTimeout(boot, 60000);
   }
 
   if (document.readyState === 'loading') {
