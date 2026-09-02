@@ -362,6 +362,52 @@ def check_gps_reminders():
     )
     stale_threshold = now - timedelta(minutes=30)
     count = 0
+
+    # Rappels multi-jours (push app + WhatsApp pour J-1 / jour J)
+    try:
+        from django.core.cache import cache as _rm_cache
+        from julmin_taxis.notify import push_order_event, notify_trip_reminder
+        windows = (
+            ('trip_reminder_7d', timedelta(days=7), timedelta(days=6, hours=12)),
+            ('trip_reminder_3d', timedelta(days=3), timedelta(days=2, hours=12)),
+            ('trip_reminder_1d', timedelta(days=1), timedelta(hours=20)),
+            ('trip_reminder_same_day', timedelta(hours=12), timedelta(hours=2)),
+        )
+        later_base = Order.objects.filter(
+            is_later=True,
+            scheduled_at__gt=now,
+            status__in=['pending', 'price_proposed', 'price_confirmed', 'driver_assigned'],
+        )
+        for event, upper, lower in windows:
+            for order in later_base.filter(
+                scheduled_at__lte=now + upper,
+                scheduled_at__gt=now + lower,
+            ):
+                key = f'daxi:{event}:{order.pk}'
+                if not _rm_cache.add(key, 1, timeout=86400 * 8):
+                    continue
+                try:
+                    push_order_event(order, event)
+                    _notify_ws_tracking(f'order_{order.pk}', event, {
+                        'order_id': order.pk,
+                        'status': order.status,
+                        'scheduled_at': order.scheduled_at.isoformat() if order.scheduled_at else None,
+                    })
+                    # WhatsApp rappel générique (texte adapté via template)
+                    if event in ('trip_reminder_1d', 'trip_reminder_same_day'):
+                        notify_trip_reminder(order)
+                    else:
+                        try:
+                            from julmin_taxis.notify import _safe_whatsapp
+                            _safe_whatsapp(order, 'notify_client_trip_reminder')
+                        except Exception:
+                            pass
+                    count += 1
+                except Exception:
+                    _rm_cache.delete(key)
+    except Exception:
+        pass
+
     for order in upcoming:
         
         if not order.reminder_sent and (order.client_phone or '').strip():

@@ -196,12 +196,13 @@
         resyncAfterReconnect: resyncAfterReconnect,
         ORDER_EVENTS: [
             'new_order', 'new_order_pending_accept', 'new_order_needs_coords', 'order_updated', 'order_deleted',
-            'order_unavailable', 'order_cancelled', 'order_completed', 'payment_confirmed', 'payment_failed',
+            'order_unavailable', 'order_cancelled', 'order_completed', 'payment_confirmed', 'payment_cash_confirmed', 'payment_failed',
             'price_proposed', 'price_confirmed', 'price_refused', 'price_updated',
             'driver_assigned', 'driver_accepted', 'driver_unassigned', 'driver_on_the_way', 'driver_arrived',
             'status_updated', 'status_changed', 'in_progress', 'coords_set', 'coords_needed',
             'trip_paused', 'trip_resumed', 'trip_extended', 'pickup_updated', 'pickup_confirm_prompt',
             'relocate_prompt', 'now_transition', 'gps_reminder', 'trip_reminder',
+            'trip_reminder_1d', 'trip_reminder_3d', 'trip_reminder_7d', 'trip_reminder_same_day',
             'new_message', 'danger_zone', 'zone_alert', 'driver_location', 'driver_status_changed',
             'lost_object_reported', 'sos_alert', 'withdrawal_request', 'enterprise_withdrawal',
             'enterprise_pending', 'enterprise_location_pending'

@@ -444,6 +444,15 @@
   border: 1px solid rgba(99,102,241,0.28);
   box-shadow: 0 4px 18px rgba(15,23,42,0.15);
 }
+.daxi-oc-driver--expandable {
+  cursor: pointer;
+  transition: transform .12s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.daxi-oc-driver--expandable:active { transform: scale(.985); }
+.daxi-oc-driver--expandable:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
 .daxi-oc-driver-avatar {
   width: 44px;
   height: 44px;

@@ -134,16 +134,18 @@ def _accept_order_for_driver(order, driver):
     drv_payload['status'] = 'driver_assigned'
     _notify_ws(f'order_{order.pk}', 'driver_accepted', drv_payload)
     _notify_ws('admin', 'order_updated', {'order_id': order.pk, 'status': 'driver_assigned'})
-    if not order.is_later:
-        _notify_ws(f'order_{order.pk}', 'driver_assigned', {
-            **drv_payload,
-            'message': f'Votre chauffeur {order.driver_name} a accepté — en attente de départ.',
-        })
-        try:
-            from julmin_taxis.notify import notify_order_status
-            notify_order_status(order, 'driver_assigned')
-        except Exception as exc:
-            logger.warning('Notify driver_assigned failed: %s', exc)
+    _notify_ws(f'order_{order.pk}', 'driver_assigned', {
+        **drv_payload,
+        'message': (
+            f'Votre chauffeur {order.driver_name} a accepté'
+            + (' — course planifiée.' if order.is_later else ' — en attente de départ.')
+        ),
+    })
+    try:
+        from julmin_taxis.notify import notify_order_status_now
+        notify_order_status_now(order, 'driver_assigned')
+    except Exception as exc:
+        logger.warning('Notify driver_assigned failed: %s', exc)
 
     if not _order_has_full_coords(order):
         return True, (

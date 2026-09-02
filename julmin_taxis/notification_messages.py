@@ -77,6 +77,10 @@ CLIENT_PUSH = {
         'Paiement reçu',
         f'Paiement confirmé pour la course {_order_ref(o)}. Un chauffeur va bientôt être assigné.',
     ),
+    'payment_cash_confirmed': lambda o: (
+        'Course confirmée',
+        f'Vous paierez le chauffeur en espèces à la fin de la course {_order_ref(o)}. Recherche d\'un chauffeur en cours.',
+    ),
     'payment_failed': lambda o: (
         'Paiement échoué',
         f'Le paiement de la course {_order_ref(o)} n\'a pas abouti. Réessayez depuis l\'app.',

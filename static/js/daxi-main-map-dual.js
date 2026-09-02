@@ -53,8 +53,8 @@
       scrollwheel: true,
       disableDoubleClickZoom: false,
       clickableIcons: false,
-      tiltInteractionEnabled: true,
       headingInteractionEnabled: false,
+      tiltInteractionEnabled: false,
       backgroundColor: global.DaxiMapTheme ? global.DaxiMapTheme.mapBgColor(theme) : (theme === 'light' ? '#F0F4F9' : '#070b14'),
       padding: pad
     };

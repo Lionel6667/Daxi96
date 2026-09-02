@@ -42,11 +42,12 @@
       'height:' + size + 'px',
       'transform-origin:center center',
       'pointer-events:none',
-      'filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))',
+      'filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))',
       'border-radius:50%',
       'overflow:hidden',
-      'border:2px solid #fff',
-      'background:#f59e0b',
+      'border:2.5px solid #f59e0b',
+      'background:#0f172a',
+      'box-sizing:border-box',
     ].join(';');
     el.innerHTML = TAXI_SVG.replace('width="32" height="32"', 'width="100%" height="100%"');
     return el;

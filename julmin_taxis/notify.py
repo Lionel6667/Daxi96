@@ -8,15 +8,21 @@ logger = logging.getLogger(__name__)
 PUSH_MESSAGES = {
     'price_proposed': ('Prix proposé', 'Un tarif vous a été proposé pour votre course.'),
     'price_confirmed': ('Prix confirmé', 'Le tarif de votre course a été confirmé.'),
+    'payment_confirmed': ('Paiement reçu', 'Paiement confirmé. Un chauffeur va bientôt être assigné.'),
+    'payment_cash_confirmed': ('Course confirmée', 'Vous paierez le chauffeur en espèces. Recherche d\'un chauffeur en cours.'),
     'driver_assigned': ('Chauffeur assigné', 'Votre chauffeur a été assigné à la course.'),
     'on_way': ('Chauffeur en route', 'Votre chauffeur est en route vers vous.'),
     'arrived': ('Chauffeur arrivé', 'Votre chauffeur est arrivé au point de départ.'),
     'in_progress': ('Course démarrée', 'Votre course est en cours.'),
+    'waiting_return': ('Attente avant le retour', 'Arrivé à destination — attente du retour.'),
     'completed': ('Course terminée', 'Merci d\'avoir voyagé avec Daxi.'),
     'cancelled': ('Course annulée', 'Votre course a été annulée.'),
     'new_message': ('Nouveau message', 'Vous avez un nouveau message sur votre course.'),
     'sos_ack': ('SOS reçu', 'Votre signal SOS a été transmis à l\'équipe DAXI.'),
     'trip_reminder': ('Rappel de course', 'Votre course planifiée approche — préparez-vous.'),
+    'trip_paused': ('Course en pause', 'La course est en pause — frais d\'attente applicables.'),
+    'trip_resumed': ('Course reprise', 'Votre course a repris.'),
+    'trip_extended': ('Trajet prolongé', 'Prolongation confirmée — tarif ajusté.'),
 }
 
 DRIVER_PUSH_MESSAGES = {
@@ -30,12 +36,18 @@ DRIVER_PUSH_MESSAGES = {
 WHATSAPP_BY_STATUS = {
     'price_proposed': 'notify_client_price_proposed',
     'price_confirmed': 'notify_client_price_confirmed',
+    'payment_confirmed': 'notify_client_payment_confirmed',
+    'payment_cash_confirmed': 'notify_client_payment_cash',
     'driver_assigned': 'notify_client_driver_assigned',
     'on_way': 'notify_client_driver_on_way',
     'arrived': 'notify_client_driver_arrived',
     'in_progress': 'notify_client_trip_started',
+    'waiting_return': 'notify_client_waiting_return',
     'completed': 'notify_client_trip_completed',
     'cancelled': 'notify_client_cancelled',
+    'trip_paused': 'notify_client_trip_paused',
+    'trip_resumed': 'notify_client_trip_resumed',
+    'trip_extended': 'notify_client_trip_extended',
 }
 
 
@@ -235,15 +247,17 @@ def _safe_push_driver(driver, event: str, order=None, extra: dict | None = None)
 
 
 def notify_client_accepted_price(order) -> None:
-    """Le client vient d'accepter le tarif — alerter l'admin uniquement (pas le client)."""
+    """Le client vient d'accepter le tarif — alerter le client + admin."""
+    notify_order_status_sync(order, 'price_confirmed')
     push_notify_admin('price_confirmed', order=order)
 
 
 def notify_payment_ready_for_drivers(order) -> None:
-    """Paiement validé — push client + admin + chauffeurs."""
-    _safe_push_order(order, 'payment_confirmed')
+    """Paiement validé ou cash choisi — push + WhatsApp client + admin + chauffeurs."""
     pm = (getattr(order, 'payment_method', None) or '').strip()
     if pm == 'in_person':
+        _safe_push_order(order, 'payment_cash_confirmed')
+        _safe_whatsapp(order, 'notify_client_payment_cash')
         push_notify_admin(
             'payment_confirmed',
             title='Paiement sur place',
@@ -251,6 +265,8 @@ def notify_payment_ready_for_drivers(order) -> None:
             order=order,
         )
     else:
+        _safe_push_order(order, 'payment_confirmed')
+        _safe_whatsapp(order, 'notify_client_payment_confirmed')
         push_notify_admin('payment_confirmed', order=order)
 
 
@@ -405,6 +421,16 @@ def notify_drivers_new_order_async(order) -> None:
 def notify_trip_paused(order, rate_per_5min=None) -> bool:
     _safe_push_order(order, 'trip_paused')
     return _safe_whatsapp(order, 'notify_client_trip_paused', rate_per_5min=rate_per_5min)
+
+
+def notify_trip_resumed(order) -> bool:
+    _safe_push_order(order, 'trip_resumed')
+    return _safe_whatsapp(order, 'notify_client_trip_resumed')
+
+
+def notify_trip_extended(order) -> bool:
+    _safe_push_order(order, 'trip_extended')
+    return _safe_whatsapp(order, 'notify_client_trip_extended')
 
 
 def notify_zone_approach(order, payload: dict | None = None) -> None:

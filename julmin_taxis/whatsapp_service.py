@@ -616,7 +616,7 @@ def notify_client_price_proposed(order) -> bool:
         f'📍 Départ : {pickup}\n📍 Destination : {dest}\n💰 Prix : {price}\n\n'
         f'Connectez-vous pour accepter ou refuser : {site}'
     )
-    return _try_situation(phone, 'prix_propose', [client, pickup, dest, price], fallback)
+    return _try_situation(phone, 'prix_propose', [client, pickup, dest, price], fallback, allow_text_fallback=True)
 
 
 def notify_client_driver_assigned(order) -> bool:
@@ -639,6 +639,7 @@ def notify_client_driver_assigned(order) -> bool:
         phone, 'chauffeur_assigne',
         [client, driver_name, vehicle, pickup, dest, price],
         fallback,
+        allow_text_fallback=True,
     )
 
 
@@ -672,6 +673,7 @@ def notify_client_driver_on_way(order) -> bool:
         phone, 'chauffeur_en_route',
         [client_fn, driver_name, eta],
         fallback,
+        allow_text_fallback=True,
     )
 
 
@@ -695,6 +697,7 @@ def notify_client_driver_arrived(order) -> bool:
         phone, 'chauffeur_arrive',
         [client_fn, pickup, dest, driver_name, vehicle],
         fallback,
+        allow_text_fallback=True,
     )
 
 
@@ -704,14 +707,119 @@ def notify_client_trip_started(order) -> bool:
         return False
     client = _first_name(order.client_name or 'Client', 'Client')
     pickup, dest = _trip_addresses(order)
+    phase = (getattr(order, 'round_trip_phase', None) or '').strip().lower()
+    if phase == 'return':
+        fallback = (
+            f'🚕 *DAXI — Retour démarré*\n\nBonjour {client},\n\n'
+            f'Le trajet retour est en cours.\n📍 Vers : {pickup}'
+        )
+    else:
+        fallback = (
+            f'🚕 *DAXI — Course démarrée*\n\nBonjour {client},\n\n'
+            f'Votre course est en cours.\n📍 Départ : {pickup}\n📍 Destination : {dest}'
+        )
+    return _try_situation(
+        phone, 'course_demarree',
+        [client, pickup, dest],
+        fallback,
+        allow_text_fallback=True,
+    )
+
+
+def notify_client_waiting_return(order) -> bool:
+    phone = _client_phone(order)
+    if not phone:
+        return False
+    client = _first_name(order.client_name or 'Client', 'Client')
+    pickup, dest = _trip_addresses(order)
     fallback = (
-        f'🚕 *DAXI — Course démarrée*\n\nBonjour {client},\n\n'
-        f'Votre course est en cours.\n📍 Départ : {pickup}\n📍 Destination : {dest}'
+        f'⏳ *DAXI — Attente avant le retour*\n\nBonjour {client},\n\n'
+        f'Vous êtes arrivé à destination ({dest}).\n'
+        f'Votre chauffeur attend pour le trajet retour vers {pickup}.'
+    )
+    return _try_situation(
+        phone, 'pause_course',
+        [client, '0'],
+        fallback,
+        allow_text_fallback=True,
+    )
+
+
+def notify_client_payment_cash(order) -> bool:
+    phone = _client_phone(order)
+    if not phone:
+        return False
+    client = _first_name(order.client_name or 'Client', 'Client')
+    pickup, dest = _trip_addresses(order)
+    price = _price_label(order)
+    fallback = (
+        f'💵 *DAXI — Paiement en espèces*\n\nBonjour {client},\n\n'
+        f'Course confirmée. Vous paierez le chauffeur en espèces ({price}).\n'
+        f'📍 {pickup} → {dest}\n\nRecherche d\'un chauffeur en cours.'
+    )
+    return _try_situation(
+        phone, 'prix_confirme',
+        [client, pickup, dest, price],
+        fallback,
+        allow_text_fallback=True,
+    )
+
+
+def notify_client_payment_confirmed(order) -> bool:
+    phone = _client_phone(order)
+    if not phone:
+        return False
+    client = _first_name(order.client_name or 'Client', 'Client')
+    pickup, dest = _trip_addresses(order)
+    price = _price_label(order)
+    fallback = (
+        f'✅ *DAXI — Paiement reçu*\n\nBonjour {client},\n\n'
+        f'Paiement confirmé ({price}).\n'
+        f'📍 {pickup} → {dest}\n\nRecherche d\'un chauffeur en cours.'
+    )
+    return _try_situation(
+        phone, 'prix_confirme',
+        [client, pickup, dest, price],
+        fallback,
+        allow_text_fallback=True,
+    )
+
+
+def notify_client_trip_resumed(order) -> bool:
+    phone = _client_phone(order)
+    if not phone:
+        return False
+    client = _first_name(order.client_name or 'Client', 'Client')
+    pickup, dest = _trip_addresses(order)
+    fallback = (
+        f'▶️ *DAXI — Course reprise*\n\nBonjour {client},\n\n'
+        f'Votre course a repris.\n📍 {pickup} → {dest}'
     )
     return _try_situation(
         phone, 'course_demarree',
         [client, pickup, dest],
         fallback,
+        allow_text_fallback=True,
+    )
+
+
+def notify_client_trip_extended(order) -> bool:
+    phone = _client_phone(order)
+    if not phone:
+        return False
+    client = _first_name(order.client_name or 'Client', 'Client')
+    pickup, dest = _trip_addresses(order)
+    price = _price_label(order)
+    fallback = (
+        f'🗺️ *DAXI — Trajet prolongé*\n\nBonjour {client},\n\n'
+        f'Prolongation confirmée. Tarif mis à jour : {price}\n'
+        f'📍 {pickup} → {dest}'
+    )
+    return _try_situation(
+        phone, 'prix_confirme',
+        [client, pickup, dest, price],
+        fallback,
+        allow_text_fallback=True,
     )
 
 
@@ -734,6 +842,7 @@ def notify_client_trip_completed(order) -> bool:
         [client_fn, pickup, dest],
         fallback,
         button_url_suffix=compte_order_button_suffix(order.pk),
+        allow_text_fallback=True,
     )
 
 
@@ -748,7 +857,7 @@ def notify_client_trip_paused(order, rate_per_5min=None) -> bool:
         f'⏸️ *DAXI — Pause*\n\nBonjour {client},\n\n'
         f'Votre course est en pause.\nTarif : {rate_str} $ / 5 min'
     )
-    return _try_situation(phone, 'pause_course', [client, rate_str], fallback)
+    return _try_situation(phone, 'pause_course', [client, rate_str], fallback, allow_text_fallback=True)
 
 
 def notify_client_trip_reminder(order) -> bool:
@@ -763,7 +872,7 @@ def notify_client_trip_reminder(order) -> bool:
         f'Votre course approche ({when}).\n'
         f'📍 Départ : {pickup}\n📍 Destination : {dest}'
     )
-    return _try_situation(phone, 'rappel_course', [client, pickup, dest, when], fallback)
+    return _try_situation(phone, 'rappel_course', [client, pickup, dest, when], fallback, allow_text_fallback=True)
 
 
 def notify_client_receipt(order) -> bool:
@@ -1146,7 +1255,7 @@ def notify_client_price_confirmed(order) -> bool:
         f'📍 Départ : {pickup}\n📍 Destination : {dest}\n\n'
         f'Procédez au paiement pour lancer la recherche de chauffeur.'
     )
-    return _try_situation(phone, 'prix_confirme', [client, pickup, dest, price], fallback)
+    return _try_situation(phone, 'prix_confirme', [client, pickup, dest, price], fallback, allow_text_fallback=True)
 
 
 def notify_client_cancelled(order) -> bool:
@@ -1164,6 +1273,7 @@ def notify_client_cancelled(order) -> bool:
         phone, 'course_annulee',
         [client, f'#{order.pk}', pickup],
         fallback,
+        allow_text_fallback=True,
     )
 
 

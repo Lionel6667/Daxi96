@@ -18,7 +18,8 @@ ACTIVE_TEMPLATE_FALLBACKS = {
     'prix_propose': None,
     'prix_confirme': None,
     'chauffeur_assigne': 'chauffeur_en_route',
-    'course_demarree': None,
+    'chauffeur_arrive': 'chauffeur_en_route',
+    'course_demarree': 'chauffeur_en_route',
     'course_annulee': None,
     'pause_course': None,
     'rappel_course': None,
@@ -39,6 +40,16 @@ FALLBACK_BODY_BUILDERS = {
         params[0] if params else 'Client',
         params[1] if len(params) > 1 else 'Votre chauffeur',
         '5',
+    ],
+    'chauffeur_arrive': lambda params: [
+        params[0] if params else 'Client',
+        params[3] if len(params) > 3 else 'Votre chauffeur',
+        '1',
+    ],
+    'course_demarree': lambda params: [
+        params[0] if params else 'Client',
+        'Votre chauffeur',
+        '1',
     ],
     'recu_course': lambda params: [
         params[0] if params else 'Client',

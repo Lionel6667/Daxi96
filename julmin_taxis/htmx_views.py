@@ -2902,6 +2902,44 @@ def _order_has_full_coords(order):
     )
 
 
+def prev_status_gate_needed(order):
+    """Gate 500m for démarrer la course (outbound from arrived, or return from waiting_return)."""
+    st = (order.status or '').strip()
+    return st in ('arrived', 'waiting_return')
+
+
+def _driver_near_pickup(driver, order, max_m=500):
+    """True if driver GPS is within max_m of the relevant meeting point."""
+    try:
+        dlat = float(getattr(driver, 'latitude', None) or 0)
+        dlng = float(getattr(driver, 'longitude', None) or 0)
+    except (TypeError, ValueError):
+        return False, None
+    if not dlat or not dlng:
+        return False, None
+    st = (order.status or '').strip()
+    # Return leg starts from destination; outbound from pickup/meeting
+    if st == 'waiting_return':
+        plat = order.destination_lat
+        plng = order.destination_lng
+    else:
+        plat = order.pickup_lat
+        plng = order.pickup_lng
+        if getattr(order, 'meeting_lat', None) is not None and getattr(order, 'meeting_lng', None) is not None:
+            plat = order.meeting_lat
+            plng = order.meeting_lng
+    try:
+        plat = float(plat)
+        plng = float(plng)
+    except (TypeError, ValueError):
+        return False, None
+    km = _haversine_km(dlat, dlng, plat, plng)
+    if km is None:
+        return False, None
+    dist_m = float(km) * 1000.0
+    return dist_m <= float(max_m), dist_m
+
+
 def _driver_can_accept_order(driver, order):
     """Règles d'acceptation maintenant / plus tard. Retourne (ok, message)."""
     if not getattr(driver, 'is_verified', False):
@@ -3174,6 +3212,14 @@ def driver_update_status(request, order_id):
         return _htmx_error(
             'Placez départ et destination sur la carte avant de démarrer la course.'
         )
+
+    # Anti-fraude : démarrer la course seulement si le chauffeur est vraiment près du client
+    if new_status == 'in_progress' and prev_status_gate_needed(order):
+        near, dist_m = _driver_near_pickup(driver, order, max_m=500)
+        if not near:
+            return _htmx_error(
+                'Vous devez être réellement arrivé au point de rendez-vous avant de démarrer la course.'
+            )
 
     if new_status == 'completed':
         _finalize_pause_if_active(order)
@@ -4265,6 +4311,12 @@ def _advance_to_driver_notified(order):
             'order_id': order.pk,
             'payment_method': pm,
         })
+    elif pm == 'in_person':
+        _notify_ws(f'order_{order.pk}', 'payment_cash_confirmed', {
+            'order_id': order.pk,
+            'payment_method': pm,
+            'message': 'Vous paierez le chauffeur en espèces. Recherche d\'un chauffeur en cours.',
+        })
     try:
         from julmin_taxis.notify import notify_payment_ready_for_drivers
         notify_payment_ready_for_drivers(order)
@@ -4606,8 +4658,8 @@ def driver_extend_trip(request, order_id):
         'rate_per_km': str(config.extra_km_rate),
     })
     try:
-        from julmin_taxis.notify import push_order_event
-        push_order_event(order, 'trip_extended')
+        from julmin_taxis.notify import notify_trip_extended
+        notify_trip_extended(order)
     except Exception:
         pass
     _broadcast_price_update(order)
@@ -4700,8 +4752,8 @@ def driver_resume_trip(request, order_id):
         'pause_minutes': round(total_secs / 60, 1),
     })
     try:
-        from julmin_taxis.notify import push_order_event
-        push_order_event(order, 'trip_resumed')
+        from julmin_taxis.notify import notify_trip_resumed
+        notify_trip_resumed(order)
     except Exception:
         pass
     _broadcast_price_update(order)

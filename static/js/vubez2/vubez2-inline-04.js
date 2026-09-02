@@ -7441,6 +7441,14 @@ function _daxiReattachMainMapOverlays() {
         window._clientLocationAccuracyCircle.setMap(null);
         window._clientLocationAccuracyCircle = null;
     }
+    // Réattacher le suivi chauffeur (sinon disparaît en passant clair/sombre)
+    var track = window._daxiMainOrderTrack;
+    if (track) {
+        if (track.driver && track.driver.setMap) track.driver.setMap(map);
+        if (track.legLine && track.legLine.setMap) track.legLine.setMap(map);
+        if (track.legGlow && track.legGlow.setMap) track.legGlow.setMap(map);
+        if (track.clientTwin && track.clientTwin.setMap) track.clientTwin.setMap(map);
+    }
 }
 
 function _daxiWireOneMainMapGmapsListeners(map) {
@@ -8629,9 +8637,14 @@ function _daxiNotifLabels() {
         in_progress: { title: 'Course démarrée', msg: 'Votre course est en cours.', type: 'info' },
         completed: { title: 'Course terminée', msg: 'Merci d\'avoir voyagé avec Daxi.', type: 'success' },
         cancelled: { title: 'Course annulée', msg: 'Votre course a été annulée.', type: 'warning' },
-        payment_confirmed: { title: 'Paiement confirmé', msg: 'Votre paiement a été enregistré.', type: 'success' },
+        payment_confirmed: { title: 'Paiement reçu', msg: 'Paiement confirmé. Un chauffeur va bientôt être assigné.', type: 'success' },
+        payment_cash_confirmed: { title: 'Course confirmée', msg: 'Vous paierez le chauffeur en espèces. Recherche d\'un chauffeur en cours.', type: 'success' },
         new_message: { title: 'Nouveau message', msg: 'Vous avez un message du chauffeur.', type: 'info' },
         trip_reminder: { title: 'Rappel de course', msg: 'Votre course planifiée approche — préparez-vous.', type: 'info' },
+        trip_reminder_1d: { title: 'Rappel — demain', msg: 'Votre course est prévue demain.', type: 'info' },
+        trip_reminder_3d: { title: 'Rappel — 3 jours', msg: 'Votre course est dans 3 jours.', type: 'info' },
+        trip_reminder_7d: { title: 'Rappel — 7 jours', msg: 'Votre course est prévue dans une semaine.', type: 'info' },
+        trip_reminder_same_day: { title: 'Course aujourd\'hui', msg: 'Rappel : course prévue aujourd\'hui.', type: 'info' },
         order_cancelled: { title: 'Course annulée', msg: 'Votre course a été annulée.', type: 'warning' }
     };
 }
@@ -9967,7 +9980,17 @@ document.body.addEventListener('htmx:beforeRequest', function(evt) {
     var action = seg.indexOf('confirm-price') === 0 ? 'price_confirmed'
         : seg.indexOf('refuse-price') === 0 ? 'price_refused'
         : seg.indexOf('cancel') === 0 ? 'order_cancelled'
-        : seg.indexOf('payment') === 0 ? 'payment_confirmed' : null;
+        : null;
+    if (seg.indexOf('payment') === 0) {
+        try {
+            var body = (evt.detail && evt.detail.requestConfig && evt.detail.requestConfig.parameters) || '';
+            if (typeof body === 'string' && body.indexOf('in_person') >= 0) action = 'payment_cash_confirmed';
+            else if (body && body.method === 'in_person') action = 'payment_cash_confirmed';
+            else action = 'payment_confirmed';
+        } catch (ePay) {
+            action = 'payment_confirmed';
+        }
+    }
     if (action) window.DaxiNotifPolicy.markUserAction(oid, action);
     if (seg.indexOf('confirm-price') === 0) {
         var btn = evt.detail && evt.detail.elt;

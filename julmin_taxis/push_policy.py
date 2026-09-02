@@ -27,6 +27,7 @@ CRITICAL_EVENTS = frozenset({
 
 IMPORTANT_EVENTS = frozenset({
     'order_created', 'price_proposed', 'price_confirmed', 'payment_confirmed',
+    'payment_cash_confirmed',
     'payment_failed', 'driver_assigned', 'on_way', 'arrived', 'in_progress',
     'completed', 'waiting_return', 'new_message', 'trip_reminder',
     'trip_reminder_1d', 'trip_reminder_3d', 'trip_reminder_7d',
@@ -86,6 +87,7 @@ DRIVER_IMPORTANT = frozenset({
 
 SKIP_IF_VIEWING_ORDER = frozenset({
     'order_created', 'price_proposed', 'price_confirmed', 'payment_confirmed',
+    'payment_cash_confirmed',
     'driver_assigned', 'on_way', 'arrived', 'in_progress', 'completed',
     'waiting_return', 'coords_needed', 'coords_set', 'trip_paused',
     'trip_resumed', 'trip_extended', 'price_updated', 'now_transition',

@@ -1,6 +1,21 @@
-
 {% if o.driver_name and o.status != 'pending' and o.status != 'price_proposed' and o.status != 'price_confirmed' and o.status != 'cancelled' %}
-<div class="daxi-oc-driver" id="daxi-driver-block-{{ o.id }}">
+<div class="daxi-oc-driver daxi-oc-driver--expandable"
+     id="daxi-driver-block-{{ o.id }}"
+     role="button"
+     tabindex="0"
+     data-daxi-driver-profile="1"
+     data-driver-name="{{ o.driver_name|default:'' }}"
+     data-driver-phone="{{ o.driver_phone|default:'' }}"
+     data-driver-photo="{{ o.driver_photo|default:'' }}"
+     data-driver-vehicle="{{ o.driver_vehicle_label|default:o.driver_car_brand|default:o.driver_vehicle|default:'' }}"
+     data-driver-car-model="{{ o.driver_car_model|default:'' }}"
+     data-driver-car-year="{{ o.driver_car_year|default:'' }}"
+     data-driver-plate="{{ o.driver_plate|default:'' }}"
+     data-driver-car-image="{{ o.driver_car_image|default:'' }}"
+     data-driver-rating="{{ o.driver_rating|default:'' }}"
+     data-driver-rating-count="{{ o.driver_rating_count|default:'' }}"
+     data-driver-verified="{% if o.driver_is_verified %}1{% else %}0{% endif %}"
+     aria-label="Voir le profil du chauffeur">
   <div class="daxi-oc-driver-avatar">
     {% if o.driver_photo %}
     <img src="{{ o.driver_photo }}" alt="{{ o.driver_name }}" referrerpolicy="no-referrer" loading="eager" fetchpriority="high"
@@ -23,7 +38,7 @@
     </span>
     {% endif %}
     {% if o.driver_phone %}
-    <a href="tel:{{ o.driver_phone }}" class="daxi-oc-driver-call">
+    <a href="tel:{{ o.driver_phone }}" class="daxi-oc-driver-call" onclick="event.stopPropagation();">
       <i class="ri-phone-fill"></i> Appeler le chauffeur
     </a>
     {% endif %}

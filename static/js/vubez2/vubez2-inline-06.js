@@ -520,9 +520,10 @@ function _daxiClearMainMapOrderTrack() {
     var t = window._daxiMainOrderTrack;
     if (!t) return;
     if (t.driver && t.driver.setMap) t.driver.setMap(null);
+    if (t.clientTwin && t.clientTwin.setMap) t.clientTwin.setMap(null);
     if (t.legLine && t.legLine.setMap) t.legLine.setMap(null);
     if (t.legGlow && t.legGlow.setMap) t.legGlow.setMap(null);
-    window._daxiMainOrderTrack = { driver: null, legLine: null, legGlow: null, legPath: null, orderId: null };
+    window._daxiMainOrderTrack = { driver: null, clientTwin: null, legLine: null, legGlow: null, legPath: null, orderId: null };
 }
 
 function _daxiDrawMainMapLeg(path, color) {
@@ -547,13 +548,27 @@ function _daxiDrawMainMapLeg(path, color) {
     t.legLine.setMap(window._clientBgMap);
 }
 
-function _daxiSetMainMapDriverMarker(lat, lng) {
+function _daxiSetMainMapDriverMarker(lat, lng, opts) {
     if (!window._clientBgMap || !isFinite(lat) || !isFinite(lng) || lat === 0) return;
+    opts = opts || {};
     var t = window._daxiMainOrderTrack;
     if (!t.driver) {
         t.driver = _daxiDriver3D(lat, lng, window._clientBgMap);
-    } else if (t.driver.setPosition) {
-        t.driver.setPosition({ lat: lat, lng: lng });
+    } else {
+        if (t.driver.setMap) t.driver.setMap(window._clientBgMap);
+        if (t.driver.setPosition) t.driver.setPosition({ lat: lat, lng: lng });
+    }
+    // Pendant la course : 2e pin (client) = même position que le chauffeur
+    if (opts.colocateClient) {
+        if (!t.clientTwin) {
+            t.clientTwin = _daxiMe3D(lat, lng, window._clientBgMap);
+        } else {
+            if (t.clientTwin.setMap) t.clientTwin.setMap(window._clientBgMap);
+            if (t.clientTwin.setPosition) t.clientTwin.setPosition({ lat: lat, lng: lng });
+        }
+    } else if (t.clientTwin && t.clientTwin.setMap) {
+        t.clientTwin.setMap(null);
+        t.clientTwin = null;
     }
 }
 
@@ -579,58 +594,75 @@ function _daxiSyncMainMapOrderTracking(el) {
     if (status === 'in_progress' && isFinite(dLa) && isFinite(dLo)) {
         legTo = { lat: dLa, lng: dLo };
         legColor = '#34d399';
-    } else if (isFinite(pLa) && isFinite(pLo)) {
+    } else if (status !== 'in_progress' && isFinite(pLa) && isFinite(pLo)) {
         legTo = { lat: pLa, lng: pLo };
         legColor = (status === 'on_way' || status === 'arrived') ? '#a855f7' : '#6366f1';
     }
 
     function fitTrack(lat, lng) {
-        var now = Date.now();
+        // Carte stable : un seul cadrage par commande focalisée, heading/tilt figés
         window._daxiMainFitLast = window._daxiMainFitLast || {};
-        var last = window._daxiMainFitLast[orderId] || 0;
-        if (now - last < 10000) return;
-        window._daxiMainFitLast[orderId] = now;
+        if (window._daxiMainFitLast[orderId]) return;
+        window._daxiMainFitLast[orderId] = Date.now();
         var bounds = new google.maps.LatLngBounds();
         bounds.extend({ lat: lat, lng: lng });
-        if (isFinite(pLa) && isFinite(pLo)) bounds.extend({ lat: pLa, lng: pLo });
+        if (isFinite(pLa) && isFinite(pLo) && status !== 'in_progress') bounds.extend({ lat: pLa, lng: pLo });
         if (isFinite(dLa) && isFinite(dLo)) bounds.extend({ lat: dLa, lng: dLo });
         if (!bounds.isEmpty()) {
+            try {
+                if (window._clientBgMap.setHeading) window._clientBgMap.setHeading(0);
+                if (window._clientBgMap.setTilt) window._clientBgMap.setTilt(0);
+            } catch (eH) {}
             window._clientBgMap.fitBounds(bounds, _daxiMapPaddingFullscreen());
-            _daxiRestoreBookingMapTilt(window._clientBgMap);
         }
     }
 
     function applyPos(lat, lng) {
-        _daxiSetMainMapDriverMarker(lat, lng);
+        _daxiSetMainMapDriverMarker(lat, lng, { colocateClient: status === 'in_progress' });
         if (document.body.classList.contains('daxi-sheet-collapsed-mode') ||
             (window._daxiMainMapFocusOrderId && String(window._daxiMainMapFocusOrderId) === String(orderId))) {
             fitTrack(lat, lng);
         }
     }
 
+    // Vraie position GPS — pas de collage au pickup (même en "arrived")
     if (!legTo) {
         applyPos(vLa, vLo);
         return;
     }
 
-    if (status === 'arrived' && isFinite(pLa) && isFinite(pLo)) {
-        applyPos(pLa, pLo);
-        if (isFinite(dLa) && isFinite(dLo)) {
-            _fetchRoute(pLo, pLa, dLo, dLa).then(function(route) {
-                if (!route || !route.path || String(window._daxiMainOrderTrack.orderId) !== String(orderId)) return;
-                _daxiDrawMainMapLeg(route.path, '#34d399');
-            });
+    var routeKey = orderId + ':' + status + ':' + Math.round(vLa * 2000) + ':' + Math.round(vLo * 2000);
+    var track = window._daxiMainOrderTrack;
+    if (track._lastRouteKey === routeKey && track.legPath && track.legPath.length > 1) {
+        var displayLat = vLa;
+        var displayLng = vLo;
+        if (status === 'on_way' || status === 'in_progress') {
+            var snappedFast = _daxiSnapPointToPath(vLa, vLo, track.legPath);
+            if (snappedFast && isFinite(snappedFast.lat)) {
+                displayLat = snappedFast.lat;
+                displayLng = snappedFast.lng;
+            }
         }
+        applyPos(displayLat, displayLng);
         return;
     }
 
     _fetchRoute(vLo, vLa, legTo.lng, legTo.lat).then(function(route) {
         if (!route || !route.path || String(window._daxiMainOrderTrack.orderId) !== String(orderId)) return;
         window._daxiMainOrderTrack.legPath = route.path;
+        window._daxiMainOrderTrack._lastRouteKey = routeKey;
         if (window.DaxiMapSnap && DaxiMapSnap.setActiveRoutePath) DaxiMapSnap.setActiveRoutePath(route.path);
-        var snapped = _daxiSnapPointToPath(vLa, vLo, route.path);
+        var displayLat = vLa;
+        var displayLng = vLo;
+        if (status === 'on_way' || status === 'in_progress') {
+            var snapped = _daxiSnapPointToPath(vLa, vLo, route.path);
+            if (snapped && isFinite(snapped.lat)) {
+                displayLat = snapped.lat;
+                displayLng = snapped.lng;
+            }
+        }
         _daxiDrawMainMapLeg(route.path, legColor);
-        applyPos(snapped.lat, snapped.lng);
+        applyPos(displayLat, displayLng);
     });
 }
 window._daxiSyncMainMapOrderTracking = _daxiSyncMainMapOrderTracking;
@@ -810,7 +842,9 @@ function _daxiStartLiveTracking(orderId) {
             } else if (msg.event === 'status_updated' && msg.data) {
                 applyFromData(msg.data);
                 _daxiPatchSheetStatus(orderId, msg.data);
-                _daxiNotifyOrderEvent(msg.data.status, Object.assign({ silent: 1 }, msg.data));
+                if (window._daxiNotifyOrderEvent) {
+                    _daxiNotifyOrderEvent(msg.data.status, msg.data);
+                }
             } else if (msg.event === 'driver_accepted' || msg.event === 'driver_on_the_way' || msg.event === 'driver_assigned' || msg.event === 'driver_arrived' || msg.event === 'in_progress') {
                 applyFromData(msg.data || {});
                 _daxiPatchSheetStatus(orderId, msg.data || {});
@@ -820,12 +854,14 @@ function _daxiStartLiveTracking(orderId) {
                         _loadDaxiSheetOrders({ keepOpen: true, metaOnly: true });
                     }, 300);
                 }
-                _daxiNotifyOrderEvent(msg.event.replace('driver_on_the_way', 'on_way').replace('driver_arrived', 'arrived').replace('driver_accepted', 'driver_assigned'), Object.assign({ silent: 1 }, msg.data || {}));
-            } else if (msg.event === 'price_proposed' || msg.event === 'payment_confirmed' || msg.event === 'order_cancelled' || msg.event === 'price_updated' || msg.event === 'coords_set' || msg.event === 'trip_paused' || msg.event === 'trip_resumed' || msg.event === 'trip_extended') {
-                if (msg.event !== 'payment_confirmed') {
+                if (window._daxiNotifyOrderEvent) {
+                    _daxiNotifyOrderEvent(msg.event.replace('driver_on_the_way', 'on_way').replace('driver_arrived', 'arrived').replace('driver_accepted', 'driver_assigned'), msg.data || {});
+                }
+            } else if (msg.event === 'price_proposed' || msg.event === 'payment_confirmed' || msg.event === 'payment_cash_confirmed' || msg.event === 'order_cancelled' || msg.event === 'price_updated' || msg.event === 'coords_set' || msg.event === 'trip_paused' || msg.event === 'trip_resumed' || msg.event === 'trip_extended') {
+                if (window._daxiNotifyOrderEvent) {
                     _daxiNotifyOrderEvent(msg.event === 'order_cancelled' ? 'cancelled' : msg.event, msg.data || {});
                 }
-                if (msg.event === 'price_proposed' || msg.event === 'payment_confirmed' || msg.event === 'trip_paused' || msg.event === 'trip_resumed' || msg.event === 'trip_extended') {
+                if (msg.event === 'price_proposed' || msg.event === 'payment_confirmed' || msg.event === 'payment_cash_confirmed' || msg.event === 'trip_paused' || msg.event === 'trip_resumed' || msg.event === 'trip_extended') {
                     if (window._daxiRefreshOrderSheet) _daxiRefreshOrderSheet(orderId, { forceDom: true, checkoutTransition: true });
                 } else if (msg.event === 'coords_set') {
                     _daxiPatchSheetStatus(orderId, msg.data || {});
@@ -834,9 +870,9 @@ function _daxiStartLiveTracking(orderId) {
                     _daxiPatchSheetStatus(orderId, msg.data || {});
                     if (window._daxiRefreshOrderSheet) _daxiRefreshOrderSheet(orderId, { silent: true, cacheOnly: true });
                 }
-                if (msg.event === 'payment_confirmed' && window._daxiApplyBookingMarkersLock) window._daxiApplyBookingMarkersLock();
-                if (msg.event === 'payment_confirmed' && typeof window._daxiMaybeAskNotificationsNow === 'function') {
-                    window._daxiMaybeAskNotificationsNow('payment_confirmed');
+                if ((msg.event === 'payment_confirmed' || msg.event === 'payment_cash_confirmed') && window._daxiApplyBookingMarkersLock) window._daxiApplyBookingMarkersLock();
+                if ((msg.event === 'payment_confirmed' || msg.event === 'payment_cash_confirmed') && typeof window._daxiMaybeAskNotificationsNow === 'function') {
+                    window._daxiMaybeAskNotificationsNow(msg.event);
                 }
             } else if (msg.event === 'relocate_prompt') {
                 var relocMeta = _daxiEnrichOrderMeta(msg.data || { id: orderId });
@@ -1034,19 +1070,20 @@ function _daxiFitOrderOnMainMap(el, pLa, pLo, dLa, dLo) {
         && isFinite(_df(el.dataset.driverLat)) && isFinite(_df(el.dataset.driverLng));
     if (hasDriverTrack) {
         _daxiSyncMainMapOrderTracking(el);
-    } else {
-        _daxiClearMainMapOrderTrack();
-        _daxiDrawOrderRouteOnMainMap(pLa, pLo, dLa, dLo, planStops, 0);
+        return;
     }
+    _daxiClearMainMapOrderTrack();
+    _daxiDrawOrderRouteOnMainMap(pLa, pLo, dLa, dLo, planStops, 0);
     var pts = _daxiOrderRoutePoints(pLa, pLo, dLa, dLo, planStops);
-    if (!hasDriverTrack && pts.length > 1) {
+    if (pts.length > 1) {
         _daxiFitLatLngBounds(window._clientBgMap, pts, pad);
-        _daxiRestoreBookingMapTilt(window._clientBgMap);
-    } else if (!hasDriverTrack && isFinite(pLa) && isFinite(pLo)) {
+    } else if (isFinite(pLa) && isFinite(pLo)) {
         window._clientBgMap.setCenter({ lat: pLa, lng: pLo });
         window._clientBgMap.setZoom(15);
-        _daxiRestoreBookingMapTilt(window._clientBgMap);
     }
+    try {
+        if (window._clientBgMap.setHeading) window._clientBgMap.setHeading(0);
+    } catch (e) {}
 }
 
 

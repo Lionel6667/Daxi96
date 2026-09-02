@@ -665,10 +665,10 @@
       extend(cfg.dest);
     }
     if (cfg.driver) {
-      var driverPos = cfg.driver;
-      if (st === 'arrived' && cfg.pickup) {
-        driverPos = { lat: cfg.pickup.lat, lng: cfg.pickup.lng };
-        cfg.driver = driverPos;
+      var driverPos = { lat: cfg.driver.lat, lng: cfg.driver.lng };
+      // in_progress : client + chauffeur = position réelle du chauffeur
+      if (st === 'in_progress' && cfg.pickup) {
+        cfg.pickup = { lat: driverPos.lat, lng: driverPos.lng };
       }
       addMarker(store, map, 'driver', driverPos, driverIcon(cfg.status), 'Chauffeur', 420);
       extend(driverPos);
@@ -754,10 +754,7 @@
       }
       return;
     }
-    var driverPos = cfg.driver;
-    if (cfg.status === 'arrived' && cfg.pickup) {
-      driverPos = { lat: cfg.pickup.lat, lng: cfg.pickup.lng };
-    }
+    var driverPos = { lat: cfg.driver.lat, lng: cfg.driver.lng };
     var mk = store.markers.driver;
     if (!mk) {
       addMarker(store, rec.map, 'driver', driverPos, driverIcon(cfg.status), 'Chauffeur', 420);
@@ -766,6 +763,10 @@
       mk.setPosition(driverPos);
     }
     if (mk && mk.setIcon) mk.setIcon(driverIcon(cfg.status));
+    // Pendant la course : le pin départ suit le chauffeur (même véhicule)
+    if (cfg.status === 'in_progress' && store.markers.pickup && store.markers.pickup.setPosition) {
+      store.markers.pickup.setPosition(driverPos);
+    }
     var legKey = 'leg';
     if (store.polylines[legKey]) store.polylines[legKey].setMap(null);
     delete store.polylines[legKey];
