@@ -820,6 +820,6 @@
       if (!window._daxiLoaderDismissed && window._daxiDismissInitialLoader) {
         window._daxiDismissInitialLoader();
       }
-    }, 2000);
+    }, 700);
   });
 })();

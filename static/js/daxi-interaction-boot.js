@@ -2,10 +2,14 @@
   'use strict';
 
   var started = false;
-  var v = function () { return global._DAXI_ASSET_V || '20260902n'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902o'; };
 
   var DEFERRED_CSS = [
+    'assets/css/vubez2-core.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
+    'assets/css/vubez2-body.css?v=20260902b',
+    'assets/css/remixicon-vubez2.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
     'assets/css/aos.css',
+    '/static/css/daxi-suggestions-theme.css?v=20260760',
     '/static/css/daxi-theme-subpages.css?v=20260823c',
     '/static/css/daxi-assist-ai.css?v=20260814f',
     '/static/css/daxi-map-theme.css?v=20260731',
@@ -54,10 +58,10 @@
   ];
 
   function loadCss(href) {
+    if (document.querySelector('link[href="' + href + '"]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = href.indexOf('?') >= 0 ? href : href + (href.indexOf('.css') >= 0 && href.indexOf('aos') >= 0 ? '' : '');
-    if (href.indexOf('aos') >= 0 && href.indexOf('?') < 0) link.href = href;
+    link.href = href;
     link.media = 'all';
     document.head.appendChild(link);
   }
@@ -79,12 +83,23 @@
     });
   }
 
+  function hydrateLazyBgs() {
+    document.querySelectorAll('[data-bg]').forEach(function (el) {
+      var url = el.getAttribute('data-bg');
+      if (url) {
+        el.style.backgroundImage = 'url("' + url + '")';
+        el.removeAttribute('data-bg');
+      }
+    });
+  }
+
   function shouldArm(e) {
     if (!e || !e.target || !e.target.closest) return false;
     return !!e.target.closest(
       '#mainTabBar, #orderTaxiBtn, #daxiMenuFab, #daxiMapTapZone, ' +
       '.daxi-map-placeholder, #myPositionBtn, #daxi-map-placeholder-img, ' +
-      '.sidebar-menu-item, .tab-bar-btn[data-tab]'
+      '.sidebar-menu-item, .tab-bar-btn[data-tab], #destinationAddress, ' +
+      '#destinationAddressArrival, .app-sheet'
     );
   }
 
@@ -92,6 +107,7 @@
     if (started) return;
     started = true;
     DEFERRED_CSS.forEach(loadCss);
+    hydrateLazyBgs();
     INTERACTION_SCRIPTS.reduce(function (chain, src) {
       return chain.then(function () { return loadOne(src); });
     }, Promise.resolve());
@@ -103,9 +119,15 @@
       if (shouldArm(e)) boot();
     }, once);
     document.addEventListener('click', function (e) {
-      var btn = e.target && e.target.closest && e.target.closest('.tab-bar-btn[data-tab], .sidebar-menu-item');
+      var btn = e.target && e.target.closest && e.target.closest('.tab-bar-btn[data-tab], .sidebar-menu-item, #orderTaxiBtn');
       if (btn) boot();
     }, true);
+    document.addEventListener('focusin', function (e) {
+      var id = e.target && e.target.id;
+      if (id === 'destinationAddress' || id === 'destinationAddressArrival') boot();
+    }, { once: true, capture: true });
+    // Safety net for real users who stare at the map without tapping.
+    setTimeout(boot, 12000);
   }
 
   if (document.readyState === 'loading') {
@@ -113,4 +135,6 @@
   } else {
     arm();
   }
+
+  global._daxiBootDeferredAssets = boot;
 })(typeof window !== 'undefined' ? window : this);

@@ -123,8 +123,32 @@
         .tab-bar-btn{flex:1 1 0;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;min-height:60px;padding:6px 4px!important;touch-action:manipulation}
         nav.nav-gradient{position:fixed;top:0;width:100%;z-index:500!important;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)!important}
         nav.nav-gradient .navbar-logo{display:none!important}
+        .sheet-inner{padding:8px 12px 12px;overflow:auto;pointer-events:auto;-webkit-overflow-scrolling:touch}
+        .daxi-booking-panel{background:rgba(8,14,35,.72);border:1px solid rgba(148,163,184,.14);border-radius:14px;overflow:hidden;margin-bottom:4px}
+        .daxi-booking-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(148,163,184,.1)}
+        .daxi-row-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center;line-height:1}
+        .daxi-row-icon--green{color:#22c55e}.daxi-row-icon--gold{color:#f59e0b}.daxi-row-icon--muted{color:rgba(255,255,255,.45)}
+        .daxi-row-body{flex:1;min-width:0}.daxi-row-label{display:block;font-size:8px;font-weight:600;color:rgba(255,255,255,.42);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+        .daxi-row-input,.booking-input{width:100%;background:transparent;border:none;outline:none;color:#f8fafc;font-size:14px;padding:2px 0}
+        .daxi-row-action{width:28px;height:28px;border:none;border-radius:8px;background:rgba(34,197,94,.15);color:#22c55e;display:flex;align-items:center;justify-content:center}
+        .daxi-trip-row{display:flex;gap:8px;padding:8px;align-items:center;flex-wrap:wrap}
+        .trip-type-container{display:flex;gap:4px;flex:1}.trip-type-option,.time-selection-btn{flex:1;text-align:center;padding:8px 6px;border-radius:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.55);background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.12)}
+        .trip-type-option.active,.time-selection-btn.active{color:#0a0e1a;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-color:transparent}
+        .daxi-time-row{display:flex;gap:6px;padding:0 8px 8px}
+        .daxi-passenger-stepper{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:10px;background:rgba(15,23,42,.55)}
+        .daxi-step-btn{width:28px;height:28px;border:none;border-radius:8px;background:rgba(148,163,184,.15);color:#e2e8f0;font-size:16px}
+        .daxi-step-val{min-width:16px;text-align:center;font-weight:800;color:#f8fafc}
+        .daxi-order-cta-wrap{padding:8px 0 4px}
+        #orderTaxiBtn,.app-sheet #bookingSection #orderTaxiBtn{display:block;width:100%;background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%);color:#0a0e1a;border:none;border-radius:18px;font-weight:800;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:16px;box-shadow:0 4px 12px rgba(217,119,6,.22)}
+        .tab-bar-btn i,[class^="ri-"],[class*=" ri-"]{font-style:normal;font-weight:400;line-height:1;display:inline-block;width:1.15em;text-align:center}
+        .ri-taxi-line::before{content:"🚕"}.ri-route-line::before{content:"🛣"}.ri-price-tag-3-line::before{content:"🏷"}.ri-user-3-line::before{content:"👤"}
+        .ri-map-pin-line::before{content:"📍"}.ri-flag-line::before{content:"🏁"}.ri-focus-3-line::before{content:"◎"}.ri-search-line::before{content:"🔎"}
+        .ri-chat-3-line::before{content:"💬"}.ri-arrow-right-s-line::before{content:"›"}.ri-user-3-fill::before{content:"👤"}.ri-car-line::before{content:"🚗"}
+        .ri-arrow-left-right-line::before{content:"⇄"}.ri-flashlight-line::before{content:"⚡"}.ri-calendar-line::before{content:"📅"}.ri-question-line::before{content:"?"}.ri-close-line::before{content:"×"}.ri-menu-line::before{content:"☰"}
+        .daxi-map-placeholder{position:absolute;inset:0;background:#070b14 center/cover no-repeat}
+        #initialLoader.is-dismissed{opacity:0;visibility:hidden;pointer-events:none}
     </style>
-    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+4500;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,180);return;}document.documentElement.classList.remove('daxi-booting');document.documentElement.classList.remove('daxi-intro-boot');}setTimeout(bootTimeout,1200);if(typeof addEventListener==='function'){addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(!window._daxiLoaderDismissed&&typeof window._daxiDismissInitialLoader==='function'){window._daxiDismissInitialLoader();}},1800);});}})();</script>
+    <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+2500;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,120);return;}document.documentElement.classList.remove('daxi-booting');document.documentElement.classList.remove('daxi-intro-boot');}setTimeout(bootTimeout,350);if(typeof addEventListener==='function'){addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(!window._daxiLoaderDismissed&&typeof window._daxiDismissInitialLoader==='function'){window._daxiDismissInitialLoader();}else{document.documentElement.classList.remove('daxi-booting');var l=document.getElementById('initialLoader');if(l){l.classList.add('is-dismissed');l.style.display='none';}}},400);});}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <script>
@@ -139,7 +163,7 @@
         }
         if (isNative) {
             var intro = document.createElement('script');
-            intro.src = '/static/js/daxi-intro.js?v=20260902n';
+            intro.src = '/static/js/daxi-intro.js?v=20260902o';
             intro.defer = true;
             document.head.appendChild(intro);
         }
@@ -177,7 +201,7 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <script defer src="static/js/daxi-guest-id.js?v=20260902n"></script>
+    <script defer src="static/js/daxi-guest-id.js?v=20260902o"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.DaxiGuestId && DaxiGuestId.ensure) DaxiGuestId.ensure();
@@ -255,32 +279,18 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902n" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902n" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902n"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
-
-    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902n" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902n"></noscript>
-
-
-
-
 <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260823q"></noscript>
-<link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a"></noscript>
-<script defer src="/static/js/daxi-map-placeholder.js?v=20260902n"></script>
-<script defer src="/static/js/daxi-vubez2-chunks.js?v=20260902n"></script>
-<script defer src="/static/js/daxi-interaction-boot.js?v=20260902n"></script>
+<script defer src="/static/js/daxi-map-placeholder.js?v=20260902o"></script>
+<script defer src="/static/js/daxi-vubez2-chunks.js?v=20260902o"></script>
+<script defer src="/static/js/daxi-interaction-boot.js?v=20260902o"></script>
 <script src="/static/js/vubez2/vubez2-inline-02.js?v=20260830c" defer></script>
-<script src="/static/js/daxi-theme.js?v=20260902n" defer></script>
+<script src="/static/js/daxi-theme.js?v=20260902o" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (window.DaxiTheme && typeof DaxiTheme.remount === 'function') DaxiTheme.remount();
@@ -289,9 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902n';
+window._DAXI_ASSET_V='20260902o';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902n" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902o" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -1407,7 +1417,7 @@ window._DAXI_ASSET_V='20260902n';
 
     <div id="blogFullscreenModal" class="plan-detail-modal" aria-hidden="true">
         <button class="plan-close-btn" onclick="closeFullscreenBlog()" aria-label="Fermer">&times;</button>
-        <div class="plan-hero" style="background-image: url('assets/images/img113.jpg'); background-size: cover; background-position: center;" onclick="event.stopPropagation();">
+        <div class="plan-hero" data-bg="assets/images/img113.jpg" style="background-size: cover; background-position: center; background-color:#0f172a;" onclick="event.stopPropagation();">
             <div class="plan-hero-content">
                 <h1 class="plan-hero-title" data-translate="blog_title">Blog Daxi</h1>
                 <p class="plan-hero-subtitle" data-translate="blog_subtitle">Actualités, conseils et découvertes</p>
@@ -2675,7 +2685,7 @@ window._DAXI_ASSET_V='20260902n';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902n" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902o" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
