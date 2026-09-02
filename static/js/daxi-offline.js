@@ -159,12 +159,25 @@
         } else {
             var u = data.user || {};
             window.DJANGO_SESSION = window.DJANGO_SESSION || {};
-            window.DJANGO_SESSION.is_authenticated = !!u.authenticated;
-            window.DJANGO_SESSION.user_name = u.name || '';
-            window.DJANGO_SESSION.user_email = u.email || '';
-            window.DJANGO_SESSION.user_phone = u.phone || '';
-            window.DJANGO_SESSION.user_id = u.user_id || '';
-            window.DJANGO_SESSION.first_name = (u.name || '').split(' ')[0] || '';
+            var server = window.DJANGO_SESSION;
+            var eligible = !!u.authenticated;
+            if (server.is_admin || server.driver_id || (data.session && (data.session.is_admin || data.session.driver_id))) {
+                eligible = false;
+            }
+            window.DJANGO_SESSION.is_authenticated = eligible;
+            if (!eligible) {
+                window.DJANGO_SESSION.user_name = '';
+                window.DJANGO_SESSION.user_email = '';
+                window.DJANGO_SESSION.user_phone = '';
+                window.DJANGO_SESSION.user_id = '';
+                window.DJANGO_SESSION.first_name = '';
+            } else {
+                window.DJANGO_SESSION.user_name = u.name || '';
+                window.DJANGO_SESSION.user_email = u.email || '';
+                window.DJANGO_SESSION.user_phone = u.phone || '';
+                window.DJANGO_SESSION.user_id = u.user_id || '';
+                window.DJANGO_SESSION.first_name = (u.name || '').split(' ')[0] || '';
+            }
             window.DJANGO_SESSION.google_maps_key = data.google_maps_key || window.DJANGO_SESSION.google_maps_key || '';
         }
         if (data.csrf_token) {

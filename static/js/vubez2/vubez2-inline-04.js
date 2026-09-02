@@ -10178,7 +10178,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     var djangoSession = window.DJANGO_SESSION || {};
-    var isAuthenticated = djangoSession.is_authenticated;
+    var isAuthenticated = _daxiIsClientAuthEligible(djangoSession);
     if (typeof _daxiSeedAccountSlot === 'function') _daxiSeedAccountSlot();
     else if (typeof _daxiMarkSectionReady === 'function') _daxiMarkSectionReady('accountSection');
     var pendingSec = document.getElementById('all-pending-requests');
@@ -11056,9 +11056,15 @@ function _daxiClearClientAuthUi() {
 }
 window._daxiClearClientAuthUi = _daxiClearClientAuthUi;
 
+function _daxiIsClientAuthEligible(ds) {
+    ds = ds || {};
+    if (ds.is_admin || ds.driver_id) return false;
+    return !!ds.is_authenticated;
+}
+
 function displayUserName() {
     var ds = window.DJANGO_SESSION || {};
-    if (!ds.is_authenticated) {
+    if (!_daxiIsClientAuthEligible(ds)) {
         _daxiClearClientAuthUi();
         return;
     }

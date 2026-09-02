@@ -84,18 +84,36 @@
     function applyToDjangoSession(user, mapsKey) {
         global.DJANGO_SESSION = global.DJANGO_SESSION || {};
         var u = user || {};
-        global.DJANGO_SESSION.is_authenticated = !!u.authenticated;
-        global.DJANGO_SESSION.user_name = u.name || '';
-        global.DJANGO_SESSION.user_email = u.email || '';
-        global.DJANGO_SESSION.user_phone = u.phone || '';
-        global.DJANGO_SESSION.user_id = u.user_id || '';
-        global.DJANGO_SESSION.first_name = (u.name || '').split(' ')[0] || '';
+        var server = global.DJANGO_SESSION || {};
+        var eligible = !!u.authenticated;
+        if (server.is_admin || server.driver_id) eligible = false;
+        if (eligible && server.is_authenticated === false && !server.user_name && !server.user_id) {
+            eligible = !!u.authenticated;
+        }
+        global.DJANGO_SESSION.is_authenticated = eligible;
+        if (!eligible) {
+            global.DJANGO_SESSION.user_name = '';
+            global.DJANGO_SESSION.user_email = '';
+            global.DJANGO_SESSION.user_phone = '';
+            global.DJANGO_SESSION.user_id = '';
+            global.DJANGO_SESSION.first_name = '';
+        } else {
+            global.DJANGO_SESSION.user_name = u.name || '';
+            global.DJANGO_SESSION.user_email = u.email || '';
+            global.DJANGO_SESSION.user_phone = u.phone || '';
+            global.DJANGO_SESSION.user_id = u.user_id || '';
+            global.DJANGO_SESSION.first_name = (u.name || '').split(' ')[0] || '';
+        }
         if (mapsKey) global.DJANGO_SESSION.google_maps_key = mapsKey;
     }
 
     function saveFromBootstrap(data, fromServer) {
         if (!data) return Promise.resolve();
         var user = data.user || {};
+        var server = global.DJANGO_SESSION || {};
+        if (server.is_admin || server.driver_id || (data.session && (data.session.is_admin || data.session.driver_id))) {
+            user = { authenticated: false, name: '', email: '', phone: '', user_id: '' };
+        }
         var snapshot = {
             state: deriveState(user, fromServer !== false && isOnline()),
             user: {
@@ -115,6 +133,9 @@
     }
 
     function restoreCached() {
+        if (global.DJANGO_SESSION && (global.DJANGO_SESSION.is_admin || global.DJANGO_SESSION.driver_id)) {
+            return clearOnLogout().then(function () { return null; });
+        }
         var cached = null;
         try {
             var raw = sessionStorage.getItem(STORE_KEY);
@@ -135,6 +156,9 @@
     }
 
     function getAuthState() {
+        if (global.DJANGO_SESSION && (global.DJANGO_SESSION.is_admin || global.DJANGO_SESSION.driver_id)) {
+            return AUTH.GUEST;
+        }
         if (global._daxiAuthState) return global._daxiAuthState;
         if (global.DJANGO_SESSION && global.DJANGO_SESSION.is_authenticated) {
             return isOnline() ? AUTH.AUTHENTICATED : AUTH.OFFLINE_UNVERIFIED;

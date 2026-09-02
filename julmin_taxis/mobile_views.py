@@ -95,8 +95,15 @@ def _mobile_bootstrap_impl(request):
                     merged_from.append(alias)
 
     orders_qs = Order.objects.none()
-    if user.is_authenticated:
-        orders_qs = Order.objects.filter(user=user).select_related('driver').order_by('-created_at')[:80]
+    client_user = None
+    try:
+        from julmin_taxis.htmx_views import _client_auth_user
+        client_user = _client_auth_user(request)
+    except Exception:
+        client_user = user if user.is_authenticated and not getattr(user, 'is_staff', False) else None
+
+    if client_user:
+        orders_qs = Order.objects.filter(user=client_user).select_related('driver').order_by('-created_at')[:80]
     elif guest_id:
         orders_qs = Order.objects.filter(guest_id=guest_id, user__isnull=True).select_related('driver').order_by('-created_at')[:80]
 
@@ -191,11 +198,15 @@ def _mobile_bootstrap_impl(request):
         'generated_at': tz.now().isoformat(),
         'csrf_token': get_token(request),
         'user': {
-            'authenticated': user.is_authenticated,
-            'email': user.email if user.is_authenticated else '',
-            'name': user.get_full_name() if user.is_authenticated else '',
-            'phone': getattr(user, 'phone', '') if user.is_authenticated else '',
-            'user_id': getattr(user, 'firebase_user_id', None) if user.is_authenticated else None,
+            'authenticated': client_user is not None,
+            'email': client_user.email if client_user else '',
+            'name': client_user.get_full_name() if client_user else '',
+            'phone': getattr(client_user, 'phone', '') if client_user else '',
+            'user_id': getattr(client_user, 'firebase_user_id', None) if client_user else None,
+        },
+        'session': {
+            'is_admin': bool(request.session.get('is_admin')),
+            'driver_id': request.session.get('driver_id'),
         },
         'guest_id': guest_id,
         'guest_id_merged': {'from': merged_from} if merged_from else None,
@@ -381,6 +392,29 @@ def client_recent_places(request):
             break
 
     return JsonResponse({'places': places[:8]})
+
+
+@require_GET
+def mobile_shell_context(request):
+    """GET /api/mobile/shell-context/?page=driver|driver_login|enterprise|..."""
+    from julmin_taxis.shell_context import shell_context_payload
+
+    page = (request.GET.get('page') or '').strip().lower()
+    if not page:
+        path = (request.GET.get('path') or request.path or '').lower()
+        if '/driver/login' in path:
+            page = 'driver_login'
+        elif '/driver' in path:
+            page = 'driver'
+        elif '/entreprise/dashboard' in path:
+            page = 'enterprise_dashboard'
+        elif '/entreprise' in path:
+            page = 'enterprise'
+        elif '/admin-dashboard' in path:
+            page = 'admin_dashboard'
+        else:
+            page = 'client'
+    return JsonResponse(shell_context_payload(request, page_name=page))
 
 
 @require_GET

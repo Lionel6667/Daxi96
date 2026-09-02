@@ -6321,7 +6321,7 @@ def _client_enterprise_context(request):
 
 def client_account(request):
     """GET /htmx/client/account/ — profile fragment for in-app overlay."""
-    user = request.user if request.user.is_authenticated else None
+    user = _client_auth_user(request)
     stats = {'total': 0, 'this_month': 0, 'pending': 0, 'completed': 0}
     if user:
         now = timezone.now()

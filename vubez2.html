@@ -38,9 +38,11 @@
         html.daxi-booting #daxiMapTapZone,
         html.daxi-booting .daxi-sheet-chrome,
         html.daxi-booting #daxi-web-radar,
-        html.daxi-booting .daxi-page-overlay {
-            visibility: hidden !important;
-            pointer-events: none !important;
+        html.daxi-booting .app-sheet {
+            min-height: 42vh;
+        }
+        html.daxi-booting #appSheet {
+            opacity: 1;
         }
         html.daxi-booting .app-sheet .sheet-inner > section:not(#bookingSection),
         html.daxi-booting .app-sheet .sheet-inner > div:not(#daxiSheetBooking):not(#daxiSheetOrder) {
@@ -135,7 +137,7 @@
     })();
     </script>
 
-    <script defer src="/static/js/daxi-intro.js?v=20260902i"></script>
+    <script defer src="/static/js/daxi-intro.js?v=20260902j"></script>
     <link rel="icon" type="image/png" href="assets/images/daxi-logo-gold.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
     <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816" media="print" onload="this.media='all'">
@@ -235,12 +237,14 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902i" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902j" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c">
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902i">
-    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b">
+    <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902j">
+    <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
 
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -270,7 +274,8 @@
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260762" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g">
+<link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760" media="print" onload="this.media='all'">
 <script defer src="/static/js/daxi-app-api.js?v=20260813"></script>
 <script defer src="/static/js/daxi-realtime.js?v=20260738"></script>
@@ -286,7 +291,8 @@
 <script defer src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
 <link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d"></noscript>
-<link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a">
+<link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a" media="print" onload="this.media='all'">
@@ -310,9 +316,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902i';
+window._DAXI_ASSET_V='20260902j';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902i" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902j" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -742,7 +748,7 @@ window._DAXI_ASSET_V='20260902i';
                         hx-disabled-elt="this"
                         hx-timeout="25000"
                         hx-include="[name=pickup],[name=destination],[name=pickup_lat],[name=pickup_lng],[name=destination_lat],[name=destination_lng],[name=client_gps_lat],[name=client_gps_lng],[name=client_gps_accuracy],[name=date],[name=time],[name=notes],[name=passengerCount],[name=trip_type],[name=is_later],[name=guest_id],[name=service_plan],[name=fixed_price],[name=round_trip_wait_minutes],[name=round_trip_allow_driver_other_rides],[name=plan_waypoints],[name=affiliate_code]"
-                        class="w-full gold-button py-2 !rounded-button font-semibold text-base shadow-lg cursor-pointer btn-glow"
+                        class="w-full gold-button py-2 !rounded-button font-semibold text-base cursor-pointer"
                         data-translate="order_taxi_btn">
                         COMMANDER UN TAXI
                     </button>
@@ -2876,12 +2882,12 @@ window._DAXI_ASSET_V='20260902i';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902i" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902j" defer></script>
 <script defer src="/static/js/daxi-client-gps-core.js?v=20260831b"></script>
 <script defer src="/static/js/daxi-gps-trace.js?v=20260805"></script>
 <script defer src="/static/js/gps-precision-engine.js?v=20260804g"></script>
 <script src="/static/js/vubez2/vubez2-inline-05.js?v=20260831a" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902i" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902j" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
@@ -2914,7 +2920,7 @@ window._DAXI_ASSET_V='20260902i';
     </div>
 </nav>
 
-<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902i" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902j" defer></script>
 <script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>

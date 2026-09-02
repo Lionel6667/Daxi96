@@ -137,8 +137,25 @@
         if (!global.navigator || global.navigator.onLine === false) {
             return Promise.resolve(persist(generateFallbackId(), 'local_fp'));
         }
-        return loadFingerprintJs().then(function (id) {
-            return persist(id, id.indexOf('fpjs_') === 0 ? 'fpjs' : 'local_fp');
+        var runFp = function() {
+            return loadFingerprintJs().then(function (id) {
+                return persist(id, id.indexOf('fpjs_') === 0 ? 'fpjs' : 'local_fp');
+            });
+        };
+        if (typeof global.requestIdleCallback === 'function') {
+            return new Promise(function(resolve) {
+                var started = false;
+                var start = function() {
+                    if (started) return;
+                    started = true;
+                    runFp().then(resolve);
+                };
+                global.requestIdleCallback(start, { timeout: 4500 });
+                setTimeout(start, 5000);
+            });
+        }
+        return new Promise(function(resolve) {
+            setTimeout(function() { runFp().then(resolve); }, 1800);
         });
     }
 
