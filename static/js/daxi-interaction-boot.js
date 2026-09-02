@@ -2,7 +2,7 @@
   'use strict';
 
   var started = false;
-  var v = function () { return global._DAXI_ASSET_V || '20260902r'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902s'; };
 
   var DEFERRED_CSS = [
     'assets/css/vubez2-core.css?v=' + (global._DAXI_ASSET_V || '20260902o'),

@@ -152,7 +152,11 @@
         #locationSharePrompt,.location-share-prompt{display:none!important}
         #locationSharePrompt.show{display:flex!important;position:fixed;inset:0;z-index:10020;align-items:center;justify-content:center}
         .plan-detail-modal,#blogFullscreenModal,#planDetailModal,.modal,#iosInstallModal,#appModal,.daxi-booking-help-overlay{display:none!important}
-        #daxiSidebar,.daxi-sidebar,#sidebarMenu,.sidebar-menu,.sidebar-overlay{display:none}
+        #daxiSidebar,.daxi-sidebar{display:none}
+        #sidebarMenu,.sidebar-menu{position:fixed;top:0;right:-100%;width:80%;max-width:400px;height:100vh;z-index:9999;display:flex;flex-direction:column;background:#070b14;overflow:hidden}
+        #sidebarMenu.active,.sidebar-menu.active{right:0}
+        .sidebar-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45)}
+        .sidebar-overlay.active{display:block}
         #client-map-compass,#client-map-whatsapp,#daxi-map-precision-hint{display:none}
         #daxiMenuFab{position:fixed;top:14px;left:14px;z-index:520;width:44px;height:44px;border-radius:14px;border:1px solid rgba(148,163,184,.25);background:rgba(8,14,35,.88);color:#f8fafc}
         .daxi-header-brand img,.navbar-logo{display:none!important}
