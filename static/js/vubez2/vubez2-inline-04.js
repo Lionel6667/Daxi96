@@ -47,11 +47,7 @@ window._daxiInvalidatePlanCatalog = function() {
     window._daxiPlanCatalogPromiseLang = null;
 };
 window._loadPlanCatalog = _loadPlanCatalog;
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { _loadPlanCatalog(); });
-} else {
-    _loadPlanCatalog();
-}
+/* Plan catalog loads on tarif tab / modal open — not on initial page load */
 
 function _renderPlanModal(planId, data) {
     var modal = document.getElementById('planDetailModal');

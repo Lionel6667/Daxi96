@@ -644,7 +644,7 @@
     };
     var s = document.createElement('script');
     s.referrerPolicy = 'origin';
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&loading=async&callback=initPlacesAutocomplete';
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&loading=async&callback=_daxiGmapsCoreReady';
     s.async = true;
     s.onerror = function() {
       clearTimeout(window._daxiMapsLoadTimeoutId);
@@ -663,12 +663,29 @@
       _daxiHandleMapsFailure('network');
     };
     _daxiArmMapsLoadTimeout();
-    if (!window._daxiGmapsCallbackWrapped) {
-      window._daxiGmapsCallbackWrapped = true;
-      var _origCallback = window.initPlacesAutocomplete;
-      window.initPlacesAutocomplete = function() {
-        var self = this;
-        var args = arguments;
+    if (!window._daxiGmapsCoreReady) {
+      window._daxiPlacesLibsLoaded = false;
+      window._daxiLazyLoadPlaces = function() {
+        if (window._daxiPlacesLibsLoaded) {
+          if (typeof window.initPlacesAutocomplete === 'function' && !window.initPlacesAutocomplete._daxiStub) {
+            window.initPlacesAutocomplete();
+          }
+          return Promise.resolve();
+        }
+        if (!window.google || !window.google.maps || typeof google.maps.importLibrary !== 'function') {
+          return Promise.resolve();
+        }
+        return Promise.all([
+          google.maps.importLibrary('places'),
+          google.maps.importLibrary('marker')
+        ]).then(function() {
+          window._daxiPlacesLibsLoaded = true;
+          if (typeof window.initPlacesAutocomplete === 'function' && !window.initPlacesAutocomplete._daxiStub) {
+            window.initPlacesAutocomplete();
+          }
+        }).catch(function() {});
+      };
+      window._daxiGmapsCoreReady = function() {
         clearTimeout(window._daxiMapsLoadTimeoutId);
         _daxiStopMapsRetryLoop();
         try { sessionStorage.removeItem('daxi_maps_probe_failed'); } catch (e) {}
@@ -681,10 +698,9 @@
         var finish = function() {
           window.googleMapsLoaded = true;
           if (typeof window._daxiMapDevLog === 'function') {
-            window._daxiMapDevLog('Google Maps script loaded');
-            if (window.google && window.google.maps) window._daxiMapDevLog('google.maps available');
+            window._daxiMapDevLog('Google Maps core loaded');
           }
-          try { sessionStorage.removeItem('daxi_maps_probe_failed'); sessionStorage.setItem('daxi_maps_ok', '1'); } catch (e) {}
+          try { sessionStorage.removeItem('daxi_maps_probe_failed'); sessionStorage.setItem('daxi_maps_ok', '1'); } catch (e2) {}
           if (typeof _daxiMapLog === 'function') _daxiMapLog('loadGoogleMaps-callback');
           setTimeout(function() {
             if (window.DaxiOrderCardMap && typeof DaxiOrderCardMap.init === 'function') {
@@ -695,19 +711,22 @@
             if (typeof _daxiScanLiveTracking === 'function') _daxiScanLiveTracking();
             if (typeof _daxiNotifyGoogleMapsReady === 'function') _daxiNotifyGoogleMapsReady();
           }, 120);
-          if (typeof _origCallback === 'function') return _origCallback.apply(self, args);
         };
         if (window.google && window.google.maps && typeof google.maps.importLibrary === 'function' && typeof google.maps.Map !== 'function') {
           Promise.all([
             google.maps.importLibrary('maps'),
-            google.maps.importLibrary('geometry'),
-            google.maps.importLibrary('places'),
-            google.maps.importLibrary('marker')
+            google.maps.importLibrary('geometry')
           ]).then(function() { finish(); }).catch(function() { finish(); });
           return;
         }
         return finish();
       };
+      document.addEventListener('focusin', function(e) {
+        var id = e.target && e.target.id;
+        if (id === 'destinationAddress' || id === 'destinationAddressArrival') {
+          if (typeof window._daxiLazyLoadPlaces === 'function') window._daxiLazyLoadPlaces();
+        }
+      }, true);
     }
     document.head.appendChild(s);
     _daxiRestartMapLoadWatchdog();

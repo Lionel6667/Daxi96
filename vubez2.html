@@ -139,7 +139,7 @@
         }
         if (isNative) {
             var intro = document.createElement('script');
-            intro.src = '/static/js/daxi-intro.js?v=20260902l';
+            intro.src = '/static/js/daxi-intro.js?v=20260902m';
             intro.defer = true;
             document.head.appendChild(intro);
         }
@@ -177,7 +177,7 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <script defer src="static/js/daxi-guest-id.js?v=20260902l"></script>
+    <script defer src="static/js/daxi-guest-id.js?v=20260902m"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.DaxiGuestId && DaxiGuestId.ensure) DaxiGuestId.ensure();
@@ -255,18 +255,18 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902l" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902m" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902l" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902l"></noscript>
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902m" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902m"></noscript>
     <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
 
-    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902l" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902l"></noscript>
+    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902m" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902m"></noscript>
     <link rel="stylesheet" href="assets/css/aos.css" media="print" onload="this.media='all'" onerror="this.onerror=null;this.href='https://unpkg.com/aos@2.3.1/dist/aos.css';this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/aos.css"></noscript>
 
@@ -286,13 +286,6 @@
 <link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760" media="print" onload="this.media='all'">
-<script defer src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
-<script defer src="/static/js/daxi-modal.js?v=20260820d"></script>
-
-
-<script defer src="/static/js/daxi-map-markers.js?v=20260749"></script>
-<script defer src="/static/js/daxi-map-theme.js?v=20260812"></script>
-<script defer src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
 <link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260814a" media="print" onload="this.media='all'">
@@ -300,12 +293,14 @@
 <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260828e"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a" media="print" onload="this.media='all'">
-<script defer src="/static/js/daxi-network-banner.js?v=20260828d"></script>
+<script defer src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
+<script defer src="/static/js/daxi-modal.js?v=20260820d"></script>
 <script defer src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
-<script defer src="/static/js/daxi-map-provider.js?v=20260777"></script>
-<script defer src="/static/js/daxi-idle-boot.js?v=20260902l"></script>
+<script defer src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+<script defer src="/static/js/daxi-vubez2-chunks.js?v=20260902m"></script>
+<script defer src="/static/js/daxi-interaction-boot.js?v=20260902m"></script>
 <script src="/static/js/vubez2/vubez2-inline-02.js?v=20260830c" defer></script>
-<script src="/static/js/daxi-theme.js?v=20260902l" defer></script>
+<script src="/static/js/daxi-theme.js?v=20260902m" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (window.DaxiTheme && typeof DaxiTheme.remount === 'function') DaxiTheme.remount();
@@ -314,9 +309,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902l';
+window._DAXI_ASSET_V='20260902m';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902l" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902m" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -1591,107 +1586,7 @@ window._DAXI_ASSET_V='20260902l';
                 </div>
 
 
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#ef4444,#b91c1c);">JM</div>
-                        <div>
-                            <div class="review-name">Jean-Marie P.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#ef4444;"></i>Cap-Haïtien</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Sèvis eksepsyonèl! Chofè a te fèk la anvan lè a. Machin nan pwòp, AC fèk, ak chofè a tèlman janti. M ap rekòmande Daxi bay tout moun! »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 2 semèn <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#6366f1,#4338ca);">SC</div>
-                        <div>
-                            <div class="review-name">Sabrina C.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#6366f1;"></i>Port-de-Paix</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Mwen te pran Daxi pou ale lopital. Chofè a te trè pwofesyonèl e respektab. Li te fè tout efò pou nou rive alè. 5 etwal san ezitasyon! »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 1 mwa <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#10b981,#047857);">PL</div>
-                        <div>
-                            <div class="review-name">Pierre-Louis R.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#10b981;"></i>Cap-Haïtien</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Best taxi service nan tout Okap! Aplikasyon an fasil itilize, pris yo rzonab e sèvis la wo nivo. Mwen itilize li chak semèn pou travay mwen. »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 3 semèn <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">MD</div>
-                        <div>
-                            <div class="review-name">Marie-Denise F.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#f59e0b;"></i>Limonade</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Mwen te itilize Daxi pou fèt maryaj mwen. Yo te gen yon machin bèl, pwòp, alè e chofè a te abiye pwòp. Tout envite mwen yo te enpresyone! 🙌 »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 2 mwa <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">AM</div>
-                        <div>
-                            <div class="review-name">Angeline M.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#ec4899;"></i>Cap-Haïtien</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Daxi pran swen kliyan yo vre! Chofè a te ede m ak valiz mwen, yo te gen dlo pou m bwè nan machin nan. Sèvis la depase atant mwen nèt! »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 5 jou <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#14b8a6,#0f766e);">KJ</div>
-                        <div>
-                            <div class="review-name">Kethlie J.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#14b8a6;"></i>Okap</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Trè satisfè! M te komande yo lannuit pou yon ijans, yo te reponn vit e chofè a te la nan 8 minit. Sèvis an kadans, fyab e sekirize. »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 1 semèn <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">RN</div>
-                        <div>
-                            <div class="review-name">Raphaël N.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#a855f7;"></i>Cap-Haïtien</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« Sèvis la toujou fyab! Chak fwa m itilize Daxi machin nan toujou pwòp, alè e chofè a pwofesyonèl. Yo rekòmande nan tout kondisyon! »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 3 mwa <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-                <div class="review-card">
-                    <div class="review-card-top">
-                        <div class="review-avatar" style="background:linear-gradient(135deg,#ef4444,#9f1239);">CB</div>
-                        <div>
-                            <div class="review-name">Clara B.</div>
-                            <div class="review-location"><i class="ri-map-pin-2-fill" style="color:#ef4444;"></i>Milot</div>
-                        </div>
-                    </div>
-                    <div class="review-stars"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
-                    <p class="review-text">« M te pran Daxi pou vizit touristik Citadelle Laferrière. Chofè a te eksplike nou listwa a, li te yon vrè gid. Eksperyans inbliyab! »</p>
-                    <div class="review-date"><i class="ri-time-line"></i> li gen 6 semèn <div class="google-badge"><div class="g-dot"></div> Google</div></div>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="reviews-cta" data-aos="fade-up" data-aos-delay="200">
+                <div class="reviews-cta" data-aos="fade-up" data-aos-delay="200">
             <div class="reviews-cta-inner">
                 <div class="cta-stars-preview">
                     <i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i>
@@ -2815,21 +2710,7 @@ window._DAXI_ASSET_V='20260902l';
 
 
 
-    <script defer src="static/js/daxi-phone.js?v=20260702"></script>
-
-    <script defer src="static/js/daxi-session-store.js?v=20260809"></script>
-    <script defer src="static/js/daxi-network-state.js?v=20260828d"></script>
-    <script defer src="static/js/daxi-htmx-csrf.js?v=20260816a"></script>
-    <script defer src="static/js/daxi-shell-role.js?v=20260820f"></script>
-    <script defer src="static/js/daxi-offline.js?v=20260828d"></script>
-    <script defer src="static/js/daxi-countdown.js"></script>
-    <script defer src="static/js/daxi-auto-i18n.js?v=20260737"></script>
-
     <link rel="stylesheet" href="static/css/daxi-plan-wizard.css?v=20260721d" media="print" onload="this.media='all'">
-    <script defer src="static/js/daxi-push-register.js?v=20260823n"></script>
-    <script src="assets/js/aos.js" defer onerror="this.onerror=null;this.src='https://unpkg.com/aos@2.3.1/dist/aos.js'"></script>
-
-
 
     <div id="planDetailModal" class="plan-detail-modal">
         <button class="plan-close-btn" id="planCloseBtn">&times;</button>
@@ -2880,9 +2761,7 @@ window._DAXI_ASSET_V='20260902l';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902l" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902l" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902l" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902m" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
@@ -2914,9 +2793,6 @@ window._DAXI_ASSET_V='20260902l';
 
     </div>
 </nav>
-
-<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902l" defer></script>
-<script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>
 
