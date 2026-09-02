@@ -12,7 +12,10 @@
     'daxi-places-catalog.js',
     'daxi-maplibre.js',
     'daxi-map-snap.js',
-    'daxi-order-card-map.js'
+    'daxi-order-card-map.js',
+    'daxi-client-gps-core.js',
+    'daxi-gps-trace.js',
+    'gps-precision-engine.js'
   ];
 
   var started = false;
