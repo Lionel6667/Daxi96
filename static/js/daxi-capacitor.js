@@ -2513,6 +2513,14 @@
     try {
       let perm = await Geolocation2.checkPermissions();
       let granted = perm.location === "granted" || perm.coarseLocation === "granted";
+      if (!granted) {
+        try {
+          perm = await Geolocation2.requestPermissions();
+          granted = perm.location === "granted" || perm.coarseLocation === "granted";
+        } catch (eReq) {
+          granted = false;
+        }
+      }
       window._daxiGpsPerm = granted;
       if (!granted) return;
       startGpsWatch();

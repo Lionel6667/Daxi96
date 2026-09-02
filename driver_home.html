@@ -823,8 +823,10 @@ window.RIDE = RIDE;
 const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00055, resumeAfterMs: 8000 };
 const DRV_DEFAULT_CENTER = { lat: 19.7558, lng: -72.2018 };
 const DRV_DEFAULT_ZOOM = 14;
-const DRV_MIN_GPS_M = 100;
-const DRV_MAX_GPS_M = 180;
+const DRV_MIN_GPS_M = 150;
+const DRV_MAX_GPS_M = 800;
+let _drvGpsRejectLogAt = 0;
+let _drvGpsStarted = false;
 const DRV_COMPASS_SPEED_KMH = 14;
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerpBear = (a, b, t) => (a + (((b - a + 540) % 360) - 180) * t + 360) % 360;
@@ -1137,12 +1139,18 @@ function _drvRetryMainMapLoad() {
 }
 function _initDriverMap() {
     if (!window.google || !google.maps || !google.maps.OverlayView) return;
+    if (map && _mapReady) {
+        try { google.maps.event.trigger(map, 'resize'); } catch (e) {}
+        _drvRevealLiveMap();
+        return;
+    }
     if (!_initMapOverlayClass()) return;
     var theme = document.documentElement.getAttribute('data-theme') || 'dark';
     window._drvMapTheme = theme;
     mapTheme = theme;
     mapThemeIsDark = theme === 'dark';
     _drvCreateMap(theme);
+    if (!map) return;
     _dirService = new google.maps.DirectionsService();
     _createRoutePolylines();
     _createCarMarker();
@@ -1150,40 +1158,31 @@ function _initDriverMap() {
     _drvBindMapGestures();
     if (!_driverGpsVisible) _drvSetDefaultMapView();
     _drvStartMapRevealWatcher();
-    google.maps.event.addListenerOnce(map, 'tilesloaded', function() {
+    function _drvMarkMapReady() {
         window._gmapsLoaded = true;
         window._daxiMapTilesOk = true;
         _markSplashStep('sp-map');
         _tryDismissSplash();
-        if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.mapIsVisuallyReady && DaxiMapPlaceholder.mapIsVisuallyReady(map)) {
-            _drvRevealLiveMap();
-            if (window.DaxiMapPlaceholder.stopWatchdog) DaxiMapPlaceholder.stopWatchdog('drv-map-stage');
+        _drvRevealLiveMap();
+        if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.stopWatchdog) {
+            DaxiMapPlaceholder.stopWatchdog('drv-map-stage');
         }
         try { google.maps.event.trigger(map, 'resize'); } catch (e) {}
+    }
+    google.maps.event.addListenerOnce(map, 'tilesloaded', _drvMarkMapReady);
+    google.maps.event.addListenerOnce(map, 'idle', function() {
+        setTimeout(_drvMarkMapReady, 300);
     });
+    setTimeout(_drvMarkMapReady, 2500);
     setTimeout(function() {
-        if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.mapIsVisuallyReady && DaxiMapPlaceholder.mapIsVisuallyReady(map)) {
-            window._gmapsLoaded = true;
-            window._daxiMapTilesOk = true;
-            _markSplashStep('sp-map');
-            _tryDismissSplash();
-            _drvRevealLiveMap();
-            if (window.DaxiMapPlaceholder.stopWatchdog) DaxiMapPlaceholder.stopWatchdog('drv-map-stage');
-            return;
-        }
-        if (!window._gmapsLoaded) {
+        if (map && !_daxiMapTilesOk) {
             if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.showOfflineModal) {
                 DaxiMapPlaceholder.showOfflineModal('drv-map-stage', { onRetry: _drvRetryMainMapLoad });
             }
             _markSplashStep('sp-map');
             _tryDismissSplash();
-            return;
         }
-        window._gmapsLoaded = true;
-        window._daxiMapTilesOk = true;
-        _markSplashStep('sp-map');
-        _tryDismissSplash();
-    }, 10000);
+    }, 12000);
 }
 function _drvNotifyGoogleMapsReady() {
     try { document.dispatchEvent(new CustomEvent('daxi-gmaps-ready')); } catch (e) {}
@@ -1208,9 +1207,14 @@ function _loadGoogleMaps(cb) {
         return;
     }
     if (window._drvMapsLoading) { setTimeout(function() { _loadGoogleMaps(cb); }, 200); return; }
-    var key = (window.DJANGO_SESSION && window.DJANGO_SESSION.google_maps_key) || window.GOOGLE_MAPS_API_KEY || '';
+    var key = (window.DJANGO_SESSION && window.DJANGO_SESSION.google_maps_key) || window.GOOGLE_MAPS_API_KEY || (window.DJANGO_CONFIG && window.DJANGO_CONFIG.googleMapsApiKey) || '';
     if (!key) {
-        window._gmapsLoaded = true;
+        window._drvMapsKeyTries = (window._drvMapsKeyTries || 0) + 1;
+        if (window._drvMapsKeyTries < 25) {
+            setTimeout(function() { _loadGoogleMaps(cb); }, 300);
+            return;
+        }
+        console.warn('[Driver] Google Maps key missing');
         _markSplashStep('sp-map');
         _tryDismissSplash();
         if (cb) cb();
@@ -1237,15 +1241,22 @@ function _onGpsDisplay(d) {
     if (!d) return;
     var acc = _drvGpsAccuracy(d);
     var src = (window.DaxiAndroid && DaxiAndroid.getCurrentLocation) ? 'Android' : 'GPS';
-    if (window.DaxiGpsTrace) {
-        DaxiGpsTrace.gps('DRIVER', { lat: d.lat, lng: d.lng, accuracy: acc, source: src });
-    }
-    if (window.DaxiWebGps) DaxiWebGps.recordEngineFix('DRIVER', d, src);
+    var isNative = !!(window.DaxiAndroid || window._daxiCapacitorApp || window._daxiUseNativeGps);
 
     if (!_drvGpsAccUsable(acc)) {
-        if (window.DaxiGpsTrace) DaxiGpsTrace.fail('DRIVER', 'DRIVER_ON_GPS_DISPLAY_REJECT', { lat: d.lat, lng: d.lng, accuracy: acc, source: src, reason: 'accuracy_above_max_' + DRV_MAX_GPS_M });
+        var now = Date.now();
+        if (window.DaxiGpsTrace && now - _drvGpsRejectLogAt > 5000) {
+            _drvGpsRejectLogAt = now;
+            DaxiGpsTrace.fail('DRIVER', 'DRIVER_ON_GPS_DISPLAY_REJECT', { lat: d.lat, lng: d.lng, accuracy: acc, source: src, reason: 'accuracy_above_max_' + DRV_MAX_GPS_M });
+        }
         return;
     }
+
+    if (window.DaxiGpsTrace && !window._drvGpsObtainedLogged) {
+        window._drvGpsObtainedLogged = true;
+        DaxiGpsTrace.gps('DRIVER', { lat: d.lat, lng: d.lng, accuracy: acc, source: src });
+    }
+    if (!isNative && window.DaxiWebGps) DaxiWebGps.recordEngineFix('DRIVER', d, src);
 
     _currentSpeed = d.speed || 0;
 
@@ -1254,7 +1265,6 @@ function _onGpsDisplay(d) {
     _gpsDisplayPos[1] = d.lat;
     _driverGpsVisible = true;
     _markSplashStep('sp-gps');
-    if (window.DaxiGpsTrace) DaxiGpsTrace.ok('DRIVER', 'DRIVER_MAP_UI', { lat: d.lat, lng: d.lng, accuracy: acc, source: src });
 
     var softLock = !_drvGpsAccOk(acc);
     if (!softLock) {
@@ -1270,33 +1280,64 @@ function _onGpsDisplay(d) {
 
     if (!_drvNavEntered) _drvEnterNavMode(true);
 
-    if (softLock && !_driverGpsLocked) {
-        if (window.DaxiGpsTrace) DaxiGpsTrace.fail('DRIVER', 'DRIVER_ON_GPS_DISPLAY_SOFT', { lat: d.lat, lng: d.lng, accuracy: acc, source: src, reason: 'soft_lock_above_' + DRV_MIN_GPS_M });
-    }
-
     _sendLocation(d.lat, d.lng, d.speed, d.heading);
     _checkProximity(d.lat, d.lng);
     if (activeOrder || _pendingRouteApply) _applyStateMachineRoutes();
 }
 function _drvPrimeGpsFast() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(function(p) {
-        if (!p || !p.coords) return;
-        var acc = p.coords.accuracy || 9999;
+    function applyCoords(lat, lng, acc) {
         if (!_drvGpsAccUsable(acc)) return;
-        pos = [p.coords.longitude, p.coords.latitude];
+        pos = [lng, lat];
         targetPos = pos.slice();
         _driverGpsVisible = true;
         if (_drvGpsAccOk(acc)) _driverGpsLocked = true;
         _markSplashStep('sp-gps');
         if (!_drvNavEntered) _drvEnterNavMode(true);
         if (activeOrder) _applyStateMachineRoutes();
+    }
+    // App native : Capacitor / DaxiAndroid uniquement (pas navigator.geolocation web)
+    if (window.DaxiAndroid && typeof DaxiAndroid.getCurrentLocation === 'function') {
+        try {
+            if (DaxiAndroid.refreshLocation) DaxiAndroid.refreshLocation();
+            var raw = DaxiAndroid.getCurrentLocation();
+            var p = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            if (p && !p.error && p.lat != null && p.lng != null) {
+                applyCoords(+p.lat, +p.lng, p.accuracy || 9999);
+                return;
+            }
+        } catch (e) {}
+        if (window._daxiLastNativeGps && _daxiLastNativeGps.lat != null) {
+            applyCoords(+_daxiLastNativeGps.lat, +_daxiLastNativeGps.lng, _daxiLastNativeGps.accuracy || 9999);
+        }
+        return;
+    }
+    if (window._daxiCapacitorApp || window._daxiUseNativeGps) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(p) {
+        if (!p || !p.coords) return;
+        applyCoords(p.coords.latitude, p.coords.longitude, p.coords.accuracy || 9999);
     }, function() {}, { enableHighAccuracy: true, timeout: 7000, maximumAge: 2000 });
 }
 function _startDriverGps() {
+    if (_drvGpsStarted) return;
+    var isNative = !!(window._daxiCapacitorApp || window._daxiUseNativeGps || window._daxiHybridShell
+        || (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
+        || /DaxiAndroid|Capacitor/i.test(navigator.userAgent || ''));
+    if (isNative && !window.DaxiAndroid) {
+        window._drvGpsWaitTries = (window._drvGpsWaitTries || 0) + 1;
+        if (window._drvGpsWaitTries < 40) {
+            setTimeout(_startDriverGps, 150);
+            return;
+        }
+    }
+    _drvGpsStarted = true;
     _markSplashStep('sp-gps');
-    if (window.DaxiWebGps && !window.DaxiAndroid) {
-        DaxiWebGps.startSession('DRIVER', { exploitableM: DRV_MIN_GPS_M, targetAccuracy: 50, timeoutMs: 15000 });
+    if (window.DaxiAndroid && typeof DaxiAndroid.requestLocationPermission === 'function' && !window._daxiGpsPerm) {
+        try { DaxiAndroid.requestLocationPermission(); } catch (e) {}
+    }
+    // Jamais de session WEB GPS en app native (évite le spam WEB_GPS_FIX)
+    if (window.DaxiWebGps && !isNative && !window.DaxiAndroid) {
+        DaxiWebGps.startSession('DRIVER', { exploitableM: DRV_MAX_GPS_M, targetAccuracy: DRV_MIN_GPS_M, timeoutMs: 15000 });
     }
     _drvPrimeGpsFast();
     if (!window.DaxiGpsEngine) {
@@ -1313,11 +1354,11 @@ function _startDriverGps() {
         snapThreshold: 60
     });
     var scanOpts = {
-        targetAccuracy: 50,
+        targetAccuracy: 80,
         fallbackAccuracy: DRV_MAX_GPS_M,
         maxAccuracy: DRV_MAX_GPS_M,
         requireTargetAccuracy: false,
-        maxScanMs: window.DaxiAndroid ? 5000 : 15000
+        maxScanMs: (window.DaxiAndroid || isNative) ? 5000 : 15000
     };
     _gpsEngine.rapidScan(function(fix) {
         if (fix && _drvGpsAccUsable(_drvGpsAccuracy(fix))) {
@@ -1332,12 +1373,10 @@ function _startDriverGps() {
         }
         _gpsEngine.start(_onGpsDisplay, function(err) {
             console.warn('Driver GPS error:', err);
-            if (window.DaxiWebGps) DaxiWebGps.recordError('DRIVER', err, { type: 'DaxiGpsEngine' });
         });
     }, function() {
         _gpsEngine.start(_onGpsDisplay, function(err) {
             console.warn('Driver GPS error:', err);
-            if (window.DaxiWebGps) DaxiWebGps.recordError('DRIVER', err, { type: 'DaxiGpsEngine' });
         });
     }, null, scanOpts);
 }
@@ -1854,47 +1893,34 @@ let _lastHTTPSend = 0;
 let _lastWSSend = 0;
 function _sendLocation(lat, lng, speed, heading) {
     const now = Date.now();
-    if (window.DaxiGpsTrace) DaxiGpsTrace.ok('DRIVER', 'DRIVER_SEND_LOCATION', { lat: lat, lng: lng, extra: { speed: speed, heading: heading } });
+    if (window.DaxiGpsTrace && now - (_lastHTTPSend || 0) >= 2000) {
+        DaxiGpsTrace.ok('DRIVER', 'DRIVER_SEND_LOCATION', { lat: lat, lng: lng, extra: { speed: speed, heading: heading } });
+    }
     if (_driverWSReady && now - _lastWSSend >= 1000) {
         _lastWSSend = now;
         try {
             _driverWS.send(JSON.stringify({ type: 'location_update',
                 latitude: lat, longitude: lng, speed: speed || 0, heading: heading || null }));
-            if (window.DaxiGpsTrace) DaxiGpsTrace.ok('DRIVER', 'DRIVER_WS_LOCATION_SEND', { lat: lat, lng: lng, channel: 'websocket' });
         } catch(e) {
             _driverWSReady = false;
-            if (window.DaxiGpsTrace) DaxiGpsTrace.fail('DRIVER', 'DRIVER_WS_LOCATION_SEND', { lat: lat, lng: lng, channel: 'websocket', reason: String(e && e.message || e) });
         }
-    } else if (_driverWSReady && window.DaxiGpsTrace) {
-        DaxiGpsTrace.throttle('DRIVER', 'websocket', { lat: lat, lng: lng });
     }
     if (now - _lastHTTPSend < 2000) {
-        if (window.DaxiGpsTrace) DaxiGpsTrace.throttle('DRIVER', 'http', { lat: lat, lng: lng });
         return;
     }
     _lastHTTPSend = now;
-    if (window.DaxiGpsTrace) DaxiGpsTrace.ok('DRIVER', 'DRIVER_HTTP_LOCATION_SEND', { lat: lat, lng: lng, channel: 'http' });
     fetch('/htmx/driver/location/', {
         method: 'POST',
         headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `lat=${lat}&lng=${lng}`
     }).then(function(r){
-        if (window.DaxiGpsTrace) {
-            if (r.ok) DaxiGpsTrace.ok('DRIVER', 'DRIVER_HTTP_LOCATION_RESPONSE', { lat: lat, lng: lng, httpStatus: r.status, channel: 'http' });
-            else DaxiGpsTrace.fail('DRIVER', 'DRIVER_HTTP_LOCATION_RESPONSE', { lat: lat, lng: lng, httpStatus: r.status, channel: 'http', reason: 'http_error' });
-        }
         return r.json();
     }).then(function(d){
-        if (d && d.error && window.DaxiGpsTrace) {
-            DaxiGpsTrace.fail('DRIVER', 'DRIVER_HTTP_LOCATION_RESPONSE', { lat: lat, lng: lng, channel: 'http', reason: d.error });
-        }
         if (d && d.alerts && d.alerts.length) {
             var z = d.alerts[0];
             window._daxiDangerAlert && window._daxiDangerAlert(z.alert_message || z.zone_name, z.distance_m, z);
         }
-    }).catch(function(err){
-        if (window.DaxiGpsTrace) DaxiGpsTrace.fail('DRIVER', 'DRIVER_HTTP_LOCATION_RESPONSE', { lat: lat, lng: lng, channel: 'http', reason: String(err && err.message || err) });
-    });
+    }).catch(function(){});
 }
 
 window._daxiDangerAlert = function(msg, distM, meta) {

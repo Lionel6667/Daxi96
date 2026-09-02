@@ -1040,11 +1040,17 @@ function installNativeBridge() {
 }
 
 async function initGps() {
-
-
   try {
     let perm = await Geolocation.checkPermissions();
     let granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
+    if (!granted) {
+      try {
+        perm = await Geolocation.requestPermissions();
+        granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
+      } catch (eReq) {
+        granted = false;
+      }
+    }
     window._daxiGpsPerm = granted;
     if (!granted) return;
     startGpsWatch();

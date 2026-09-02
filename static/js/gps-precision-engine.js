@@ -13,6 +13,13 @@
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
     }
 
+    function isNativeGpsHost() {
+        return !!(global.DaxiAndroid
+            || global._daxiUseNativeGps
+            || global._daxiCapacitorApp
+            || (global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform()));
+    }
+
     function webGpsSide() {
         if (global.DaxiWebGps && global.DaxiWebGps.getSession) {
             if (global.DaxiWebGps.getSession('DRIVER')) return 'DRIVER';
@@ -22,7 +29,8 @@
     }
 
     function traceFix(pos, type) {
-        if (!global.DaxiWebGps || !pos) return;
+        if (!global.DaxiWebGps || !pos || isNativeGpsHost()) return;
+        if (!global.DaxiWebGps.getSession || !global.DaxiWebGps.getSession(webGpsSide())) return;
         global.DaxiWebGps.recordFix(webGpsSide(), pos, {
             type: type,
             source: 'navigator.geolocation'
@@ -365,7 +373,7 @@
                     display.lat = precise.lat;
                     display.lng = precise.lng;
                 }
-                if (global.DaxiWebGps) global.DaxiWebGps.recordEngineFix(webGpsSide(), precise, 'navigator.geolocation');
+                if (global.DaxiWebGps && !isNativeGpsHost()) global.DaxiWebGps.recordEngineFix(webGpsSide(), precise, 'navigator.geolocation');
                 return precise;
             }
 
@@ -390,7 +398,7 @@
                 display = { lat: result.raw.lat, lng: result.raw.lng };
             }
 
-            if (global.DaxiWebGps) global.DaxiWebGps.recordEngineFix(webGpsSide(), result, 'navigator.geolocation');
+            if (global.DaxiWebGps && !isNativeGpsHost()) global.DaxiWebGps.recordEngineFix(webGpsSide(), result, 'navigator.geolocation');
             return result;
         }
 
