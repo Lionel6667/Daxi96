@@ -2,14 +2,11 @@
   'use strict';
 
   var started = false;
-  var v = function () { return global._DAXI_ASSET_V || '20260902s'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902t'; };
 
+  // Secondary UI only — core/remixicon load from <head>.
   var DEFERRED_CSS = [
-    'assets/css/vubez2-core.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
-    'assets/css/vubez2-body.css?v=20260902b',
-    'assets/css/remixicon-vubez2.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
     'assets/css/aos.css',
-    '/static/css/daxi-suggestions-theme.css?v=20260760',
     '/static/css/daxi-theme-subpages.css?v=20260823c',
     '/static/css/daxi-assist-ai.css?v=20260814f',
     '/static/css/daxi-map-theme.css?v=20260731',
@@ -18,13 +15,15 @@
     '/static/css/daxi-chat.css?v=20260760',
     '/static/css/daxi-network-banner.css?v=20260828d',
     '/static/css/daxi-theme-contrast.css?v=20260828e',
-    '/static/css/daxi-lieux.css?v=20260827a'
+    '/static/css/daxi-lieux.css?v=20260827a',
+    '/static/css/daxi-suggestions-theme.css?v=20260760'
   ];
 
-  var INTERACTION_SCRIPTS = [
+  var BOOT_SCRIPTS = [
     'assets/js/htmx.min.js',
     '/static/js/daxi-action-buttons.js?v=20260820a',
     '/static/js/daxi-modal.js?v=20260820d',
+    '/static/js/daxi-htmx-csrf.js?v=20260816a',
     '/static/js/daxi-app-api.js',
     '/static/js/daxi-realtime.js',
     '/static/js/daxi-notif-policy.js',
@@ -47,7 +46,6 @@
     '/static/js/daxi-phone.js',
     '/static/js/daxi-session-store.js',
     '/static/js/daxi-network-state.js',
-    '/static/js/daxi-htmx-csrf.js',
     '/static/js/daxi-shell-role.js',
     '/static/js/daxi-offline.js',
     '/static/js/daxi-countdown.js',
@@ -58,10 +56,11 @@
   ];
 
   function loadCss(href) {
-    if (document.querySelector('link[href="' + href + '"]')) return;
+    if (document.querySelector('link[data-daxi-href="' + href + '"], link[href="' + href + '"]')) return;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = href;
+    link.setAttribute('data-daxi-href', href);
     link.media = 'all';
     document.head.appendChild(link);
   }
@@ -101,41 +100,35 @@
     });
   }
 
-  function shouldArm(e) {
-    if (!e || !e.target || !e.target.closest) return false;
-    return !!e.target.closest(
-      '#mainTabBar, #orderTaxiBtn, #daxiMenuFab, #daxiMapTapZone, ' +
-      '.daxi-map-placeholder, #myPositionBtn, #daxi-map-placeholder-img, ' +
-      '.sidebar-menu-item, .tab-bar-btn[data-tab], #destinationAddress, ' +
-      '#destinationAddressArrival, .app-sheet'
-    );
-  }
-
   function boot() {
     if (started) return;
     started = true;
     DEFERRED_CSS.forEach(loadCss);
     hydrateLazyBgs();
-    INTERACTION_SCRIPTS.reduce(function (chain, src) {
+    if (typeof global._daxiEnsureVubez2Chunks === 'function') {
+      global._daxiEnsureVubez2Chunks();
+    }
+    BOOT_SCRIPTS.reduce(function (chain, src) {
       return chain.then(function () { return loadOne(src); });
-    }, Promise.resolve());
+    }, Promise.resolve()).then(function () {
+      try {
+        global.dispatchEvent(new Event('daxi:bootstrap-ready'));
+      } catch (e) {}
+      if (typeof global._daxiLoadGoogleMaps === 'function') {
+        global._daxiLoadGoogleMaps();
+      }
+    });
   }
 
   function arm() {
-    var once = { once: true, passive: true, capture: true };
-    document.addEventListener('pointerdown', function (e) {
-      if (shouldArm(e)) boot();
-    }, once);
-    document.addEventListener('click', function (e) {
-      var btn = e.target && e.target.closest && e.target.closest('.tab-bar-btn[data-tab], .sidebar-menu-item, #orderTaxiBtn');
-      if (btn) boot();
-    }, true);
-    document.addEventListener('focusin', function (e) {
-      var id = e.target && e.target.id;
-      if (id === 'destinationAddress' || id === 'destinationAddressArrival') boot();
-    }, { once: true, capture: true });
-    // Safety net far beyond typical Lighthouse audit windows.
-    setTimeout(boot, 60000);
+    // Essential assets must appear quickly — do not wait for a tap.
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(boot, { timeout: 900 });
+    } else {
+      setTimeout(boot, 400);
+    }
+    document.addEventListener('pointerdown', boot, { once: true, passive: true, capture: true });
+    document.addEventListener('keydown', boot, { once: true, capture: true });
   }
 
   if (document.readyState === 'loading') {

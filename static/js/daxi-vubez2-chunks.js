@@ -3,7 +3,7 @@
 
   var loaded = false;
   var loading = null;
-  var v = function () { return global._DAXI_ASSET_V || '20260902s'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902t'; };
 
   var CHUNKS = [
     '/static/js/vubez2/vubez2-inline-04.js',
@@ -64,33 +64,20 @@
     'handleTouristAttractions', 'initPlacesAutocomplete'
   ].forEach(stub);
 
-  function shouldArm(e) {
-    if (!e || !e.target || !e.target.closest) return false;
-    return !!e.target.closest(
-      '#mainTabBar, #orderTaxiBtn, #daxiMenuFab, #daxiMapTapZone, ' +
-      '.daxi-map-placeholder, #myPositionBtn, #daxi-map-placeholder-img, ' +
-      '.tab-bar-btn[data-tab]'
-    );
-  }
-
-  var armed = false;
   function arm() {
-    if (armed) return;
-    armed = true;
     var once = { once: true, passive: true, capture: true };
-    document.addEventListener('pointerdown', function (e) {
-      if (shouldArm(e)) ensure();
-    }, once);
-    document.addEventListener('input', function (e) {
+    document.addEventListener('pointerdown', function () { ensure(); }, once);
+    document.addEventListener('keydown', function () { ensure(); }, once);
+    document.addEventListener('focusin', function (e) {
       var id = e.target && e.target.id;
-      if ((id === 'destinationAddress' || id === 'destinationAddressArrival') && e.target.value && e.target.value.length >= 2) {
-        ensure();
-      }
+      if (id === 'destinationAddress' || id === 'destinationAddressArrival') ensure();
     }, { once: true, capture: true });
-    document.addEventListener('click', function (e) {
-      var btn = e.target && e.target.closest && e.target.closest('.tab-bar-btn[data-tab]');
-      if (btn) ensure();
-    }, true);
+    // Auto-load soon so map/booking work without requiring a lucky tap first.
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(function () { ensure(); }, { timeout: 1200 });
+    } else {
+      setTimeout(function () { ensure(); }, 700);
+    }
   }
 
   if (document.readyState === 'loading') {

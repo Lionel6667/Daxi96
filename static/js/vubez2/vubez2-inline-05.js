@@ -759,18 +759,25 @@
     document.addEventListener('pointerdown', function(e) {
       if (!e.target || !e.target.closest) return;
       if (e.target.closest(
-        '#daxiMapTapZone, .daxi-map-placeholder, #myPositionBtn, ' +
-        '#daxi-map-placeholder-img, #orderTaxiBtn'
+        '#daxi-map-stage, #appSheet, .app-sheet, #bookingSection, #orderTaxiBtn, ' +
+        '#destinationAddress, #destinationAddressArrival, #myPositionBtn, ' +
+        '.daxi-map-placeholder, #daxiMapTapZone, #daxi-map-placeholder-img, ' +
+        '#mainTabBar, #daxiMenuFab'
       )) allow();
     }, once);
     document.addEventListener('focusin', function(e) {
       var t = e.target;
       if (!t || !t.id) return;
-      if (t.id === 'destinationAddress' || t.id === 'destinationAddressArrival') {
-        if (t.value && t.value.length >= 2) allow();
-      }
+      if (t.id === 'destinationAddress' || t.id === 'destinationAddressArrival') allow();
     }, once);
     document.addEventListener('daxi:map-activate', allow, once);
+    document.addEventListener('daxi:bootstrap-ready', allow, once);
+    document.addEventListener('daxi:vubez2-ready', allow, once);
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(allow, { timeout: 2500 });
+    } else {
+      setTimeout(allow, 1800);
+    }
   }
   function _daxiLoadGoogleMaps(opts) {
     if (opts && opts.immediate) {
@@ -820,6 +827,6 @@
       if (!window._daxiLoaderDismissed && window._daxiDismissInitialLoader) {
         window._daxiDismissInitialLoader();
       }
-    }, 700);
+    }, 1600);
   });
 })();
