@@ -4501,7 +4501,10 @@ function saveProfile(e) {
         method:'POST',
         headers:{'X-CSRFToken':getCsrf()},
         body: fd
-    }).then(r=>r.text()).then(html => {
+    }).then(function(r) {
+        var photoUrl = r.headers.get('X-Daxi-Driver-Photo') || '';
+        return r.text().then(function(html) { return { html: html, photoUrl: photoUrl }; });
+    }).then(function(res) {
         document.getElementById('pm-msg').innerHTML = '<span style="color:#10b981;">✅ Profil mis à jour !</span>';
         if (window.DaxiDriverNavPrompt && DaxiDriverNavPrompt.updatePrefsFromForm) {
             DaxiDriverNavPrompt.updatePrefsFromForm(
@@ -4523,6 +4526,18 @@ function saveProfile(e) {
         const year  = document.getElementById('pm-car-year').value;
         document.getElementById('drv-car-name').textContent = [brand,model,year].filter(Boolean).join(' ') || '—';
         document.getElementById('drv-car-plate').innerHTML = '<i class="ri-barcode-box-line"></i> ' + (document.getElementById('pm-plate').value || '—');
+
+        var avatarUrl = res.photoUrl || (document.getElementById('pm-avatar-img').src || '');
+        if (avatarUrl && avatarUrl.indexOf('data:') !== 0) {
+            document.getElementById('drv-sb-avatar').src = avatarUrl;
+            document.getElementById('drv-sb-avatar').style.display = 'block';
+            document.getElementById('drv-sb-initials').style.display = 'none';
+            document.getElementById('pm-avatar-img').src = avatarUrl;
+            document.getElementById('pm-avatar-img').style.display = 'block';
+            document.getElementById('pm-avatar-ini').style.display = 'none';
+            var pillImg = document.getElementById('profile-avatar');
+            if (pillImg) { pillImg.src = avatarUrl; pillImg.style.display = 'block'; }
+        }
     }).catch(()=>{
         document.getElementById('pm-msg').innerHTML = '<span style="color:#ef4444;">Erreur réseau</span>';
     });

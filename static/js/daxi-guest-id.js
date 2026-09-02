@@ -137,26 +137,20 @@
         if (!global.navigator || global.navigator.onLine === false) {
             return Promise.resolve(persist(generateFallbackId(), 'local_fp'));
         }
+        var provisional = persist(generateFallbackId(), 'local_fp');
         var runFp = function() {
             return loadFingerprintJs().then(function (id) {
+                if (!id || id === provisional) return provisional;
+                addAlias(provisional);
                 return persist(id, id.indexOf('fpjs_') === 0 ? 'fpjs' : 'local_fp');
             });
         };
         if (typeof global.requestIdleCallback === 'function') {
-            return new Promise(function(resolve) {
-                var started = false;
-                var start = function() {
-                    if (started) return;
-                    started = true;
-                    runFp().then(resolve);
-                };
-                global.requestIdleCallback(start, { timeout: 4500 });
-                setTimeout(start, 5000);
-            });
+            global.requestIdleCallback(function() { runFp(); }, { timeout: 8000 });
+        } else {
+            setTimeout(runFp, 2500);
         }
-        return new Promise(function(resolve) {
-            setTimeout(function() { runFp().then(resolve); }, 1800);
-        });
+        return Promise.resolve(provisional);
     }
 
     

@@ -194,7 +194,8 @@ class ServeOriginalPage(View):
                     from drivers.models import Driver
                     d = Driver.objects.get(pk=driver_id)
                     driver_name = d.get_full_name()
-                    driver_photo = d.photo.url if d.photo else None
+                    from julmin_taxis.driver_display_utils import _driver_photo_url
+                    driver_photo = _driver_photo_url(d, request=request) or None
                     driver_is_verified = bool(d.is_verified)
                     driver_nav_pref_mode = d.nav_pref_mode or 'ask'
                     driver_nav_pref_app = d.nav_pref_app or 'google'

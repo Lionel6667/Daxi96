@@ -3,6 +3,11 @@ import base64
 
 from django.conf import settings
 
+ACTIVE_DRIVER_ORDER_STATUSES = (
+    'pending', 'price_proposed', 'price_confirmed', 'price_declined',
+    'driver_assigned', 'on_way', 'arrived', 'in_progress', 'waiting_return',
+)
+
 
 def _abs_url(url: str, request=None) -> str:
     if not url:
@@ -12,9 +17,15 @@ def _abs_url(url: str, request=None) -> str:
         return url
     if url.startswith('http://') or url.startswith('https://'):
         return url
-    
-    
     if url.startswith('/'):
+        if request:
+            try:
+                return request.build_absolute_uri(url)
+            except Exception:
+                pass
+        base = getattr(settings, 'SITE_URL', '').rstrip('/')
+        if base:
+            return f'{base}{url}'
         return url
     if request:
         try:
@@ -59,34 +70,50 @@ def _usable_data_uri(raw: str) -> str:
 
 
 def _driver_photo_url(driver, order=None, request=None) -> str:
-    if order and getattr(order, 'driver_photo_url', None):
-        stored = _abs_url(order.driver_photo_url, request)
-        if stored.startswith('data:'):
-            stored = _usable_data_uri(stored)
-        if stored and 'res.cloudinary.com' in stored and '/upload/drivers/' in stored:
-            stored = ''
-        if stored:
-            return stored
+    """Resolve driver profile photo — prefer live driver.photo over order snapshot."""
     if driver and getattr(driver, 'photo', None) and driver.photo:
-        name = str(getattr(driver.photo, 'name', '') or '').lstrip('/')
+        name = str(getattr(driver.photo, 'name', '') or '').strip().lstrip('/')
+        if name.startswith('http://') or name.startswith('https://'):
+            return _abs_url(name, request)
         usable = True
-        if name and not name.startswith(('daxi/', 'http://', 'https://')):
+        if name and not name.startswith('daxi/'):
             try:
                 usable = bool(driver.photo.storage.exists(name))
             except Exception:
-                usable = not name.startswith('drivers/')
+                usable = True
         if usable:
             try:
                 url = _abs_url(driver.photo.url, request)
-                if url and 'res.cloudinary.com' in url and '/upload/drivers/' in url:
-                    url = ''
                 if url:
                     return url
             except Exception:
                 pass
+    if order and getattr(order, 'driver_photo_url', None):
+        stored = _abs_url(order.driver_photo_url, request)
+        if stored.startswith('data:'):
+            stored = _usable_data_uri(stored)
+        if stored:
+            return stored
     if driver and getattr(driver, 'photo_base64', None):
         return _usable_data_uri(driver.photo_base64)
     return ''
+
+
+def sync_driver_photo_snapshots(driver, photo_url: str = '', request=None) -> str:
+    """Refresh denormalized driver_photo_url on active orders after profile change."""
+    if not driver:
+        return ''
+    if not photo_url:
+        photo_url = _driver_photo_url(driver, request=request)
+    try:
+        from orders.models import Order
+        Order.objects.filter(
+            driver=driver,
+            status__in=ACTIVE_DRIVER_ORDER_STATUSES,
+        ).update(driver_photo_url=photo_url or '')
+    except Exception:
+        pass
+    return photo_url or ''
 
 
 def driver_public_dict(driver, order=None, request=None) -> dict:

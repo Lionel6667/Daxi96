@@ -1,7 +1,7 @@
 (function(){
   window._daxiLoaderDismissed = false;
   window._daxiLoaderStartedAt = Date.now();
-  window._DAXI_LOADER_MIN_MS = 700;
+  window._DAXI_LOADER_MIN_MS = 500;
   window._daxiBootState = window._daxiBootState || {};
   if (window._daxiBootState.mapReady == null) window._daxiBootState.mapReady = false;
   if (window._daxiBootState.routesReady == null) window._daxiBootState.routesReady = true;
@@ -778,5 +778,10 @@
       DaxiMapPlaceholder.applyTheme('daxi-map-stage');
       DaxiMapPlaceholder.bindThemeSync('daxi-map-stage');
     }
+    setTimeout(function() {
+      if (!window._daxiLoaderDismissed && window._daxiDismissInitialLoader) {
+        window._daxiDismissInitialLoader();
+      }
+    }, 2000);
   });
 })();

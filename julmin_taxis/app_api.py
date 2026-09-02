@@ -123,15 +123,11 @@ def _user_payload(request):
     }
 
 
-def _driver_payload(driver):
+def _driver_payload(driver, request=None):
     if not driver:
         return None
-    photo = ''
-    try:
-        if driver.photo:
-            photo = driver.photo.url
-    except Exception:
-        photo = ''
+    from julmin_taxis.driver_display_utils import _driver_photo_url
+    photo = _driver_photo_url(driver, request=request) or ''
     return {
         'id': driver.pk,
         'firstname': driver.firstname or '',
@@ -377,7 +373,7 @@ def app_home(request):
     except Exception:
         data = {'ok': False}
     data['user'] = _user_payload(request)
-    data['driver'] = _driver_payload(_get_current_driver(request))
+    data['driver'] = _driver_payload(_get_current_driver(request), request)
     data['csrf_token'] = get_token(request)
     data['next'] = 'home'
     orders = data.get('orders') or []
@@ -401,7 +397,7 @@ def app_me(request):
     driver = _get_current_driver(request)
     return _ok({
         'user': _user_payload(request),
-        'driver': _driver_payload(driver),
+        'driver': _driver_payload(driver, request),
         'guest_id': request.session.get('guest_id') or request.META.get('HTTP_X_DAXI_GUEST_ID', ''),
         'csrf_token': get_token(request),
         'is_authenticated': bool(request.user and request.user.is_authenticated),
@@ -772,7 +768,7 @@ def app_driver_login(request):
         if not driver:
             return _err('Email ou mot de passe incorrect', 401)
     return _ok({
-        'driver': _driver_payload(driver),
+        'driver': _driver_payload(driver, request),
         'csrf_token': get_token(request),
         'redirect': '/driver/',
     })
@@ -825,7 +821,7 @@ def app_driver_home(request):
     except Exception:
         stats_data = {}
     return _ok({
-        'driver': _driver_payload(driver),
+        'driver': _driver_payload(driver, request),
         'active_order': active_data.get('order'),
         'stats': stats_data,
     })
@@ -850,7 +846,7 @@ def app_driver_orders(request):
         _json_safe(_order_to_dict(o, light=True, for_driver=True, request=request))
         for o in qs.select_related('driver', 'user').order_by('-created_at')[:80]
     ]
-    return _ok({'orders': orders, 'tab': tab, 'driver': _driver_payload(driver)})
+    return _ok({'orders': orders, 'tab': tab, 'driver': _driver_payload(driver, request)})
 
 
 @require_http_methods(['POST'])
@@ -953,7 +949,7 @@ def app_driver_wallet(request):
     if not driver:
         return _err('Non authentifié', 401)
     return _ok({
-        'driver': _driver_payload(driver),
+        'driver': _driver_payload(driver, request),
         'wallet_balance': float(getattr(driver, 'wallet_balance', 0) or 0),
     })
 
@@ -983,4 +979,4 @@ def app_driver_profile_update(request):
     html_err = _html_error(resp)
     if html_err:
         return _err(html_err)
-    return _ok({'driver': _driver_payload(_get_current_driver(request))})
+    return _ok({'driver': _driver_payload(_get_current_driver(request), request)})

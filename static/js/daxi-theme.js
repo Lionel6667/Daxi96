@@ -26,6 +26,15 @@
     }
   }
 
+  function remixIconReady() {
+    try {
+      if (!document.fonts || !document.fonts.check) return false;
+      return document.fonts.check('1em remixicon') || document.fonts.check('16px remixicon');
+    } catch (e) {
+      return false;
+    }
+  }
+
   function applyTheme(theme) {
     theme = VALID[theme] ? theme : 'dark';
     var root = document.documentElement;
@@ -65,12 +74,16 @@
     btn.setAttribute('aria-label', btn.getAttribute('title'));
     var icon = btn.querySelector('i');
     if (icon) {
-      if (document.querySelector('link[href*="remixicon"]')) {
+      if (remixIconReady()) {
         icon.className = isDark ? 'ri-sun-line' : 'ri-moon-line';
         icon.textContent = '';
+        icon.style.fontFamily = '';
+        icon.style.fontSize = '';
       } else {
         icon.className = '';
         icon.textContent = isDark ? '\u2600' : '\u263E';
+        icon.style.fontFamily = 'system-ui, sans-serif';
+        icon.style.fontSize = '1.15em';
       }
     }
     var label = btn.querySelector('.daxi-theme-toggle__label');
@@ -121,6 +134,19 @@
     updateToggle(getTheme());
   }
 
+  function bindFontRefresh() {
+    if (global._daxiThemeFontBound) return;
+    global._daxiThemeFontBound = true;
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () { updateToggle(getTheme()); });
+    }
+    document.querySelectorAll('link[href*="remixicon"]').forEach(function (link) {
+      link.addEventListener('load', function () {
+        setTimeout(function () { updateToggle(getTheme()); }, 40);
+      });
+    });
+  }
+
   var DaxiTheme = {
     get: getTheme,
     set: applyTheme,
@@ -135,6 +161,7 @@
   function boot() {
     applyTheme(getTheme());
     ensureToggle();
+    bindFontRefresh();
   }
 
   if (document.readyState === 'loading') {

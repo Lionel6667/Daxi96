@@ -71,10 +71,14 @@ class CloudinaryMediaStorage(Storage):
         name = str(name).lstrip('/')
         if name.startswith('http://') or name.startswith('https://'):
             return name
-        if cloudinary_configured() and name.startswith('daxi/'):
+        if cloudinary_configured():
             cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', '')
             if cloud_name:
-                return f'https://res.cloudinary.com/{cloud_name}/image/upload/{name}'
+                if name.startswith('daxi/'):
+                    return f'https://res.cloudinary.com/{cloud_name}/image/upload/{name}'
+                if name.startswith('drivers/'):
+                    pid = f'{self.folder}/{os.path.basename(name)}'
+                    return f'https://res.cloudinary.com/{cloud_name}/image/upload/{pid}'
         return self._local_fallback().url(name)
 
     def size(self, name):

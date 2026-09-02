@@ -2153,6 +2153,8 @@ def admin_set_driver_photo(request, driver_id):
 
     driver.photo = f
     driver.save(update_fields=['photo'])
+    from julmin_taxis.driver_display_utils import sync_driver_photo_snapshots
+    sync_driver_photo_snapshots(driver, request=request)
     return HttpResponse(
         '<span style="color:#10b981;font-weight:700;">✓ Photo enregistrée</span>',
         content_type='text/html',
@@ -2197,6 +2199,7 @@ def admin_available_drivers(request):
     if city:
         qs = qs.filter(city__icontains=city)
 
+    from julmin_taxis.driver_display_utils import _driver_photo_url
     drivers = [{
         'id': d.pk,
         'name': d.get_full_name(),
@@ -2206,7 +2209,7 @@ def admin_available_drivers(request):
         'plate': d.plate,
         'status': d.status,
         'rating': d.rating,
-        'photo': d.photo.url if d.photo else None,
+        'photo': _driver_photo_url(d, request=request) or None,
         'latitude': d.latitude,
         'longitude': d.longitude,
     } for d in qs]
@@ -2503,7 +2506,7 @@ def admin_chat_messages(request, order_id):
 
     messages = order.messages.order_by('timestamp')[:100]
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'admin'),
+        'messages': _order_messages_for_scope(order, 'admin', request),
         'order_id': order_id,
         'scope': 'admin',
     })
@@ -2546,7 +2549,7 @@ def admin_chat_send(request, order_id):
 
     messages = order.messages.order_by('timestamp')[:100]
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'admin'),
+        'messages': _order_messages_for_scope(order, 'admin', request),
         'order_id': order_id,
         'scope': 'admin',
     })
@@ -5125,7 +5128,13 @@ def driver_profile_update(request):
 
     driver.save()
     request.session['driver_name'] = driver.get_full_name()
-    return _htmx_success('Profil mis à jour')
+    from julmin_taxis.driver_display_utils import sync_driver_photo_snapshots
+    photo_url = sync_driver_photo_snapshots(driver, request=request)
+    request.session['driver_photo'] = photo_url
+    resp = _htmx_success('Profil mis à jour')
+    if photo_url:
+        resp['X-Daxi-Driver-Photo'] = photo_url
+    return resp
 
 
                                                                                  
@@ -5144,18 +5153,19 @@ def driver_chat_messages(request, order_id):
                                   
     OrderMessage.objects.filter(order=order, sender_type='user', is_read=False).update(is_read=True)
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'driver'),
+        'messages': _order_messages_for_scope(order, 'driver', request),
         'order_id': order_id,
         'scope': 'driver',
     })
 
 
-def _chat_msg_payload(msg):
+def _chat_msg_payload(msg, request=None):
+    from julmin_taxis.driver_display_utils import _abs_url
     return {
         'id': msg.pk,
         'content': msg.content,
-        'image_url': msg.image_url or '',
-        'audio_url': getattr(msg, 'audio_url', '') or '',
+        'image_url': _abs_url(msg.image_url or '', request),
+        'audio_url': _abs_url(getattr(msg, 'audio_url', '') or '', request),
         'message_type': msg.message_type or 'text',
         'sender_type': msg.sender_type,
         'sender_name': msg.sender_name,
@@ -5165,14 +5175,23 @@ def _chat_msg_payload(msg):
     }
 
 
-def _order_messages_for_scope(order, scope):
+def _order_messages_for_scope(order, scope, request=None):
     """Filtre les messages admin d'annulation selon l'audience (client vs chauffeur)."""
+    from julmin_taxis.driver_display_utils import _abs_url
     qs = order.messages.order_by('timestamp')
     if scope == 'user':
-        return list(qs.exclude(message_type='admin_cancel_driver')[:100])
-    if scope == 'driver':
-        return list(qs.exclude(message_type='admin_cancel_client')[:100])
-    return list(qs[:100])
+        msgs = list(qs.exclude(message_type='admin_cancel_driver')[:100])
+    elif scope == 'driver':
+        msgs = list(qs.exclude(message_type='admin_cancel_client')[:100])
+    else:
+        msgs = list(qs[:100])
+    for m in msgs:
+        if m.image_url:
+            m.image_url = _abs_url(m.image_url, request)
+        audio = getattr(m, 'audio_url', '') or ''
+        if audio:
+            m.audio_url = _abs_url(audio, request)
+    return msgs
 
 
 def _parse_chat_send(request):
@@ -5240,7 +5259,7 @@ def driver_chat_send(request, order_id):
         reply_to=reply_to,
         is_read=False,
     )
-    payload = _chat_msg_payload(msg)
+    payload = _chat_msg_payload(msg, request)
     _notify_ws(f'order_{order.pk}', 'new_message', payload)
     try:
         from julmin_taxis.notify import push_notify_client_message
@@ -5249,7 +5268,7 @@ def driver_chat_send(request, order_id):
         pass
     OrderMessage.objects.filter(order=order, sender_type='user', is_read=False).update(is_read=True)
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'driver'),
+        'messages': _order_messages_for_scope(order, 'driver', request),
         'order_id': order_id,
         'scope': 'driver',
     })
@@ -5317,7 +5336,7 @@ def _chat_scope_owns(scope, msg):
 
 def _render_order_chat(request, order, order_id, scope):
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, scope),
+        'messages': _order_messages_for_scope(order, scope, request),
         'order_id': order_id,
         'scope': scope,
     })
@@ -7444,7 +7463,7 @@ def client_chat_messages(request, order_id):
     messages = order.messages.order_by('timestamp')[:100]
     OrderMessage.objects.filter(order=order, sender_type='driver', is_read=False).update(is_read=True)
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'user'),
+        'messages': _order_messages_for_scope(order, 'user', request),
         'order_id': order_id,
         'scope': 'user',
     })
@@ -7485,7 +7504,7 @@ def client_chat_send(request, order_id):
         audio_duration_sec=parsed.get('audio_duration_sec'),
         reply_to=reply_to,
     )
-    _notify_ws(f'order_{order.pk}', 'new_message', _chat_msg_payload(msg))
+    _notify_ws(f'order_{order.pk}', 'new_message', _chat_msg_payload(msg, request))
     try:
         from julmin_taxis.notify import push_notify_driver_message
         push_notify_driver_message(order)
@@ -7494,7 +7513,7 @@ def client_chat_send(request, order_id):
 
     messages = order.messages.order_by('timestamp')[:100]
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'user'),
+        'messages': _order_messages_for_scope(order, 'user', request),
         'order_id': order_id,
         'scope': 'user',
     })
@@ -8191,7 +8210,7 @@ def enterprise_order_chat(request, order_id):
         return err
     messages = order.messages.order_by('timestamp')[:100]
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'admin'),
+        'messages': _order_messages_for_scope(order, 'admin', request),
         'order_id': order.pk,
         'scope': 'enterprise',
     })
@@ -8224,7 +8243,7 @@ def enterprise_order_chat_send(request, order_id):
     })
     messages = order.messages.order_by('timestamp')[:100]
     return render(request, 'htmx/chat_messages.html', {
-        'messages': _order_messages_for_scope(order, 'admin'),
+        'messages': _order_messages_for_scope(order, 'admin', request),
         'order_id': order.pk,
         'scope': 'enterprise',
     })
