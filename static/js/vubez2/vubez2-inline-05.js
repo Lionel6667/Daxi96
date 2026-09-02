@@ -722,17 +722,35 @@
       _daxiRestartMapLoadWatchdog();
     };
     var once = { once: true, passive: true, capture: true };
-    ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel'].forEach(function(ev) {
-      document.addEventListener(ev, allow, once);
-    });
-    document.addEventListener('daxi:intro-complete', allow, once);
-    document.addEventListener('daxi:map-activate', allow, once);
-    var delayMs = 5000;
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(allow, { timeout: delayMs });
-    } else {
-      setTimeout(allow, delayMs);
+    var isNative = window._daxiIsNativeApp && window._daxiIsNativeApp();
+    if (isNative) {
+      ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel'].forEach(function(ev) {
+        document.addEventListener(ev, allow, once);
+      });
+      document.addEventListener('daxi:intro-complete', allow, once);
+      document.addEventListener('daxi:map-activate', allow, once);
+      var delayMs = 5000;
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(allow, { timeout: delayMs });
+      } else {
+        setTimeout(allow, delayMs);
+      }
+      return;
     }
+    document.addEventListener('pointerdown', function(e) {
+      if (!e.target || !e.target.closest) return;
+      if (e.target.closest(
+        '#daxi-map-stage, #appSheet, .app-sheet, #bookingSection, #orderTaxiBtn, ' +
+        '#destinationAddress, #destinationAddressArrival, #myPositionBtn, ' +
+        '.daxi-map-placeholder, #daxiMapTapZone, #daxi-map-placeholder-img'
+      )) allow();
+    }, once);
+    document.addEventListener('focusin', function(e) {
+      var t = e.target;
+      if (!t || !t.id) return;
+      if (t.id === 'destinationAddress' || t.id === 'destinationAddressArrival') allow();
+    }, once);
+    document.addEventListener('daxi:map-activate', allow, once);
   }
   function _daxiLoadGoogleMaps(opts) {
     if (opts && opts.immediate) {

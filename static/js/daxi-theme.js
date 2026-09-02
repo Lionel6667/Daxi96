@@ -35,8 +35,25 @@
     }
   }
 
+  function ensureLightThemeCss() {
+    if (global._daxiLightCssLoaded) return;
+    global._daxiLightCssLoaded = true;
+    var v = '20260823q';
+    [
+      '/static/css/daxi-theme-light.css?v=' + v,
+      '/static/css/daxi-theme-light-extended.css?v=20260827a',
+      '/static/css/daxi-theme-light-pages.css?v=20260830n'
+    ].forEach(function (href) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.appendChild(link);
+    });
+  }
+
   function applyTheme(theme) {
     theme = VALID[theme] ? theme : 'dark';
+    if (theme === 'light') ensureLightThemeCss();
     var root = document.documentElement;
     root.setAttribute('data-theme', theme);
     root.style.colorScheme = theme;
@@ -159,6 +176,7 @@
   global.DaxiTheme = DaxiTheme;
 
   function boot() {
+    if (getTheme() === 'light') ensureLightThemeCss();
     applyTheme(getTheme());
     ensureToggle();
     bindFontRefresh();

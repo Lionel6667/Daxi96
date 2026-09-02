@@ -22,7 +22,7 @@
     <meta name="theme-color" content="#070B14">
     <link rel="canonical" href="https://daxipro.com/">
 
-    <script>(function(){window._daxiBootT0=Date.now();window._daxiBootLog=[];window._daxiBootDump=function(){try{localStorage.setItem('daxi_boot_log',JSON.stringify(window._daxiBootLog||[]));}catch(e){}return window._daxiBootLog;};window._daxiBootMark=function(n){var rec={t:Date.now()-window._daxiBootT0,nav:(typeof performance!=='undefined'&&performance.now)?Math.round(performance.now()):0,n:n};(window._daxiBootLog=window._daxiBootLog||[]).push(rec);try{console.log('[DAXI BOOT]',rec.nav+'ms nav',rec.t+'ms parse',n);}catch(e){}};window._daxiBootMark('html-parse-start');if(typeof addEventListener==='function'){addEventListener('daxi:intro-complete',function(){try{window._daxiBootDump();}catch(e){}});addEventListener('load',function(){try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(!n)return;window._daxiBootMark('nav dns='+Math.round(n.domainLookupEnd-n.domainLookupStart)+' connect='+Math.round(n.connectEnd-n.connectStart)+' tls='+Math.round(Math.max(0,n.connectEnd-(n.secureConnectionStart||n.connectStart)))+' ttfb='+Math.round(n.responseStart-n.requestStart)+' download='+Math.round(n.responseEnd-n.responseStart)+' encoded='+Math.round(n.encodedBodySize||0)+' decoded='+Math.round(n.decodedBodySize||0)+' transfer='+Math.round(n.transferSize||0));try{window._daxiBootDump();}catch(e2){}}catch(e){}}); }try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
     <style id="daxi-critical-boot">
         html.daxi-booting, html.daxi-booting body {
             background: #070b14;
@@ -110,6 +110,19 @@
             45% { transform: scale(1); opacity: 0.85; }
             100% { transform: scale(1.12); opacity: 0; }
         }
+        *,*::before,*::after{box-sizing:border-box}
+        *{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+        html,body{height:100%;margin:0}
+        html{background:#070b14}
+        html[data-theme="light"]{background:#f0f4f9}
+        body{padding-bottom:0!important;overflow:hidden!important;height:100%;background:transparent!important;touch-action:manipulation}
+        #daxi-map-stage{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;overflow:hidden;pointer-events:none}
+        .app-sheet{position:fixed;bottom:60px;left:0;right:0;z-index:600;pointer-events:none;display:flex;flex-direction:column;max-height:min(90dvh,calc(100dvh - 68px));border-radius:18px 18px 0 0;background:linear-gradient(to top,rgba(4,8,20,.97),rgba(6,10,28,.88));border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -4px 32px rgba(0,0,0,.45)}
+        .tab-bar{position:fixed;left:0;right:0;bottom:0;width:100%;z-index:500;height:60px;background:rgba(8,14,35,.96);border-top:1px solid rgba(148,163,184,.18)}
+        .tab-bar>div{display:flex;height:60px;min-height:60px}
+        .tab-bar-btn{flex:1 1 0;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;min-height:60px;padding:6px 4px!important;touch-action:manipulation}
+        nav.nav-gradient{position:fixed;top:0;width:100%;z-index:500!important;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)!important}
+        nav.nav-gradient .navbar-logo{display:none!important}
     </style>
     <script>document.documentElement.classList.add('daxi-booting');(function(){var deadline=Date.now()+4500;function bootTimeout(){if(window._daxiIntroPlaying&&Date.now()<deadline){setTimeout(bootTimeout,180);return;}document.documentElement.classList.remove('daxi-booting');document.documentElement.classList.remove('daxi-intro-boot');}setTimeout(bootTimeout,1200);if(typeof addEventListener==='function'){addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(!window._daxiLoaderDismissed&&typeof window._daxiDismissInitialLoader==='function'){window._daxiDismissInitialLoader();}},1800);});}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -124,6 +137,12 @@
             document.documentElement.classList.add('daxi-native-shell');
             document.documentElement.classList.add('daxi-intro-boot');
         }
+        if (isNative) {
+            var intro = document.createElement('script');
+            intro.src = '/static/js/daxi-intro.js?v=20260902l';
+            intro.defer = true;
+            document.head.appendChild(intro);
+        }
         if (isFile && !document.querySelector('base')) {
             var base = document.createElement('base');
             base.href = location.href.substring(0, location.href.lastIndexOf('/') + 1);
@@ -137,7 +156,6 @@
     })();
     </script>
 
-    <script defer src="/static/js/daxi-intro.js?v=20260902k"></script>
     <link rel="icon" type="image/png" href="assets/images/daxi-logo-gold.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
     <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260816" media="print" onload="this.media='all'">
@@ -159,7 +177,7 @@
 
     <link rel="manifest" href="manifest.json">
 
-    <script defer src="static/js/daxi-guest-id.js?v=20260902k"></script>
+    <script defer src="static/js/daxi-guest-id.js?v=20260902l"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (window.DaxiGuestId && DaxiGuestId.ensure) DaxiGuestId.ensure();
@@ -237,23 +255,18 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902k" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260902l" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902k">
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902l" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260902l"></noscript>
     <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
 
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"></noscript>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap"></noscript>
-    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902k">
+    <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902l" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902l"></noscript>
     <link rel="stylesheet" href="assets/css/aos.css" media="print" onload="this.media='all'" onerror="this.onerror=null;this.href='https://unpkg.com/aos@2.3.1/dist/aos.css';this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/aos.css"></noscript>
 
@@ -266,9 +279,6 @@
 <link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-suggestions-theme.css?v=20260760"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-assist-ai.css?v=20260814f" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260823q" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260827a" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/static/css/daxi-theme-light-pages.css?v=20260830n" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-theme-subpages.css?v=20260823c" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260731"></noscript>
@@ -276,11 +286,6 @@
 <link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/static/css/daxi-checkout-cards.css?v=20260831g"></noscript>
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760" media="print" onload="this.media='all'">
-<script defer src="/static/js/daxi-app-api.js?v=20260813"></script>
-<script defer src="/static/js/daxi-realtime.js?v=20260738"></script>
-<script defer src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
-<script defer src="/static/js/daxi-notifications.js?v=20260823n"></script>
-<script defer src="/static/js/daxi-realtime-sync.js?v=20260778"></script>
 <script defer src="/static/js/daxi-action-buttons.js?v=20260820a"></script>
 <script defer src="/static/js/daxi-modal.js?v=20260820d"></script>
 
@@ -297,16 +302,10 @@
 <link rel="stylesheet" href="/static/css/daxi-lieux.css?v=20260827a" media="print" onload="this.media='all'">
 <script defer src="/static/js/daxi-network-banner.js?v=20260828d"></script>
 <script defer src="/static/js/daxi-map-placeholder.js?v=20260814a"></script>
-<script defer src="/static/js/daxi-maplibre.js?v=20260777"></script>
 <script defer src="/static/js/daxi-map-provider.js?v=20260777"></script>
-<script defer src="/static/js/daxi-deeplink-router.js?v=20260828a"></script>
-<script defer src="/static/js/daxi-places-catalog.js?v=20260814b"></script>
-
-<script defer src="/static/js/daxi-routes.js?v=20260803r"></script>
-<script defer src="/static/js/daxi-map-snap.js?v=20260728"></script>
-<script defer src="/static/js/daxi-order-card-map.js?v=20260806"></script>
+<script defer src="/static/js/daxi-idle-boot.js?v=20260902l"></script>
 <script src="/static/js/vubez2/vubez2-inline-02.js?v=20260830c" defer></script>
-<script src="/static/js/daxi-theme.js?v=20260902k" defer></script>
+<script src="/static/js/daxi-theme.js?v=20260902l" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   if (window.DaxiTheme && typeof DaxiTheme.remount === 'function') DaxiTheme.remount();
@@ -315,9 +314,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260902k';
+window._DAXI_ASSET_V='20260902l';
 </script>
-<script src="/static/js/daxi-lazy-loader.js?v=20260902k" defer></script>
+<script src="/static/js/daxi-lazy-loader.js?v=20260902l" defer></script>
 </head>
 
 <body class="page-transition" data-page="client">
@@ -388,7 +387,7 @@ window._DAXI_ASSET_V='20260902k';
             <a href="/" class="daxi-header-brand" aria-label="Daxi">
                 <picture>
                   <source srcset="/assets/images/daxi-logo-gold.webp" type="image/webp">
-                  <img src="/assets/images/daxi-logo-gold.png" alt="Daxi" width="120" height="40" decoding="async" fetchpriority="high" class="navbar-logo daxi-brand-logo daxi-brand-logo--gold">
+                  <img src="/assets/images/daxi-logo-gold.png" alt="Daxi" width="120" height="40" decoding="async" class="navbar-logo daxi-brand-logo daxi-brand-logo--gold">
                 </picture>
                 <picture>
                   <source srcset="/assets/images/daxi-logo-dark.webp" type="image/webp">
@@ -2881,12 +2880,12 @@ window._DAXI_ASSET_V='20260902k';
     </div>
 
 
-<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902k" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-04.js?v=20260902l" defer></script>
 <script defer src="/static/js/daxi-client-gps-core.js?v=20260831b"></script>
 <script defer src="/static/js/daxi-gps-trace.js?v=20260805"></script>
 <script defer src="/static/js/gps-precision-engine.js?v=20260804g"></script>
-<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902k" defer></script>
-<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902k" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-05.js?v=20260902l" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-06.js?v=20260902l" defer></script>
 
 
 <nav class="tab-bar" id="mainTabBar" data-daxi-no-collapse="1">
@@ -2919,7 +2918,7 @@ window._DAXI_ASSET_V='20260902k';
     </div>
 </nav>
 
-<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902k" defer></script>
+<script src="/static/js/vubez2/vubez2-inline-07.js?v=20260902l" defer></script>
 <script defer src="/static/js/daxi-client-map-ui.js?v=20260814"></script>
 
 </body>
