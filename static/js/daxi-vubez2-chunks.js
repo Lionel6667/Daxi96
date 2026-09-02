@@ -3,7 +3,7 @@
 
   var loaded = false;
   var loading = null;
-  var v = function () { return global._DAXI_ASSET_V || '20260902o'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902p'; };
 
   var CHUNKS = [
     '/static/js/vubez2/vubez2-inline-04.js',

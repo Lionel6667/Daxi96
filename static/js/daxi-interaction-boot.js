@@ -2,7 +2,7 @@
   'use strict';
 
   var started = false;
-  var v = function () { return global._DAXI_ASSET_V || '20260902o'; };
+  var v = function () { return global._DAXI_ASSET_V || '20260902p'; };
 
   var DEFERRED_CSS = [
     'assets/css/vubez2-core.css?v=' + (global._DAXI_ASSET_V || '20260902o'),
@@ -90,6 +90,14 @@
         el.style.backgroundImage = 'url("' + url + '")';
         el.removeAttribute('data-bg');
       }
+    });
+    document.querySelectorAll('img[data-src]').forEach(function (img) {
+      img.src = img.getAttribute('data-src');
+      img.removeAttribute('data-src');
+    });
+    document.querySelectorAll('source[data-srcset]').forEach(function (src) {
+      src.srcset = src.getAttribute('data-srcset');
+      src.removeAttribute('data-srcset');
     });
   }
 
