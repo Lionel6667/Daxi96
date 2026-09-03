@@ -260,8 +260,7 @@
     #chat-send-btn{width:44px;height:44px;border-radius:50%;background:#005c4b;border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
     #chat-img-btn{background:none;border:none;color:#8696a0;font-size:22px;cursor:pointer;padding:4px 6px;display:flex;align-items:center;justify-content:center;}
 
-    #ios-compass-btn{position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 360px);right:16px;z-index:900;display:none;width:44px;height:44px;border-radius:50%;background:rgba(59,130,246,.9);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 4px 16px rgba(59,130,246,.4);align-items:center;justify-content:center;transform:translateZ(0);}
-    body.drv-mission-active #ios-compass-btn{bottom:calc(env(safe-area-inset-bottom, 0px) + 480px);}
+    #ios-compass-btn{position:relative;bottom:auto;right:auto;margin:0;z-index:900;display:none;width:44px;height:44px;border-radius:50%;background:rgba(59,130,246,.9);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 4px 16px rgba(59,130,246,.4);align-items:center;justify-content:center;transform:translateZ(0);flex-shrink:0;}
     #mission-action-btn.is-proximity-locked{background:#64748b!important;color:#e2e8f0!important;cursor:not-allowed;opacity:.75;box-shadow:none;}
 
     
@@ -300,11 +299,11 @@
     <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
     <link rel="stylesheet" href="/static/css/daxi-map-theme.css?v=20260736">
     <link rel="stylesheet" href="/static/css/daxi-order-cards.css?v=20260772">
-    <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260803">
+    <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260903f">
     <link rel="stylesheet" href="/static/css/daxi-driver-calendar.css?v=20260815">
     <link rel="stylesheet" href="/static/css/daxi-calendar-modal.css?v=20260801">
     <link rel="stylesheet" href="/static/css/daxi-notifications.css?v=20260903b">
-    <script src="/static/js/daxi-map-placeholder.js?v=20260803"></script>
+    <script src="/static/js/daxi-map-placeholder.js?v=20260903f"></script>
     <script src="/static/js/daxi-map-theme.js?v=20260813"></script>
     <script src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
     <link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">
@@ -328,6 +327,7 @@
 
 
 <div id="map-tools-col">
+    <button id="ios-compass-btn" title="Activer la boussole"><i class="ri-compass-3-fill"></i></button>
     <button id="pause-fab" onclick="togglePause()" title="Pause client" style="display:none;">
         <i class="ri-pause-fill" id="pause-fab-icon"></i>
     </button>
@@ -339,9 +339,9 @@
         <span id="chat-unread"></span>
     </button>
     <button id="recenter-btn" onclick="reCenter()" title="Recentrer sur ma position" style="display:none;"><i class="ri-crosshair-line"></i></button>
-<button id="focus-mode-btn" onclick="toggleFocusMode()" title="Mode plein écran">
-    <i id="focus-mode-icon" class="ri-fullscreen-line"></i>
-</button>
+    <button id="focus-mode-btn" onclick="toggleFocusMode()" title="Mode plein écran">
+        <i id="focus-mode-icon" class="ri-fullscreen-line"></i>
+    </button>
 </div>
 
 
@@ -469,8 +469,6 @@
     </form>
 </div>
 
-
-<button id="ios-compass-btn" title="Activer la boussole"><i class="ri-compass-3-fill"></i></button>
 
 
 <div id="drawer-overlay" onclick="toggleDrawer(false)"></div>
@@ -991,12 +989,14 @@ function _carIsOnMap() {
 function _showRecenterBtn(show) {
     var btn = document.getElementById('recenter-btn');
     if (!btn) return;
-    if (!_driverGpsLocked) {
+    if (!_driverGpsVisible) {
         btn.style.display = 'none';
         return;
     }
-    btn.style.display = show ? 'flex' : 'none';
-    btn.style.opacity = show ? '1' : '0';
+    // Visible when user left nav follow (or GPS ready but not following yet).
+    var want = !!show || (!_followMode && _driverGpsVisible);
+    btn.style.display = want ? 'flex' : 'none';
+    btn.style.opacity = want ? '1' : '0';
 }
 function reCenter() {
     _drvEnterNavMode(true);
@@ -1057,7 +1057,9 @@ function _drvBlueDotEl() {
     return el;
 }
 function _drvEnterNavMode(force) {
-    if (!map || !_mapReady || !targetPos || !targetPos[0]) return;
+    if (!map || !_mapReady) return;
+    if (!targetPos || targetPos[0] == null || targetPos[1] == null) return;
+    if (!_driverGpsVisible) return;
     _followMode = true;
     _wasDragging = false;
     _drvMapUserHeld = false;
@@ -1082,8 +1084,10 @@ function _drvEnterNavMode(force) {
             if (map.setZoom) map.setZoom(zoom);
         }
     } catch (e) {}
+    _drvNavEntered = true;
     _showRecenterBtn(false);
-    if (force) _drvNavEntered = true;
+    // Reveal only after real GPS camera is applied — never Cap-Haïtien default.
+    if (_driverGpsVisible) _drvRevealLiveMap();
 }
 function _createCarMarker() {
     var el = _drvBlueDotEl();
@@ -1091,7 +1095,8 @@ function _createCarMarker() {
     _carMarker._el = el;
     _carMarkerAdvanced = false;
 }
-function _drvRevealLiveMap() {
+function _drvRevealLiveMap(force) {
+    if (!force && !_driverGpsVisible) return;
     if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.revealLive) {
         DaxiMapPlaceholder.revealLive('drv-map-stage');
     } else {
@@ -1104,7 +1109,12 @@ function _drvStartMapRevealWatcher() {
     DaxiMapPlaceholder.startLiveRevealWatcher('drv-map-stage', {
         getMap: function() { return map; },
         getMapEl: function() { return document.getElementById('map'); },
-        canReveal: function() { return !!(map && window.google && window.google.maps); },
+        // Keep branded placeholder until real GPS nav camera is ready —
+        // never flash the Cap-Haïtien default Google Map tiles.
+        canReveal: function() {
+            return !!(map && window.google && window.google.maps
+                && _driverGpsVisible && _drvNavEntered);
+        },
         onRevealed: function() {
             window._gmapsLoaded = true;
             window._daxiMapTilesOk = true;
@@ -1151,7 +1161,7 @@ function _initDriverMap() {
     if (!window.google || !google.maps || !google.maps.OverlayView) return;
     if (map && _mapReady) {
         try { google.maps.event.trigger(map, 'resize'); } catch (e) {}
-        _drvRevealLiveMap();
+        if (_driverGpsVisible) _drvRevealLiveMap();
         return;
     }
     if (!_initMapOverlayClass()) return;
@@ -1173,7 +1183,8 @@ function _initDriverMap() {
         window._daxiMapTilesOk = true;
         _markSplashStep('sp-map');
         _tryDismissSplash();
-        _drvRevealLiveMap();
+        // Do not reveal Cap-Haïtien tiles early — wait for GPS nav (or timeout).
+        if (_driverGpsVisible && _drvNavEntered) _drvRevealLiveMap();
         if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.stopWatchdog) {
             DaxiMapPlaceholder.stopWatchdog('drv-map-stage');
         }
@@ -1184,6 +1195,10 @@ function _initDriverMap() {
         setTimeout(_drvMarkMapReady, 300);
     });
     setTimeout(_drvMarkMapReady, 2500);
+    // Fallback: if GPS never arrives, still show the map after a delay.
+    setTimeout(function() {
+        if (!_driverGpsVisible) _drvRevealLiveMap(true);
+    }, 10000);
     setTimeout(function() {
         if (map && !_daxiMapTilesOk) {
             if (window.DaxiMapPlaceholder && DaxiMapPlaceholder.showOfflineModal) {
@@ -1281,13 +1296,12 @@ function _onGpsDisplay(d) {
     pos = [d.lng, d.lat];
     _gpsDisplayPos[0] = d.lng;
     _gpsDisplayPos[1] = d.lat;
+    targetPos[0] = d.lng;
+    targetPos[1] = d.lat;
     _driverGpsVisible = true;
+    // Usable fix is enough for 3rd-person nav (don't wait for ≤150m lock).
+    _driverGpsLocked = true;
     _markSplashStep('sp-gps');
-
-    var softLock = !_drvGpsAccOk(acc);
-    if (!softLock) {
-        _driverGpsLocked = true;
-    }
 
     if (d.heading != null && !isNaN(d.heading)) {
         targetBear = ((targetBear + _bearingDelta(d.heading, targetBear) * 0.25) + 360) % 360;
@@ -1308,7 +1322,7 @@ function _drvPrimeGpsFast() {
         pos = [lng, lat];
         targetPos = pos.slice();
         _driverGpsVisible = true;
-        if (_drvGpsAccOk(acc)) _driverGpsLocked = true;
+        _driverGpsLocked = true;
         _markSplashStep('sp-gps');
         if (!_drvNavEntered) _drvEnterNavMode(true);
         if (activeOrder) _applyStateMachineRoutes();
@@ -1382,7 +1396,7 @@ function _startDriverGps() {
             targetPos = pos.slice();
             if (fix.heading != null) targetBear = fix.heading;
             _driverGpsVisible = true;
-            if (_drvGpsAccOk(_drvGpsAccuracy(fix))) _driverGpsLocked = true;
+            _driverGpsLocked = true;
             _markSplashStep('sp-gps');
             if (!_drvNavEntered) _drvEnterNavMode(true);
             if (activeOrder) _applyStateMachineRoutes();
@@ -1639,7 +1653,7 @@ function engine() {
         pos[1] = targetPos[1];
     }
     if (!pos || !pos[0]) return;
-    if (_followMode && !_wasDragging && !_drvMapUserHeld && _driverGpsLocked) {
+    if (_followMode && !_wasDragging && !_drvMapUserHeld && (_driverGpsLocked || _driverGpsVisible)) {
         try {
             var heading = _drvMapHeading();
             _lastMapHeading = lerpBear(_lastMapHeading || heading, heading, 0.16);

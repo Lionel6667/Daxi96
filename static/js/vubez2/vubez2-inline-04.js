@@ -6986,7 +6986,12 @@ function _daxiMainMapCssVisibleEnough() {
 function _daxiCanHideMapPlaceholder() {
     if (!_daxiMainMapCssVisibleEnough()) return false;
     if (!_daxiGoogleMapHasFirstRender()) return false;
-    return true;
+    // Keep branded placeholder until we have a real GPS camera —
+    // avoid flashing Cap-Haïtien default tiles as a "fake map".
+    if (window._lastClientGpsPos || window._clientGpsPannedOnce) return true;
+    if (window._daxiOfflineMapMode) return true;
+    if (window._daxiAllowMapRevealWithoutGps) return true;
+    return false;
 }
 
 function _daxiEnsureGoogleMapSized(reason) {
@@ -7083,7 +7088,7 @@ function _daxiTryCommitGoogleMapVisible(reason) {
         _daxiEnsureGoogleMapSized(reason);
         return true;
     }
-    if (reason === 'timeout' || reason === 'gps' || reason === 'location') return false;
+    if (reason === 'timeout') return false;
     if (!_daxiGoogleMapInstanceReady()) {
         var el = document.getElementById('daxi-main-map');
         if (window._clientBgMap && !_daxiMapContainerHasSize(el)) {
@@ -7093,9 +7098,10 @@ function _daxiTryCommitGoogleMapVisible(reason) {
             window._daxiMapForceRevealTimer = setTimeout(function() {
                 window._daxiMapForceRevealTimer = null;
                 if (!window._daxiGoogleMapHasBeenShown && window._clientBgMap) {
+                    window._daxiAllowMapRevealWithoutGps = true;
                     _daxiPlaceholderHide('timeout-force');
                 }
-            }, 3500);
+            }, 12000);
         }
         return false;
     }

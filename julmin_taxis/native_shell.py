@@ -315,5 +315,5 @@ class DaxiNativeShellMiddleware:
             response.content = next_content.encode(response.charset or 'utf-8')
             if response.has_header('Content-Length'):
                 response['Content-Length'] = str(len(response.content))
-        response['Cache-Control'] = 'private, max-age=3600'
+        response['Cache-Control'] = 'private, no-cache, max-age=0, must-revalidate'
         return response
