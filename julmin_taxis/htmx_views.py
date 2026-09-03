@@ -4889,10 +4889,14 @@ def driver_commission_pay_moncash(request):
     if not payment_url:
         payment.delete()
         return _htmx_error('URL MonCash indisponible.')
-    return HttpResponse(
-        f'<script>window.location.href = {json.dumps(payment_url)};</script>',
-        content_type='text/html',
-    )
+
+    # HTMX: redirect header. Fallback POST (no htmx): HTTP redirect.
+    if request.headers.get('HX-Request'):
+        resp = HttpResponse(status=204)
+        resp['HX-Redirect'] = payment_url
+        return resp
+    from django.shortcuts import redirect as _redirect
+    return _redirect(payment_url)
 
 
 def _complete_driver_commission_payment(payment):

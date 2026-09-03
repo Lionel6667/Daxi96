@@ -67,7 +67,8 @@
       {% elif withdrawable_balance <= 0 %}
       <div class="drv-wlt-warn">Retrait indisponible{% if cash_owed_to_admin > 0 %} — réglez d'abord votre dette cash à l'admin{% else %} — solde insuffisant{% endif %}.</div>
       {% else %}
-      <form class="drv-wlt-form" hx-post="/htmx/driver/wallet/withdraw/"
+      <form class="drv-wlt-form" method="post" action="/htmx/driver/wallet/withdraw/"
+            hx-post="/htmx/driver/wallet/withdraw/"
             hx-target="#drv-wallet-wrap" hx-swap="outerHTML">
         {% csrf_token %}
         <div class="drv-wlt-row" style="margin-bottom:4px;">
@@ -103,7 +104,9 @@
 
     <div class="drv-wlt-section">
       {% if moncash_configured %}
-      <form hx-post="/htmx/driver/wallet/pay-commission/" hx-target="#drv-wallet-wrap" hx-swap="outerHTML">
+      <form method="post" action="/htmx/driver/wallet/pay-commission/"
+            hx-post="/htmx/driver/wallet/pay-commission/"
+            hx-target="#drv-wallet-wrap" hx-swap="none">
         {% csrf_token %}
         <button type="submit" class="drv-wlt-btn drv-wlt-btn--orange">
           <img src="{% static 'payments/moncash-badge.png' %}?v=20260827b" alt="" style="height:22px;width:auto;max-width:100px;object-fit:contain;background:#fff;border-radius:6px;padding:2px 4px;">
