@@ -43,7 +43,7 @@
     zone_alert: 8 * 60 * 1000,
     driver_unassigned: 15 * 60 * 1000,
     price_proposed: 30 * 60 * 1000,
-    new_message: 20 * 60 * 1000,
+    new_message: 1500,
     driver_assigned: 15 * 60 * 1000,
     driver_accepted: 15 * 60 * 1000,
     on_way: 15 * 60 * 1000,
@@ -69,7 +69,11 @@
     return 'daxi:act:' + action + ':' + orderId;
   }
 
-  function deliveryKey(event, orderId) {
+  function deliveryKey(event, orderId, data) {
+    data = data || {};
+    if (event === 'new_message' && data.id != null) {
+      return 'daxi:notif:shown:' + orderId + ':new_message:' + data.id;
+    }
     return 'daxi:notif:shown:' + orderId + ':' + event;
   }
 
@@ -101,6 +105,12 @@
 
   function isViewingChat(orderId) {
     if (!orderId) return false;
+    var drvPanel = document.getElementById('chat-panel');
+    if (drvPanel && drvPanel.classList.contains('open')) {
+      var form = document.getElementById('chat-form');
+      if (form && form.dataset.orderId && String(form.dataset.orderId) === String(orderId)) return true;
+      if (global._chatOrderId && String(global._chatOrderId) === String(orderId)) return true;
+    }
     var chat = document.getElementById('client-chat-panel-' + orderId)
       || document.getElementById('chat-messages-' + orderId);
     if (!chat) return false;
@@ -108,10 +118,10 @@
     return !!(panel && panel.offsetParent !== null && !panel.classList.contains('hidden'));
   }
 
-  function alreadyShown(event, orderId) {
+  function alreadyShown(event, orderId, data) {
     if (!orderId) return false;
     try {
-      var raw = localStorage.getItem(deliveryKey(event, orderId));
+      var raw = localStorage.getItem(deliveryKey(event, orderId, data));
       if (!raw) return false;
       if (NEVER_SHOW[event]) return true;
       var retry = RETRY_AFTER_MS[event];
@@ -122,10 +132,10 @@
     }
   }
 
-  function recordShown(event, orderId) {
+  function recordShown(event, orderId, data) {
     if (!orderId || !event) return;
     try {
-      localStorage.setItem(deliveryKey(event, orderId), String(Date.now()));
+      localStorage.setItem(deliveryKey(event, orderId, data || {}), String(Date.now()));
     } catch (e) {}
   }
 
@@ -140,7 +150,7 @@
 
     if (NEVER_SHOW[event]) return false;
     if (hadRecentUserAction(event, oid)) return false;
-    if (alreadyShown(event, oid)) return false;
+    if (alreadyShown(event, oid, data)) return false;
 
     if (event === 'new_message' && isViewingChat(oid)) return false;
     if (event === 'price_proposed' && isViewingOrder(oid)) {

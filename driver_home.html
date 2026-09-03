@@ -297,6 +297,7 @@
     <link rel="stylesheet" href="/static/css/daxi-map-placeholder.css?v=20260803">
     <link rel="stylesheet" href="/static/css/daxi-driver-calendar.css?v=20260815">
     <link rel="stylesheet" href="/static/css/daxi-calendar-modal.css?v=20260801">
+    <link rel="stylesheet" href="/static/css/daxi-notifications.css?v=20260903b">
     <script src="/static/js/daxi-map-placeholder.js?v=20260803"></script>
     <script src="/static/js/daxi-map-theme.js?v=20260813"></script>
     <script src="/static/js/daxi-main-map-dual.js?v=20260813"></script>
@@ -485,8 +486,8 @@
 <script>if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('driver');</script>
 <script src="/static/js/daxi-action-buttons.js?v=20260777"></script>
 <script src="/static/js/daxi-modal.js?v=20260820b"></script>
-<script src="/static/js/daxi-notif-policy.js?v=20260823n"></script>
-<script src="/static/js/daxi-notifications.js?v=20260823n"></script>
+<script src="/static/js/daxi-notif-policy.js?v=20260903b"></script>
+<script src="/static/js/daxi-notifications.js?v=20260903b"></script>
 <script src="/static/js/daxi-realtime-sync.js?v=20260828p"></script>
 <script src="/static/js/daxi-realtime.js?v=20260738"></script>
 <script src="/static/js/daxi-push-register.js?v=20260823o"></script>
@@ -846,7 +847,7 @@ let _pickupPolyGlow = null;
 let _tripPoly = null;
 let _tripPolyGlow = null;
 let _clientMarker = null;
-let _clientAccCircle = null; // legacy unused — accuracy circle lives on order-card maps only
+let _clientAccCircle = null;
 let _previewMkr = null;
 let _carMarker = null;
 let _carMarkerAdvanced = false;
@@ -1480,6 +1481,7 @@ function _drvDetachMapLayers() {
         if (_clientMarker.map != null) _clientMarker.map = null;
         else if (_clientMarker.setMap) _clientMarker.setMap(null);
     }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(null);
     if (_previewMkr) {
         if (_previewMkr.map != null) _previewMkr.map = null;
         else if (_previewMkr.setMap) _previewMkr.setMap(null);
@@ -1500,6 +1502,7 @@ function _drvReattachMapLayers() {
         if (_clientMarker.map != null) _clientMarker.map = map;
         else if (_clientMarker.setMap) _clientMarker.setMap(map);
     }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(map);
     if (_previewMkr) {
         if (_previewMkr.map != null) _previewMkr.map = map;
         else if (_previewMkr.setMap) _previewMkr.setMap(map);
@@ -1845,6 +1848,8 @@ function _initDriverWS() {
                 _driverRefreshAcceptedDrawer();
                 if (!activeOrder) _syncActiveOrderFromServer();
                 if (typeof showDriverToast === 'function') showDriverToast('Nouvelle activité commande', 'info');
+            } else if (ev === 'new_message') {
+                _onDriverNewMessage(payload);
             } else if (ev === 'client_gps_updated') {
                 _applyClientGpsAccuracyUpdate(payload);
             } else if (ev === 'pickup_updated') {
@@ -2169,11 +2174,7 @@ function _initOrderWS(orderId) {
                 _driverRefreshActiveOrder(orderId);
                 _driverRefreshAcceptedDrawer();
             } else if (ev === 'new_message') {
-                if (document.getElementById('chat-panel')?.classList.contains('open')) loadChatMessages();
-                else if (_chatOrderId) {
-                    const badge = document.getElementById('chat-unread');
-                    if (badge) { badge.textContent = '+1'; badge.style.display = 'block'; }
-                }
+                _onDriverNewMessage(data);
             }
         } catch(err) {}
     };
@@ -2616,6 +2617,7 @@ function _hideClientGpsAccuracyHint() {
         mission.style.display = 'none';
         mission.textContent = '';
     }
+    if (_clientAccCircle && _clientAccCircle.setMap) _clientAccCircle.setMap(null);
 }
 
 function _syncClientGpsAccuracyHint() {
@@ -2632,8 +2634,30 @@ function _syncClientGpsAccuracyHint() {
     if (banner) banner.classList.add('is-on');
     var mission = document.getElementById('mission-gps-accuracy');
     if (mission) {
-        mission.textContent = 'Zone approximative : ~' + acc + ' m — visible sur la carte de la commande.';
+        mission.textContent = 'Zone approximative : ~' + acc + ' m';
         mission.style.display = 'block';
+    }
+    var lat = parseFloat(o.clientGpsLat != null ? o.clientGpsLat : o.pickupLat);
+    var lng = parseFloat(o.clientGpsLng != null ? o.clientGpsLng : o.pickupLng);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && map && window.google && google.maps && google.maps.Circle) {
+        if (!_clientAccCircle) {
+            _clientAccCircle = new google.maps.Circle({
+                map: map,
+                center: { lat: lat, lng: lng },
+                radius: acc,
+                fillColor: '#38bdf8',
+                fillOpacity: 0.14,
+                strokeColor: '#0ea5e9',
+                strokeOpacity: 0.7,
+                strokeWeight: 1.5,
+                clickable: false,
+                zIndex: 40
+            });
+        } else {
+            _clientAccCircle.setCenter({ lat: lat, lng: lng });
+            _clientAccCircle.setRadius(acc);
+            if (!_clientAccCircle.getMap()) _clientAccCircle.setMap(map);
+        }
     }
     _refreshDriverOrderCardAccuracy(
         o.id,
@@ -3241,6 +3265,45 @@ function openDriverChat(orderId) {
         document.getElementById('chat-client-name').textContent = card.dataset.clientName || 'Client';
     }
     toggleChat(true);
+}
+
+function _onDriverNewMessage(data) {
+    data = data || {};
+    if (data.action === 'deleted' || data.action === 'edited') {
+        if (document.getElementById('chat-panel')?.classList.contains('open') && _chatOrderId
+            && data.order_id && String(_chatOrderId) === String(data.order_id)) {
+            loadChatMessages();
+        }
+        return;
+    }
+    var oid = data.order_id || data.id;
+    var chatOpen = !!(document.getElementById('chat-panel')?.classList.contains('open'));
+    var sameOrder = !!(oid && _chatOrderId && String(_chatOrderId) === String(oid));
+    // Echo of our own send — refresh open chat, no toast
+    if (data.sender_type === 'driver') {
+        if (chatOpen && sameOrder) loadChatMessages();
+        return;
+    }
+    if (chatOpen && sameOrder) {
+        loadChatMessages();
+        return;
+    }
+    if (oid && (sameOrder || (activeOrder && String(activeOrder.id) === String(oid)) || !_chatOrderId)) {
+        var badge = document.getElementById('chat-unread');
+        if (badge) {
+            badge.textContent = '+1';
+            badge.style.display = 'block';
+        }
+    }
+    if (typeof _daxiNotifyOrderEvent === 'function') {
+        _daxiNotifyOrderEvent('new_message', Object.assign({ order_id: oid }, data));
+    } else if (window.showDaxiNotification) {
+        showDaxiNotification(
+            'Nouveau message',
+            data.message || data.content || 'Nouveau message sur votre course.',
+            { type: 'info' }
+        );
+    }
 }
 
 function loadChatMessages() {

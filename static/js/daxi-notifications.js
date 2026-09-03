@@ -162,7 +162,7 @@
     }
     showDaxiNotification(cfg.title, msg, { type: cfg.type, skipNative: true });
     if (global.DaxiNotifPolicy) {
-      global.DaxiNotifPolicy.recordShown(status || eventName, (data && (data.order_id || data.id)));
+      global.DaxiNotifPolicy.recordShown(status || eventName, (data && (data.order_id || data.id)), data);
     }
   }
 

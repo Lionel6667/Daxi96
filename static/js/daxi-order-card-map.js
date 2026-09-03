@@ -233,6 +233,8 @@
     return {
       pickup: pickupExplicit,
       pickupDisplay: departDisplay,
+      clientGps: clientGps,
+      clientGpsAccuracy: parseFloat(el.dataset.clientGpsAccuracy || '') || 0,
       dest: dest,
       driver: driver,
       status: el.dataset.orderStatus || '',
@@ -253,6 +255,8 @@
     }
     return [
       p(cfg.pickup), p(cfg.dest), p(cfg.driver), cfg.status || '',
+      Math.round(cfg.clientGpsAccuracy || 0),
+      p(cfg.clientGps),
       (cfg.planStops || []).map(function (s) { return p(s); }).join('|'),
     ].join(';');
   }
@@ -512,8 +516,69 @@
   function clearStore(store) {
     Object.values(store.markers || {}).forEach(function (m) { m.setMap(null); });
     Object.values(store.polylines || {}).forEach(function (p) { p.setMap(null); });
+    Object.values(store.circles || {}).forEach(function (c) { if (c && c.setMap) c.setMap(null); });
     store.markers = {};
     store.polylines = {};
+    store.circles = {};
+  }
+
+  function accuracyCircleCenter(cfg) {
+    if (cfg && isValidGpsPoint(cfg.clientGps)) return cfg.clientGps;
+    if (cfg && isValidGpsPoint(cfg.pickup)) return cfg.pickup;
+    if (cfg && isValidGpsPoint(cfg.pickupDisplay)) return cfg.pickupDisplay;
+    return null;
+  }
+
+  function shouldShowClientAccuracyCircle(cfg) {
+    if (!cfg) return false;
+    var acc = parseFloat(cfg.clientGpsAccuracy);
+    if (!Number.isFinite(acc) || acc <= 100) return false;
+    var st = cfg.status || '';
+    if (st === 'in_progress' || st === 'waiting_return' || st === 'completed' || st === 'cancelled') return false;
+    return !!accuracyCircleCenter(cfg);
+  }
+
+  function extendAccuracyBounds(points, center, radiusM) {
+    if (!center || !(radiusM > 0) || !points) return;
+    var dLat = radiusM / 111320;
+    var cosLat = Math.cos(center.lat * Math.PI / 180);
+    var dLng = cosLat > 0.05 ? radiusM / (111320 * cosLat) : dLat;
+    points.push({ lat: center.lat + dLat, lng: center.lng });
+    points.push({ lat: center.lat - dLat, lng: center.lng });
+    points.push({ lat: center.lat, lng: center.lng + dLng });
+    points.push({ lat: center.lat, lng: center.lng - dLng });
+  }
+
+  function syncClientAccuracyCircle(store, map, cfg) {
+    if (!store || !map || !global.google || !global.google.maps || !global.google.maps.Circle) return;
+    store.circles = store.circles || {};
+    var existing = store.circles.clientAccuracy;
+    if (!shouldShowClientAccuracyCircle(cfg)) {
+      if (existing && existing.setMap) existing.setMap(null);
+      delete store.circles.clientAccuracy;
+      return null;
+    }
+    var center = accuracyCircleCenter(cfg);
+    var radius = Math.round(parseFloat(cfg.clientGpsAccuracy));
+    if (existing) {
+      existing.setCenter(center);
+      existing.setRadius(radius);
+      if (!existing.getMap()) existing.setMap(map);
+      return existing;
+    }
+    store.circles.clientAccuracy = new global.google.maps.Circle({
+      map: map,
+      center: center,
+      radius: radius,
+      fillColor: '#38bdf8',
+      fillOpacity: 0.12,
+      strokeColor: '#0ea5e9',
+      strokeOpacity: 0.65,
+      strokeWeight: 1.5,
+      clickable: false,
+      zIndex: 40,
+    });
+    return store.circles.clientAccuracy;
   }
 
   function addMarker(store, map, key, pos, icon, title, zIndex, label) {
@@ -636,7 +701,7 @@
         mapOpts.mapTypeId = global.google.maps.MapTypeId ? global.google.maps.MapTypeId.ROADMAP : 'roadmap';
         map = new global.google.maps.Map(el, mapOpts);
       }
-      rec = { map: map, store: { markers: {}, polylines: {} }, theme: theme, cfgKey: signature };
+      rec = { map: map, store: { markers: {}, polylines: {}, circles: {} }, theme: theme, cfgKey: signature };
       MAPS[key] = rec;
     } else {
       map = rec.map;
@@ -645,6 +710,7 @@
     }
 
     const store = rec.store;
+    if (!store.circles) store.circles = {};
     clearStore(store);
 
     const st = cfg.status;
@@ -672,6 +738,11 @@
       }
       addMarker(store, map, 'driver', driverPos, driverIcon(cfg.status), 'Chauffeur', 420);
       extend(driverPos);
+    }
+
+    syncClientAccuracyCircle(store, map, cfg);
+    if (shouldShowClientAccuracyCircle(cfg)) {
+      extendAccuracyBounds(points, accuracyCircleCenter(cfg), parseFloat(cfg.clientGpsAccuracy) || 0);
     }
 
     function snapDriverToPath(path) {
@@ -786,6 +857,7 @@
         }
       });
     }
+    syncClientAccuracyCircle(store, rec.map, cfg);
     if (rec.lastPoints) {
       try { global.google.maps.event.trigger(rec.map, 'resize'); } catch (e) {}
     }

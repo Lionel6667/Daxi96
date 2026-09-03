@@ -5217,8 +5217,11 @@ def driver_chat_messages(request, order_id):
 
 def _chat_msg_payload(msg, request=None):
     from julmin_taxis.driver_display_utils import _abs_url
+    order = getattr(msg, 'order', None)
+    order_id = getattr(msg, 'order_id', None) or (order.pk if order else None)
     return {
         'id': msg.pk,
+        'order_id': order_id,
         'content': msg.content,
         'image_url': _abs_url(msg.image_url or '', request),
         'audio_url': _abs_url(getattr(msg, 'audio_url', '') or '', request),
@@ -5228,6 +5231,7 @@ def _chat_msg_payload(msg, request=None):
         'timestamp': msg.timestamp.strftime('%H:%M'),
         'reply_to_id': msg.reply_to_id,
         'reply_preview': (msg.reply_to.content[:80] if msg.reply_to and msg.reply_to.content else '') if msg.reply_to else '',
+        'message': (msg.content or '')[:120] or 'Nouveau message',
     }
 
 
@@ -5317,6 +5321,8 @@ def driver_chat_send(request, order_id):
     )
     payload = _chat_msg_payload(msg, request)
     _notify_ws(f'order_{order.pk}', 'new_message', payload)
+    if order.driver_id:
+        _notify_ws(f'driver_{order.driver_id}', 'new_message', payload)
     try:
         from julmin_taxis.notify import push_notify_client_message
         push_notify_client_message(order)
@@ -7561,6 +7567,8 @@ def client_chat_send(request, order_id):
         reply_to=reply_to,
     )
     _notify_ws(f'order_{order.pk}', 'new_message', _chat_msg_payload(msg, request))
+    if order.driver_id:
+        _notify_ws(f'driver_{order.driver_id}', 'new_message', _chat_msg_payload(msg, request))
     try:
         from julmin_taxis.notify import push_notify_driver_message
         push_notify_driver_message(order)

@@ -424,6 +424,9 @@ if (window.location.pathname.replace(/\/$/, '') === '/compte') {
 <script src="/static/js/daxi-phone.js?v=20260702"></script>
 <script src="/static/js/daxi-app-api.js?v=20260813"></script>
 <script src="/static/js/daxi-realtime.js?v=20260738"></script>
+<link rel="stylesheet" href="/static/css/daxi-notifications.css?v=20260903b">
+<script src="/static/js/daxi-notif-policy.js?v=20260903b"></script>
+<script src="/static/js/daxi-notifications.js?v=20260903b"></script>
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -437,8 +440,13 @@ document.addEventListener('DOMContentLoaded', function() {
     loadStats();
     if (window.DaxiRealtime) {
         DaxiRealtime.connect('client-account', DaxiRealtime.wsUrl('/ws/user/'), {
-            onEvent: function(ev) {
+            onEvent: function(ev, data) {
                 if (!DaxiRealtime.isOrderEvent(ev)) return;
+                data = data || {};
+                if (!(ev === 'new_message' && data.sender_type === 'user')
+                    && typeof _daxiNotifyOrderEvent === 'function') {
+                    _daxiNotifyOrderEvent(ev, data);
+                }
                 loadStats();
                 var ol = document.getElementById('orders-list');
                 if (ol && typeof htmx !== 'undefined') htmx.trigger(ol, 'refresh');

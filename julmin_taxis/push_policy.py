@@ -59,7 +59,7 @@ RETRY_AFTER_OFFLINE_SEC = {
     'danger_zone': 15 * 60,
     'driver_unassigned': 15 * 60,
     'price_proposed': 30 * 60,
-    'new_message': 20 * 60,
+    'new_message': 2,
     'driver_assigned': 15 * 60,
     'on_way': 15 * 60,
     'arrived': 15 * 60,
@@ -261,11 +261,15 @@ def should_send_driver_push(driver, event: str, *, order=None, extra: dict | Non
     dedup_key = _driver_dedup_key(driver_id, event, order)
     rec = cache.get(dedup_key)
     if rec and event not in DRIVER_CRITICAL:
-        if is_online('driver', driver_id):
-            return False, 'already_sent'
         retry_after = RETRY_AFTER_OFFLINE_SEC.get(event, 1800)
         stamp = float(rec.get('at', 0) if isinstance(rec, dict) else 0)
-        if time.time() - stamp < retry_after:
+        # new_message: allow rapid successive pushes (not once-per-order forever)
+        if event == 'new_message':
+            if time.time() - stamp < retry_after:
+                return False, 'already_sent'
+        elif is_online('driver', driver_id):
+            return False, 'already_sent'
+        elif time.time() - stamp < retry_after:
             return False, 'already_sent'
 
     from julmin_taxis.presence import get_presence_context

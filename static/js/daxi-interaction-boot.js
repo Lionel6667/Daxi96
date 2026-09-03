@@ -13,6 +13,7 @@
     '/static/css/daxi-order-cards.css?v=20260762',
     '/static/css/daxi-checkout-cards.css?v=20260831g',
     '/static/css/daxi-chat.css?v=20260760',
+    '/static/css/daxi-notifications.css?v=20260903b',
     '/static/css/daxi-network-banner.css?v=20260828d',
     '/static/css/daxi-theme-contrast.css?v=20260828e',
     '/static/css/daxi-lieux.css?v=20260827a',

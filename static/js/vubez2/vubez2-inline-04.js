@@ -8708,7 +8708,7 @@ function _daxiNotifyOrderEvent(eventName, data) {
         var msg = data.message || cfg.msg;
         showDaxiNotification(cfg.title, msg, { type: cfg.type, skipNative: true });
         if (window.DaxiNotifPolicy) {
-            window.DaxiNotifPolicy.recordShown(status || eventName, data.order_id || data.id);
+            window.DaxiNotifPolicy.recordShown(status || eventName, data.order_id || data.id, data);
         }
     }
     if (window.DaxiRealtimeSync) DaxiRealtimeSync.handle(eventName, data);
@@ -11204,8 +11204,13 @@ window._daxiSyncSidebarEnterprise = _daxiSyncSidebarEnterprise;
             DaxiRealtime.connect('client-main', DaxiRealtime.wsUrl('/ws/user/'), {
                 onEvent: function(ev, data) {
                     if (!DaxiRealtime.isOrderEvent(ev)) return;
-                    if (typeof _daxiNotifyOrderEvent === 'function') _daxiNotifyOrderEvent(ev, data || {});
-                    if (window.DaxiRealtimeSync) DaxiRealtimeSync.handle(ev, data || {});
+                    data = data || {};
+                    if (ev === 'new_message' && data.sender_type === 'user') {
+                        // own chat echo — no toast
+                    } else if (typeof _daxiNotifyOrderEvent === 'function') {
+                        _daxiNotifyOrderEvent(ev, data);
+                    }
+                    if (window.DaxiRealtimeSync) DaxiRealtimeSync.handle(ev, data);
                     else if (typeof _loadDaxiSheetOrders === 'function') _loadDaxiSheetOrders({ keepOpen: true, metaOnly: true });
                 }
             });

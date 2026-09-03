@@ -895,7 +895,10 @@ function _daxiStartLiveTracking(orderId) {
                 _daxiPatchSheetStatus(orderId, msg.data || {});
                 if (window._daxiRefreshOrderSheet) _daxiRefreshOrderSheet(orderId, { forceDom: true });
             } else if (msg.event === 'new_message') {
-                _daxiNotifyOrderEvent('new_message', Object.assign({ order_id: orderId }, msg.data || {}));
+                var msgData = Object.assign({ order_id: orderId }, msg.data || {});
+                if (msgData.sender_type !== 'user') {
+                    _daxiNotifyOrderEvent('new_message', msgData);
+                }
                 var msgArea = document.getElementById('chat-messages-' + orderId);
                 if (msgArea) htmx.trigger(msgArea, 'revealed');
             } else if ((msg.event === 'danger_zone' || msg.event === 'zone_alert') && msg.data) {
