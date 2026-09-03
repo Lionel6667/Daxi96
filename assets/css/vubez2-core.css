@@ -781,18 +781,18 @@
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
+            touch-action: pan-x pan-y;
             overscroll-behavior: contain;
             color: rgba(255,255,255,0.92);
         }
         html.daxi-native-shell .daxi-page-overlay.show {
             overflow-y: scroll !important;
-            touch-action: pan-y !important;
+            touch-action: pan-x pan-y !important;
         }
         html.daxi-native-shell .daxi-page-body {
             min-height: 100%;
             padding-bottom: 120px;
-            touch-action: pan-y;
+            touch-action: pan-x pan-y;
         }
         .daxi-page-overlay .text-gray-800,
         .daxi-page-overlay .text-gray-900,
@@ -878,6 +878,20 @@
             width: calc(100% + (2 * var(--daxi-page-pad-x, 16px)));
             margin-left: calc(-1 * var(--daxi-page-pad-x, 16px));
             margin-right: calc(-1 * var(--daxi-page-pad-x, 16px));
+            touch-action: pan-x pan-y;
+            pointer-events: auto;
+        }
+        .daxi-page-overlay #servicePlansSection .plans-container {
+            touch-action: pan-x pan-y !important;
+            pointer-events: auto !important;
+            overflow-x: auto !important;
+        }
+        .daxi-page-overlay #servicePlansSection .plan-card,
+        .daxi-page-overlay #servicePlansSection .learn-more-btn,
+        .daxi-page-overlay #servicePlansSection .daxi-plans-nav-btn,
+        .daxi-page-overlay #servicePlansSection .nav-arrow {
+            pointer-events: auto !important;
+            touch-action: manipulation;
         }
         .daxi-page-overlay #servicePlansSection .daxi-plans-rail {
             margin-bottom: 8px;
@@ -3051,8 +3065,10 @@
         }
 
         .plan-detail-modal.show {
-            display: block;
+            display: block !important;
             opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
         }
 
         @keyframes planEnter {
@@ -8580,6 +8596,9 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 5;
         }
 
         .sidebar-close:hover {
@@ -8590,6 +8609,7 @@
         .sidebar-close i {
             font-size: 20px;
             color: #f8fafc;
+            pointer-events: none;
         }
 
 

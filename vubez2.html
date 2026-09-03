@@ -145,11 +145,14 @@
         #initialLoader.is-dismissed,#initialLoader[hidden]{opacity:0!important;visibility:hidden!important;pointer-events:none!important;display:none!important}
         #locationSharePrompt,.location-share-prompt{display:none!important}
         #locationSharePrompt.show{display:flex!important;position:fixed;inset:0;z-index:10020;align-items:center;justify-content:center}
-        .plan-detail-modal,#blogFullscreenModal,#planDetailModal,.modal,#iosInstallModal,#appModal,.daxi-booking-help-overlay{display:none!important}
+        .plan-detail-modal:not(.show),#blogFullscreenModal:not(.show),#planDetailModal:not(.show),.modal:not(.is-open):not(.show),#iosInstallModal:not(.show),#appModal:not(.show),.daxi-booking-help-overlay:not(.show){display:none!important}
+        .plan-detail-modal.show,#blogFullscreenModal.show,#planDetailModal.show{display:block!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
         #sidebarMenu,.sidebar-menu{position:fixed;top:0;right:-100%;width:80%;max-width:400px;height:100vh;z-index:9999;display:flex;flex-direction:column;background:#070b14;overflow:hidden}
         #sidebarMenu.active,.sidebar-menu.active{right:0}
-        .sidebar-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45)}
-        .sidebar-overlay.active{display:block}
+        .sidebar-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45);pointer-events:none}
+        .sidebar-overlay.active{display:block;pointer-events:auto}
+        .sidebar-close{pointer-events:auto!important;z-index:2;position:relative}
+        .sidebar-close i{pointer-events:none}
         #daxiMenuFab{position:fixed;top:max(10px,env(safe-area-inset-top,10px));right:max(10px,env(safe-area-inset-right,10px))!important;left:auto!important;z-index:650;width:48px;height:48px;border-radius:14px;border:1.5px solid rgba(245,158,11,.45);background:rgba(8,14,35,.94);color:#fbbf24;display:none;align-items:center;justify-content:center}
         .hidden{display:none!important}
     </style>
@@ -307,13 +310,13 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260903g" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260903h" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903g" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903g"></noscript>
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903h" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903h"></noscript>
     <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
     <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902t" media="print" onload="this.media='all'">
@@ -339,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260903g';
+window._DAXI_ASSET_V='20260903h';
 </script>
 <script src="/static/js/daxi-lazy-loader.js?v=20260902t" defer></script>
 </head>
@@ -1152,7 +1155,7 @@ window._DAXI_ASSET_V='20260903g';
             <div id="account-htmx-slot" data-daxi-account-shell="1">
                 <div class="daxi-acc" id="daxi-account-root">
                     <div class="daxi-gate">
-                        <p class="daxi-gate-kicker">Espace client</p>
+                        <p class="daxi-gate-kicker" data-translate="account_space_kicker">Espace client</p>
                         <h3 class="daxi-gate-title" data-translate="account_guest_title">Connectez-vous</h3>
                         <p class="daxi-gate-sub" data-translate="account_guest_sub">Accédez à vos courses, statistiques et paramètres.</p>
                         <div class="daxi-gate-btns">
@@ -1164,15 +1167,6 @@ window._DAXI_ASSET_V='20260903g';
                             </button>
                         </div>
                     </div>
-                    <a href="/entreprise/?tab=register" class="daxi-acc-enterprise-promo" hx-boost="false"
-                       onclick="if(window._daxiGoEnterprise)_daxiGoEnterprise(event,this.href);">
-                        <div class="daxi-acc-enterprise-promo__icon"><i class="ri-building-2-line"></i></div>
-                        <div class="daxi-acc-enterprise-promo__body">
-                            <strong data-translate="account_enterprise_title">Espace partenaire</strong>
-                            <span data-translate="account_enterprise_sub">Gérez les courses de votre entreprise sur DAXI</span>
-                        </div>
-                        <i class="ri-arrow-right-s-line"></i>
-                    </a>
                 </div>
             </div>
             <div id="account-settings-inline-slot" class="daxi-acc-settings-inline" style="display:none;"></div>

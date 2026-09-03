@@ -112,6 +112,10 @@ function _renderPlanModal(planId, data) {
 
     modal.classList.remove('hide');
     modal.classList.add('show');
+    modal.style.display = 'block';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    modal.style.pointerEvents = 'auto';
     document.body.style.overflow = 'hidden';
     setTimeout(function() { modal.scrollTop = 0; }, 50);
 }
@@ -143,6 +147,10 @@ function closePlanModal(skipBlock) {
 
     setTimeout(function() {
         modal.classList.remove('show');
+        modal.style.display = '';
+        modal.style.opacity = '';
+        modal.style.visibility = '';
+        modal.style.pointerEvents = '';
         document.body.style.overflow = '';
     }, 600);
 }
@@ -2079,24 +2087,40 @@ window._daxiOpenSheetOrder = _daxiOpenSheetOrder;
         var sidebarOverlay = document.getElementById('sidebarOverlay');
         if (sidebarMenu) sidebarMenu.classList.add('active');
         if (sidebarOverlay) sidebarOverlay.classList.add('active');
+        document.body.classList.add('daxi-sidebar-open');
     }
     function closeSidebar() {
         var sidebarMenu = document.getElementById('sidebarMenu');
         var sidebarOverlay = document.getElementById('sidebarOverlay');
         if (sidebarMenu) sidebarMenu.classList.remove('active');
         if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.body.classList.remove('daxi-sidebar-open');
     }
     window.openSidebar = openSidebar;
     window.closeSidebar = closeSidebar;
     document.addEventListener('click', function(e) {
-        var fab = e.target && e.target.closest ? e.target.closest('#daxiMenuFab') : null;
+        if (!e.target || !e.target.closest) return;
+        var closeBtn = e.target.closest('#sidebarClose, .sidebar-close');
+        if (closeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar();
+            return;
+        }
+        if (e.target.id === 'sidebarOverlay' || e.target.closest('#sidebarOverlay')) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar();
+            return;
+        }
+        var fab = e.target.closest('#daxiMenuFab');
         if (fab) {
             e.preventDefault();
             e.stopPropagation();
             openSidebar();
             return;
         }
-        var toggle = e.target && e.target.closest ? e.target.closest('#menuToggle') : null;
+        var toggle = e.target.closest('#menuToggle');
         if (toggle) {
             e.preventDefault();
             e.stopPropagation();
@@ -9865,16 +9889,36 @@ function renderPendingOrdersFromDjango() {
 }
 
 function openFullscreenBlog() {
+    if (typeof closeSidebar === 'function') closeSidebar();
     var modal = document.getElementById('blogFullscreenModal');
     if (!modal) return;
     modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.style.display = 'block';
+    modal.style.opacity = '1';
+    modal.style.visibility = 'visible';
+    modal.style.pointerEvents = 'auto';
+    document.body.style.overflow = 'hidden';
     var fc = document.getElementById('blogFullscreenContainer');
     if (!fc) return;
-    if (fc.dataset.loaded === '1' && fc.innerHTML.trim()) return;
+    if (fc.dataset.loaded === '1' && fc.innerHTML.trim()) {
+        if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+        return;
+    }
     if (window._daxiBlogPreloadPromise) {
         window._daxiBlogPreloadPromise.then(function() {
-            if (fc.dataset.loaded === '1' && fc.innerHTML.trim()) return;
-        }).catch(function() {});
+            if (fc.dataset.loaded === '1' && fc.innerHTML.trim()) {
+                if (window.applyDaxiTranslations) window.applyDaxiTranslations();
+                return;
+            }
+            if (typeof htmx !== 'undefined') {
+                htmx.ajax('GET', '/htmx/blog/', { target: '#blogFullscreenContainer', swap: 'innerHTML' });
+            }
+        }).catch(function() {
+            if (typeof htmx !== 'undefined') {
+                htmx.ajax('GET', '/htmx/blog/', { target: '#blogFullscreenContainer', swap: 'innerHTML' });
+            }
+        });
         return;
     }
     var offline = (window.DaxiOffline && DaxiOffline.isReadOnly && DaxiOffline.isReadOnly()) || !_daxiIsOnlineForHtmx();
@@ -9882,11 +9926,13 @@ function openFullscreenBlog() {
         DaxiOffline.tryServeHtmxFromCache('/htmx/blog/', '#blogFullscreenContainer').then(function(ok) {
             if (ok) {
                 fc.dataset.loaded = '1';
+                if (window.applyDaxiTranslations) window.applyDaxiTranslations();
                 return;
             }
             fc.innerHTML = '<div style="padding:28px;text-align:center;color:#94a3b8;">'
-                + '<p style="font-weight:700;">Blog hors ligne</p>'
-                + '<p style="font-size:12px;margin-top:6px;">Ouvrez le blog une fois en ligne pour le mettre en cache.</p></div>';
+                + '<p style="font-weight:700;" data-translate="blog_offline_title">Blog hors ligne</p>'
+                + '<p style="font-size:12px;margin-top:6px;" data-translate="blog_offline_sub">Ouvrez le blog une fois en ligne pour le mettre en cache.</p></div>';
+            if (window.applyDaxiTranslations) window.applyDaxiTranslations();
         });
         return;
     }
@@ -9898,7 +9944,15 @@ function openFullscreenBlog() {
 
 function closeFullscreenBlog() {
     var modal = document.getElementById('blogFullscreenModal');
-    if (modal) modal.classList.remove('show');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.style.display = '';
+        modal.style.opacity = '';
+        modal.style.visibility = '';
+        modal.style.pointerEvents = '';
+    }
+    document.body.style.overflow = '';
 }
 
 function openBlogArticle(slug) {
@@ -10283,10 +10337,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function openSidebar() {
         if (sidebarMenu) sidebarMenu.classList.add('active');
         if (sidebarOverlay) sidebarOverlay.classList.add('active');
+        document.body.classList.add('daxi-sidebar-open');
     }
     function closeSidebar() {
         if (sidebarMenu) sidebarMenu.classList.remove('active');
         if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.body.classList.remove('daxi-sidebar-open');
     }
     window.openSidebar = openSidebar;
     window.closeSidebar = closeSidebar;
@@ -10301,8 +10357,20 @@ document.addEventListener('DOMContentLoaded', function() {
         menuFab.dataset.daxiMenuBound = '1';
         menuFab.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); openSidebar(); });
     }
-    if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
-    if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar();
+        });
+    }
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeSidebar();
+        });
+    }
 
     (function _daxiBindClientEdgeSwipeSidebar() {
         var EDGE_PX = 28;
@@ -11838,6 +11906,21 @@ window._daxiPersistLang = function(lang) {
             service_plans: 'Nos Plans de Service',
             learn_more: 'En savoir plus',
             discover_haiti: 'Découvrez Haïti',
+            explorer_description: 'Description',
+            explorer_history: 'Histoire',
+            explorer_highlights: 'À découvrir',
+            explorer_tip: 'Bon à savoir',
+            explorer_book_taxi: 'Commander un taxi',
+            explorer_enlarge_photo: 'Agrandir la photo',
+            blog_offline_title: 'Blog hors ligne',
+            blog_offline_sub: 'Ouvrez le blog une fois en ligne pour le mettre en cache.',
+            account_space_kicker: 'Espace client',
+            account_view_orders: 'Voir mes commandes',
+            account_edit_profile: 'Modifier profil & photo',
+            account_session: 'Session',
+            account_this_month: 'Ce mois',
+            account_in_progress: 'En cours',
+            account_completed: 'Terminées',
             top_drivers: 'Meilleurs Chauffeurs de la Semaine',
             login: 'Connexion',
             logout: 'Déconnexion',
@@ -12262,6 +12345,21 @@ window._daxiPersistLang = function(lang) {
             service_plans: 'Plan Sèvis Nou yo',
             learn_more: 'Aprann plis',
             discover_haiti: 'Dekouvri Ayiti',
+            explorer_description: 'Deskripsyon',
+            explorer_history: 'Istwa',
+            explorer_highlights: 'Pou dekouvri',
+            explorer_tip: 'Bon pou konnen',
+            explorer_book_taxi: 'Kòmande yon taksi',
+            explorer_enlarge_photo: 'Agrandi foto a',
+            blog_offline_title: 'Blog offline',
+            blog_offline_sub: 'Ouvri blog la yon fwa ou sou entènèt pou mete l nan kach.',
+            account_space_kicker: 'Espas kliyan',
+            account_view_orders: 'Gade kòmand mwen yo',
+            account_edit_profile: 'Modifye pwofil & foto',
+            account_session: 'Sesyon',
+            account_this_month: 'Mwa sa a',
+            account_in_progress: 'An kou',
+            account_completed: 'Fini',
             top_drivers: 'Pi Bon Chofè Semèn nan',
             login: 'Koneksyon',
             logout: 'Dekoneksyon',
@@ -12678,6 +12776,21 @@ window._daxiPersistLang = function(lang) {
             service_plans: 'Our Service Plans',
             learn_more: 'Learn more',
             discover_haiti: 'Discover Haiti',
+            explorer_description: 'Description',
+            explorer_history: 'History',
+            explorer_highlights: 'Highlights',
+            explorer_tip: 'Good to know',
+            explorer_book_taxi: 'Book a taxi',
+            explorer_enlarge_photo: 'Enlarge photo',
+            blog_offline_title: 'Blog offline',
+            blog_offline_sub: 'Open the blog once online to cache it.',
+            account_space_kicker: 'Client area',
+            account_view_orders: 'View my rides',
+            account_edit_profile: 'Edit profile & photo',
+            account_session: 'Session',
+            account_this_month: 'This month',
+            account_in_progress: 'In progress',
+            account_completed: 'Completed',
             top_drivers: 'Top Drivers of the Week',
             login: 'Login',
             logout: 'Logout',
@@ -13069,6 +13182,21 @@ window._daxiPersistLang = function(lang) {
             service_plans: 'Nuestros Planes de Servicio',
             learn_more: 'Saber más',
             discover_haiti: 'Descubra Haití',
+            explorer_description: 'Descripción',
+            explorer_history: 'Historia',
+            explorer_highlights: 'Qué descubrir',
+            explorer_tip: 'Bueno saber',
+            explorer_book_taxi: 'Pedir un taxi',
+            explorer_enlarge_photo: 'Ampliar foto',
+            blog_offline_title: 'Blog sin conexión',
+            blog_offline_sub: 'Abra el blog en línea para guardarlo en caché.',
+            account_space_kicker: 'Espacio cliente',
+            account_view_orders: 'Ver mis viajes',
+            account_edit_profile: 'Editar perfil y foto',
+            account_session: 'Sesión',
+            account_this_month: 'Este mes',
+            account_in_progress: 'En curso',
+            account_completed: 'Completadas',
             top_drivers: 'Mejores Conductores de la Semana',
             login: 'Iniciar sesión',
             logout: 'Cerrar sesión',

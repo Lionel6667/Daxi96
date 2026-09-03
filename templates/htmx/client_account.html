@@ -146,7 +146,7 @@ html[data-theme="light"] .daxi-gate-up {
 <div class="daxi-acc" id="daxi-account-root">
 {% if not is_authenticated %}
   <div class="daxi-gate">
-    <p class="daxi-gate-kicker">Espace client</p>
+    <p class="daxi-gate-kicker" data-translate="account_space_kicker">Espace client</p>
     <h3 class="daxi-gate-title" data-translate="account_guest_title">Connectez-vous</h3>
     <p class="daxi-gate-sub" data-translate="account_guest_sub">Accédez à vos courses, statistiques et paramètres.</p>
     <div class="daxi-gate-btns">
@@ -187,11 +187,11 @@ html[data-theme="light"] .daxi-gate-up {
   <div class="daxi-acc-card">
     <div class="daxi-acc-card-h" data-translate="account_actions">Actions</div>
     <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.openDaxiPageFromAccount)openDaxiPageFromAccount('all-pending-requests','Mes commandes');else if(window.tabGoOrders)tabGoOrders(true);">
-      <i class="ri-route-line"></i><div><small data-translate="tab_orders">Mes courses</small>Voir mes commandes</div>
+      <i class="ri-route-line"></i><div><small data-translate="tab_orders">Mes courses</small><span data-translate="account_view_orders">Voir mes commandes</span></div>
       <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
     </div>
     <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.openDaxiAccountSettings)openDaxiAccountSettings();">
-      <i class="ri-settings-3-line"></i><div><small data-translate="account_perk_settings">Paramètres</small>Modifier profil &amp; photo</div>
+      <i class="ri-settings-3-line"></i><div><small data-translate="account_perk_settings">Paramètres</small><span data-translate="account_edit_profile">Modifier profil &amp; photo</span></div>
       <i class="ri-arrow-right-s-line" style="margin-left:auto;color:#64748b;"></i>
     </div>
     {% if has_enterprise %}
@@ -201,7 +201,7 @@ html[data-theme="light"] .daxi-gate-up {
     </div>
     {% endif %}
     <div class="daxi-acc-row" style="cursor:pointer;" onclick="if(window.daxiClientLogout)window.daxiClientLogout();">
-      <i class="ri-logout-box-r-line"></i><div><small>Session</small><span data-translate="logout">Se déconnecter</span></div>
+      <i class="ri-logout-box-r-line"></i><div><small data-translate="account_session">Session</small><span data-translate="logout">Se déconnecter</span></div>
     </div>
   </div>
 {% endif %}

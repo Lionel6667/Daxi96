@@ -172,13 +172,18 @@ function _daxiShowMapNeedOnline(kind) {
 window._daxiShowMapNeedOnline = _daxiShowMapNeedOnline;
 
 function tabGoTarif() {
+    if (typeof closeSidebar === 'function') closeSidebar();
     _daxiTabBtnPulse('tabbtn-tarif');
     try { if (window.DaxiExplorerMap) window.DaxiExplorerMap.exit(); } catch (eTarif) {}
     tabSetActive('tabbtn-tarif');
     openDaxiPage('servicePlansSection', 'Nos Tarifs & Services');
     if (window.daxiSetRoute) daxiSetRoute('tarif');
+    setTimeout(function() {
+        if (window._daxiRecenterPlanCarousel) window._daxiRecenterPlanCarousel();
+    }, 280);
 }
 function tabGoExplorer() {
+    if (typeof closeSidebar === 'function') closeSidebar();
     tabSetActive('tabbtn-tarif');
     window._daxiPendingExplorer = true;
     function launch() {
@@ -521,7 +526,10 @@ window.daxiPageBack = daxiPageBack;
 
 
 function openSidebarTarifs()  { tabGoTarif(); }
-function openSidebarExplorer(){ tabGoExplorer(); }
+function openSidebarExplorer(){
+    if (typeof closeSidebar === 'function') closeSidebar();
+    tabGoExplorer();
+}
 window.openSidebarExplorer = openSidebarExplorer;
 function openSidebarLieux() {
     if (typeof closeSidebar === 'function') closeSidebar();
@@ -769,11 +777,12 @@ function _daxiSeedAccountSlot() {
         '<div class="daxi-acc-card"><div class="daxi-acc-card-h" data-translate="account_stats">Statistiques</div>' +
         '<div class="daxi-acc-stats">' +
         '<div class="daxi-acc-stat"><div class="n">—</div><div class="l" data-translate="account_perk_rides">Courses</div></div>' +
-        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l">Ce mois</div></div>' +
-        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l">En cours</div></div>' +
-        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l">Terminées</div></div>' +
+        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l" data-translate="account_this_month">Ce mois</div></div>' +
+        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l" data-translate="account_in_progress">En cours</div></div>' +
+        '<div class="daxi-acc-stat"><div class="n">—</div><div class="l" data-translate="account_completed">Terminées</div></div>' +
         '</div></div></div>';
     _daxiMarkSectionReady('accountSection');
+    if (window.applyDaxiTranslations) window.applyDaxiTranslations();
 }
 window._daxiSeedAccountSlot = _daxiSeedAccountSlot;
 

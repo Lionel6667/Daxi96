@@ -1004,35 +1004,65 @@
         return _moveCameraSafe(cam);
     }
 
+    function _t(key, fallback) {
+        try {
+            var lang = (typeof global._daxiGetSavedLang === 'function' ? global._daxiGetSavedLang() : null)
+                || (global.localStorage && localStorage.getItem('daxi_lang'))
+                || 'fr';
+            var dict = (global._localTranslations && global._localTranslations[lang]) || {};
+            if (dict[key]) return dict[key];
+            var fr = (global._localTranslations && global._localTranslations.fr) || {};
+            if (fr[key]) return fr[key];
+        } catch (e) {}
+        return fallback || key;
+    }
+    function _placeField(place, field) {
+        if (!place) return '';
+        try {
+            var lang = (typeof global._daxiGetSavedLang === 'function' ? global._daxiGetSavedLang() : null)
+                || (global.localStorage && localStorage.getItem('daxi_lang'))
+                || 'fr';
+            if (lang && lang !== 'fr' && place.i18n && place.i18n[lang] && place.i18n[lang][field] != null) {
+                return place.i18n[lang][field];
+            }
+        } catch (e2) {}
+        return place[field];
+    }
     function _openDetail(idx) {
         var place = _places()[idx];
         if (!place || !_detailEl) return;
+        var highlights = _placeField(place, 'highlights') || place.highlights || [];
+        var description = _placeField(place, 'description') || place.description || '';
+        var history = _placeField(place, 'history') || place.history || '';
+        var visitTip = _placeField(place, 'visitTip') || place.visitTip || '';
+        var placeName = _placeField(place, 'name') || place.name || '';
         var highlightsHtml = '';
-        if (place.highlights && place.highlights.length) {
-            highlightsHtml = '<h4>À découvrir</h4><ul class="daxi-explorer-detail-list">';
-            place.highlights.forEach(function (h) {
+        if (highlights && highlights.length) {
+            highlightsHtml = '<h4 data-translate="explorer_highlights">À découvrir</h4><ul class="daxi-explorer-detail-list">';
+            highlights.forEach(function (h) {
                 highlightsHtml += '<li>' + h + '</li>';
             });
             highlightsHtml += '</ul>';
         }
-        var tipHtml = place.visitTip
-            ? '<h4>Bon à savoir</h4><p class="daxi-explorer-detail-tip">' + place.visitTip + '</p>'
+        var tipHtml = visitTip
+            ? '<h4 data-translate="explorer_tip">Bon à savoir</h4><p class="daxi-explorer-detail-tip">' + visitTip + '</p>'
             : '';
         _detailEl.innerHTML =
             '<div class="daxi-explorer-detail-panel" onclick="event.stopPropagation()">' +
             '<button type="button" class="daxi-explorer-detail-close" id="daxi-explorer-detail-close"><i class="ri-close-line"></i></button>' +
-            '<div class="daxi-explorer-detail-img" id="daxi-explorer-detail-hero" style="background-image:url(\'' + (place.detailImage || place.image) + '\')" role="button" tabindex="0" aria-label="Agrandir la photo"></div>' +
+            '<div class="daxi-explorer-detail-img" id="daxi-explorer-detail-hero" style="background-image:url(\'' + (place.detailImage || place.image) + '\')" role="button" tabindex="0" aria-label="' + _t('explorer_enlarge_photo', 'Agrandir la photo') + '"></div>' +
             '<div class="daxi-explorer-detail-scroll">' +
-            '<h3>' + place.name + '</h3>' +
+            '<h3>' + placeName + '</h3>' +
             highlightsHtml +
-            '<h4>Description</h4><p>' + place.description + '</p>' +
-            '<h4>Histoire</h4><p>' + place.history + '</p>' +
+            '<h4 data-translate="explorer_description">Description</h4><p>' + description + '</p>' +
+            '<h4 data-translate="explorer_history">Histoire</h4><p>' + history + '</p>' +
             tipHtml +
             '</div>' +
-            '<button type="button" class="daxi-explorer-detail-book" data-place-name="' + place.name.replace(/"/g, '') + '">Commander un taxi</button>' +
+            '<button type="button" class="daxi-explorer-detail-book" data-place-name="' + String(placeName).replace(/"/g, '') + '" data-translate="explorer_book_taxi">' + _t('explorer_book_taxi', 'Commander un taxi') + '</button>' +
             '</div>';
         _detailEl.classList.add('open');
         document.body.classList.add('daxi-explorer-detail-open');
+        if (global.applyDaxiTranslations) try { global.applyDaxiTranslations(); } catch (eTr) {}
         document.getElementById('daxi-explorer-detail-close').onclick = _closeDetail;
         var hero = document.getElementById('daxi-explorer-detail-hero');
         if (hero) {
