@@ -156,3 +156,49 @@ def get_driver_presence(driver, now=None):
         'last_seen_at': last_seen,
         'gps_age_seconds': int(gps_age) if gps_age is not None else None,
     }
+
+
+ACTIVE_ORDER_STATUSES = (
+    'driver_assigned',
+    'on_way',
+    'arrived',
+    'in_progress',
+    'waiting_return',
+)
+
+
+def driver_has_active_order(driver):
+    from julmin_taxis.models import Order
+    return Order.objects.filter(driver_id=driver.pk, status__in=ACTIVE_ORDER_STATUSES).exists()
+
+
+def sync_driver_status_from_orders(driver):
+    """Disponible/occupé selon les courses actives. Ne force pas un hors-ligne en ligne."""
+    now = timezone.now()
+    if driver_has_active_order(driver):
+        new_status = 'busy'
+    elif (driver.status or 'offline') == 'offline':
+        new_status = 'offline'
+    else:
+        new_status = 'available'
+
+    fields = []
+    if driver.status != new_status:
+        driver.status = new_status
+        driver.status_updated_at = now
+        fields.extend(['status', 'status_updated_at'])
+    touch_driver_last_seen(driver, now)
+    fields.append('last_seen_at')
+    driver.save(update_fields=list(dict.fromkeys(fields)))
+    return new_status
+
+
+def open_driver_online_status(driver):
+    """Ouvre la session chauffeur (app boot) : disponible, ou occupé si course active."""
+    now = timezone.now()
+    new_status = 'busy' if driver_has_active_order(driver) else 'available'
+    driver.status = new_status
+    driver.status_updated_at = now
+    touch_driver_last_seen(driver, now)
+    driver.save(update_fields=['status', 'status_updated_at', 'last_seen_at'])
+    return new_status

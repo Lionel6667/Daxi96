@@ -500,13 +500,13 @@
 <script src="/static/js/daxi-push-register.js?v=20260823o"></script>
 <link rel="stylesheet" href="/static/css/daxi-chat.css?v=20260760">
 <script src="/static/js/daxi-map-snap.js?v=20260728"></script>
-<script src="/static/js/daxi-gps-trace.js?v=20260804"></script>
+    <script src="/static/js/daxi-gps-trace.js?v=20260903g"></script>
 <script src="/static/js/gps-precision-engine.js?v=20260902a"></script>
 <script src="/static/js/daxi-order-expand.js?v=20260741"></script>
 <script src="/static/js/daxi-map-markers.js?v=20260730"></script>
 <script src="/static/js/daxi-external-nav.js?v=20260772"></script>
 <script src="/static/js/daxi-driver-nav-prompt.js?v=20260772"></script>
-<script src="/static/js/daxi-order-card-map.js?v=20260903a"></script>
+<script src="/static/js/daxi-order-card-map.js?v=20260903g"></script>
 <script src="/static/js/daxi-known-places.js?v=20260776"></script>
 <script src="/static/js/daxi-order-coords-map.js?v=20260771"></script>
 <script src="/static/js/daxi-chat-media.js?v=20260769"></script>
@@ -1037,13 +1037,18 @@ function _initMapOverlayClass() {
     return true;
 }
 function _createRoutePolylines() {
-    var glow = { map: null, geodesic: true, strokeOpacity: 0.35, strokeWeight: 10 };
-    var line = { map: null, geodesic: true, strokeOpacity: 1, strokeWeight: 5 };
-    _pickupPolyGlow = new google.maps.Polyline(Object.assign({}, glow, { strokeColor: '#38bdf8' }));
-    _pickupPoly = new google.maps.Polyline(Object.assign({}, line, { strokeColor: '#0ea5e9' }));
-    _tripPolyGlow = new google.maps.Polyline(Object.assign({}, glow, { strokeColor: '#fbbf24' }));
-    _tripPoly = new google.maps.Polyline(Object.assign({}, line, { strokeColor: '#f59e0b' }));
-    _sourcesReady = true;
+    if (!window.google || !google.maps || !google.maps.Polyline) return;
+    try {
+        var glow = { map: null, geodesic: true, strokeOpacity: 0.35, strokeWeight: 10 };
+        var line = { map: null, geodesic: true, strokeOpacity: 1, strokeWeight: 5 };
+        _pickupPolyGlow = new google.maps.Polyline(Object.assign({}, glow, { strokeColor: '#38bdf8' }));
+        _pickupPoly = new google.maps.Polyline(Object.assign({}, line, { strokeColor: '#0ea5e9' }));
+        _tripPolyGlow = new google.maps.Polyline(Object.assign({}, glow, { strokeColor: '#fbbf24' }));
+        _tripPoly = new google.maps.Polyline(Object.assign({}, line, { strokeColor: '#f59e0b' }));
+        _sourcesReady = true;
+    } catch (ePoly) {
+        _sourcesReady = false;
+    }
 }
 function _drvBlueDotEl() {
     var el = document.createElement('div');
@@ -1226,15 +1231,38 @@ function _drvWaitGoogleMapsApi(cb, attempt) {
     setTimeout(function() { _drvWaitGoogleMapsApi(cb, attempt + 1); }, 100);
 }
 function _loadGoogleMaps(cb) {
-    if (window.google && google.maps && google.maps.Map) {
+    window._drvMapsCbs = window._drvMapsCbs || [];
+    if (typeof cb === 'function') window._drvMapsCbs.push(cb);
+
+    function flushCbs() {
+        var cbs = window._drvMapsCbs || [];
+        window._drvMapsCbs = [];
+        for (var i = 0; i < cbs.length; i++) {
+            try { cbs[i](); } catch (eCb) {}
+        }
+    }
+
+    function mapsReady() {
+        return !!(window.google && google.maps && google.maps.Map);
+    }
+
+    if (mapsReady()) {
+        window._drvMapsLoading = false;
         _drvNotifyGoogleMapsReady();
-        if (cb) cb();
+        flushCbs();
         return;
     }
-    if (window._drvMapsLoading) { setTimeout(function() { _loadGoogleMaps(cb); }, 200); return; }
+
+    // Singleton: never inject a second Maps script (kills Map/Polyline/Marker).
+    var existing = document.querySelector('script[data-daxi-gmaps="1"], script[src*="maps.googleapis.com/maps/api/js"]');
+    if (existing || window._drvMapsLoading) {
+        window._drvMapsLoading = true;
+        setTimeout(function() { _loadGoogleMaps(null); }, 200);
+        return;
+    }
+
     var key = (window.DJANGO_SESSION && window.DJANGO_SESSION.google_maps_key) || window.GOOGLE_MAPS_API_KEY || (window.DJANGO_CONFIG && window.DJANGO_CONFIG.googleMapsApiKey) || '';
     if (!key) {
-        // Capacitor/local shell: hydrate session + maps key from API before giving up
         if (!window._drvShellCtxTried && typeof window._daxiLoadShellContext === 'function') {
             window._drvShellCtxTried = true;
             try { window._daxiLoadShellContext(); } catch (eShell) {}
@@ -1244,29 +1272,35 @@ function _loadGoogleMaps(cb) {
     if (!key) {
         window._drvMapsKeyTries = (window._drvMapsKeyTries || 0) + 1;
         if (window._drvMapsKeyTries < 40) {
-            setTimeout(function() { _loadGoogleMaps(cb); }, 250);
+            setTimeout(function() { _loadGoogleMaps(null); }, 250);
             return;
         }
         console.warn('[Driver] Google Maps key missing');
+        window._drvMapsLoading = false;
         _markSplashStep('sp-map');
         _tryDismissSplash();
-        if (cb) cb();
+        flushCbs();
         return;
     }
+
     window._drvMapsLoading = true;
     var s = document.createElement('script');
+    s.setAttribute('data-daxi-gmaps', '1');
     s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&v=weekly&libraries=geometry&loading=async';
     s.async = true;
     s.onload = function() {
-        window._drvMapsLoading = false;
-        _drvWaitGoogleMapsApi(function() { if (cb) cb(); });
+        _drvWaitGoogleMapsApi(function() {
+            window._drvMapsLoading = false;
+            _drvNotifyGoogleMapsReady();
+            flushCbs();
+        });
     };
     s.onerror = function() {
         window._drvMapsLoading = false;
         window._gmapsLoaded = true;
         _markSplashStep('sp-map');
         _tryDismissSplash();
-        if (cb) cb();
+        flushCbs();
     };
     document.head.appendChild(s);
 }
@@ -1803,7 +1837,7 @@ function _drvWireMapInstance(targetMap) {
 
 function _drvCreateMap(theme, restore) {
     const mapEl = document.getElementById('map');
-    if (!mapEl || !window.google || !google.maps) return;
+    if (!mapEl || !window.google || !google.maps || !google.maps.Map) return;
     const view = {
         center: (restore && restore.center) ? restore.center : { lat: targetPos[1], lng: targetPos[0] },
         zoom: (restore && restore.zoom != null) ? restore.zoom : (_userZoom || (_driverGpsVisible ? CFG.zoom : DRV_DEFAULT_ZOOM)),
@@ -1811,44 +1845,51 @@ function _drvCreateMap(theme, restore) {
         heading: (restore && restore.heading != null) ? restore.heading : 0
     };
     if (window.DaxiMainMapDual && window.DaxiMainMapDual.create && !window._daxiMainMapPair && !restore) {
-        const pair = window.DaxiMainMapDual.create(mapEl, {
-            theme: theme,
-            restore: restore,
+        var pair = null;
+        try {
+            pair = window.DaxiMainMapDual.create(mapEl, {
+                theme: theme,
+                restore: restore,
+                center: view.center,
+                zoom: view.zoom,
+                tilt: view.tilt,
+                paddingFn: function() { return { bottom: window.innerHeight * 0.4 }; }
+            });
+        } catch (eDual) { pair = null; }
+        if (pair) {
+            map = window.DaxiMainMapDual.getActiveMap();
+            if (map) { _drvWireMapInstance(map); return; }
+        }
+    }
+    try {
+        const scheme = (window.DaxiMapTheme && window.DaxiMapTheme.mapColorScheme)
+            ? window.DaxiMapTheme.mapColorScheme(theme)
+            : (theme === 'light' ? 'LIGHT' : 'DARK');
+        const bg = (window.DaxiMapTheme && window.DaxiMapTheme.mapBgColor)
+            ? window.DaxiMapTheme.mapBgColor(theme)
+            : (theme === 'light' ? '#F0F4F9' : '#070b14');
+        map = new google.maps.Map(mapEl, {
+            mapId: 'c4948b020bfc08331f1cb94e',
             center: view.center,
             zoom: view.zoom,
             tilt: view.tilt,
-            paddingFn: function() { return { bottom: window.innerHeight * 0.4 }; }
+            heading: view.heading,
+            colorScheme: scheme,
+            padding: (restore && restore.padding) ? restore.padding : { bottom: window.innerHeight * 0.4 },
+            tiltInteractionEnabled: true,
+            headingInteractionEnabled: true,
+            disableDefaultUI: true,
+            gestureHandling: 'greedy',
+            draggable: true,
+            scrollwheel: true,
+            backgroundColor: bg,
+            clickableIcons: false,
         });
-        if (pair) {
-            map = window.DaxiMainMapDual.getActiveMap();
-            _drvWireMapInstance(map);
-            return;
-        }
+        _drvWireMapInstance(map);
+    } catch (eMap) {
+        console.warn('[Driver] map create failed', eMap);
+        map = null;
     }
-    const scheme = (window.DaxiMapTheme && window.DaxiMapTheme.mapColorScheme)
-        ? window.DaxiMapTheme.mapColorScheme(theme)
-        : (theme === 'light' ? 'LIGHT' : 'DARK');
-    const bg = (window.DaxiMapTheme && window.DaxiMapTheme.mapBgColor)
-        ? window.DaxiMapTheme.mapBgColor(theme)
-        : (theme === 'light' ? '#F0F4F9' : '#070b14');
-    map = new google.maps.Map(mapEl, {
-        mapId: 'c4948b020bfc08331f1cb94e',
-        center: view.center,
-        zoom: view.zoom,
-        tilt: view.tilt,
-        heading: view.heading,
-        colorScheme: scheme,
-        padding: (restore && restore.padding) ? restore.padding : { bottom: window.innerHeight * 0.4 },
-        tiltInteractionEnabled: true,
-        headingInteractionEnabled: true,
-        disableDefaultUI: true,
-        gestureHandling: 'greedy',
-        draggable: true,
-        scrollwheel: true,
-        backgroundColor: bg,
-        clickableIcons: false,
-    });
-    _drvWireMapInstance(map);
 }
 
 function _drvApplyMapTheme(theme) {

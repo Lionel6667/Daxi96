@@ -7,6 +7,14 @@
   var IMPRECISE_ACCURACY_M = 500;
   var DEFAULT_TIMEOUT_MS = 12000;
   var submittedKeys = {};
+  // High-frequency / noisy steps — keep in memory log only, no console spam.
+  var QUIET_CONSOLE = {
+    WEB_GPS_FIX: 1,
+    WEB_GPS_SESSION_START: 1,
+    WEB_GPS_SESSION_END: 1,
+    WEB_GPS_WATCH: 1,
+    WEB_GPS_PERMISSION: 1
+  };
 
   function ts() {
     return new Date().toISOString();
@@ -40,9 +48,10 @@
       extra: data.extra
     };
     try {
+      var verbose = !!(global.DAXI_GPS_TRACE_VERBOSE);
       if (data.ok === false) {
         console.warn(PREFIX, step, entry);
-      } else {
+      } else if (verbose || !QUIET_CONSOLE[step]) {
         console.log(PREFIX, step, entry);
       }
     } catch (e) {}

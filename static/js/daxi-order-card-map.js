@@ -500,23 +500,39 @@
   }
 
   function fitMap(map, points) {
-    if (!map || !points || !points.length) return;
+    if (!isUsableMap(map) || !points || !points.length) return;
     var pad = { top: 48, right: 44, bottom: 56, left: 44 };
+    function toLatLng(p) {
+      if (!p) return null;
+      var lat = typeof p.lat === 'function' ? p.lat() : p.lat;
+      var lng = typeof p.lng === 'function' ? p.lng() : p.lng;
+      if (!Number.isFinite(+lat) || !Number.isFinite(+lng)) return null;
+      return { lat: +lat, lng: +lng };
+    }
     if (points.length === 1) {
-      map.setCenter(points[0]);
+      var only = toLatLng(points[0]);
+      if (!only) return;
+      map.setCenter(only);
       var z = map.getZoom();
       if (!z || z > 14) map.setZoom(13);
       return;
     }
     const bounds = new global.google.maps.LatLngBounds();
-    points.forEach(function (p) { bounds.extend(p); });
-    map.fitBounds(bounds, pad);
+    var n = 0;
+    points.forEach(function (p) {
+      var ll = toLatLng(p);
+      if (!ll) return;
+      bounds.extend(ll);
+      n += 1;
+    });
+    if (n < 1) return;
+    try { map.fitBounds(bounds, pad); } catch (eFit) {}
   }
 
   function clearStore(store) {
-    Object.values(store.markers || {}).forEach(function (m) { m.setMap(null); });
-    Object.values(store.polylines || {}).forEach(function (p) { p.setMap(null); });
-    Object.values(store.circles || {}).forEach(function (c) { if (c && c.setMap) c.setMap(null); });
+    Object.values(store.markers || {}).forEach(function (m) { try { m.setMap(null); } catch (e) {} });
+    Object.values(store.polylines || {}).forEach(function (p) { try { p.setMap(null); } catch (e) {} });
+    Object.values(store.circles || {}).forEach(function (c) { if (c && c.setMap) try { c.setMap(null); } catch (e) {} });
     store.markers = {};
     store.polylines = {};
     store.circles = {};
@@ -581,31 +597,43 @@
     return store.circles.clientAccuracy;
   }
 
+  function isUsableMap(map) {
+    try {
+      return !!(map && global.google && global.google.maps && map instanceof global.google.maps.Map);
+    } catch (e) {
+      return !!(map && map.getDiv);
+    }
+  }
+
   function addMarker(store, map, key, pos, icon, title, zIndex, label) {
-    if (!pos) return;
-    const opts = { map: map, position: pos, icon: icon, title: title || '', zIndex: zIndex || 100 };
-    if (label) opts.label = { text: label, color: '#fff', fontSize: '11px', fontWeight: '700' };
-    store.markers[key] = new global.google.maps.Marker(opts);
+    if (!pos || !isUsableMap(map)) return;
+    try {
+      const opts = { map: map, position: pos, icon: icon, title: title || '', zIndex: zIndex || 100 };
+      if (label) opts.label = { text: label, color: '#fff', fontSize: '11px', fontWeight: '700' };
+      store.markers[key] = new global.google.maps.Marker(opts);
+    } catch (eMark) {}
   }
 
   function addLine(store, map, key, path, color, weight, opacity, dashed) {
-    if (!path || path.length < 2) return;
-    const opts = {
-      map: map,
-      path: path,
-      strokeColor: color || '#94a3b8',
-      strokeOpacity: opacity != null ? opacity : 0.75,
-      strokeWeight: weight || 4,
-      zIndex: 50,
-    };
-    if (dashed) {
-      opts.icons = [{
-        icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 },
-        offset: '0',
-        repeat: '14px',
-      }];
-    }
-    store.polylines[key] = new global.google.maps.Polyline(opts);
+    if (!path || path.length < 2 || !isUsableMap(map)) return;
+    try {
+      const opts = {
+        map: map,
+        path: path,
+        strokeColor: color || '#94a3b8',
+        strokeOpacity: opacity != null ? opacity : 0.75,
+        strokeWeight: weight || 4,
+        zIndex: 50,
+      };
+      if (dashed) {
+        opts.icons = [{
+          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 },
+          offset: '0',
+          repeat: '14px',
+        }];
+      }
+      store.polylines[key] = new global.google.maps.Polyline(opts);
+    } catch (eLine) {}
   }
 
   function destroyMapRecord(el) {
@@ -694,17 +722,28 @@
       el.innerHTML = '';
       var mapOpts = mapOptions(center, theme);
       try {
+        if (!mapsApiReady()) return;
         map = new global.google.maps.Map(el, mapOpts);
       } catch (mapErr) {
         console.warn('[DaxiOrderCardMap] mapId fallback', mapErr);
-        delete mapOpts.mapId;
-        mapOpts.mapTypeId = global.google.maps.MapTypeId ? global.google.maps.MapTypeId.ROADMAP : 'roadmap';
-        map = new global.google.maps.Map(el, mapOpts);
+        try {
+          delete mapOpts.mapId;
+          mapOpts.mapTypeId = global.google.maps.MapTypeId ? global.google.maps.MapTypeId.ROADMAP : 'roadmap';
+          map = new global.google.maps.Map(el, mapOpts);
+        } catch (mapErr2) {
+          console.warn('[DaxiOrderCardMap] map create failed', mapErr2);
+          return;
+        }
       }
+      if (!isUsableMap(map)) return;
       rec = { map: map, store: { markers: {}, polylines: {}, circles: {} }, theme: theme, cfgKey: signature };
       MAPS[key] = rec;
     } else {
       map = rec.map;
+      if (!isUsableMap(map)) {
+        destroyMapRecord(el);
+        return;
+      }
       try { global.google.maps.event.trigger(map, 'resize'); } catch (e) {}
       rec.cfgKey = signature;
     }
