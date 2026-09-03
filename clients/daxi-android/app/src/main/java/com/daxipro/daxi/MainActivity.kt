@@ -472,7 +472,16 @@ class MainActivity : AppCompatActivity() {
             onNativeLocationFlowFinished()
             return
         }
-        showNativeLocationPrompt()
+        // Driver shell shows its own mandatory location modal (Activer / Sortir).
+        binding.webView.evaluateJavascript(
+            "(function(){try{return /\\/driver/i.test(String(location.pathname||''))?'1':'0';}catch(e){return'0';}})();",
+        ) { value ->
+            if (value == "\"1\"") {
+                scheduleNativeNotificationPrompt()
+                return@evaluateJavascript
+            }
+            showNativeLocationPrompt()
+        }
     }
 
     private fun showNativeLocationPrompt() {

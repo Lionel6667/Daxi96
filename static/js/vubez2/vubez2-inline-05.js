@@ -205,18 +205,8 @@
   }, 2500);
 
   document.addEventListener('DOMContentLoaded', function() {
-    if (!window.DaxiAndroid && typeof _resolveGeoPermission === 'function') {
-      _resolveGeoPermission(function(state) {
-        
-        if (state === 'granted' && typeof _bootClientGps === 'function') {
-          if (typeof _daxiGrantGpsUserConsent === 'function') _daxiGrantGpsUserConsent();
-          if (window.DaxiWebGps) {
-            DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
-          }
-          _bootClientGps();
-        }
-      });
-    }
+    // Never auto-start GPS / OS permission without the in-app consent modal.
+    // Location flow is owned by _daxiMaybeAskLocation → #locationSharePrompt.
   });
 
   function _daxiMapsApiKey() {

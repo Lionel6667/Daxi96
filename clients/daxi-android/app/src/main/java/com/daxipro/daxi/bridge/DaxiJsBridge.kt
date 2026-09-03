@@ -44,7 +44,8 @@ class DaxiJsBridge(
                 .toString()
         }
         if (!hasLocationPermission()) {
-            onRequestLocationPermission()
+            // Do not auto-prompt OS here — web/driver UI must show a consent modal first,
+            // then call requestLocationPermission() explicitly.
             return JSONObject()
                 .put("error", "no_permission")
                 .put("message", "Autorisation de localisation requise")

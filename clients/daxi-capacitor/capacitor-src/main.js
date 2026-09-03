@@ -1040,17 +1040,11 @@ function installNativeBridge() {
 }
 
 async function initGps() {
+  // Never prompt OS permission on boot — driver/client UI shows a modal first,
+  // then calls DaxiAndroid.requestLocationPermission().
   try {
-    let perm = await Geolocation.checkPermissions();
-    let granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
-    if (!granted) {
-      try {
-        perm = await Geolocation.requestPermissions();
-        granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
-      } catch (eReq) {
-        granted = false;
-      }
-    }
+    const perm = await Geolocation.checkPermissions();
+    const granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
     window._daxiGpsPerm = granted;
     if (!granted) return;
     startGpsWatch();

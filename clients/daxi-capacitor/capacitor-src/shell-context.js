@@ -208,7 +208,10 @@
   global._daxiReloadShellContext = function () {
     return loadSync();
   };
-  if (global._daxiCapacitorApp || (global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform())) {
+  if (global._daxiCapacitorApp
+    || (global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform())
+    || /DaxiAndroid|Capacitor/i.test(String(global.navigator && global.navigator.userAgent || ''))
+    || !(global.DJANGO_SESSION && (global.DJANGO_SESSION.google_maps_key || global.GOOGLE_MAPS_API_KEY))) {
     loadSync();
     try {
       global.addEventListener('online', function () {

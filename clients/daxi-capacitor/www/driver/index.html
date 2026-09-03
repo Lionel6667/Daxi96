@@ -53,19 +53,23 @@
     
     #drv-map-stage{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1;}
     .daxi-brand-logo{max-width:180px;height:auto;object-fit:contain;background:transparent!important;}
-    .daxi-brand-logo--dark{display:none;}
-    [data-theme="light"] .daxi-brand-logo--gold{display:none;}
-    [data-theme="light"] .daxi-brand-logo--dark{display:block;}
+    .daxi-brand-logo--dark{display:none !important;}
+    [data-theme="light"] .daxi-brand-logo--gold{display:none !important;}
+    [data-theme="light"] .daxi-brand-logo--dark{display:block !important;}
+    .dsb-logo-pair{display:inline-flex;align-items:center;line-height:0;}
+    .dsb-logo-pair .dsb-logo-img.daxi-brand-logo--dark{display:none !important;}
+    [data-theme="light"] .dsb-logo-pair .dsb-logo-img.daxi-brand-logo--gold{display:none !important;}
+    [data-theme="light"] .dsb-logo-pair .dsb-logo-img.daxi-brand-logo--dark{display:block !important;}
     .gm-style-cc, .gmnoprint, .gm-fullscreen-control { display:none!important; }
     a[href^="https://maps.google.com"] { display:none!important; }
     #splash{position:fixed;inset:0;z-index:9000;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s ease;}
     #splash.hide{opacity:0;pointer-events:none;}
     .splash-logo{margin-bottom:22px;display:flex;justify-content:center;align-items:center;width:100%;max-width:320px;padding:0 24px;}
     .splash-logo .daxi-brand-logo{width:min(160px,42vw);height:auto;object-fit:contain;}
-    .splash-logo .daxi-brand-logo--gold{display:block;animation:splashPulse 1.5s ease-in-out infinite;}
-    .splash-logo .daxi-brand-logo--dark{display:none;}
-    [data-theme="light"] .splash-logo .daxi-brand-logo--gold{display:none;}
-    [data-theme="light"] .splash-logo .daxi-brand-logo--dark{display:block;animation:splashPulse 1.5s ease-in-out infinite;}
+    .splash-logo .daxi-brand-logo--gold{display:block !important;animation:splashPulse 1.5s ease-in-out infinite;}
+    .splash-logo .daxi-brand-logo--dark{display:none !important;}
+    [data-theme="light"] .splash-logo .daxi-brand-logo--gold{display:none !important;}
+    [data-theme="light"] .splash-logo .daxi-brand-logo--dark{display:block !important;animation:splashPulse 1.5s ease-in-out infinite;}
     @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.06);opacity:.85;}}
     .splash-title{font-size:15px;font-weight:800;letter-spacing:.02em;color:rgba(255,255,255,.55);margin-bottom:20px;}
     .splash-steps{display:flex;flex-direction:column;gap:6px;margin-bottom:22px;min-height:72px;}
@@ -220,8 +224,9 @@
     #complete-fab{display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:99px;padding:14px 28px;font-size:13px;font-weight:900;letter-spacing:1px;text-transform:uppercase;cursor:pointer;z-index:900;box-shadow:0 4px 20px rgba(99,102,241,0.5);align-items:center;justify-content:center;}
     [data-theme="light"] #complete-fab{background:linear-gradient(135deg,#4f46e5,#4338ca);box-shadow:0 4px 18px rgba(79,70,229,.35);}
     
-    #map-tools-col{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom, 0px) + 280px);z-index:900;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;}
+    #map-tools-col{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom, 0px) + 300px);z-index:900;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;}
     #map-tools-col > *{pointer-events:auto;}
+    body.drv-mission-active #map-tools-col{bottom:calc(env(safe-area-inset-bottom, 0px) + 420px);}
     #focus-mode-btn,#recenter-btn,#chat-fab{position:relative;bottom:auto;right:auto;margin:0;}
     #focus-mode-btn{width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,.85);color:#9ca3af;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.4);backdrop-filter:blur(8px);transition:all .2s;transform:translateZ(0);}
     #focus-mode-btn.focus-active{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.4);}
@@ -255,7 +260,8 @@
     #chat-send-btn{width:44px;height:44px;border-radius:50%;background:#005c4b;border:none;color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;}
     #chat-img-btn{background:none;border:none;color:#8696a0;font-size:22px;cursor:pointer;padding:4px 6px;display:flex;align-items:center;justify-content:center;}
 
-    #ios-compass-btn{position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 340px);right:16px;z-index:900;display:none;width:44px;height:44px;border-radius:50%;background:rgba(59,130,246,.9);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 4px 16px rgba(59,130,246,.4);align-items:center;justify-content:center;transform:translateZ(0);}
+    #ios-compass-btn{position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 360px);right:16px;z-index:900;display:none;width:44px;height:44px;border-radius:50%;background:rgba(59,130,246,.9);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 4px 16px rgba(59,130,246,.4);align-items:center;justify-content:center;transform:translateZ(0);}
+    body.drv-mission-active #ios-compass-btn{bottom:calc(env(safe-area-inset-bottom, 0px) + 480px);}
     #mission-action-btn.is-proximity-locked{background:#64748b!important;color:#e2e8f0!important;cursor:not-allowed;opacity:.75;box-shadow:none;}
 
     
@@ -482,6 +488,9 @@
 
 <div id="htmx-fetcher" hx-get="/htmx/driver/orders/?tab=available" hx-trigger="every 60s" hx-swap="none"></div>
 <script src="/static/js/daxi-app-api.js?v=20260813"></script>
+<script>window._daxiShellPage = 'driver';</script>
+<script src="/static/js/daxi-shell-context.js?v=20260903c"></script>
+<script src="/static/js/daxi-role-boot.js?v=20260903c"></script>
 <script src="/static/js/daxi-shell-role.js?v=20260820f"></script>
 <script>if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('driver');</script>
 <script src="/static/js/daxi-action-buttons.js?v=20260777"></script>
@@ -1210,9 +1219,17 @@ function _loadGoogleMaps(cb) {
     if (window._drvMapsLoading) { setTimeout(function() { _loadGoogleMaps(cb); }, 200); return; }
     var key = (window.DJANGO_SESSION && window.DJANGO_SESSION.google_maps_key) || window.GOOGLE_MAPS_API_KEY || (window.DJANGO_CONFIG && window.DJANGO_CONFIG.googleMapsApiKey) || '';
     if (!key) {
+        // Capacitor/local shell: hydrate session + maps key from API before giving up
+        if (!window._drvShellCtxTried && typeof window._daxiLoadShellContext === 'function') {
+            window._drvShellCtxTried = true;
+            try { window._daxiLoadShellContext(); } catch (eShell) {}
+            key = (window.DJANGO_SESSION && window.DJANGO_SESSION.google_maps_key) || window.GOOGLE_MAPS_API_KEY || (window.DJANGO_CONFIG && window.DJANGO_CONFIG.googleMapsApiKey) || '';
+        }
+    }
+    if (!key) {
         window._drvMapsKeyTries = (window._drvMapsKeyTries || 0) + 1;
-        if (window._drvMapsKeyTries < 25) {
-            setTimeout(function() { _loadGoogleMaps(cb); }, 300);
+        if (window._drvMapsKeyTries < 40) {
+            setTimeout(function() { _loadGoogleMaps(cb); }, 250);
             return;
         }
         console.warn('[Driver] Google Maps key missing');
@@ -1333,9 +1350,7 @@ function _startDriverGps() {
     }
     _drvGpsStarted = true;
     _markSplashStep('sp-gps');
-    if (window.DaxiAndroid && typeof DaxiAndroid.requestLocationPermission === 'function' && !window._daxiGpsPerm) {
-        try { DaxiAndroid.requestLocationPermission(); } catch (e) {}
-    }
+    // Permission OS: uniquement après consentement modal (_drvRequestLocationThenStart)
     // Jamais de session WEB GPS en app native (évite le spam WEB_GPS_FIX)
     if (window.DaxiWebGps && !isNative && !window.DaxiAndroid) {
         DaxiWebGps.startSession('DRIVER', { exploitableM: DRV_MAX_GPS_M, targetAccuracy: DRV_MIN_GPS_M, timeoutMs: 15000 });
@@ -1427,7 +1442,7 @@ function bootDriverApp() {
                 }
             });
         }
-        _startDriverGps();
+        _drvEnsureLocationConsentThenStartGps();
         var list = document.getElementById('orders-list');
         var sb = document.getElementById('sb-orders');
         if (list) _initDriverOrderMapsAll(list);
@@ -1441,6 +1456,178 @@ function bootDriverApp() {
         }
     }, 6000);
     _initDriverWS();
+}
+
+function _drvIsNativeGpsHost() {
+    return !!(window._daxiCapacitorApp || window._daxiUseNativeGps || window._daxiHybridShell
+        || window.DaxiAndroid
+        || (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())
+        || /DaxiAndroid|Capacitor/i.test(navigator.userAgent || ''));
+}
+
+function _drvHasLocationPermission(cb) {
+    if (typeof cb !== 'function') return;
+    if (window._daxiGpsPerm === true) {
+        cb(true);
+        return;
+    }
+    try {
+        var CapGeo = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Geolocation;
+        if (CapGeo && typeof CapGeo.checkPermissions === 'function') {
+            CapGeo.checkPermissions().then(function(perm) {
+                var ok = !!(perm && (perm.location === 'granted' || perm.coarseLocation === 'granted'));
+                if (ok) window._daxiGpsPerm = true;
+                cb(ok);
+            }).catch(function() { cb(false); });
+            return;
+        }
+    } catch (eCap) {}
+    if (navigator.permissions && typeof navigator.permissions.query === 'function') {
+        try {
+            navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
+                cb(!!(p && p.state === 'granted'));
+            }).catch(function() { cb(false); });
+            return;
+        } catch (ePerm) {}
+    }
+    cb(false);
+}
+
+function _drvExitWithoutLocation() {
+    try {
+        if (typeof drvLogout === 'function') {
+            drvLogout();
+            return;
+        }
+    } catch (e) {}
+    window.location.href = '/driver/login/';
+}
+
+function _drvShowLocationDeniedRetry() {
+    var msg = 'La localisation est obligatoire pour utiliser l’espace chauffeur. Autorisez-la dans les réglages de votre appareil, puis réessayez.';
+    if (window.DaxiModal && typeof DaxiModal.alert === 'function') {
+        DaxiModal.alert(msg, {
+            title: 'Localisation requise',
+            type: 'warn',
+            okLabel: 'Réessayer'
+        }).then(function() {
+            _drvShowLocationRequiredModal();
+        });
+        return;
+    }
+    _drvShowLocationRequiredModal();
+}
+
+function _drvRequestLocationThenStart() {
+    var settled = false;
+    function afterOk() {
+        if (settled) return;
+        settled = true;
+        window._daxiDriverGpsConsent = true;
+        window._daxiGpsPerm = true;
+        _drvGpsStarted = false;
+        _startDriverGps();
+    }
+    function afterDeny() {
+        if (settled) return;
+        settled = true;
+        window._daxiGpsPerm = false;
+        _drvShowLocationDeniedRetry();
+    }
+
+    if (window.DaxiAndroid && typeof DaxiAndroid.requestLocationPermission === 'function') {
+        var prevGranted = window._daxiOnNativeLocationGranted;
+        var prevDenied = window._daxiOnNativeLocationDenied;
+        window._daxiOnNativeLocationGranted = function() {
+            window._daxiOnNativeLocationGranted = prevGranted;
+            window._daxiOnNativeLocationDenied = prevDenied;
+            afterOk();
+            if (typeof prevGranted === 'function') {
+                try { prevGranted.apply(null, arguments); } catch (e1) {}
+            }
+        };
+        window._daxiOnNativeLocationDenied = function() {
+            window._daxiOnNativeLocationGranted = prevGranted;
+            window._daxiOnNativeLocationDenied = prevDenied;
+            afterDeny();
+            if (typeof prevDenied === 'function') {
+                try { prevDenied.apply(null, arguments); } catch (e2) {}
+            }
+        };
+        try {
+            DaxiAndroid.requestLocationPermission();
+        } catch (eReq) {
+            afterDeny();
+        }
+        setTimeout(function() {
+            if (!settled && window._daxiGpsPerm === true) afterOk();
+        }, 2500);
+        return;
+    }
+
+    if (!navigator.geolocation) {
+        afterDeny();
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function() {
+        afterOk();
+    }, function() {
+        afterDeny();
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+}
+
+function _drvShowLocationRequiredModal() {
+    if (window._daxiDriverGpsConsent && window._daxiGpsPerm) {
+        _startDriverGps();
+        return;
+    }
+    var title = 'Localisation obligatoire';
+    var message = 'Pour continuer en tant que chauffeur, le partage de votre localisation est obligatoire.\n\nSans GPS, vous ne pouvez pas recevoir ni effectuer de courses.';
+    if (window.DaxiModal && typeof DaxiModal.confirm === 'function') {
+        DaxiModal.confirm(message, {
+            title: title,
+            type: 'warn',
+            okLabel: 'Activer ma localisation',
+            cancelLabel: 'Sortir',
+            backdropClose: false
+        }).then(function(ok) {
+            if (ok) _drvRequestLocationThenStart();
+            else _drvExitWithoutLocation();
+        });
+        return;
+    }
+    if (window.confirm(title + '\n\n' + message)) _drvRequestLocationThenStart();
+    else _drvExitWithoutLocation();
+}
+
+function _drvEnsureLocationConsentThenStartGps() {
+    _drvHasLocationPermission(function(granted) {
+        if (granted) {
+            window._daxiDriverGpsConsent = true;
+            window._daxiGpsPerm = true;
+            _startDriverGps();
+            return;
+        }
+        // Native bridge may still be booting — recheck briefly before showing the modal.
+        if (_drvIsNativeGpsHost() && window._daxiGpsPerm !== false) {
+            var tries = 0;
+            (function waitNative() {
+                tries += 1;
+                if (window._daxiGpsPerm === true) {
+                    window._daxiDriverGpsConsent = true;
+                    _startDriverGps();
+                    return;
+                }
+                if (tries < 12) {
+                    setTimeout(waitNative, 120);
+                    return;
+                }
+                _drvShowLocationRequiredModal();
+            })();
+            return;
+        }
+        _drvShowLocationRequiredModal();
+    });
 }
 function engine() {
     requestAnimationFrame(engine);
@@ -2302,6 +2489,7 @@ function confirmComplete() {
             clearRoutes();
             hideChatFab();
             document.getElementById('mission-panel').style.display = 'none';
+            document.body.classList.remove('drv-mission-active');
             document.getElementById('home-panel').style.display = 'grid';
             runAfter();
         });
@@ -2950,6 +3138,7 @@ function setActiveOrder(o) {
             missionPanelEarly.style.display = 'none';
             missionPanelEarly.classList.remove('is-active');
         }
+        document.body.classList.remove('drv-mission-active');
         if (homePanelEarly) homePanelEarly.style.display = 'flex';
         hideChatFab();
         _hideClientGpsAccuracyHint();
@@ -2964,6 +3153,7 @@ function setActiveOrder(o) {
         missionPanel.style.display = 'block';
         missionPanel.classList.add('is-active');
     }
+    document.body.classList.add('drv-mission-active');
     if (homePanel) homePanel.style.display = 'none';
 
     const statusToState = {
@@ -3125,6 +3315,7 @@ function missionAction() {
                 clearRoutes();
                 hideChatFab();
                 document.getElementById('mission-panel').style.display = 'none';
+                document.body.classList.remove('drv-mission-active');
                 document.getElementById('home-panel').style.display = 'grid';
                 activeOrder = null;
                 rideState   = RIDE.IDLE;
@@ -4116,6 +4307,32 @@ function closeDrvSidebar() {
     document.getElementById('drv-sidebar-overlay').style.display = 'none';
     _syncMapToolsVisibility();
 }
+
+(function _drvBindEdgeSwipeSidebar() {
+    var EDGE_PX = 28;
+    var MIN_DX = 56;
+    var startX = 0, startY = 0, tracking = false;
+    document.addEventListener('touchstart', function(e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        if (document.getElementById('chat-panel')?.classList.contains('open')) return;
+        if (document.getElementById('orders-drawer')?.classList.contains('open')) return;
+        var t = e.touches[0];
+        if (t.clientX > EDGE_PX) { tracking = false; return; }
+        tracking = true;
+        startX = t.clientX;
+        startY = t.clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', function(e) {
+        if (!tracking) return;
+        tracking = false;
+        var t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        var dx = t.clientX - startX;
+        var dy = Math.abs(t.clientY - startY);
+        if (dy > 70) return;
+        if (dx >= MIN_DX) openDrvSidebar();
+    }, { passive: true });
+})();
 
 
 function openDrvPanel(section) {

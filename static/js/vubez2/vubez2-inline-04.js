@@ -518,21 +518,26 @@ function initServicePlansSection() {
         var dur = beh === 'smooth' ? 820 : 120;
         navLockUntil = Date.now() + dur;
         var container = plansContainer;
-        var maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
         var prevSnap = container.style.scrollSnapType;
         container.style.scrollSnapType = 'none';
 
         function targetScroll() {
             var cardRect = card.getBoundingClientRect();
             var containerRect = container.getBoundingClientRect();
-            var cardCenter = container.scrollLeft + (cardRect.left - containerRect.left) + cardRect.width / 2;
-            return Math.max(0, Math.min(cardCenter - container.clientWidth / 2, maxScroll));
+            if (!containerRect.width || !cardRect.width) return container.scrollLeft;
+            var delta = (cardRect.left + cardRect.width / 2) - (containerRect.left + containerRect.width / 2);
+            var maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+            return Math.max(0, Math.min(container.scrollLeft + delta, maxScroll));
         }
 
         function finish() {
             container.scrollLeft = targetScroll();
-            container.style.scrollSnapType = prevSnap || '';
-            isProgrammatic = false;
+            // Second pass after layout/border settle — keeps true visual center on all screens
+            requestAnimationFrame(function() {
+                container.scrollLeft = targetScroll();
+                container.style.scrollSnapType = prevSnap || '';
+                isProgrammatic = false;
+            });
         }
 
         if (beh === 'auto') {
@@ -545,17 +550,17 @@ function initServicePlansSection() {
     }
 
     function nearestIndex() {
-        var center = plansContainer.scrollLeft + plansContainer.clientWidth / 2;
+        var containerRect = plansContainer.getBoundingClientRect();
+        var center = containerRect.left + containerRect.width / 2;
         var best = 0;
         var bestDist = Infinity;
         planCards.forEach(function(card, i) {
-            var cardCenter = card.offsetLeft + card.offsetWidth / 2;
-            var d = Math.abs(cardCenter - center);
+            var r = card.getBoundingClientRect();
+            var d = Math.abs((r.left + r.width / 2) - center);
             if (d < bestDist) { bestDist = d; best = i; }
         });
         return best;
     }
-
     function updateActivePlan(index, behavior) {
         if (index < 0) index = total - 1;
         if (index >= total) index = 0;
@@ -10259,6 +10264,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
     if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+    (function _daxiBindClientEdgeSwipeSidebar() {
+        var EDGE_PX = 28;
+        var MIN_DX = 56;
+        var startX = 0, startY = 0, tracking = false;
+        document.addEventListener('touchstart', function(e) {
+            if (!e.touches || e.touches.length !== 1) return;
+            if (sidebarMenu && sidebarMenu.classList.contains('active')) return;
+            var t = e.touches[0];
+            var w = window.innerWidth || document.documentElement.clientWidth || 0;
+            if (t.clientX < w - EDGE_PX) { tracking = false; return; }
+            tracking = true;
+            startX = t.clientX;
+            startY = t.clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', function(e) {
+            if (!tracking) return;
+            tracking = false;
+            var t = e.changedTouches && e.changedTouches[0];
+            if (!t) return;
+            var dx = t.clientX - startX;
+            var dy = Math.abs(t.clientY - startY);
+            if (dy > 70) return;
+            if (dx <= -MIN_DX) openSidebar();
+        }, { passive: true });
+    })();
 
     if (sidebarMenu) {
         sidebarMenu.addEventListener('click', function(evt) {

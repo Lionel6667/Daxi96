@@ -7,9 +7,9 @@
   background: transparent !important;
   background-color: transparent !important;
 }
-.daxi-brand-logo--dark { display: none; }
-[data-theme="light"] .daxi-brand-logo--gold { display: none; }
-[data-theme="light"] .daxi-brand-logo--dark { display: block; }
+.daxi-brand-logo--dark { display: none !important; }
+[data-theme="light"] .daxi-brand-logo--gold { display: none !important; }
+[data-theme="light"] .daxi-brand-logo--dark { display: block !important; }
 
 img[src*="daxi-logo-gold"],
 img[src*="daxi-logo-dark"] {

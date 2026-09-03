@@ -390,11 +390,14 @@ function openDaxiPage(sectionId, title, opts) {
         }
     }
     if (sectionId === 'servicePlansSection') {
+        function recenter() {
+            if (window._daxiRecenterPlanCarousel) window._daxiRecenterPlanCarousel();
+        }
         requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-                if (window._daxiRecenterPlanCarousel) window._daxiRecenterPlanCarousel();
-            });
+            requestAnimationFrame(recenter);
         });
+        setTimeout(recenter, 80);
+        setTimeout(recenter, 280);
     }
     setTimeout(function() {
         if (window.applyDaxiTranslations) window.applyDaxiTranslations();
@@ -1280,6 +1283,7 @@ function _daxiValidateEngineFix(fix, source) {
 }
 
 function _markLocPromptDone() {
+    window._daxiLocPromptDone = true;
     try { localStorage.setItem(DAXI_LOC_PROMPT_KEY, '1'); } catch (e) {}
 }
 
@@ -1422,9 +1426,7 @@ function _daxiScheduleNotifAfterLocFlow() {
 function _daxiMaybeAskLocation() {
     
     if (window._daxiNativePermissionHost) {
-        try {
-            if (typeof _ensureClientGpsLiveRunning === 'function') _ensureClientGpsLiveRunning();
-        } catch (e) {}
+        // Android WebView shows its own native consent dialog — don't OS-prompt from JS.
         return;
     }
     if (window._daxiGeoBrowserBlocked) {
@@ -1435,12 +1437,18 @@ function _daxiMaybeAskLocation() {
         navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
             if (p.state === 'granted') {
                 if (window._daxiClearGeoBlocked) window._daxiClearGeoBlocked();
-                _markGeoGranted();
-                _daxiGrantGpsUserConsent();
-                if (window.DaxiWebGps && !window.DaxiAndroid) {
-                    DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
+                // After user already accepted the in-app prompt once, silent GPS boot is OK.
+                if (_wasLocPromptDone() || window._daxiGpsUserConsent) {
+                    _markGeoGranted();
+                    _daxiGrantGpsUserConsent();
+                    if (window.DaxiWebGps && !window.DaxiAndroid) {
+                        DaxiWebGps.startSession('CLIENT', { exploitableM: DAXI_GPS_FALLBACK_M, targetAccuracy: DAXI_GPS_TARGET_M, timeoutMs: 15000 });
+                    }
+                    _bootClientGps();
+                    return;
                 }
-                _bootClientGps();
+                // First visit this browser session / never confirmed in-app → show modal first
+                _showLocationSharePrompt(false);
                 return;
             }
             if (p.state === 'denied') {
@@ -2087,9 +2095,8 @@ function _showLocationSharePrompt(forceDenied) {
         }
         return;
     }
-    if (window._daxiCapacitorApp || (window._daxiIsNativeApp && window._daxiIsNativeApp())) {
-        if (!window._daxiUserAskedLocationPrompt) return;
-    }
+    // Always show the in-app consent modal first (site + Capacitor).
+    // Native Android WebView uses its own dialog via _daxiNativePermissionHost.
     if (window._daxiNativePermissionHost) return;
     _initLocationSharePrompt();
     _bindLocationSharePromptDelegation();
@@ -2137,6 +2144,7 @@ function _initLocationSharePrompt() {
     if (enableBtn && !enableBtn.dataset.bound) {
         enableBtn.dataset.bound = '1';
         enableBtn.addEventListener('click', function() {
+            window._daxiUserAskedLocationPrompt = true;
             _markLocPromptDone();
             _hideLocationSharePrompt();
             _daxiRequestBrowserGeoFromUserGesture(function() {
@@ -2188,6 +2196,7 @@ function _bindLocationSharePromptDelegation() {
         if (enableBtn) {
             e.preventDefault();
             e.stopPropagation();
+            window._daxiUserAskedLocationPrompt = true;
             if (typeof _markLocPromptDone === 'function') _markLocPromptDone();
             if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();
             if (typeof _daxiRequestBrowserGeoFromUserGesture === 'function') {

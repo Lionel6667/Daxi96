@@ -867,9 +867,17 @@
         }
         .daxi-page-body {
             padding: 16px 16px max(72px, calc(56px + env(safe-area-inset-bottom, 0px)));
+            --daxi-page-pad-x: 16px;
         }
         .daxi-page-overlay #servicePlansSection.plans-section {
             padding-bottom: 8px;
+            overflow: visible;
+        }
+        .daxi-page-overlay #servicePlansSection .daxi-plans-stage {
+            /* Full-bleed so the active card centers on the real screen, not the padded body */
+            width: calc(100% + (2 * var(--daxi-page-pad-x, 16px)));
+            margin-left: calc(-1 * var(--daxi-page-pad-x, 16px));
+            margin-right: calc(-1 * var(--daxi-page-pad-x, 16px));
         }
         .daxi-page-overlay #servicePlansSection .daxi-plans-rail {
             margin-bottom: 8px;
@@ -3891,9 +3899,9 @@
             background: transparent !important;
             background-color: transparent !important;
         }
-        .daxi-brand-logo--dark { display: none; }
-        [data-theme="light"] .daxi-brand-logo--gold { display: none; }
-        [data-theme="light"] .daxi-brand-logo--dark { display: block; }
+        .daxi-brand-logo--dark { display: none !important; }
+        [data-theme="light"] .daxi-brand-logo--gold { display: none !important; }
+        [data-theme="light"] .daxi-brand-logo--dark { display: block !important; }
 
         .navbar-logo {
             height: 44px !important;
@@ -6678,7 +6686,9 @@
                 width: 280px;
             }
             .daxi-plans-stage .plan-card {
-                width: 300px;
+                width: var(--daxi-plan-card-w) !important;
+                flex: 0 0 var(--daxi-plan-card-w) !important;
+                max-width: var(--daxi-plan-card-w) !important;
             }
         }
 
@@ -6708,8 +6718,8 @@
                 padding-right: 70px;
             }
             .daxi-plans-stage .plans-container {
-                padding-left: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) !important;
-                padding-right: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) !important;
+                padding-left: var(--daxi-plan-side-pad) !important;
+                padding-right: var(--daxi-plan-side-pad) !important;
             }
 
             .nav-arrow.left {
@@ -9072,7 +9082,9 @@
             margin: 0;
             padding: 4px 0 8px;
             background: transparent;
-            --daxi-plan-card-w: min(320px, calc(100vw - 52px));
+            /* Card width from viewport so side padding can truly center on screen */
+            --daxi-plan-card-w: min(320px, calc(100vw - 56px));
+            --daxi-plan-side-pad: max(16px, calc((100vw - var(--daxi-plan-card-w)) / 2));
         }
         .daxi-plans-viewport {
             position: relative;
@@ -9154,15 +9166,16 @@
             -webkit-overflow-scrolling: touch;
             touch-action: pan-x pan-y;
             overscroll-behavior-x: contain;
-            scroll-padding-inline: max(12px, calc(50% - (var(--daxi-plan-card-w) / 2)));
-            gap: 14px;
-            padding: 12px max(12px, calc(50% - (var(--daxi-plan-card-w) / 2))) 20px !important;
+            scroll-padding-inline: var(--daxi-plan-side-pad);
+            gap: 16px;
+            padding: 12px var(--daxi-plan-side-pad) 20px !important;
             overflow-x: auto;
             overflow-y: visible;
             display: flex;
             align-items: stretch;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            box-sizing: border-box;
         }
         .daxi-plans-stage .plans-container::before,
         .daxi-plans-stage .plans-container::after {
@@ -9174,8 +9187,9 @@
         .daxi-plans-stage .plan-card,
         .daxi-plans-stage .plan-card:not(.active),
         .daxi-plans-stage .plan-card.active {
-            flex: 0 0 var(--daxi-plan-card-w);
-            width: var(--daxi-plan-card-w);
+            flex: 0 0 var(--daxi-plan-card-w) !important;
+            width: var(--daxi-plan-card-w) !important;
+            max-width: var(--daxi-plan-card-w) !important;
             height: auto;
             min-height: 0;
             max-height: none;
@@ -9189,7 +9203,7 @@
             opacity: 1;
             filter: none;
             -webkit-filter: none;
-            transform: none;
+            transform: none !important;
             animation: none !important;
             transition: border-color 0.25s ease, box-shadow 0.25s ease;
             pointer-events: auto;

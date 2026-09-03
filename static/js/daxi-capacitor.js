@@ -2510,17 +2510,11 @@
     });
   }
   async function initGps() {
+    // Ne jamais demander la permission OS au boot : le modal chauffeur/client
+    // doit expliquer d'abord, puis appeler requestLocationPermission().
     try {
-      let perm = await Geolocation2.checkPermissions();
-      let granted = perm.location === "granted" || perm.coarseLocation === "granted";
-      if (!granted) {
-        try {
-          perm = await Geolocation2.requestPermissions();
-          granted = perm.location === "granted" || perm.coarseLocation === "granted";
-        } catch (eReq) {
-          granted = false;
-        }
-      }
+      const perm = await Geolocation2.checkPermissions();
+      const granted = perm.location === "granted" || perm.coarseLocation === "granted";
       window._daxiGpsPerm = granted;
       if (!granted) return;
       startGpsWatch();
