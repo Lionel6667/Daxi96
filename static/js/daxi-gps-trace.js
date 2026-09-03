@@ -2,19 +2,12 @@
   'use strict';
 
   var PREFIX = '[DAXI-GPS-TRACE]';
-  var MAX = 300;
+  var MAX = 80;
   var REJECT_ACCURACY_M = 5000;
   var IMPRECISE_ACCURACY_M = 500;
   var DEFAULT_TIMEOUT_MS = 12000;
   var submittedKeys = {};
-  // High-frequency / noisy steps — keep in memory log only, no console spam.
-  var QUIET_CONSOLE = {
-    WEB_GPS_FIX: 1,
-    WEB_GPS_SESSION_START: 1,
-    WEB_GPS_SESSION_END: 1,
-    WEB_GPS_WATCH: 1,
-    WEB_GPS_PERMISSION: 1
-  };
+  // Console muted by default. Set window.DAXI_GPS_TRACE_VERBOSE = true to debug.
 
   function ts() {
     return new Date().toISOString();
@@ -47,14 +40,25 @@
       channel: data.channel,
       extra: data.extra
     };
+    // Hard mute: never spam console (enable only with window.DAXI_GPS_TRACE_VERBOSE = true).
     try {
-      var verbose = !!(global.DAXI_GPS_TRACE_VERBOSE);
-      if (data.ok === false) {
-        console.warn(PREFIX, step, entry);
-      } else if (verbose || !QUIET_CONSOLE[step]) {
-        console.log(PREFIX, step, entry);
+      if (global.DAXI_GPS_TRACE_VERBOSE) {
+        if (data.ok === false) console.warn(PREFIX, step, entry);
+        else console.log(PREFIX, step, entry);
       }
     } catch (e) {}
+    // Cap memory log aggressively for high-frequency fixes.
+    if (step === 'WEB_GPS_FIX') {
+      var last = (global._daxiGpsTraceLog || [])[(global._daxiGpsTraceLog || []).length - 1];
+      if (last && last.step === 'WEB_GPS_FIX' && last.side === side
+          && Math.abs((+new Date(entry.ts)) - (+new Date(last.ts || 0))) < 2000) {
+        last.ts = entry.ts;
+        last.lat = entry.lat;
+        last.lng = entry.lng;
+        last.accuracy = entry.accuracy;
+        return last;
+      }
+    }
     global._daxiGpsTraceLog = global._daxiGpsTraceLog || [];
     global._daxiGpsTraceLog.push(entry);
     if (global._daxiGpsTraceLog.length > MAX) {
@@ -115,6 +119,7 @@
       if (c.ok) return k + ' ✓';
       return k + ' —';
     }).join(' → ');
+    if (!global.DAXI_GPS_TRACE_VERBOSE) return { chain: chain, failures: failed, line: line };
     console.log(PREFIX + ' CHAIN ' + side + ': ' + line);
     if (failed.length) console.warn(PREFIX + ' FAILURES', failed);
     return { chain: chain, failures: failed, line: line };

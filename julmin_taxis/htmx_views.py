@@ -3633,32 +3633,55 @@ def driver_update_online_status(request):
     requested = (request.POST.get('status') or '').strip().lower()
     label_map = {'available': 'Disponible', 'offline': 'Hors ligne', 'busy': 'Occupé'}
 
-    from julmin_taxis.driver_presence import open_driver_online_status, sync_driver_status_from_orders
-
-    if session == 'close' or requested == 'offline':
-        new_status = 'offline'
-        driver.status = new_status
-        driver.status_updated_at = timezone.now()
-        driver.save(update_fields=['status', 'status_updated_at'])
-    elif session == 'open':
-        new_status = open_driver_online_status(driver)
-    elif session == 'sync' or requested in ('available', 'busy'):
-        new_status = sync_driver_status_from_orders(driver)
-    else:
-        return _htmx_error('Statut invalide')
-
-    driver_name = driver.get_full_name() or driver.phone or driver.email or f'Chauffeur #{driver.pk}'
-    _notify_ws('admin', 'driver_status_changed', {
-        'driver_id': driver.pk,
-        'driver_name': driver_name,
-        'status': new_status,
-    })
-
     wants_json = (
         session in ('open', 'close', 'sync')
         or 'application/json' in request.headers.get('Accept', '')
         or request.POST.get('format') == 'json'
     )
+
+    try:
+        from julmin_taxis.driver_presence import open_driver_online_status, sync_driver_status_from_orders
+
+        if session == 'close' or requested == 'offline':
+            new_status = 'offline'
+            driver.status = new_status
+            driver.status_updated_at = timezone.now()
+            update_fields = ['status', 'status_updated_at']
+            if hasattr(driver, 'last_seen_at'):
+                from julmin_taxis.driver_presence import touch_driver_last_seen
+                touch_driver_last_seen(driver, timezone.now())
+                update_fields.append('last_seen_at')
+            driver.save(update_fields=update_fields)
+        elif session == 'open':
+            new_status = open_driver_online_status(driver)
+        elif session == 'sync' or requested in ('available', 'busy'):
+            new_status = sync_driver_status_from_orders(driver)
+        else:
+            return _htmx_error('Statut invalide')
+    except Exception:
+        # Never hard-crash the driver shell for presence sync.
+        new_status = (driver.status or 'offline')
+        if wants_json:
+            return JsonResponse({
+                'status': new_status,
+                'label': label_map.get(new_status, new_status),
+            }, status=200)
+        return render(request, 'htmx/driver_status_badge.html', {
+            'status': new_status,
+            'label': label_map.get(new_status, new_status),
+            'driver': driver,
+        })
+
+    try:
+        driver_name = driver.get_full_name() or driver.phone or driver.email or f'Chauffeur #{driver.pk}'
+        _notify_ws('admin', 'driver_status_changed', {
+            'driver_id': driver.pk,
+            'driver_name': driver_name,
+            'status': new_status,
+        })
+    except Exception:
+        pass
+
     if wants_json:
         return JsonResponse({
             'status': new_status,
