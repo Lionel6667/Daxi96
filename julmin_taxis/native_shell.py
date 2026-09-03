@@ -16,7 +16,7 @@ NATIVE_ENV_HEAD = (
     '</script>\n'
 )
 NATIVE_ROUTER_TAG = '<script src="/static/js/daxi-deeplink-router.js?v=20260828d"></script>\n'
-NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260828g" data-daxi-cap-early async></script>\n'
+NATIVE_CAP_TAG = '<script src="/static/js/daxi-capacitor.js?v=20260903e" data-daxi-cap-early async></script>\n'
 NATIVE_BANNER_CSS = '<link rel="stylesheet" href="/static/css/daxi-network-banner.css?v=20260828d">\n'
 NATIVE_STATE_TAG = '<script src="/static/js/daxi-network-state.js?v=20260828d"></script>\n'
 NATIVE_BANNER_JS = '<script src="/static/js/daxi-network-banner.js?v=20260828d"></script>\n'

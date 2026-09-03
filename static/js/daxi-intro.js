@@ -142,9 +142,10 @@
     '{visibility:hidden!important;opacity:0!important}' +
     'html.daxi-intro-playing #splash,html.daxi-intro-done #splash,' +
     'html.daxi-intro-playing #daxi-web-radar,html.daxi-intro-done #daxi-web-radar,' +
-    'html.daxi-intro-playing #admin-app,html.daxi-intro-done #admin-app,' +
     'html.daxi-intro-playing #admin-boot-overlay,html.daxi-intro-done #admin-boot-overlay,' +
-    'html.daxi-intro-playing #drv-map-stage,html.daxi-intro-done #drv-map-stage,' +
+    /* Hide app shells only while intro runs — never after done (map/admin must show). */
+    'html.daxi-intro-playing #admin-app,' +
+    'html.daxi-intro-playing #drv-map-stage,' +
     'html.daxi-intro-boot #admin-app,html.daxi-intro-boot #admin-boot-overlay,' +
     'html.daxi-intro-boot #drv-map-stage,html.daxi-intro-boot #splash,' +
     'html.daxi-intro-boot #daxi-web-radar' +
@@ -309,19 +310,30 @@
   }
 
   function playOn(el, keys, delay, duration, withOpacity) {
-    if (!el || typeof el.animate !== 'function') {
-      if (el) {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-      }
+    if (!el) return null;
+    if (typeof el.animate !== 'function') {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
       return null;
     }
-    return el.animate(keysToFrames(keys, withOpacity), {
-      delay: delay,
-      duration: duration,
-      easing: 'linear',
-      fill: 'forwards'
-    });
+    // Schedule with setTimeout — WAAPI `delay` is unreliable on Android WebView
+    // (only the first letter "D" would animate; A/X/I stayed at opacity:0).
+    var start = function () {
+      try {
+        return el.animate(keysToFrames(keys, withOpacity), {
+          duration: duration,
+          easing: 'linear',
+          fill: 'forwards'
+        });
+      } catch (eAnim) {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        return null;
+      }
+    };
+    delay = delay || 0;
+    if (delay <= 0) return start();
+    return setTimeout(start, delay);
   }
 
   function mountWord(root) {
@@ -420,6 +432,9 @@
           document.documentElement.classList.add('daxi-intro-done');
           document.documentElement.classList.remove('daxi-intro-playing');
           document.documentElement.classList.remove('daxi-intro-boot');
+          // Re-apply CSS so post-intro rules (map/admin visible) stick even if
+          // an older cached stylesheet was injected earlier in the session.
+          injectCss();
         } catch (e) {}
         try {
           var el = document.getElementById('daxi-cinematic');
