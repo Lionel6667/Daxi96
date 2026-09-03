@@ -234,6 +234,20 @@
     #map-tools-col{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom, 0px) + 300px);z-index:900;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;}
     #map-tools-col > *{pointer-events:auto;}
     body.drv-mission-active #map-tools-col{bottom:calc(env(safe-area-inset-bottom, 0px) + 420px);}
+    #drv-zoom-calib{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);z-index:2400;display:none;flex-direction:column;gap:10px;pointer-events:none;}
+    #drv-zoom-calib.show{display:flex;}
+    #drv-zoom-calib .dzc-card{pointer-events:auto;background:rgba(8,14,35,.94);border:1px solid rgba(148,163,184,.28);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.45);backdrop-filter:blur(12px);}
+    #drv-zoom-calib .dzc-title{font-size:13px;font-weight:800;color:#f8fafc;margin:0 0 4px;}
+    #drv-zoom-calib .dzc-sub{font-size:11px;color:#94a3b8;line-height:1.45;margin:0 0 12px;}
+    #drv-zoom-calib .dzc-row{display:flex;align-items:center;gap:10px;}
+    #drv-zoom-calib .dzc-btn{flex:1;height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.9);color:#e2e8f0;font-weight:800;font-size:18px;}
+    #drv-zoom-calib .dzc-val{min-width:52px;text-align:center;font-size:16px;font-weight:900;color:#fbbf24;}
+    #drv-zoom-calib .dzc-actions{display:flex;gap:8px;margin-top:10px;}
+    #drv-zoom-calib .dzc-save{flex:1.4;height:44px;border:0;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#111;font-weight:800;}
+    #drv-zoom-calib .dzc-cancel{flex:1;height:44px;border-radius:12px;border:1px solid rgba(148,163,184,.3);background:transparent;color:#cbd5e1;font-weight:700;}
+    body.drv-zoom-calibrating #mission-panel,
+    body.drv-zoom-calibrating #home-panel,
+    body.drv-zoom-calibrating #profile-modal{display:none!important;}
     #focus-mode-btn,#recenter-btn,#chat-fab{position:relative;bottom:auto;right:auto;margin:0;}
     #focus-mode-btn{width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,.85);color:#9ca3af;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.4);backdrop-filter:blur(8px);transition:all .2s;transform:translateZ(0);}
     #focus-mode-btn.focus-active{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.4);}
@@ -350,6 +364,22 @@
     <button id="focus-mode-btn" onclick="toggleFocusMode()" title="Mode plein écran">
         <i id="focus-mode-icon" class="ri-fullscreen-line"></i>
     </button>
+</div>
+
+<div id="drv-zoom-calib" aria-live="polite">
+    <div class="dzc-card">
+        <div class="dzc-title">Zoom navigation par défaut</div>
+        <p class="dzc-sub">Zoomez ou réduisez jusqu’à ce que la vue vous convienne en conduite. Ce niveau sera repris automatiquement en navigation.</p>
+        <div class="dzc-row">
+            <button type="button" class="dzc-btn" onclick="adjustNavZoomCalib(-0.5)" aria-label="Réduire le zoom">−</button>
+            <div class="dzc-val" id="drv-zoom-calib-val">20.0</div>
+            <button type="button" class="dzc-btn" onclick="adjustNavZoomCalib(0.5)" aria-label="Augmenter le zoom">+</button>
+        </div>
+        <div class="dzc-actions">
+            <button type="button" class="dzc-cancel" onclick="cancelNavZoomCalibration()">Annuler</button>
+            <button type="button" class="dzc-save" onclick="saveNavZoomCalibration()">Enregistrer</button>
+        </div>
+    </div>
 </div>
 
 
@@ -806,11 +836,19 @@
             <option value="site">Toujours utiliser DAXI (carte intégrée)</option>
             <option value="external">Toujours ouvrir une app externe</option>
         </select>
-        <select class="pm-input" id="pm-nav-app" name="nav_pref_app">
+        <select class="pm-input" id="pm-nav-app" name="nav_pref_app" style="margin-bottom:10px;">
             <option value="google">Google Maps</option>
             <option value="waze">Waze</option>
             <option value="apple">Apple Plans</option>
         </select>
+        <input type="hidden" id="pm-nav-zoom" name="nav_pref_zoom" value="20">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);">
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#e2e8f0;">Zoom navigation</div>
+                <div id="pm-nav-zoom-label" style="font-size:11px;color:#9ca3af;margin-top:2px;">Par défaut · 20</div>
+            </div>
+            <button type="button" class="pm-save-btn" style="width:auto;padding:8px 12px;margin:0;font-size:11px;" onclick="startNavZoomCalibration()">Régler</button>
+        </div>
     </div>
 
     <div class="pm-section">
@@ -836,7 +874,7 @@ let activeOrder = null;
 let rideState = 0;
 const RIDE = { IDLE: 0, REQUEST: 1, TO_CLIENT: 2, IN_TRIP: 3, IN_PROGRESS: 3, FINISHED: 4 };
 window.RIDE = RIDE;
-const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00072, resumeAfterMs: 8000 };
+const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00095, resumeAfterMs: 8000 };
 const DRV_DEFAULT_CENTER = { lat: 19.7558, lng: -72.2018 };
 const DRV_DEFAULT_ZOOM = 14;
 const DRV_MIN_GPS_M = 150;
@@ -851,6 +889,9 @@ let targetPos = [-72.2011, 19.7594];
 let _gpsDisplayPos = [-72.2011, 19.7594];
 let targetBear = 0;
 let _userZoom = CFG.zoom;
+let _drvZoomCalibActive = false;
+let _drvZoomCalibBackup = null;
+window._drvZoomCalibActive = false;
 let _followMode = false;
 let _wasDragging = false;
 let _interactTimer = null;
@@ -891,6 +932,134 @@ function _drvGpsAccUsable(acc) {
 function _drvSpeedKmh() {
     return (_currentSpeed || 0) * 3.6;
 }
+function _drvClampNavZoom(z) {
+    z = Number(z);
+    if (!isFinite(z)) return CFG.zoom;
+    return Math.max(14, Math.min(21.5, Math.round(z * 100) / 100));
+}
+function _drvReadPreferredNavZoom() {
+    var z = null;
+    try {
+        if (window.DJANGO_SESSION && window.DJANGO_SESSION.nav_pref_zoom != null) {
+            z = window.DJANGO_SESSION.nav_pref_zoom;
+        }
+    } catch (e0) {}
+    if (z == null) {
+        try {
+            var stored = localStorage.getItem('daxi_drv_nav_zoom');
+            if (stored != null && stored !== '') z = stored;
+        } catch (e1) {}
+    }
+    return _drvClampNavZoom(z != null ? z : CFG.zoom);
+}
+function _drvApplyPreferredNavZoom(z, opts) {
+    opts = opts || {};
+    z = _drvClampNavZoom(z);
+    CFG.zoom = z;
+    _userZoom = z;
+    try {
+        localStorage.setItem('daxi_drv_nav_zoom', String(z));
+    } catch (e) {}
+    try {
+        if (window.DJANGO_SESSION) window.DJANGO_SESSION.nav_pref_zoom = z;
+    } catch (e2) {}
+    var hid = document.getElementById('pm-nav-zoom');
+    if (hid) hid.value = String(z);
+    var lab = document.getElementById('pm-nav-zoom-label');
+    if (lab) lab.textContent = 'Par défaut · ' + z.toFixed(1).replace(/\.0$/, '');
+    _drvSyncZoomCalibLabel(z);
+    if (opts.applyCamera && map && _mapReady) {
+        try {
+            if (map.setZoom) map.setZoom(z);
+            else if (map.moveCamera) map.moveCamera({ zoom: z });
+        } catch (e3) {}
+        if (_followMode || opts.forceNav) _drvEnterNavMode(true);
+    }
+    return z;
+}
+function _drvSyncZoomCalibLabel(z) {
+    var el = document.getElementById('drv-zoom-calib-val');
+    if (!el) return;
+    z = _drvClampNavZoom(z != null ? z : (map && map.getZoom ? map.getZoom() : _userZoom));
+    el.textContent = z.toFixed(1);
+}
+function startNavZoomCalibration() {
+    try { closeProfileModal(); } catch (e) {}
+    _drvZoomCalibBackup = {
+        zoom: _userZoom,
+        cfgZoom: CFG.zoom,
+        follow: _followMode,
+        held: _drvMapUserHeld
+    };
+    _drvZoomCalibActive = true;
+    window._drvZoomCalibActive = true;
+    document.body.classList.add('drv-zoom-calibrating');
+    var panel = document.getElementById('drv-zoom-calib');
+    if (panel) panel.classList.add('show');
+    var startZ = _drvReadPreferredNavZoom();
+    _drvApplyPreferredNavZoom(startZ, { applyCamera: true, forceNav: true });
+    _drvRefreshMapPad();
+    _showRecenterBtn(false);
+}
+function adjustNavZoomCalib(delta) {
+    var cur = map && map.getZoom ? map.getZoom() : _userZoom;
+    var next = _drvClampNavZoom(cur + delta);
+    _userZoom = next;
+    CFG.zoom = next;
+    _drvSyncZoomCalibLabel(next);
+    try {
+        if (map && map.setZoom) map.setZoom(next);
+        else if (map && map.moveCamera) map.moveCamera({ zoom: next });
+    } catch (e) {}
+    if (_followMode) _drvEnterNavMode(true);
+}
+function cancelNavZoomCalibration() {
+    if (_drvZoomCalibBackup) {
+        CFG.zoom = _drvZoomCalibBackup.cfgZoom;
+        _userZoom = _drvZoomCalibBackup.zoom;
+        _followMode = !!_drvZoomCalibBackup.follow;
+        _drvMapUserHeld = !!_drvZoomCalibBackup.held;
+    }
+    _drvZoomCalibActive = false;
+    window._drvZoomCalibActive = false;
+    document.body.classList.remove('drv-zoom-calibrating');
+    var panel = document.getElementById('drv-zoom-calib');
+    if (panel) panel.classList.remove('show');
+    _drvRefreshMapPad();
+    _drvZoomCalibBackup = null;
+    if (_followMode) _drvEnterNavMode(true);
+}
+function saveNavZoomCalibration() {
+    var z = _drvClampNavZoom(map && map.getZoom ? map.getZoom() : _userZoom);
+    _drvApplyPreferredNavZoom(z, { applyCamera: true, forceNav: true });
+    var fd = new FormData();
+    fd.append('nav_pref_zoom', String(z));
+    try {
+        var modeEl = document.getElementById('pm-nav-mode');
+        var appEl = document.getElementById('pm-nav-app');
+        if (modeEl && modeEl.value) fd.append('nav_pref_mode', modeEl.value);
+        if (appEl && appEl.value) fd.append('nav_pref_app', appEl.value);
+    } catch (eForm) {}
+    fetch('/htmx/driver/profile/update/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': (typeof getCsrf === 'function' ? getCsrf() : '') },
+        body: fd
+    }).catch(function() {});
+    _drvZoomCalibActive = false;
+    window._drvZoomCalibActive = false;
+    document.body.classList.remove('drv-zoom-calibrating');
+    var panel = document.getElementById('drv-zoom-calib');
+    if (panel) panel.classList.remove('show');
+    _drvRefreshMapPad();
+    _drvZoomCalibBackup = null;
+    if (window.showDaxiNotification) {
+        showDaxiNotification('Zoom enregistré', 'Niveau ' + z.toFixed(1) + ' pour la navigation.', { type: 'success' });
+    }
+}
+_drvApplyPreferredNavZoom(_drvReadPreferredNavZoom());
+window.addEventListener('daxi:shell-context-ready', function() {
+    _drvApplyPreferredNavZoom(_drvReadPreferredNavZoom());
+});
 function _drvMapHeading() {
     var kmh = _drvSpeedKmh();
     if (kmh >= DRV_COMPASS_SPEED_KMH) return targetBear || _lastMapHeading || 0;
@@ -964,6 +1133,12 @@ function _syncDriverRouteSnap() {
     }
 }
 function _drvOnUserMapInteract() {
+    if (window._drvZoomCalibActive) {
+        // During zoom calibration, allow pan/zoom without leaving the preview camera.
+        _drvMapUserHeld = false;
+        _wasDragging = false;
+        return;
+    }
     _wasDragging = true;
     _followMode = false;
     _drvMapUserHeld = true;
@@ -1072,8 +1247,10 @@ function _drvBlueDotEl() {
 }
 function _drvMapBottomPad() {
     var mission = !!(document.body && document.body.classList.contains('drv-mission-active'));
-    // Keep the blue position above the mission action buttons.
-    return { bottom: Math.round(window.innerHeight * (mission ? 0.54 : 0.40)) };
+    var calib = !!(document.body && document.body.classList.contains('drv-zoom-calibrating'));
+    // Keep the blue GPS dot above mission buttons / calib card.
+    var ratio = calib ? 0.48 : (mission ? 0.66 : 0.40);
+    return { bottom: Math.round(window.innerHeight * ratio) };
 }
 function _drvRefreshMapPad() {
     try { if (map && map.setOptions) map.setOptions({ padding: _drvMapBottomPad() }); } catch (e) {}
@@ -1845,7 +2022,10 @@ function _drvWireMapInstance(targetMap) {
         _wasDragging = false;
         if (map && _driverGpsLocked && map.setTilt) map.setTilt(CFG.pitch);
     });
-    targetMap.addListener('zoom_changed', function() { _userZoom = map.getZoom(); });
+    targetMap.addListener('zoom_changed', function() {
+        _userZoom = map.getZoom();
+        if (window._drvZoomCalibActive) _drvSyncZoomCalibLabel(_userZoom);
+    });
     google.maps.event.addListener(targetMap, 'idle', function() {
         if (_carMarker && _carIsOnMap() && !_carMarkerAdvanced) _carMarker.draw();
         _updateCarMarker3D();
@@ -4865,8 +5045,13 @@ function openProfileModal() {
         if (cityEl) document.getElementById('pm-city').value = cityEl.dataset.city;
         const navModeEl = doc.querySelector('[data-nav-pref-mode]');
         const navAppEl = doc.querySelector('[data-nav-pref-app]');
+        const navZoomEl = doc.querySelector('[data-nav-pref-zoom]');
         if (navModeEl) document.getElementById('pm-nav-mode').value = navModeEl.dataset.navPrefMode || 'ask';
         if (navAppEl) document.getElementById('pm-nav-app').value = navAppEl.dataset.navPrefApp || 'google';
+        if (navZoomEl) {
+            var nz = _drvClampNavZoom(navZoomEl.dataset.navPrefZoom || 20);
+            _drvApplyPreferredNavZoom(nz);
+        }
         const carBrand = doc.querySelector('[data-car-brand]');
         if (carBrand) {
             document.getElementById('pm-car-brand').value = carBrand.dataset.carBrand||'';

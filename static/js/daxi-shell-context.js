@@ -141,6 +141,7 @@
               driver_is_verified: true,
               nav_pref_mode: "ask",
               nav_pref_app: "google",
+              nav_pref_zoom: 20,
               is_authenticated: !!(data.user && data.user.authenticated),
               user_name: data.user && data.user.name || null,
               first_name: null,
@@ -214,10 +215,7 @@
         global._daxiReloadShellContext = function() {
           return loadSync();
         };
-        if (global._daxiCapacitorApp
-          || global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform()
-          || /DaxiAndroid|Capacitor/i.test(String(global.navigator && global.navigator.userAgent || ""))
-          || !(global.DJANGO_SESSION && (global.DJANGO_SESSION.google_maps_key || global.GOOGLE_MAPS_API_KEY))) {
+        if (global._daxiCapacitorApp || global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform() || /DaxiAndroid|Capacitor/i.test(String(global.navigator && global.navigator.userAgent || "")) || !(global.DJANGO_SESSION && (global.DJANGO_SESSION.google_maps_key || global.GOOGLE_MAPS_API_KEY))) {
           loadSync();
           try {
             global.addEventListener("online", function() {

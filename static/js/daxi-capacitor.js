@@ -2510,8 +2510,6 @@
     });
   }
   async function initGps() {
-    // Ne jamais demander la permission OS au boot : le modal chauffeur/client
-    // doit expliquer d'abord, puis appeler requestLocationPermission().
     try {
       const perm = await Geolocation2.checkPermissions();
       const granted = perm.location === "granted" || perm.coarseLocation === "granted";
@@ -2566,34 +2564,18 @@
     } catch (e3) {
     }
     const path = String(location.pathname || "").toLowerCase();
-    let dest = "";
     if (role === "driver") {
       if (path.indexOf("/driver") >= 0) return false;
-      dest = "/driver/";
-    } else if (role === "admin") {
+      location.replace("/driver/");
+      return true;
+    }
+    if (role === "admin") {
       if (path.indexOf("/admin") >= 0) return false;
-      dest = "/admin-dashboard/";
-    } else {
-      if (path.indexOf("/entreprise/dashboard") >= 0) return false;
-      dest = "/entreprise/dashboard/";
+      location.replace("/admin-dashboard/");
+      return true;
     }
-    // Abort home intro immediately (often stuck on "D") so the role page
-    // can play the full D→A→X→I sequence without a cut mid-flight.
-    try {
-      window.DAXI_INTRO_DISABLED = true;
-      window._daxiIntroPlaying = false;
-      window._daxiIntroDone = true;
-      document.documentElement.classList.remove("daxi-intro-playing", "daxi-intro-boot");
-      document.documentElement.classList.add("daxi-intro-done");
-      const cin = document.getElementById("daxi-cinematic");
-      if (cin && cin.parentNode) cin.parentNode.removeChild(cin);
-    } catch (eAbort) {
-    }
-    try {
-      sessionStorage.setItem("daxi_shell_nav", "1");
-    } catch (eNav2) {
-    }
-    location.replace(dest);
+    if (path.indexOf("/entreprise/dashboard") >= 0) return false;
+    location.replace("/entreprise/dashboard/");
     return true;
   }
   function markNative() {

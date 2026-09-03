@@ -3859,6 +3859,10 @@ window._daxiClientCancelOrder = function(orderId, btn, guestId) {
     if (!orderId) return false;
     guestId = guestId || _daxiGuestIdForRequest();
     var run = function() {
+        // Clear checkout UI immediately so WhatsApp / pending cards don't linger.
+        if (window._daxiOnOrderCancelled) {
+            try { window._daxiOnOrderCancelled(orderId, { silent: true }); } catch (eEarly) {}
+        }
         var fd = new FormData();
         fd.append('sheet_mode', '1');
         if (guestId) fd.append('guest_id', guestId);
@@ -4150,6 +4154,12 @@ function _daxiFetchSheetOrderHtml(orderId, opts) {
         if (done) return;
         done = true;
         if (html && _daxiIsSheetErrorHtml(html)) {
+            var gone = html.indexOf('Commande introuvable') >= 0;
+            if (gone && orderId && window._daxiOnOrderCancelled) {
+                window._daxiOnOrderCancelled(orderId, { silent: true });
+                if (opts.onFail) opts.onFail();
+                return;
+            }
             if (slot && !opts.silent) {
                 slot.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:13px;">' +
                     (html.indexOf('Non autorisé') >= 0 ? 'Accès refusé à cette course. Reconnectez-vous ou réessayez.' : 'Impossible de charger cette course.') +
@@ -4543,6 +4553,16 @@ window._daxiOnPriceRefused = function(orderId) {
 
 window._daxiOnOrderCancelled = function(orderId, opts) {
     opts = opts || {};
+    var oid = orderId != null ? String(orderId) : '';
+    if (oid && typeof _daxiStopOrderCoordsBackfill === 'function') {
+        try { _daxiStopOrderCoordsBackfill(oid); } catch (eStop) {}
+    }
+    if (oid && typeof _daxiInvalidateSheetCache === 'function') {
+        try { _daxiInvalidateSheetCache(oid); } catch (eInv) {}
+    }
+    if (oid && window._daxiPendingOrderPlaces) {
+        try { delete window._daxiPendingOrderPlaces[oid]; } catch (ePl) {}
+    }
     if (orderId && window._daxiDestroyOrderMaps) window._daxiDestroyOrderMaps(orderId);
     if (orderId && window._daxiTrackers && window._daxiTrackers[orderId]) {
         var t = window._daxiTrackers[orderId];
@@ -4550,7 +4570,6 @@ window._daxiOnOrderCancelled = function(orderId, opts) {
         if (t.ws) try { t.ws.close(); } catch (e) {}
         delete window._daxiTrackers[orderId];
     }
-    var oid = orderId != null ? String(orderId) : '';
     if (oid) {
         var mapWrap = document.getElementById('daximap-wrap-' + oid);
         if (mapWrap) mapWrap.remove();
@@ -4564,14 +4583,31 @@ window._daxiOnOrderCancelled = function(orderId, opts) {
     }
     var wasActiveDetail = false;
     window._daxiSheetOrderList = (window._daxiSheetOrderList || []).filter(function(o) {
-        if (String(o.id) === String(orderId) && o.active) wasActiveDetail = true;
-        return String(o.id) !== String(orderId);
+        if (String(o.id) === oid && o.active) wasActiveDetail = true;
+        return String(o.id) !== oid;
     });
+    if (typeof _daxiPersistOrdersListMeta === 'function') {
+        try { _daxiPersistOrdersListMeta(); } catch (eMeta) {}
+    }
     var slot = document.getElementById('daxi-sheet-order-slot');
-    var listCard = document.getElementById('co-' + orderId);
+    var slotShowsCancelled = false;
+    if (slot && oid) {
+        try {
+            if (slot.querySelector('[data-daxi-cancel-order="' + oid + '"]') ||
+                slot.querySelector('#co-' + oid) ||
+                slot.querySelector('[data-order-id="' + oid + '"]') ||
+                slot.querySelector('#guest-phone-card, #pending-coords-card, #price-proposal-card, #payment-selection-wrap') ||
+                (slot.innerHTML && slot.innerHTML.indexOf('/orders/' + oid + '/') >= 0)) {
+                slotShowsCancelled = true;
+            }
+        } catch (eSlot) {}
+    }
+    var listCard = document.getElementById('co-' + oid);
     if (listCard) listCard.remove();
     if (typeof _daxiSyncClientOrdersCacheFromDom === 'function') _daxiSyncClientOrdersCacheFromDom('active');
-    if (wasActiveDetail && slot) slot.innerHTML = '';
+    if (slot && (slotShowsCancelled || wasActiveDetail || !(window._daxiSheetOrderList || []).length)) {
+        slot.innerHTML = '';
+    }
     if (window._daxiSyncClientOrdersCount) window._daxiSyncClientOrdersCount();
     var pills = document.getElementById('daxi-order-pills');
     if (pills) { pills.innerHTML = ''; pills.classList.remove('has-items'); }
@@ -4581,7 +4617,7 @@ window._daxiOnOrderCancelled = function(orderId, opts) {
         window._daxiSheetView = 'list';
         _daxiRenderOrderListView();
         _daxiSetSheetMode('order', { expand: false });
-        if (wasActiveDetail) {
+        if (wasActiveDetail || slotShowsCancelled) {
             var next = window._daxiSheetOrderList[0];
             if (next && next.id && window._daxiLoadSheetOrder) {
                 window._daxiLoadSheetOrder(next.id, { preferCache: false });
@@ -4590,12 +4626,14 @@ window._daxiOnOrderCancelled = function(orderId, opts) {
     } else {
         window._daxiMainMapFocusOrderId = null;
         window._daxiSheetPreferredMode = 'form';
+        window._daxiSheetView = 'form';
         if (typeof _daxiClearMainMapOrderTrack === 'function') _daxiClearMainMapOrderTrack();
         if (typeof _daxiClearBookingRouteHud === 'function') _daxiClearBookingRouteHud();
         if (slot) slot.innerHTML = '';
         if (window._daxiSetSheetMode) _daxiSetSheetMode('form');
         if (window._daxiUpdateSheetSwitcher) _daxiUpdateSheetSwitcher();
     }
+    if (window._daxiUpdateSheetSwitcher) _daxiUpdateSheetSwitcher();
     if (window._daxiSetSheetCollapsed) _daxiSetSheetCollapsed(false);
     if (!opts.silent && window.showDaxiNotification) {
         showDaxiNotification('Course annulée', 'La course a été retirée de votre espace.', { type: 'warning' });
@@ -6984,14 +7022,9 @@ function _daxiMainMapCssVisibleEnough() {
 }
 
 function _daxiCanHideMapPlaceholder() {
-    if (!_daxiMainMapCssVisibleEnough()) return false;
-    if (!_daxiGoogleMapHasFirstRender()) return false;
-    // Keep branded placeholder until we have a real GPS camera —
-    // avoid flashing Cap-Haïtien default tiles as a "fake map".
-    if (window._lastClientGpsPos || window._clientGpsPannedOnce) return true;
-    if (window._daxiOfflineMapMode) return true;
-    if (window._daxiAllowMapRevealWithoutGps) return true;
-    return false;
+    // Reveal when tiles have painted — do not wait on GPS or CSS opacity
+    // (opacity is applied in _daxiMakeMapCssVisible just before hide).
+    return _daxiGoogleMapHasFirstRender();
 }
 
 function _daxiEnsureGoogleMapSized(reason) {
@@ -7101,7 +7134,7 @@ function _daxiTryCommitGoogleMapVisible(reason) {
                     window._daxiAllowMapRevealWithoutGps = true;
                     _daxiPlaceholderHide('timeout-force');
                 }
-            }, 12000);
+            }, 3500);
         }
         return false;
     }

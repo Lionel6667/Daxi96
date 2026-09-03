@@ -5197,6 +5197,14 @@ def driver_profile_update(request):
     nav_app = request.POST.get('nav_pref_app', '').strip()
     if nav_app in ('google', 'waze', 'apple'):
         driver.nav_pref_app = nav_app
+    nav_zoom_raw = request.POST.get('nav_pref_zoom', '').strip()
+    if nav_zoom_raw:
+        try:
+            z = float(nav_zoom_raw)
+            if 14.0 <= z <= 21.5:
+                driver.nav_pref_zoom = round(z, 2)
+        except (TypeError, ValueError):
+            pass
 
     driver.full_name = f'{driver.firstname} {driver.lastname}'.strip()
 
@@ -7481,7 +7489,8 @@ def client_refuse_price(request, order_id):
     order.delete()
 
     return HttpResponse(
-        f'<div id="daxi-refuse-done" data-order-id="{order_id}" style="display:none;"></div>',
+        f'<div id="daxi-refuse-done" data-order-id="{order_id}" style="display:none;"></div>'
+        f'<script>if(window._daxiOnOrderCancelled)window._daxiOnOrderCancelled({order_id},{{silent:true}});</script>',
         content_type='text/html',
     )
 

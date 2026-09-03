@@ -133,6 +133,7 @@
         driver_is_verified: true,
         nav_pref_mode: 'ask',
         nav_pref_app: 'google',
+        nav_pref_zoom: 20,
         is_authenticated: !!(data.user && data.user.authenticated),
         user_name: (data.user && data.user.name) || null,
         first_name: null,

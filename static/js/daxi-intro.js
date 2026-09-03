@@ -20,15 +20,15 @@
   };
 
   var INTRO = {
-    durationMs: 4000,
-    fadeMs: 240,
-    killMs: 4600,
+    durationMs: 4800,
+    fadeMs: 320,
+    killMs: 5600,
     easing: EASE.rubber,
     letters: {
 
       D: {
         delay: 0,
-        duration: 1000,
+        duration: 1100,
         origin: '50% 50%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 0.28, sy: 1.42, r: 0, o: 1, e: EASE.snap },
@@ -42,8 +42,8 @@
       },
 
       A: {
-        delay: 1000,
-        duration: 1000,
+        delay: 1100,
+        duration: 1100,
         origin: '50% 100%',
         keys: [
           { t: 0.00, x: 0, y: -72, sx: 1.28, sy: 0.38, r: 0, o: 1, e: EASE.gravity },
@@ -56,8 +56,8 @@
       },
 
       X: {
-        delay: 2000,
-        duration: 1000,
+        delay: 2200,
+        duration: 1100,
         origin: '50% 50%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 0.48, sy: 1.32, r: -18, o: 1, e: EASE.back },
@@ -70,8 +70,8 @@
       },
 
       I: {
-        delay: 3000,
-        duration: 700,
+        delay: 3300,
+        duration: 900,
         origin: '50% 100%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 1.32, sy: 0.22, r: 0, o: 1, e: EASE.back },
@@ -83,8 +83,8 @@
       }
     },
     chorus: {
-      delay: 3700,
-      duration: 300,
+      delay: 4200,
+      duration: 360,
       keys: [
         { t: 0.00, sx: 1.00, sy: 1.00, e: EASE.snap },
         { t: 0.30, sx: 1.10, sy: 0.86, e: EASE.back },
@@ -320,6 +320,7 @@
     // (only the first letter "D" would animate; A/X/I stayed at opacity:0).
     var start = function () {
       try {
+        el.style.opacity = '1';
         return el.animate(keysToFrames(keys, withOpacity), {
           duration: duration,
           easing: 'linear',
@@ -333,7 +334,34 @@
     };
     delay = delay || 0;
     if (delay <= 0) return start();
+    // Fallback: if animate never paints, force letter visible shortly after start.
+    setTimeout(function () {
+      try {
+        if (el && (!el.getAnimations || !el.getAnimations().length)) {
+          if (parseFloat(window.getComputedStyle(el).opacity || '0') < 0.2) {
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+          }
+        }
+      } catch (eFall) {
+        try { el.style.opacity = '1'; } catch (e2) {}
+      }
+    }, delay + Math.min(180, duration * 0.2));
     return setTimeout(start, delay);
+  }
+
+  function forceWordVisible(root) {
+    if (!root) return;
+    try {
+      var spans = root.querySelectorAll('#daxi-cin-word span');
+      var i;
+      for (i = 0; i < spans.length; i++) {
+        spans[i].style.opacity = '1';
+        spans[i].style.transform = 'none';
+      }
+      var word = root.querySelector('#daxi-cin-word');
+      if (word) word.style.transform = 'none';
+    } catch (e) {}
   }
 
   function mountWord(root) {
@@ -468,7 +496,12 @@
           playWordIntro(root);
           killer = setTimeout(done, INTRO.killMs);
           setTimeout(function () {
-            if (settled || !root || typeof root.animate !== 'function') {
+            if (settled || !root) {
+              if (!settled) done();
+              return;
+            }
+            forceWordVisible(root);
+            if (typeof root.animate !== 'function') {
               if (!settled) done();
               return;
             }
@@ -512,7 +545,7 @@
   };
 
   global.daxiWaitForIntro = function (timeoutMs) {
-    timeoutMs = timeoutMs || 6000;
+    timeoutMs = timeoutMs || 7000;
     if (!global.daxiShouldSkipSecondaryBoot || !global.daxiShouldSkipSecondaryBoot()) {
       return Promise.resolve();
     }

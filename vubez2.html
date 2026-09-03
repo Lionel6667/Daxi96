@@ -150,7 +150,7 @@
         #sidebarMenu.active,.sidebar-menu.active{right:0}
         .sidebar-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45)}
         .sidebar-overlay.active{display:block}
-        #daxiMenuFab{position:fixed;top:14px;left:14px;z-index:520;width:44px;height:44px;border-radius:14px;border:1px solid rgba(148,163,184,.25);background:rgba(8,14,35,.88);color:#f8fafc}
+        #daxiMenuFab{position:fixed;top:max(10px,env(safe-area-inset-top,10px));right:max(10px,env(safe-area-inset-right,10px))!important;left:auto!important;z-index:650;width:48px;height:48px;border-radius:14px;border:1.5px solid rgba(245,158,11,.45);background:rgba(8,14,35,.94);color:#fbbf24;display:none;align-items:center;justify-content:center}
         .hidden{display:none!important}
     </style>
     <script>
@@ -307,13 +307,13 @@
       } catch (eGate) {}
     })();
     </script>
-    <link rel="preload" href="assets/css/vubez2-core.css?v=20260903d" as="style">
+    <link rel="preload" href="assets/css/vubez2-core.css?v=20260903g" as="style">
     <link rel="preload" as="image" href="assets/images/daxi-map-placeholder-dark.webp" fetchpriority="high">
     <link rel="preload" href="assets/fonts/remixicon.woff2?t=1734404658139" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/tailwind-vubez2.css?v=20260830c"></noscript>
-    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903d" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903d"></noscript>
+    <link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903g" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/vubez2-core.css?v=20260903g"></noscript>
     <link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="assets/css/vubez2-body.css?v=20260902b"></noscript>
     <link rel="stylesheet" href="assets/css/remixicon-vubez2.css?v=20260902t" media="print" onload="this.media='all'">
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 window._DAXI_LAZY_SCRIPTS=['daxi-assist-ai.js', 'daxi-chat-composer.js', 'daxi-chat-media.js', 'daxi-chat-ui.js', 'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js', 'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js', 'daxi-plan-wizard.js', 'firebase-shim.js'];
-window._DAXI_ASSET_V='20260903f';
+window._DAXI_ASSET_V='20260903g';
 </script>
 <script src="/static/js/daxi-lazy-loader.js?v=20260902t" defer></script>
 </head>

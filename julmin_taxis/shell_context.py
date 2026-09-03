@@ -54,6 +54,7 @@ def build_shell_session(request, page_name='client'):
     driver_is_verified = True
     driver_nav_pref_mode = 'ask'
     driver_nav_pref_app = 'google'
+    driver_nav_pref_zoom = 20.0
     if driver_id:
         try:
             from drivers.models import Driver
@@ -64,6 +65,10 @@ def build_shell_session(request, page_name='client'):
             driver_is_verified = bool(d.is_verified)
             driver_nav_pref_mode = d.nav_pref_mode or 'ask'
             driver_nav_pref_app = d.nav_pref_app or 'google'
+            try:
+                driver_nav_pref_zoom = float(getattr(d, 'nav_pref_zoom', 20.0) or 20.0)
+            except (TypeError, ValueError):
+                driver_nav_pref_zoom = 20.0
         except Exception:
             pass
 
@@ -87,6 +92,7 @@ def build_shell_session(request, page_name='client'):
         'driver_is_verified': driver_is_verified,
         'nav_pref_mode': driver_nav_pref_mode if driver_id else 'ask',
         'nav_pref_app': driver_nav_pref_app if driver_id else 'google',
+        'nav_pref_zoom': driver_nav_pref_zoom if driver_id else 20.0,
         'is_authenticated': is_auth,
         'user_name': (
             client_user.get_full_name()

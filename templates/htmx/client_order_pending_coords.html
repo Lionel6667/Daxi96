@@ -21,12 +21,9 @@
     </div>
     <div class="daxi-guest-phone-cancel-wrap">
       <button type="button"
-              class="daxi-guest-phone-cancel"
-              hx-post="/htmx/client/orders/{{ order_id }}/refuse-price/"
-              hx-target="#daxi-sheet-order-slot"
-              hx-swap="innerHTML"
-              hx-confirm="Annuler cette commande ?"
-              hx-include="#guestIdHidden, [name=csrfmiddlewaretoken]">
+              class="daxi-guest-phone-cancel daxi-oc-btn--cancel"
+              data-daxi-cancel-order="{{ order_id }}"
+              {% if order.guest_id %}data-guest-id="{{ order.guest_id }}"{% endif %}>
         Annuler la commande
       </button>
     </div>

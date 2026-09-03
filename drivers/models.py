@@ -125,6 +125,11 @@ class Driver(models.Model):
         max_length=20, choices=NAV_PREF_APP_CHOICES, default='google',
         verbose_name='Application GPS externe',
     )
+    nav_pref_zoom = models.FloatField(
+        default=20.0,
+        verbose_name='Zoom navigation par défaut',
+        help_text='Niveau de zoom Google Maps en mode navigation (environ 14–21).',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
