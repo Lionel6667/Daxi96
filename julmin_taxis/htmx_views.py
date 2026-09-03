@@ -3660,7 +3660,13 @@ def driver_update_online_status(request):
             return _htmx_error('Statut invalide')
     except Exception:
         # Never hard-crash the driver shell for presence sync.
-        new_status = (driver.status or 'offline')
+        try:
+            from julmin_taxis.driver_presence import driver_has_active_order
+            new_status = 'busy' if driver_has_active_order(driver) else 'available'
+        except Exception:
+            new_status = (driver.status or 'available')
+            if new_status == 'offline':
+                new_status = 'available'
         if wants_json:
             return JsonResponse({
                 'status': new_status,

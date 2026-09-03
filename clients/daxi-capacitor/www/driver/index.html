@@ -1,6 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script src="/daxi-capacitor-config.js"></script>
+    <script>window._daxiShellPage='driver';window._daxiCapacitorApp=true;document.documentElement.classList.add('daxi-native-shell');</script>
+    <script src="/js/daxi-shell-context.js"></script>
+    <script src="/js/daxi-capacitor.js"></script>
+    <script src="/js/daxi-role-boot.js"></script>
+    <link rel="stylesheet" href="/assets/css/daxi-local-fonts.css">
+
     <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -231,7 +238,7 @@
     #focus-mode-btn{width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,.85);color:#9ca3af;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.4);backdrop-filter:blur(8px);transition:all .2s;transform:translateZ(0);}
     #focus-mode-btn.focus-active{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.4);}
     #recenter-btn{width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,.92);color:#60a5fa;border:1.5px solid rgba(96,165,250,.4);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 14px rgba(0,0,0,.45);backdrop-filter:blur(10px);}
-    #chat-fab{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;cursor:pointer;color:#fff;font-size:22px;box-shadow:0 6px 24px rgba(14,165,233,.45);align-items:center;justify-content:center;transform:translateZ(0);}
+    #chat-fab{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 2px 14px rgba(14,165,233,.45);align-items:center;justify-content:center;transform:translateZ(0);}
     
     #extra-price-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:800;display:none;background:rgba(15,23,42,.95);border:1px solid #f59e0b;border-radius:12px;padding:8px 20px;font-size:13px;font-weight:800;color:#f59e0b;white-space:normal;max-width:min(92vw,420px);text-align:center;backdrop-filter:blur(8px);animation:daxiZoneIn .18s ease-out;}
     #drv-return-recall-banner{position:fixed;top:calc(env(safe-area-inset-top,0px) + 118px);left:16px;right:16px;z-index:850;display:none;background:linear-gradient(135deg,rgba(99,102,241,.95),rgba(79,70,229,.92));border:2px solid rgba(165,180,252,.5);border-radius:16px;padding:14px 16px;box-shadow:0 8px 32px rgba(99,102,241,.45);backdrop-filter:blur(10px);}
@@ -242,7 +249,7 @@
     #drv-return-recall-banner .drv-rr-open{flex:1;padding:10px;background:#fff;border:none;color:#4f46e5;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer;}
 
     
-    #chat-fab{position:relative;bottom:auto;right:auto;z-index:850;display:none;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;cursor:pointer;color:#fff;font-size:22px;box-shadow:0 6px 24px rgba(14,165,233,.45);align-items:center;justify-content:center;transform:translateZ(0);}
+    #chat-fab{position:relative;bottom:auto;right:auto;z-index:850;display:none;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0284c7);border:none;cursor:pointer;color:#fff;font-size:20px;box-shadow:0 2px 14px rgba(14,165,233,.45);align-items:center;justify-content:center;transform:translateZ(0);}
     #chat-unread{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:9px;font-weight:900;border-radius:99px;padding:2px 5px;min-width:16px;text-align:center;display:none;border:2px solid var(--dark);}
     [data-theme="light"] #chat-unread{border-color:#f8fafc;}
     #chat-overlay{position:fixed;inset:0;z-index:1099;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);display:none;}
@@ -311,6 +318,7 @@
     <script src="/static/js/daxi-network-banner.js?v=20260828d"></script>
     <script src="/static/js/daxi-offline.js?v=20260828d"></script>
     <script src="/static/js/daxi-theme.js?v=20260733" defer></script>
+    <script src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
 </head>
 <body class="drv-page" data-page="driver">
 
@@ -546,7 +554,7 @@
                 <i class="ri-checkbox-circle-fill" id="drv-status-icon"></i>
                 <span id="drv-status-label">Disponible</span>
             </div>
-            <span class="dsb-status-hint">Statut automatique selon vos courses actives</span>
+            <span class="dsb-status-hint">Occupé si vous avez une course en cours</span>
         </div>
     </div>
 
@@ -828,7 +836,7 @@ let activeOrder = null;
 let rideState = 0;
 const RIDE = { IDLE: 0, REQUEST: 1, TO_CLIENT: 2, IN_TRIP: 3, IN_PROGRESS: 3, FINISHED: 4 };
 window.RIDE = RIDE;
-const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00055, resumeAfterMs: 8000 };
+const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00072, resumeAfterMs: 8000 };
 const DRV_DEFAULT_CENTER = { lat: 19.7558, lng: -72.2018 };
 const DRV_DEFAULT_ZOOM = 14;
 const DRV_MIN_GPS_M = 150;
@@ -1052,7 +1060,8 @@ function _createRoutePolylines() {
 }
 function _drvBlueDotEl() {
     var el = document.createElement('div');
-    el.style.cssText = 'position:relative;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;';
+    // No translate here — MapOverlay already centers with translate(-50%,-50%).
+    el.style.cssText = 'position:relative;width:22px;height:22px;pointer-events:none;';
     var pulse = document.createElement('div');
     pulse.style.cssText = 'position:absolute;inset:-6px;border-radius:50%;background:rgba(59,130,246,0.2);animation:daxiSpin 4s linear infinite reverse;';
     var dot = document.createElement('div');
@@ -1060,6 +1069,14 @@ function _drvBlueDotEl() {
     el.appendChild(pulse);
     el.appendChild(dot);
     return el;
+}
+function _drvMapBottomPad() {
+    var mission = !!(document.body && document.body.classList.contains('drv-mission-active'));
+    // Keep the blue position above the mission action buttons.
+    return { bottom: Math.round(window.innerHeight * (mission ? 0.54 : 0.40)) };
+}
+function _drvRefreshMapPad() {
+    try { if (map && map.setOptions) map.setOptions({ padding: _drvMapBottomPad() }); } catch (e) {}
 }
 function _drvEnterNavMode(force) {
     if (!map || !_mapReady) return;
@@ -1757,7 +1774,7 @@ function _drvCaptureMapView() {
             zoom: map.getZoom(),
             tilt: map.getTilt ? map.getTilt() : CFG.pitch,
             heading: map.getHeading ? map.getHeading() : 0,
-            padding: map.getPadding ? map.getPadding() : { bottom: window.innerHeight * 0.4 }
+            padding: map.getPadding ? map.getPadding() : _drvMapBottomPad()
         };
     } catch (e) { return null; }
 }
@@ -1853,7 +1870,7 @@ function _drvCreateMap(theme, restore) {
                 center: view.center,
                 zoom: view.zoom,
                 tilt: view.tilt,
-                paddingFn: function() { return { bottom: window.innerHeight * 0.4 }; }
+                paddingFn: function() { return _drvMapBottomPad(); }
             });
         } catch (eDual) { pair = null; }
         if (pair) {
@@ -1875,7 +1892,7 @@ function _drvCreateMap(theme, restore) {
             tilt: view.tilt,
             heading: view.heading,
             colorScheme: scheme,
-            padding: (restore && restore.padding) ? restore.padding : { bottom: window.innerHeight * 0.4 },
+            padding: (restore && restore.padding) ? restore.padding : _drvMapBottomPad(),
             tiltInteractionEnabled: true,
             headingInteractionEnabled: true,
             disableDefaultUI: true,
@@ -2546,6 +2563,7 @@ function confirmComplete() {
             document.getElementById('mission-panel').style.display = 'none';
             document.body.classList.remove('drv-mission-active');
             document.getElementById('home-panel').style.display = 'grid';
+            _drvRefreshMapPad();
             runAfter();
         });
     };
@@ -2750,7 +2768,7 @@ async function _applyStateMachineRoutes() {
         }
         _followMode = true;
         _userZoom   = CFG.zoom;
-        map.setOptions({ padding: { bottom: window.innerHeight * 0.4 } }); 
+        map.setOptions({ padding: _drvMapBottomPad() }); 
 
     } else if (rideState === RIDE.IN_TRIP || rideState === RIDE.IN_PROGRESS) {
         _setRouteGeoJSON('rt-pickup-src', null);
@@ -2778,7 +2796,7 @@ async function _applyStateMachineRoutes() {
         _hideClientPin();
         _followMode = true;
         _userZoom   = CFG.zoom;
-        map.setOptions({ padding: { bottom: window.innerHeight * 0.4 } });
+        map.setOptions({ padding: _drvMapBottomPad() });
     }
     _syncClientGpsAccuracyHint();
 
@@ -3197,6 +3215,7 @@ function setActiveOrder(o) {
         if (homePanelEarly) homePanelEarly.style.display = 'flex';
         hideChatFab();
         _hideClientGpsAccuracyHint();
+        _drvRefreshMapPad();
         _drvSyncSystemStatus('sync');
         return;
     }
@@ -3210,6 +3229,8 @@ function setActiveOrder(o) {
     }
     document.body.classList.add('drv-mission-active');
     if (homePanel) homePanel.style.display = 'none';
+    _drvRefreshMapPad();
+    _syncDriverStatusUI('busy', 'Occupé');
 
     const statusToState = {
         'driver_assigned': RIDE.TO_CLIENT,
@@ -3374,6 +3395,7 @@ function missionAction() {
                 document.getElementById('home-panel').style.display = 'grid';
                 activeOrder = null;
                 rideState   = RIDE.IDLE;
+                _drvRefreshMapPad();
                 _drvSyncSystemStatus('sync');
                 loadProfile();
             }
@@ -4742,11 +4764,19 @@ function _syncDriverStatusUI(status, label) {
     var labelEl = document.getElementById('drv-status-label');
     var iconEl = document.getElementById('drv-status-icon');
     if (!pill || !labelEl) return;
+    // Active mission always shows Occupé — never "Hors ligne".
+    if (activeOrder && _orderIsOperationallyActive(activeOrder)) {
+        status = 'busy';
+        label = 'Occupé';
+    }
     var labels = {
-        available: label || 'Disponible',
-        busy: label || 'Occupé',
-        offline: label || 'Hors ligne'
+        available: 'Disponible',
+        busy: 'Occupé',
+        offline: 'Hors ligne'
     };
+    if (label && (status === 'available' || status === 'busy' || status === 'offline')) {
+        // Prefer short fixed labels for driver UI
+    }
     pill.classList.remove('dsb-status-pill--available', 'dsb-status-pill--busy', 'dsb-status-pill--offline');
     if (status === 'busy') {
         pill.classList.add('dsb-status-pill--busy');

@@ -168,12 +168,12 @@ ACTIVE_ORDER_STATUSES = (
 
 
 def driver_has_active_order(driver):
-    from julmin_taxis.models import Order
+    from orders.models import Order
     return Order.objects.filter(driver_id=driver.pk, status__in=ACTIVE_ORDER_STATUSES).exists()
 
 
 def sync_driver_status_from_orders(driver):
-    """Disponible/occupé selon les courses actives. Ne force pas un hors-ligne en ligne."""
+    """Occupé si course active, sinon disponible (sauf hors ligne manuel)."""
     now = timezone.now()
     if driver_has_active_order(driver):
         new_status = 'busy'
@@ -194,7 +194,7 @@ def sync_driver_status_from_orders(driver):
 
 
 def open_driver_online_status(driver):
-    """Ouvre la session chauffeur (app boot) : disponible, ou occupé si course active."""
+    """Ouvre la session : Occupé si course en cours, sinon Disponible."""
     now = timezone.now()
     new_status = 'busy' if driver_has_active_order(driver) else 'available'
     driver.status = new_status
