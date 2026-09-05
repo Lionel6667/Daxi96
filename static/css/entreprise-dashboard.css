@@ -232,6 +232,8 @@ body { color: var(--ent-text); }
   box-shadow: var(--daxi-card-shadow), 0 0 0 1px rgba(245, 158, 11, .3);
   pointer-events: auto; z-index: 2;
 }
+.plan-card .learn-more-btn,
+.plan-card button { pointer-events: auto; }
 .plan-header {
   background: linear-gradient(135deg, rgba(245, 158, 11, .32), rgba(217, 119, 6, .22)) !important;
   color: #f8fafc !important; padding: 14px 14px 12px;

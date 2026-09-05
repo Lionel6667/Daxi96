@@ -77,6 +77,7 @@
   border: 1px solid rgba(245, 158, 11, 0.28);
   color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
 }
 .adm-ent-loc-coords {
   font-size: 11px;

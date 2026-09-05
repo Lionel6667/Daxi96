@@ -778,9 +778,9 @@
             z-index: 5100;
             background: linear-gradient(160deg, #070b14 0%, #0a1628 50%, #0f2447 100%);
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: clip;
             -webkit-overflow-scrolling: touch;
-            touch-action: pan-x pan-y;
+            touch-action: pan-y;
             overscroll-behavior: contain;
             color: rgba(255,255,255,0.92);
         }
@@ -896,15 +896,14 @@
             touch-action: manipulation;
         }
         .daxi-page-overlay.daxi-page-tarif {
-            touch-action: pan-x pan-y !important;
-            overflow-x: hidden;
+            touch-action: pan-y;
+            overflow-x: clip;
         }
         .daxi-page-overlay.daxi-page-tarif .daxi-plans-stage,
         .daxi-page-overlay.daxi-page-tarif .plans-container {
             touch-action: pan-x pan-y !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
-            pointer-events: auto !important;
         }
         .daxi-page-overlay #servicePlansSection .daxi-plans-rail {
             margin-bottom: 8px;
@@ -3073,8 +3072,7 @@
             z-index: 9999;
             overflow-y: auto;
             overflow-x: hidden;
-            /* Opacity-only enter — transform breaks position:fixed close button */
-            animation: none;
+            animation: planEnter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
             opacity: 0;
         }
 
@@ -3086,8 +3084,17 @@
         }
 
         @keyframes planEnter {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         @keyframes planExit {
@@ -3105,10 +3112,7 @@
         }
 
         .plan-detail-modal.hide {
-            animation: none;
-            opacity: 0 !important;
-            display: none !important;
-            pointer-events: none !important;
+            animation: planExit 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
         /* Immediate close must beat critical CSS .show { opacity:1 !important } */
         .plan-detail-modal:not(.show),
@@ -3201,30 +3205,28 @@
 
         .plan-close-btn {
             position: fixed;
-            top: max(12px, env(safe-area-inset-top, 12px));
-            right: max(12px, env(safe-area-inset-right, 12px));
-            width: 48px;
-            height: 48px;
-            background: rgba(15,23,42,0.94);
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(15,23,42,0.88);
             color: #f8fafc;
-            border: 1px solid rgba(148,163,184,0.35);
+            border: 1px solid rgba(148,163,184,0.28);
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10050;
+            z-index: 5001;
             font-size: 24px;
             line-height: 1;
-            transition: background 0.2s ease, transform 0.2s ease;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.45);
-            pointer-events: auto !important;
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            animation: fadeIn 0.4s ease-out 0.3s backwards;
         }
         .plan-close-btn i,
         .plan-close-btn svg {
             color: #f8fafc;
-            pointer-events: none;
         }
 
         @keyframes fadeIn {
@@ -3239,8 +3241,8 @@
         }
 
         .plan-close-btn:hover {
-            background: rgba(30,41,59,0.98);
-            transform: rotate(90deg) scale(1.05);
+            background: rgba(30,41,59,0.95);
+            transform: rotate(90deg) scale(1.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
@@ -3302,8 +3304,8 @@
             display: flex;
             gap: 15px;
             align-items: flex-start;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            animation: none;
+            transition: all 0.3s ease;
+            animation: featureZoom 0.6s ease-out backwards;
         }
 
         .plan-feature-card:nth-child(1) { animation-delay: 0.5s; }
@@ -12055,80 +12057,37 @@
 
 
         /* Plan feature icons — one glyph per circle, never stacked */
-        #planDetailModal .plan-features-grid,
-        #planFeaturesGrid {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-            gap: 12px !important;
-            margin-bottom: 24px !important;
-        }
-        #planDetailModal .plan-feature-card {
-            display: flex !important;
-            align-items: flex-start !important;
-            gap: 12px !important;
-            padding: 14px !important;
-            background: rgba(255,255,255,0.05) !important;
-            border: 1px solid rgba(148,163,184,0.18) !important;
-            border-radius: 12px !important;
-            animation: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-        }
-        #planDetailModal .plan-feature-icon {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
-            max-width: 40px !important;
-            max-height: 40px !important;
+        .plan-feature-icon {
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
             border-radius: 50% !important;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             overflow: hidden !important;
             flex-shrink: 0 !important;
-            position: relative !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
-            color: #111827 !important;
         }
-        #planDetailModal .plan-feature-icon > i {
-            position: static !important;
-            display: block !important;
-            width: 1em !important;
-            height: 1em !important;
+        .plan-feature-icon i,
+        .plan-feature-icon i::before {
+            font-size: 17px !important;
+            line-height: 1 !important;
+            width: auto !important;
+            height: auto !important;
+            display: inline-block !important;
             margin: 0 !important;
             padding: 0 !important;
-            font-size: 18px !important;
-            line-height: 1 !important;
-            color: #111827 !important;
-            -webkit-text-fill-color: #111827 !important;
+            vertical-align: middle !important;
         }
-        #planDetailModal .plan-feature-icon > i::before {
-            display: block !important;
-            font-size: 18px !important;
-            line-height: 1 !important;
-            width: 1em !important;
-            height: 1em !important;
-            margin: 0 !important;
-            padding: 0 !important;
+        .plan-features-grid,
+        #planFeaturesGrid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
         }
-        #planDetailModal .plan-feature-icon > *:not(i) {
-            display: none !important;
-        }
-        #planDetailModal .plan-feature-item {
+        .plan-feature-item {
             display: flex !important;
             align-items: flex-start !important;
             gap: 12px !important;
-        }
-        #planDetailModal .plan-feature-title {
-            color: #f8fafc !important;
-            font-weight: 700 !important;
-            margin-bottom: 4px !important;
-        }
-        #planDetailModal .plan-feature-desc {
-            color: rgba(226,232,240,0.72) !important;
-            font-size: 13px !important;
-            line-height: 1.45 !important;
         }

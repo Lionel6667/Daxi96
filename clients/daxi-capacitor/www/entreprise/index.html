@@ -1,0 +1,729 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <script src="/daxi-capacitor-config.js"></script>
+    <script>window._daxiShellPage='enterprise';window._daxiCapacitorApp=true;document.documentElement.classList.add('daxi-native-shell');</script>
+    <script src="/js/daxi-shell-context.js"></script>
+    <script src="/js/daxi-capacitor.js"></script>
+    <script src="/js/daxi-role-boot.js"></script>
+    <link rel="stylesheet" href="/assets/css/daxi-local-fonts.css">
+
+  <script>(function(){try{var t=localStorage.getItem('daxi-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAXI — Partenaires</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/daxi-logo-gold.png">
+  <link rel="shortcut icon" href="/assets/images/daxi-logo-gold.png">
+  <link rel="icon" href="/assets/images/daxi-logo-gold.png">
+  <link rel="stylesheet" href="/static/css/daxi-brand-logo.css?v=20260820f">
+  <link rel="stylesheet" href="/static/css/daxi-boot-radar.css?v=20260823i">
+  <script src="/static/js/daxi-web-radar.js?v=20260823i" defer></script>
+  <script src="/static/js/daxi-shell-role.js?v=20260820f"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0b1220;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding-top: 56px;
+    }
+    .ent-topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,18,32,.92); backdrop-filter: blur(12px);
+      padding: 0 16px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .ent-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .ent-logo img { height: 34px; width: auto; }
+    .ent-logo .daxi-brand-logo--dark { display: none !important; }
+    [data-theme="light"] .ent-logo .daxi-brand-logo--gold { display: none !important; }
+    [data-theme="light"] .ent-logo .daxi-brand-logo--dark { display: block !important; }
+    .ent-back {
+      color: rgba(255,255,255,.7); font-size: 13px; font-weight: 600;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      padding: 8px 10px; border-radius: 10px; border: none; background: transparent; cursor: pointer;
+      font-family: inherit;
+    }
+    .ent-back:hover { color: #fbbf24; }
+    .ent-topbar-right { display: flex; align-items: center; gap: 8px; }
+
+    .ent-page { max-width: 440px; margin: 0 auto; padding: 20px 16px 32px; }
+    @media (min-width: 1024px) {
+      body { padding-top: 64px; }
+      #enterprise-hero.ent-page {
+        max-width: 1120px; padding: 36px 32px 12px;
+        display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center;
+      }
+      #enterprise-hero .ent-hero { text-align: left; margin-bottom: 0; }
+      #enterprise-hero .ent-hero-title { font-size: 44px; }
+      #enterprise-hero .ent-earn { margin: 0; }
+      #enterprise-auth-section.ent-page {
+        max-width: 1120px; padding: 0 32px 48px;
+        display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px;
+      }
+      #enterprise-auth-section .ent-panel { grid-column: 2; }
+      #enterprise-status-section.ent-page { max-width: 640px; }
+    }
+    .ent-hero { text-align: center; margin-bottom: 18px; }
+    .ent-hero-kicker {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: #fbbf24; margin-bottom: 10px;
+    }
+    .ent-hero-title {
+      font-size: 32px; font-weight: 900; line-height: 1.08; color: #fff; margin-bottom: 8px;
+    }
+    .ent-hero-title em { font-style: normal; color: #fbbf24; }
+    .ent-hero-line { font-size: 14px; color: rgba(255,255,255,.62); line-height: 1.5; }
+
+    .ent-earn {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 20px;
+    }
+    .ent-earn-item {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; padding: 12px 8px; text-align: center;
+    }
+    .ent-earn-item i { font-size: 20px; color: #fbbf24; display: block; margin-bottom: 6px; }
+    .ent-earn-item strong { display: block; font-size: 11px; color: #fff; line-height: 1.3; }
+    .ent-earn-item span { display: block; font-size: 10px; color: rgba(255,255,255,.45); margin-top: 3px; }
+
+    .ent-panel {
+      background: linear-gradient(160deg, rgba(15,23,42,.96), rgba(8,14,35,.98));
+      border: 1px solid rgba(245,158,11,.2);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+      overflow: hidden;
+    }
+    .auth-tabs { display: flex; background: rgba(0,0,0,.2); border-bottom: 1px solid rgba(255,255,255,.06); }
+    .auth-tab {
+      flex: 1; padding: 13px 10px; font-size: 13px; font-weight: 700;
+      background: none; border: none; cursor: pointer; color: rgba(255,255,255,.4);
+      border-bottom: 2px solid transparent; font-family: inherit;
+    }
+    .auth-tab.active { color: #fbbf24; border-bottom-color: #f59e0b; background: rgba(245,158,11,.06); }
+    .ent-form-body { padding: 18px 16px 16px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.5); margin-bottom: 4px; }
+    .form-input {
+      width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 10px;
+      padding: 11px 12px; font-size: 14px; color: #fff; outline: none;
+      font-family: inherit; background: rgba(0,0,0,.25);
+    }
+    .form-input:focus { border-color: rgba(245,158,11,.5); box-shadow: 0 0 0 3px rgba(245,158,11,.12); }
+    .form-input::placeholder { color: rgba(255,255,255,.28); }
+    .ent-phone-wrap { display: flex; gap: 0; width: 100%; }
+    .ent-phone-prefix {
+      flex-shrink: 0; padding: 11px 12px; font-size: 14px; font-weight: 700;
+      color: #fbbf24; background: rgba(245,158,11,.1);
+      border: 1px solid rgba(255,255,255,.1); border-right: none;
+      border-radius: 10px 0 0 10px;
+    }
+    .ent-phone-wrap .form-input { border-radius: 0 10px 10px 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mode-pill {
+      border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 10px;
+      cursor: pointer; text-align: center; user-select: none; transition: all .15s;
+      background: rgba(0,0,0,.2);
+    }
+    .mode-pill input { display: none; }
+    .mode-pill.active { border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.1); }
+    .mode-pill i { font-size: 18px; color: #fbbf24; display: block; margin-bottom: 4px; }
+    .mode-pill span { font-size: 11px; font-weight: 700; color: #fff; display: block; }
+    .mode-hint {
+      margin-top: 8px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.45;
+      color: rgba(255,255,255,.65); background: rgba(245,158,11,.08);
+      border: 1px solid rgba(245,158,11,.15);
+    }
+    .ent-btn {
+      width: 100%; padding: 13px; font-size: 14px; font-weight: 800;
+      border: none; border-radius: 12px; cursor: pointer; margin-top: 4px;
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #0f172a;
+      box-shadow: 0 6px 18px rgba(245,158,11,.35); font-family: inherit;
+    }
+    .ent-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .ent-switch {
+      display: block; width: 100%; margin-top: 12px; padding: 0;
+      background: none; border: none; color: rgba(255,255,255,.45); font-size: 12px; font-weight: 700;
+      cursor: pointer; text-align: center; font-family: inherit;
+    }
+    .ent-switch:hover { color: #fbbf24; }
+    .ent-alert { padding: 10px 12px; border-radius: 10px; font-size: 12px; margin-bottom: 10px; }
+    .ent-alert-error { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
+    .ent-alert-success { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+
+    .ent-otp-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.88); align-items: center; justify-content: center; padding: 16px;
+    }
+    .ent-otp-overlay.show { display: flex; }
+    .ent-otp-card {
+      width: 100%; max-width: 380px; padding: 24px 20px; text-align: center;
+      background: linear-gradient(160deg, #1e293b, #0f172a);
+      border: 1px solid rgba(245,158,11,.25); border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+    }
+    .ent-otp-card h3 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .ent-otp-card p { font-size: 12px; color: rgba(255,255,255,.55); margin-bottom: 16px; line-height: 1.5; }
+    .ent-otp-boxes { display: flex; gap: 8px; justify-content: center; margin: 14px 0; }
+    .ent-otp-box {
+      width: 42px; height: 48px; text-align: center; font-size: 20px; font-weight: 800;
+      border: 1px solid rgba(255,255,255,.15); border-radius: 10px; outline: none;
+      background: rgba(0,0,0,.3); color: #fff;
+    }
+    .ent-otp-box:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
+    .ent-otp-status { font-size: 11px; color: rgba(255,255,255,.45); min-height: 16px; margin-top: 8px; }
+    .ent-otp-resend {
+      display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700;
+      color: #fbbf24; background: none; border: none; cursor: pointer; font-family: inherit;
+    }
+
+    .status-panel { padding: 28px 20px; text-align: center; color: #e2e8f0; }
+    .status-icon { font-size: 42px; margin-bottom: 10px; display: block; }
+    .status-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: #fff; }
+    .status-desc { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.55; }
+    .chat-pending-wrap { padding: 0 16px 16px; }
+
+    .ent-select-overlay {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.6); align-items: center; justify-content: center;
+    }
+    .ent-select-overlay.show { display: flex; }
+    .ent-select-sheet {
+      background: white; border-radius: 18px; width: 90%; max-width: 400px; padding: 20px;
+    }
+    .ent-select-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; color: #111827; }
+    .ent-select-sub { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+    .ent-select-item {
+      border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 11px 12px;
+      margin-bottom: 8px; cursor: pointer;
+    }
+    .ent-select-item:hover { border-color: #f59e0b; background: #fffbeb; }
+    .ent-select-item-name { font-size: 14px; font-weight: 700; color: #111827; }
+    .ent-select-item-status { font-size: 11px; margin-top: 2px; }
+  </style>
+  <link rel="stylesheet" href="/static/css/daxi-theme.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-light-extended.css?v=20260725">
+  <link rel="stylesheet" href="/static/css/daxi-theme-contrast.css?v=20260823c">
+  <script src="/static/js/daxi-theme.js?v=20260724" defer></script>
+    <script src="/static/js/daxi-htmx-csrf.js?v=20260816a"></script>
+</head>
+<body>
+
+  <header class="ent-topbar">
+    <a href="/" class="ent-logo daxi-header-brand" onclick="return daxiBackToApp(event)">
+      <img src="/assets/images/daxi-logo-gold.png" alt="DAXI" class="navbar-logo daxi-brand-logo daxi-brand-logo--gold">
+      <img src="/assets/images/daxi-logo-dark.png" alt="DAXI" class="navbar-logo daxi-brand-logo daxi-brand-logo--dark">
+    </a>
+    <div class="ent-topbar-right">
+      <div id="daxi-theme-slot"></div>
+      <button type="button" class="ent-back" onclick="return daxiBackToApp(event)">
+        <i class="ri-arrow-left-line"></i> Retour
+      </button>
+    </div>
+  </header>
+
+  <div id="enterprise-hero" class="ent-page">
+    <div class="ent-hero">
+      <div class="ent-hero-kicker"><i class="ri-money-dollar-circle-line"></i> Partenaire DAXI</div>
+      <h1 class="ent-hero-title">Gagnez sur <em>chaque course</em></h1>
+      <p class="ent-hero-line">Partagez votre lien. Vos clients commandent. Vous touchez une commission.</p>
+    </div>
+    <div class="ent-earn">
+      <div class="ent-earn-item">
+        <i class="ri-link"></i>
+        <strong>Lien unique</strong>
+        <span>À partager</span>
+      </div>
+      <div class="ent-earn-item">
+        <i class="ri-cash-line"></i>
+        <strong>Commission</strong>
+        <span>Par course</span>
+      </div>
+      <div class="ent-earn-item">
+        <i class="ri-smartphone-line"></i>
+        <strong>MonCash</strong>
+        <span>Retrait facile</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="enterprise-auth-section" class="ent-page" style="padding-top:0;">
+    <div class="ent-panel">
+      <div class="auth-tabs">
+        <button class="auth-tab" id="tab-login-btn" onclick="showAuthTab('login')">Connexion</button>
+        <button class="auth-tab active" id="tab-register-btn" onclick="showAuthTab('register')">Inscription</button>
+      </div>
+
+      <div id="auth-login-form" class="ent-form-body" style="display:none;">
+        <div id="login-response"></div>
+        <form id="ent-login-form">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" class="form-input" placeholder="votre@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+          </div>
+          <button type="button" onclick="loginEnterprise()" class="ent-btn" id="login-submit-btn">Se connecter</button>
+        </form>
+        <button type="button" class="ent-switch" onclick="showAuthTab('register')">Pas encore partenaire ? S'inscrire</button>
+      </div>
+
+      <div id="auth-register-form" class="ent-form-body">
+        <div id="register-response"></div>
+        <form id="ent-register-form">
+          <div class="form-group">
+            <label>Nom de l'entreprise</label>
+            <input type="text" name="name" id="ent-reg-name" class="form-input" placeholder="Ex: Hotel Plaza" required>
+          </div>
+          <div class="form-group">
+            <label>WhatsApp</label>
+            <div class="ent-phone-wrap">
+              <div class="ent-phone-prefix">+509</div>
+              <input type="tel" name="phone" id="ent-reg-phone" class="form-input" placeholder="40123456"
+                     inputmode="numeric" autocomplete="tel-national" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" id="ent-reg-email" class="form-input" placeholder="contact@..." required>
+          </div>
+          <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" name="password" id="ent-reg-password" class="form-input" placeholder="6 caractères min." required>
+          </div>
+          <div class="form-group">
+            <label>Mode</label>
+            <div class="mode-row">
+              <label class="mode-pill active" id="mode-shared-card" onclick="selectMode('shared_code')">
+                <input type="radio" name="mode" value="shared_code" checked id="mode-shared">
+                <i class="ri-link"></i><span>Lien client</span>
+              </label>
+              <label class="mode-pill" id="mode-self-card" onclick="selectMode('self_order')">
+                <input type="radio" name="mode" value="self_order" id="mode-self">
+                <i class="ri-taxi-line"></i><span>Je commande</span>
+              </label>
+            </div>
+            <div class="mode-hint" id="ent-mode-hint">Vos clients commandent via votre lien. Vous gagnez une commission sur chaque course.</div>
+          </div>
+          <button type="submit" class="ent-btn" id="ent-reg-submit">Commencer à gagner</button>
+        </form>
+        <button type="button" class="ent-switch" onclick="showAuthTab('login')">Déjà partenaire ? Se connecter</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="enterprise-pending-section" class="ent-page" style="display:none;">
+    <div class="ent-panel">
+      <div class="status-panel">
+        <span class="status-icon">⏳</span>
+        <div class="status-title">Demande reçue</div>
+        <p class="status-desc">Réponse sous <strong>24–48h</strong>. Vous pourrez gagner dès l'activation.</p>
+      </div>
+      <div class="chat-pending-wrap">
+        <div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:8px;">Support</div>
+        <div hx-get="/htmx/enterprise/chat/" hx-trigger="load" hx-swap="innerHTML" id="pending-chat-box"
+             style="min-height:60px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+          <div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Chargement...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="enterprise-rejected-section" class="ent-page" style="display:none;">
+    <div class="ent-panel">
+      <div class="status-panel">
+        <span class="status-icon">❌</span>
+        <div class="status-title">Demande refusée</div>
+        <p class="status-desc" id="enterprise-rejection-reason">Contactez le support pour plus d'informations.</p>
+      </div>
+      <div class="chat-pending-wrap">
+        <div hx-get="/htmx/enterprise/chat/" hx-trigger="load" hx-swap="innerHTML" id="rejected-chat-box"
+             style="min-height:60px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+          <div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Chargement...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ent-otp-overlay" class="ent-otp-overlay">
+    <div class="ent-otp-card">
+      <h3><i class="ri-whatsapp-line" style="color:#25D366;"></i> Vérification WhatsApp</h3>
+      <p id="ent-otp-desc">Code envoyé sur votre WhatsApp.</p>
+      <div class="ent-otp-boxes" id="ent-otp-boxes">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+        <input type="tel" class="ent-otp-box" maxlength="1" inputmode="numeric">
+      </div>
+      <button type="button" class="ent-btn" id="ent-otp-verify">Valider</button>
+      <p class="ent-otp-status" id="ent-otp-status"></p>
+      <button type="button" class="ent-otp-resend" id="ent-otp-resend">Renvoyer le code</button>
+    </div>
+  </div>
+
+  <div id="ent-select-overlay" class="ent-select-overlay">
+    <div class="ent-select-sheet">
+      <div class="ent-select-title">Choisir une entreprise</div>
+      <div class="ent-select-sub">Sélectionnez le compte à ouvrir.</div>
+      <div id="ent-select-list"></div>
+    </div>
+  </div>
+
+  <script>
+  window.daxiBackToApp = function(e) {
+    if (e) e.preventDefault();
+    try { sessionStorage.setItem('daxi_shell_nav', '1'); } catch (_) {}
+    try {
+      if (sessionStorage.getItem('daxi_from_app') === '1' && window.history.length > 1) {
+        sessionStorage.removeItem('daxi_from_app');
+        history.back();
+        return false;
+      }
+    } catch (_) {}
+    window.location.href = '/';
+    return false;
+  };
+
+  (function() {
+    var session = window.DJANGO_SESSION || {};
+
+    function getCsrf() {
+      var m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : (session.csrf_token || '');
+    }
+    document.body.addEventListener('htmx:configRequest', function(e) {
+      e.detail.headers['X-CSRFToken'] = getCsrf();
+    });
+
+    function show(id) { var e = document.getElementById(id); if (e) e.style.display = ''; }
+    function hide(id) { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
+
+    window.showAuthTab = function(tab) {
+      document.getElementById('auth-login-form').style.display  = tab === 'login'    ? 'block' : 'none';
+      document.getElementById('auth-register-form').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('tab-login-btn').className  = 'auth-tab' + (tab === 'login'    ? ' active' : '');
+      document.getElementById('tab-register-btn').className = 'auth-tab' + (tab === 'register' ? ' active' : '');
+    };
+
+    window.selectMode = function(mode) {
+      document.getElementById('mode-shared').checked = (mode === 'shared_code');
+      document.getElementById('mode-self').checked   = (mode === 'self_order');
+      document.getElementById('mode-shared-card').className = 'mode-pill' + (mode === 'shared_code' ? ' active' : '');
+      document.getElementById('mode-self-card').className   = 'mode-pill' + (mode === 'self_order'  ? ' active' : '');
+      var hint = document.getElementById('ent-mode-hint');
+      if (hint) hint.textContent = MODE_HINTS[mode] || MODE_HINTS.shared_code;
+    };
+
+    var MODE_HINTS = {
+      shared_code: 'Vos clients commandent via votre lien. Vous gagnez une commission sur chaque course.',
+      self_order: 'Vous commandez les taxis pour vos clients. Commission sur chaque course validée.'
+    };
+
+    function entNormalizePhone(raw) {
+      var digits = (raw || '').replace(/\D/g, '');
+      if (digits.length === 8) return '+509' + digits;
+      if (digits.length === 11 && digits.indexOf('509') === 0) return '+' + digits;
+      return '+509' + digits.replace(/^509/, '');
+    }
+
+    var _entPendingReg = null;
+
+    function entCollectOtp() {
+      var code = '';
+      document.querySelectorAll('#ent-otp-boxes .ent-otp-box').forEach(function(b) {
+        code += (b.value || '').replace(/\D/g, '');
+      });
+      return code;
+    }
+
+    function entShowOtpModal() {
+      document.getElementById('ent-otp-overlay').classList.add('show');
+      var boxes = document.querySelectorAll('#ent-otp-boxes .ent-otp-box');
+      boxes.forEach(function(b) { b.value = ''; });
+      if (boxes[0]) boxes[0].focus();
+    }
+
+    function entHideOtpModal() {
+      document.getElementById('ent-otp-overlay').classList.remove('show');
+    }
+
+    async function entSendOtp() {
+      if (!_entPendingReg) return false;
+      var status = document.getElementById('ent-otp-status');
+      try {
+        var r = await fetch('/api/auth/send-otp/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email: _entPendingReg.email,
+            phone: _entPendingReg.phone,
+            name: _entPendingReg.name,
+          }),
+        });
+        var d = await r.json();
+        if (d.success) {
+          if (status) status.textContent = 'Code envoyé sur WhatsApp.';
+          return true;
+        }
+        if (status) status.textContent = d.message || 'Échec envoi.';
+        return false;
+      } catch (_) {
+        if (status) status.textContent = 'Erreur réseau.';
+        return false;
+      }
+    }
+
+    async function entSubmitRegistration(otp) {
+      if (!_entPendingReg) return;
+      var resp = document.getElementById('register-response');
+      var btn = document.getElementById('ent-reg-submit');
+      var fd = new FormData();
+      Object.keys(_entPendingReg).forEach(function(k) { fd.append(k, _entPendingReg[k]); });
+      fd.append('otp', otp);
+      if (btn) { btn.disabled = true; btn.textContent = 'Envoi...'; }
+      try {
+        var vr = await fetch('/api/auth/verify-reg-otp/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email: _entPendingReg.email,
+            phone: _entPendingReg.phone,
+            otp: otp,
+          }),
+        });
+        var vd = await vr.json();
+        if (!vd.success) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">' + (vd.message || 'Code incorrect.') + '</div>';
+          entHideOtpModal();
+          return;
+        }
+        var r = await fetch('/htmx/enterprise/register/', {
+          method: 'POST', body: fd, credentials: 'same-origin',
+          headers: { 'X-CSRFToken': getCsrf() },
+        });
+        var html = await r.text();
+        if (resp) resp.innerHTML = html;
+        if (html.indexOf('success') !== -1 || html.indexOf('Demande') !== -1 || html.indexOf('soumis') !== -1) {
+          entHideOtpModal();
+          setTimeout(function() { window.location.reload(); }, 1500);
+        } else {
+          entHideOtpModal();
+        }
+      } catch (_) {
+        if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">Erreur réseau.</div>';
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Commencer à gagner'; }
+      }
+    }
+
+    function setupEntRegister() {
+      var form = document.getElementById('ent-register-form');
+      if (!form) return;
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var resp = document.getElementById('register-response');
+        var name = (document.getElementById('ent-reg-name').value || '').trim();
+        var phoneRaw = (document.getElementById('ent-reg-phone').value || '').trim();
+        var email = (document.getElementById('ent-reg-email').value || '').trim().toLowerCase();
+        var pwd = (document.getElementById('ent-reg-password').value || '').trim();
+        var mode = document.getElementById('mode-self').checked ? 'self_order' : 'shared_code';
+        var phone = entNormalizePhone(phoneRaw);
+        if (!name || !phoneRaw || !email || !pwd) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">Tous les champs sont requis.</div>';
+          return;
+        }
+        if (pwd.length < 6) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">Mot de passe min. 6 caractères.</div>';
+          return;
+        }
+        if (phoneRaw.replace(/\D/g, '').length < 8) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">Numéro WhatsApp invalide.</div>';
+          return;
+        }
+        _entPendingReg = { name: name, phone: phone, email: email, password: pwd, mode: mode };
+        var btn = document.getElementById('ent-reg-submit');
+        if (btn) { btn.disabled = true; btn.textContent = 'Envoi code...'; }
+        var sent = await entSendOtp();
+        if (btn) { btn.disabled = false; btn.textContent = 'Commencer à gagner'; }
+        if (!sent) {
+          if (resp) resp.innerHTML = '<div class="ent-alert ent-alert-error">Impossible d\'envoyer le code WhatsApp.</div>';
+          return;
+        }
+        document.getElementById('ent-otp-desc').textContent = 'Code envoyé au ' + phone + '.';
+        entShowOtpModal();
+      });
+
+      document.getElementById('ent-otp-verify').addEventListener('click', function() {
+        var code = entCollectOtp();
+        if (code.length !== 6) {
+          document.getElementById('ent-otp-status').textContent = 'Entrez les 6 chiffres.';
+          return;
+        }
+        entSubmitRegistration(code);
+      });
+
+      document.getElementById('ent-otp-resend').addEventListener('click', function(e) {
+        e.preventDefault();
+        entSendOtp();
+      });
+
+      document.querySelectorAll('#ent-otp-boxes .ent-otp-box').forEach(function(box, idx, boxes) {
+        box.addEventListener('input', function() {
+          box.value = (box.value || '').replace(/\D/g, '').slice(0, 1);
+          if (box.value && boxes[idx + 1]) boxes[idx + 1].focus();
+          if (entCollectOtp().length === 6) document.getElementById('ent-otp-verify').click();
+        });
+        box.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Backspace' && !box.value && boxes[idx - 1]) boxes[idx - 1].focus();
+        });
+      });
+    }
+
+    function initPage() {
+      var entId     = session.enterprise_id;
+      var entStatus = session.enterprise_status;
+
+      if (!entId) {
+        show('enterprise-hero');
+        show('enterprise-auth-section');
+        var tabParam = new URLSearchParams(window.location.search).get('tab');
+        showAuthTab(tabParam === 'login' ? 'login' : 'register');
+        return;
+      }
+
+      hide('enterprise-hero');
+      hide('enterprise-auth-section');
+
+      if (!entStatus) {
+        show('enterprise-hero');
+        show('enterprise-auth-section');
+        showAuthTab('login');
+        return;
+      }
+
+      if (entStatus === 'approved') {
+        window.location.replace('/entreprise/dashboard/');
+      } else if (entStatus === 'pending') {
+        show('enterprise-pending-section');
+      } else if (entStatus === 'rejected') {
+        showEnterpriseRejection(session.enterprise_rejection_reason || '');
+        show('enterprise-rejected-section');
+      }
+    }
+
+    function showEnterpriseRejection(reason) {
+      var el = document.getElementById('enterprise-rejection-reason');
+      if (!el) return;
+      var text = (reason || '').trim();
+      el.innerHTML = text
+        ? 'Votre demande de partenariat a été refusée.<br><strong>Motif :</strong> ' + text.replace(/</g, '&lt;')
+        : 'Votre demande de partenariat a été refusée. Contactez le support pour plus d\'informations.';
+    }
+
+    function redirectAfterEnterpriseLogin(data) {
+      if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
+      var status = (data && data.status) || '';
+      if (status === 'approved') {
+        window.location.href = '/entreprise/dashboard/';
+      } else {
+        window.location.href = '/entreprise/';
+      }
+    }
+
+    window.loginEnterprise = function() {
+      var form = document.getElementById('ent-login-form');
+      var fd   = new FormData(form);
+      var resp = document.getElementById('login-response');
+      var btn  = document.getElementById('login-submit-btn');
+      resp.innerHTML = '';
+      var emailVal = (fd.get('email') || '').trim();
+      var passVal  = (fd.get('password') || '').trim();
+      if (!emailVal || !passVal) {
+        resp.innerHTML = '<div class="ent-alert ent-alert-error">Email et mot de passe requis.</div>';
+        return;
+      }
+      btn.disabled = true; btn.textContent = 'Connexion...';
+      fetch('/htmx/enterprise/login/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      })
+      .then(function(r) { return r.json().catch(function() { return r.text().then(function(t){ return {text: t}; }); }); })
+      .then(function(data) {
+        if (data && data.enterprises && data.enterprises.length > 1) {
+          showEnterpriseSelector(data.enterprises);
+          btn.disabled = false; btn.textContent = 'Se connecter';
+        } else if (data && data.enterprise_id) {
+          redirectAfterEnterpriseLogin(data);
+        } else if (data && data.error) {
+          resp.innerHTML = '<div class="ent-alert ent-alert-error">' + data.error + '</div>';
+          btn.disabled = false; btn.textContent = 'Se connecter';
+        } else {
+          redirectAfterEnterpriseLogin(data);
+        }
+      })
+      .catch(function() {
+        resp.innerHTML = '<div class="ent-alert ent-alert-error">Erreur réseau.</div>';
+        btn.disabled = false; btn.textContent = 'Se connecter';
+      });
+    };
+
+    function showEnterpriseSelector(enterprises) {
+      var list = document.getElementById('ent-select-list');
+      list.innerHTML = '';
+      enterprises.forEach(function(e) {
+        var statusColor = e.status === 'approved' ? '#10b981' : e.status === 'pending' ? '#f59e0b' : '#ef4444';
+        var statusLabel = e.status === 'approved' ? 'Actif' : e.status === 'pending' ? 'En attente' : 'Refusé';
+        var item = document.createElement('div');
+        item.className = 'ent-select-item';
+        item.innerHTML = '<div class="ent-select-item-name">' + e.name + '</div>' +
+          '<div class="ent-select-item-status" style="color:' + statusColor + ';">' + statusLabel + '</div>';
+        item.addEventListener('click', function() { selectEnterprise(e.id); });
+        list.appendChild(item);
+      });
+      document.getElementById('ent-select-overlay').classList.add('show');
+    }
+
+    function selectEnterprise(eid) {
+      document.getElementById('ent-select-overlay').classList.remove('show');
+      var fd = new FormData();
+      fd.append('enterprise_id', eid);
+      fetch('/htmx/enterprise/switch/', {
+        method: 'POST', body: fd, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCsrf() }
+      }).then(function() {
+        if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
+        window.location.href = '/entreprise/';
+      }).catch(function() {
+        window.location.href = '/entreprise/';
+      });
+    }
+
+    document.body.addEventListener('htmx:afterSettle', function(e) {
+      var target = e.detail && e.detail.target;
+      if (!target || target.id !== 'register-response') return;
+      var html = target.innerHTML;
+      if (html.indexOf('Demande') !== -1 || html.indexOf('partenaire') !== -1 || html.indexOf('success') !== -1) {
+        if (window.DaxiShellRole && DaxiShellRole.persistAuth) DaxiShellRole.persistAuth('enterprise');
+        setTimeout(function() { window.location.reload(); }, 1500);
+      }
+    });
+
+    setupEntRegister();
+    initPage();
+  })();
+  </script>
+</body>
+</html>

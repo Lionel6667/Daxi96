@@ -1240,13 +1240,95 @@ function _drvBlueDotEl() {
 function _drvMapBottomPad() {
     var mission = !!(document.body && document.body.classList.contains('drv-mission-active'));
     var calib = !!(document.body && document.body.classList.contains('drv-zoom-calibrating'));
-    // Keep the blue GPS dot above mission buttons / calib card.
-    var ratio = calib ? 0.48 : (mission ? 0.66 : 0.40);
-    return { bottom: Math.round(window.innerHeight * ratio) };
+    var h = window.innerHeight || 640;
+    var bottom = Math.round(h * 0.38);
+    try {
+        if (calib) {
+            var card = document.getElementById('drv-zoom-calib-card') || document.querySelector('.drv-zoom-calib');
+            if (card) {
+                var cr = card.getBoundingClientRect();
+                bottom = Math.max(bottom, Math.round(h - cr.top + 24));
+            } else {
+                bottom = Math.round(h * 0.48);
+            }
+        } else if (mission) {
+            // Measure real mission panel height so the GPS dot sits above the buttons,
+            // not under a fixed fraction of the screen that drifts by device.
+            var panel = document.getElementById('mission-panel');
+            if (panel && panel.classList.contains('is-active')) {
+                var pr = panel.getBoundingClientRect();
+                var panelTop = pr.top;
+                if (pr.height > 0 && panelTop > 0 && panelTop < h) {
+                    bottom = Math.max(Math.round(h * 0.42), Math.round(h - panelTop + 28));
+                } else {
+                    bottom = Math.round(h * 0.58);
+                }
+            } else {
+                bottom = Math.round(h * 0.58);
+            }
+        }
+        bottom = Math.min(Math.round(h * 0.78), Math.max(Math.round(h * 0.28), bottom));
+    } catch (e) {}
+    return { bottom: bottom };
 }
+function _drvLookAhead() {
+    var mission = !!(document.body && document.body.classList.contains('drv-mission-active'));
+    if (!mission) return CFG.lookAhead;
+    // Maps JS ignores setOptions({padding}). Positive lookAhead puts the car BELOW
+    // screen center (toward the mission panel) — that made the bug worse.
+    // Use a net BEHIND offset so the GPS dot rises into the free band above the panel,
+    // while keeping a small forward bias for navigation readability.
+    var pad = _drvMapBottomPad();
+    var h = window.innerHeight || 640;
+    var frac = Math.min(0.72, Math.max(0.35, (pad.bottom || 0) / h));
+    return CFG.lookAhead * (0.28 - frac * 1.9);
+}
+function _drvEstimateMarkerScreenYRatio() {
+    // Empirical: la=CFG → ~0.68 from top; la=0 → 0.50; scales ~linear for small la.
+    var la = (typeof _drvLookAhead === 'function') ? _drvLookAhead() : CFG.lookAhead;
+    return 0.5 + 0.18 * (la / (CFG.lookAhead || 0.00095));
+}
+function _drvMarkerClearsMissionPanel() {
+    var h = window.innerHeight || 640;
+    var panel = document.getElementById('mission-panel');
+    var panelTop = h;
+    if (panel && panel.classList.contains('is-active')) {
+        var pr = panel.getBoundingClientRect();
+        if (pr.height > 0) panelTop = pr.top;
+    } else if (document.body && document.body.classList.contains('drv-mission-active')) {
+        panelTop = h * (1 - (_drvMapBottomPad().bottom / h));
+    }
+    var markerY = _drvEstimateMarkerScreenYRatio() * h;
+    return {
+        ok: markerY < panelTop - 28,
+        markerY: Math.round(markerY),
+        panelTop: Math.round(panelTop),
+        clearance: Math.round(panelTop - markerY),
+        lookAhead: _drvLookAhead(),
+        pad: _drvMapBottomPad()
+    };
+}
+window._drvMarkerClearsMissionPanel = _drvMarkerClearsMissionPanel;
 function _drvRefreshMapPad() {
     try { if (map && map.setOptions) map.setOptions({ padding: _drvMapBottomPad() }); } catch (e) {}
 }
+(function _drvBindMissionPadObserver() {
+    if (window._drvMissionPadObsBound) return;
+    window._drvMissionPadObsBound = true;
+    function bind() {
+        var panel = document.getElementById('mission-panel');
+        if (!panel || !window.ResizeObserver) return;
+        var ro = new ResizeObserver(function() {
+            if (document.body && document.body.classList.contains('drv-mission-active')) _drvRefreshMapPad();
+        });
+        ro.observe(panel);
+        window.addEventListener('resize', function() {
+            if (document.body && document.body.classList.contains('drv-mission-active')) _drvRefreshMapPad();
+        });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+    else bind();
+})();
 function _drvEnterNavMode(force) {
     if (!map || !_mapReady) return;
     if (!targetPos || targetPos[0] == null || targetPos[1] == null) return;
@@ -1258,8 +1340,9 @@ function _drvEnterNavMode(force) {
     _lastMapHeading = heading;
     var zoom = _drvActiveZoom();
     _userZoom = zoom;
-    var aheadLng = targetPos[0] + Math.sin(heading * Math.PI / 180) * CFG.lookAhead;
-    var aheadLat = targetPos[1] + Math.cos(heading * Math.PI / 180) * CFG.lookAhead;
+    var _la = (typeof _drvLookAhead === 'function') ? _drvLookAhead() : CFG.lookAhead;
+    var aheadLng = targetPos[0] + Math.sin(heading * Math.PI / 180) * _la;
+    var aheadLat = targetPos[1] + Math.cos(heading * Math.PI / 180) * _la;
     try {
         if (map.moveCamera) {
             map.moveCamera({
@@ -1635,12 +1718,12 @@ let _driverWS = null;
 let _driverWSReady = false;
 
 function bootDriverApp() {
-    window._drvSplashMinUntil = Date.now() + 2200;
+    window._drvSplashMinUntil = Date.now() + 700;
     _showRecenterBtn(false);
     setTimeout(function() {
         window._daxiForceSplashDismiss = true;
         _tryDismissSplash();
-    }, 5500);
+    }, 2200);
     populateSidebar();
     _drvSyncSystemStatus('open');
     loadProfile();
@@ -1878,8 +1961,9 @@ function engine() {
             var heading = _drvMapHeading();
             _lastMapHeading = lerpBear(_lastMapHeading || heading, heading, 0.16);
             var zoom = _drvActiveZoom();
-            var aheadLng = targetPos[0] + Math.sin(_lastMapHeading * Math.PI / 180) * CFG.lookAhead;
-            var aheadLat = targetPos[1] + Math.cos(_lastMapHeading * Math.PI / 180) * CFG.lookAhead;
+            var _la2 = (typeof _drvLookAhead === 'function') ? _drvLookAhead() : CFG.lookAhead;
+            var aheadLng = targetPos[0] + Math.sin(_lastMapHeading * Math.PI / 180) * _la2;
+            var aheadLat = targetPos[1] + Math.cos(_lastMapHeading * Math.PI / 180) * _la2;
             if (map.moveCamera) {
                 map.moveCamera({ center: { lat: aheadLat, lng: aheadLng }, heading: _lastMapHeading, tilt: CFG.pitch, zoom: zoom });
             } else {
@@ -5204,6 +5288,58 @@ function haversineKm(lat1,lon1,lat2,lon2) {
     window.addEventListener('load', openDriverOrderFromHash);
     window.addEventListener('hashchange', openDriverOrderFromHash);
 })();
+
+/* Android / Capacitor system back — close overlays before leaving the app */
+window.daxiHandleSystemBack = function daxiHandleSystemBack() {
+    try {
+        var splash = document.getElementById('splash');
+        if (splash && !splash.classList.contains('hide') && splash.style.display !== 'none') {
+            splash.classList.add('hide');
+            splash.style.pointerEvents = 'none';
+            splash.style.display = 'none';
+            return true;
+        }
+        var sidebar = document.getElementById('drv-sidebar') || document.getElementById('sidebarMenu');
+        if (sidebar && (sidebar.classList.contains('open') || sidebar.classList.contains('active') || sidebar.classList.contains('is-open'))) {
+            sidebar.classList.remove('open', 'active', 'is-open');
+            var so = document.getElementById('drv-sidebar-overlay') || document.getElementById('sidebarOverlay');
+            if (so) so.classList.remove('open', 'active', 'show');
+            document.body.classList.remove('sidebar-open');
+            return true;
+        }
+        var chat = document.getElementById('chat-panel');
+        if (chat && (chat.classList.contains('open') || chat.classList.contains('is-open') || chat.classList.contains('active'))) {
+            chat.classList.remove('open', 'is-open', 'active');
+            return true;
+        }
+        var orders = document.getElementById('orders-drawer');
+        if (orders && (orders.classList.contains('open') || orders.classList.contains('is-open') || orders.classList.contains('active'))) {
+            orders.classList.remove('open', 'is-open', 'active');
+            return true;
+        }
+        var panel = document.getElementById('drv-panel');
+        if (panel && (panel.classList.contains('open') || panel.classList.contains('is-open'))) {
+            panel.classList.remove('open', 'is-open');
+            return true;
+        }
+        var calib = document.getElementById('drv-zoom-calib-card');
+        if (calib && document.body.classList.contains('drv-zoom-calibrating')) {
+            if (typeof window._drvExitZoomCalib === 'function') window._drvExitZoomCalib();
+            else {
+                document.body.classList.remove('drv-zoom-calibrating');
+                calib.style.display = 'none';
+            }
+            return true;
+        }
+        var profile = document.getElementById('profile-modal') || document.getElementById('drv-profile-modal');
+        if (profile && profile.classList.contains('show')) {
+            profile.classList.remove('show');
+            profile.style.display = 'none';
+            return true;
+        }
+    } catch (e) {}
+    return false;
+};
 </script>
 <script src="/static/js/daxi-countdown.js"></script>
 </body>

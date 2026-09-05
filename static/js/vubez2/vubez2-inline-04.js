@@ -93,22 +93,21 @@ function _renderPlanModal(planId, data) {
         });
     }
 
-    var animTargets = modal.querySelectorAll('.plan-description, .plan-features-grid, .plan-cta-section');
+    // Do not animate the features grid — featureZoom + animate-on-scroll
+    // stacked/compressed the icon circles until IntersectionObserver fired.
+    var animTargets = modal.querySelectorAll('.plan-description, .plan-cta-section');
     animTargets.forEach(function(el, i) {
-        el.classList.add('animate-on-scroll');
-        el.style.transitionDelay = (i * 120) + 'ms';
+        el.classList.add('animate-on-scroll', 'in-view');
+        el.style.transitionDelay = (i * 80) + 'ms';
+        el.style.opacity = '1';
+        el.style.transform = 'none';
     });
-
-    var io = new IntersectionObserver(function(entries, obs) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('in-view');
-                obs.unobserve(entry.target);
-            }
-        });
-    }, { root: modal, threshold: 0.15 });
-
-    animTargets.forEach(function(el) { io.observe(el); });
+    var featuresGridEl = document.getElementById('planFeaturesGrid');
+    if (featuresGridEl) {
+        featuresGridEl.classList.remove('animate-on-scroll');
+        featuresGridEl.style.opacity = '1';
+        featuresGridEl.style.transform = 'none';
+    }
 
     modal.classList.remove('hide');
     modal.classList.add('show');
@@ -140,20 +139,25 @@ function openPlanModal(planId) {
 function closePlanModal(skipBlock) {
     var modal = document.getElementById('planDetailModal');
     if (!modal) return;
+    // Critical CSS uses .show { opacity:1 !important } — must drop .show immediately
+    // or the modal stays fully visible for the whole exit animation.
     modal.classList.add('hide');
-
-
-    if (!skipBlock) window.__preventOpenOrderModalUntil = Date.now() + 1200;
-
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.style.opacity = '0';
+    modal.style.visibility = 'hidden';
+    modal.style.pointerEvents = 'none';
+    document.body.style.overflow = '';
+    if (!skipBlock) window.__preventOpenOrderModalUntil = Date.now() + 400;
     setTimeout(function() {
-        modal.classList.remove('show');
+        modal.classList.remove('hide');
         modal.style.display = '';
         modal.style.opacity = '';
         modal.style.visibility = '';
         modal.style.pointerEvents = '';
-        document.body.style.overflow = '';
-    }, 600);
+    }, 50);
 }
+window.closePlanModal = closePlanModal;
 
 function initPlanDetailModal() {
     var modal = document.getElementById('planDetailModal');
@@ -212,12 +216,32 @@ function initPlanDetailModal() {
                 if (planId === '1' || planId === '2' || planId === '3' || planId === '4' || planId === '5') {
                     closePlanModal(true);
                     setTimeout(function() {
-                        if (window.DaxiPlanWizard && window.DaxiPlanWizard.open) {
-                            window.DaxiPlanWizard.open(planId);
-                        } else if (typeof openPlanOrderWizard === 'function') {
-                            openPlanOrderWizard(planId);
+                        function _openWizard() {
+                            if (window.DaxiPlanWizard && window.DaxiPlanWizard.open) {
+                                window.DaxiPlanWizard.open(planId);
+                                return true;
+                            }
+                            if (typeof openPlanOrderWizard === 'function') {
+                                openPlanOrderWizard(planId);
+                                return true;
+                            }
+                            return false;
                         }
-                    }, 300);
+                        if (_openWizard()) return;
+                        var loader = window.DaxiLazy && (DaxiLazy.loadPlanWizard || DaxiLazy.load);
+                        var p = loader
+                            ? (DaxiLazy.loadPlanWizard ? DaxiLazy.loadPlanWizard() : DaxiLazy.load('daxi-plan-wizard.js'))
+                            : Promise.resolve();
+                        Promise.resolve(p).then(function() {
+                            if (!_openWizard()) {
+                                var tries = 0;
+                                var t = setInterval(function() {
+                                    tries++;
+                                    if (_openWizard() || tries > 20) clearInterval(t);
+                                }, 100);
+                            }
+                        }).catch(function() {});
+                    }, 200);
                     return;
                 }
 
@@ -625,8 +649,9 @@ function initServicePlansSection() {
             var cardRect = card.getBoundingClientRect();
             var containerRect = plansContainer.getBoundingClientRect();
             var drift = (cardRect.left + cardRect.width / 2) - (containerRect.left + containerRect.width / 2);
-            if (Math.abs(drift) > 6) scrollCardToCenter(idx, 'smooth');
-        }, 120);
+            // Soft snap only when nearly settled — avoid fighting active swipe/pan.
+            if (Math.abs(drift) > 28) scrollCardToCenter(idx, 'smooth');
+        }, 180);
     }, { passive: true });
 
     if (leftArrow) {
@@ -4765,6 +4790,43 @@ function _initDaxiSheetUi() {
     _syncRoundTripWaitUi();
     if (window._initDaxiSheetHandleDrag) _initDaxiSheetHandleDrag();
 
+    // Trip type + notes must live here: deferred chunk often loads after DOMContentLoaded,
+    // so wiring them only inside that listener left the controls dead.
+    (function _initTripTypeAndNotes() {
+        if (window._daxiTripNotesBound) return;
+        window._daxiTripNotesBound = true;
+        var notesRow = document.getElementById('notesToggleRow');
+        var notesExpand = document.getElementById('notesExpand');
+        var notesChevron = document.getElementById('notesChevron');
+        function toggleNotesExpand() {
+            if (!notesExpand) return;
+            var open = notesExpand.classList.toggle('open');
+            if (notesChevron) notesChevron.className = 'daxi-row-chevron ' + (open ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line');
+            if (open) {
+                var ta = document.getElementById('bookingDescription');
+                if (ta) setTimeout(function() { ta.focus(); }, 80);
+            }
+        }
+        if (notesRow) {
+            notesRow.addEventListener('click', toggleNotesExpand);
+            notesRow.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleNotesExpand(); }
+            });
+        }
+        var oneWayBtn = document.getElementById('oneWayBtn');
+        var roundTripBtn = document.getElementById('roundTripBtn');
+        var tripTypeHidden = document.getElementById('tripTypeHidden');
+        function setTripType(value, activeBtn, inactiveBtn) {
+            if (tripTypeHidden) tripTypeHidden.value = value;
+            if (activeBtn) activeBtn.classList.add('active');
+            if (inactiveBtn) inactiveBtn.classList.remove('active');
+            if (window._syncRoundTripWaitUi) _syncRoundTripWaitUi();
+            if (typeof _syncBookingHiddenFields === 'function') _syncBookingHiddenFields();
+        }
+        if (oneWayBtn) oneWayBtn.addEventListener('click', function() { setTripType('aller simple', oneWayBtn, roundTripBtn); });
+        if (roundTripBtn) roundTripBtn.addEventListener('click', function() { setTripType('aller-retour', roundTripBtn, oneWayBtn); });
+    })();
+
     (function _initBookingHelpModal() {
         var btn = document.getElementById('daxiBookingHelpBtn');
         var overlay = document.getElementById('daxiBookingHelpOverlay');
@@ -7973,6 +8035,7 @@ async function _initPlacesAutocompleteAsync() {
             DaxiOffline.initSimpleMap('daxi-main-map');
             if (typeof _flushClientGpsToMap === 'function') _flushClientGpsToMap();
         }
+        if (typeof _initDaxiSheetUi === 'function') _initDaxiSheetUi();
         if (window._daxiTryDismissInitialLoader) window._daxiTryDismissInitialLoader();
         return;
     }
@@ -7984,6 +8047,7 @@ async function _initPlacesAutocompleteAsync() {
             DaxiOffline.initSimpleMap('daxi-main-map');
             if (typeof _flushClientGpsToMap === 'function') _flushClientGpsToMap();
         }
+        if (typeof _initDaxiSheetUi === 'function') _initDaxiSheetUi();
         if (window._daxiTryDismissInitialLoader) window._daxiTryDismissInitialLoader();
         return;
     }
@@ -8490,11 +8554,31 @@ document.addEventListener('click', function(e) {
     if (orderBtn) {
         e.preventDefault();
         var pid = orderBtn.getAttribute('data-plan');
-        if (window.DaxiPlanWizard && window.DaxiPlanWizard.open) {
-            window.DaxiPlanWizard.open(pid);
-        } else if (typeof submitPlanOrder === 'function') {
-            submitPlanOrder(pid);
+        function _openW() {
+            if (window.DaxiPlanWizard && window.DaxiPlanWizard.open) {
+                window.DaxiPlanWizard.open(pid);
+                return true;
+            }
+            if (typeof submitPlanOrder === 'function') {
+                submitPlanOrder(pid);
+                return true;
+            }
+            return false;
         }
+        if (_openW()) return;
+        var loader = window.DaxiLazy && (DaxiLazy.loadPlanWizard || DaxiLazy.load);
+        var p = loader
+            ? (DaxiLazy.loadPlanWizard ? DaxiLazy.loadPlanWizard() : DaxiLazy.load('daxi-plan-wizard.js'))
+            : Promise.resolve();
+        Promise.resolve(p).then(function() {
+            if (!_openW()) {
+                var tries = 0;
+                var t = setInterval(function() {
+                    tries++;
+                    if (_openW() || tries > 20) clearInterval(t);
+                }, 100);
+            }
+        }).catch(function() {});
     }
 });
 
@@ -10235,7 +10319,9 @@ document.body.addEventListener('htmx:beforeRequest', function(evt) {
     });
 })();
 
-document.addEventListener('DOMContentLoaded', function() {
+function _daxiBootMainUi() {
+    if (window._daxiMainUiBooted) return;
+    window._daxiMainUiBooted = true;
     if (typeof _initMapTapZone === 'function') _initMapTapZone();
     if (typeof _daxiIsolateCommandChrome === 'function') _daxiIsolateCommandChrome();
     if (typeof _daxiWireSheetOpenTargets === 'function') _daxiWireSheetOpenTargets();
@@ -10264,11 +10350,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof _initDaxiSheetUi === 'function') _initDaxiSheetUi();
 
 
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof AOS !== 'undefined') {
-            AOS.init({ once: true, duration: 600, offset: 60, easing: 'ease-out-quad' });
-        }
-    });
+    if (typeof AOS !== 'undefined') {
+        AOS.init({ once: true, duration: 600, offset: 60, easing: 'ease-out-quad' });
+    }
 
     renderTopDriversFromDjango();
     initServicePlansSection();
@@ -10571,38 +10655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     })();
 
-    var notesRow = document.getElementById('notesToggleRow');
-    var notesExpand = document.getElementById('notesExpand');
-    var notesChevron = document.getElementById('notesChevron');
-    function toggleNotesExpand() {
-        if (!notesExpand) return;
-        var open = notesExpand.classList.toggle('open');
-        if (notesChevron) notesChevron.className = 'daxi-row-chevron ' + (open ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line');
-        if (open) {
-            var ta = document.getElementById('bookingDescription');
-            if (ta) setTimeout(function() { ta.focus(); }, 80);
-        }
-    }
-    if (notesRow) {
-        notesRow.addEventListener('click', toggleNotesExpand);
-        notesRow.addEventListener('keydown', function(ev) {
-            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleNotesExpand(); }
-        });
-    }
-
-
-    var oneWayBtn = document.getElementById('oneWayBtn');
-    var roundTripBtn = document.getElementById('roundTripBtn');
-    var tripTypeHidden = document.getElementById('tripTypeHidden');
-    function setTripType(value, activeBtn, inactiveBtn) {
-        if (tripTypeHidden) tripTypeHidden.value = value;
-        if (activeBtn) activeBtn.classList.add('active');
-        if (inactiveBtn) inactiveBtn.classList.remove('active');
-        if (window._syncRoundTripWaitUi) _syncRoundTripWaitUi();
-        _syncBookingHiddenFields();
-    }
-    if (oneWayBtn) oneWayBtn.addEventListener('click', function() { setTripType('aller simple', oneWayBtn, roundTripBtn); });
-    if (roundTripBtn) roundTripBtn.addEventListener('click', function() { setTripType('aller-retour', roundTripBtn, oneWayBtn); });
+    // trip type + notes: wired in _initDaxiSheetUi (deferred-safe)
 
 
     var orderBtn = document.getElementById('orderTaxiBtn');
@@ -10623,14 +10676,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    var closePlanBtns = document.querySelectorAll('.plan-close-btn');
-    closePlanBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var modal = btn.closest('.plan-detail-modal');
-            if (modal) modal.classList.remove('show');
-        });
-    });
-
+    // plan close is handled by initPlanDetailModal → closePlanModal
 
     document.querySelectorAll('.route-book-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -11136,7 +11182,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _daxiBootMainUi);
+} else {
+    _daxiBootMainUi();
+}
 
 
 function showAuthError(tabId, msg) {

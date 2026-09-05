@@ -447,6 +447,59 @@ function daxiHandleSystemBack() {
             if (typeof closeSidebar === 'function') closeSidebar();
             return true;
         }
+        var planModal = document.getElementById('planDetailModal');
+        if (planModal && planModal.classList.contains('show')) {
+            if (typeof closePlanModal === 'function') closePlanModal();
+            else if (typeof window.closePlanModal === 'function') window.closePlanModal();
+            else {
+                planModal.classList.remove('show');
+                planModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+            return true;
+        }
+        var help = document.getElementById('daxiBookingHelpOverlay');
+        if (help && help.classList.contains('show')) {
+            help.classList.remove('show');
+            help.style.display = 'none';
+            return true;
+        }
+        var cardPay = document.getElementById('daxiCardPaymentOverlay');
+        if (cardPay && cardPay.classList.contains('show')) {
+            cardPay.classList.remove('show');
+            cardPay.style.display = 'none';
+            return true;
+        }
+        function _vis(el) {
+            if (!el) return false;
+            if (el.classList && (el.classList.contains('show') || el.classList.contains('active'))) return true;
+            var d = el.style && el.style.display;
+            return !!(d && d !== 'none');
+        }
+        var loginModal = document.getElementById('loginModal');
+        if (_vis(loginModal)) {
+            loginModal.style.display = 'none';
+            loginModal.classList.remove('show', 'active');
+            return true;
+        }
+        var signupModal = document.getElementById('daxiSignupModal');
+        if (_vis(signupModal)) {
+            signupModal.style.display = 'none';
+            signupModal.classList.remove('show', 'active');
+            return true;
+        }
+        var forgot = document.getElementById('forgotPasswordModal');
+        if (_vis(forgot)) {
+            forgot.style.display = 'none';
+            forgot.classList.remove('show', 'active');
+            return true;
+        }
+        var blogModal = document.getElementById('blogFullscreenModal');
+        if (blogModal && blogModal.classList.contains('show')) {
+            if (typeof closeFullscreenBlog === 'function') closeFullscreenBlog();
+            else blogModal.classList.remove('show');
+            return true;
+        }
         var locPrompt = document.getElementById('locationSharePrompt');
         if (locPrompt && locPrompt.classList.contains('show')) {
             if (typeof _hideLocationSharePrompt === 'function') _hideLocationSharePrompt();

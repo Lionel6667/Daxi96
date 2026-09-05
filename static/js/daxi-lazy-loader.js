@@ -219,6 +219,7 @@
   global.DaxiLazy = {
     load: loadScript,
     loadMany: loadMany,
+    loadPlanWizard: function () { return loadScript('daxi-plan-wizard.js'); },
     ensureExplorerMap: ensureExplorerMap,
     ensureRoutesMap: ensureRoutesMap,
     loadRoutesOfflineUi: loadRoutesOfflineUi,

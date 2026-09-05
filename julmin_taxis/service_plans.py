@@ -61,7 +61,7 @@ PLAN_CATALOG = {
             {'icon': 'ri-time-line', 'title': 'Gagner du temps', 'desc': 'Évitez les retards et les tracas des transports en commun'},
             {'icon': 'ri-music-2-line', 'title': 'Musique à votre choix', 'desc': 'Personnalisez votre ambiance de voyage'},
             {'icon': 'ri-shield-check-line', 'title': 'Sécurité garantie', 'desc': 'Protection en cas de grève ou problème'},
-            {'icon': 'ri-mind-map', 'title': 'Esprit tranquille', 'desc': 'Voyagez sereinement et sans stress'},
+            {'icon': 'ri-emotion-happy-line', 'title': 'Esprit tranquille', 'desc': 'Voyagez sereinement et sans stress'},
             {'icon': 'ri-wifi-line', 'title': 'WiFi à bord', 'desc': 'Travaillez en route avec internet'},
             {'icon': 'ri-user-voice-line', 'title': 'Service personnalisé', 'desc': 'Adaptée à vos besoins spécifiques'},
         ],

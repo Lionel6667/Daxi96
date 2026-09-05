@@ -20,15 +20,15 @@
   };
 
   var INTRO = {
-    durationMs: 4800,
-    fadeMs: 320,
-    killMs: 5600,
+    durationMs: 1600,
+    fadeMs: 180,
+    killMs: 2000,
     easing: EASE.rubber,
     letters: {
 
       D: {
         delay: 0,
-        duration: 1100,
+        duration: 520,
         origin: '50% 50%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 0.28, sy: 1.42, r: 0, o: 1, e: EASE.snap },
@@ -42,8 +42,8 @@
       },
 
       A: {
-        delay: 1100,
-        duration: 1100,
+        delay: 180,
+        duration: 520,
         origin: '50% 100%',
         keys: [
           { t: 0.00, x: 0, y: -72, sx: 1.28, sy: 0.38, r: 0, o: 1, e: EASE.gravity },
@@ -56,8 +56,8 @@
       },
 
       X: {
-        delay: 2200,
-        duration: 1100,
+        delay: 360,
+        duration: 520,
         origin: '50% 50%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 0.48, sy: 1.32, r: -18, o: 1, e: EASE.back },
@@ -70,8 +70,8 @@
       },
 
       I: {
-        delay: 3300,
-        duration: 900,
+        delay: 520,
+        duration: 480,
         origin: '50% 100%',
         keys: [
           { t: 0.00, x: 0, y: 0, sx: 1.32, sy: 0.22, r: 0, o: 1, e: EASE.back },
@@ -83,8 +83,8 @@
       }
     },
     chorus: {
-      delay: 4200,
-      duration: 360,
+      delay: 980,
+      duration: 260,
       keys: [
         { t: 0.00, sx: 1.00, sy: 1.00, e: EASE.snap },
         { t: 0.30, sx: 1.10, sy: 0.86, e: EASE.back },
@@ -545,7 +545,7 @@
   };
 
   global.daxiWaitForIntro = function (timeoutMs) {
-    timeoutMs = timeoutMs || 7000;
+    timeoutMs = timeoutMs || 4200;
     if (!global.daxiShouldSkipSecondaryBoot || !global.daxiShouldSkipSecondaryBoot()) {
       return Promise.resolve();
     }

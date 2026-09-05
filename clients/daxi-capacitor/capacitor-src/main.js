@@ -1529,7 +1529,7 @@ function waitIntroComplete() {
     const done = () => resolve();
     window.addEventListener('daxi:intro-complete', done, { once: true });
     document.addEventListener('daxi:intro-complete', done, { once: true });
-    setTimeout(resolve, 8000);
+    setTimeout(resolve, 2800);
   });
 }
 
