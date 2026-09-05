@@ -1227,8 +1227,10 @@ function _daxiGpsDisplaySource(src) {
     if (src === 'native_watch') return 'A';
     if (src === 'engine-live' || src === 'refine-live') return 'B';
     if (src === 'refine-poll') return 'C';
-    if (/prime|readnative|cache/i.test(src)) return 'D';
-    return 'B';
+    if (/prime|readnative|cache|flush|uncovered/i.test(src)) return 'D';
+    // Never guess: an unlabelled producer must stand out rather than be filed
+    // under a plausible letter, otherwise the taxonomy proves nothing.
+    return src ? '?' : '?';
 }
 
 // Read-only mirror of _daxiShouldCommitGpsMapPoint, used to name the skip reason.
@@ -2723,7 +2725,7 @@ function _applyClientGpsSuccess(pos, btn, inp) {
             if (latEl) latEl.value = '';
             if (lngEl) lngEl.value = '';
             _rejectUncoveredPlace(inp, { lat: lat, lng: lng });
-            _daxiCommitGpsMapPoint(lat, lng, acc, { force: true });
+            _daxiCommitGpsMapPoint(lat, lng, acc, { force: true, source: 'uncovered-place' });
             if (latEl) latEl.value = lat;
             if (lngEl) lngEl.value = lng;
             _setMainMapBookingPoint('pickup', lat, lng, 'pickupLatHidden', 'pickupLngHidden', 'destinationAddress', { silent: true, uncovered: true, gpsLabel: true });
@@ -2806,7 +2808,7 @@ function _daxiFlushClientGpsToMap() {
     }
     if (!p || p.lat == null || p.lng == null) return;
     var needsForce = !_daxiGpsMarkerVisible();
-    _daxiCommitGpsMapPoint(p.lat, p.lng, p.acc || p.accuracy || 250, { force: needsForce || !_daxiGpsMapCommitted });
+    _daxiCommitGpsMapPoint(p.lat, p.lng, p.acc || p.accuracy || 250, { force: needsForce || !_daxiGpsMapCommitted, source: 'flush' });
 }
 window._daxiFlushClientGpsToMap = _daxiFlushClientGpsToMap;
 
