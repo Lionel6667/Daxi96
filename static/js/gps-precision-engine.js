@@ -115,7 +115,8 @@
                 heading: fix.heading != null ? fix.heading : null,
                 speed: fix.speed || 0
             },
-            timestamp: fix.time || fix.ts || Date.now()
+            timestamp: fix.time || fix.ts || Date.now(),
+            mock: !!fix.mock
         };
     }
 
@@ -402,6 +403,9 @@
             var rawAcc = c.accuracy || 9999;
             var dupes = diagDuplicates(c);
 
+            if (pos.mock) {
+                return diagReject('mock_location', { raw: rawAcc, provider: meta.type });
+            }
             if (rawAcc > REJECT_ACCURACY_M) {
                 return diagReject('above_REJECT_ACCURACY_M', { raw: rawAcc, limit: REJECT_ACCURACY_M });
             }

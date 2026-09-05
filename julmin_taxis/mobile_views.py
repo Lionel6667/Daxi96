@@ -303,7 +303,9 @@ def mobile_gps_batch(request):
             speed_ms = float(speed) if speed is not None else None
         except (TypeError, ValueError):
             speed_ms = None
-        ok, _, _ = validate_driver_gps(driver.pk, lat, lng, speed_ms)
+        ok, _, _ = validate_driver_gps(
+            driver.pk, lat, lng, speed_ms, mock=point.get('mock'),
+        )
         if not ok:
             continue
         driver.latitude = lat

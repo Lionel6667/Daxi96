@@ -193,6 +193,9 @@ class DriverConsumer(AsyncWebsocketConsumer):
         from julmin_taxis.driver_presence import touch_driver_location_seen
         try:
             driver = Driver.objects.get(pk=self.driver_id)
+            from julmin_taxis.gps_antispoof import is_mock_flag
+            if is_mock_flag(data.get('mock')):
+                return None
             driver.latitude = data.get('latitude')
             driver.longitude = data.get('longitude')
             from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy

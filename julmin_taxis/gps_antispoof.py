@@ -42,11 +42,20 @@ def get_gps_trust_score(driver_id: int) -> int:
     return int(cache.get(_trust_key(driver_id), _TRUST_INITIAL) or _TRUST_INITIAL)
 
 
+def is_mock_flag(raw) -> bool:
+    if raw is True or raw == 1:
+        return True
+    if isinstance(raw, str) and raw.strip().lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    return False
+
+
 def validate_driver_gps(
     driver_id: int,
     lat: float,
     lng: float,
     reported_speed_ms: Optional[float] = None,
+    mock=None,
 ) -> Tuple[bool, str, int]:
     """
     Return (accepted, reason, trust_score).
@@ -56,6 +65,11 @@ def validate_driver_gps(
     key = _cache_key(driver_id)
     last = cache.get(key)
     trust = get_gps_trust_score(driver_id)
+
+    if is_mock_flag(mock):
+        trust = max(_TRUST_MIN, trust - _TRUST_PENALTY_REJECT)
+        cache.set(_trust_key(driver_id), trust, 86400)
+        return False, 'gps_mock_location', trust
 
     if last:
         last_lat, last_lng, last_ts = last

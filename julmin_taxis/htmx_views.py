@@ -3740,7 +3740,9 @@ def driver_update_location(request):
             speed_ms = float(speed_raw)
         except (TypeError, ValueError):
             speed_ms = None
-    ok, gps_reason, trust = validate_driver_gps(driver.pk, lat, lng, speed_ms)
+    ok, gps_reason, trust = validate_driver_gps(
+        driver.pk, lat, lng, speed_ms, mock=request.POST.get('mock'),
+    )
     if not ok:
         gps_trace(
             'BACKEND',

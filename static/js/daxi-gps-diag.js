@@ -32,6 +32,7 @@
     satellitesInView: null,
     lastBridgeLatencyMs: null,
     lastSource: null,
+    lastMock: false,
     firstFixAtMs: null,
     bestAccuracy: null,
     bestAccuracyAtMs: null
@@ -155,8 +156,10 @@
       sats: next.satellitesUsed != null
         ? (next.satellitesUsed + '/' + next.satellitesInView)
         : null,
+      mock: next.mock ? true : null,
       bridgeLatency: next.nativeTs ? (Date.now() - next.nativeTs) + 'ms' : null
     };
+    state.lastMock = !!next.mock;
     if (next.satellitesUsed != null) state.satellitesUsed = next.satellitesUsed;
     if (next.satellitesInView != null) state.satellitesInView = next.satellitesInView;
     if (ageMs != null && isFinite(ageMs)) state.lastAgeMs = ageMs;
@@ -288,7 +291,8 @@
       displayWrites: counters.display,
       commits: counters.commits,
       commitSkips: counters.commitSkips,
-      lastSource: state.lastSource
+      lastSource: state.lastSource,
+      mock: state.lastMock
     };
   }
 

@@ -143,7 +143,9 @@
         var reason = 'UNKNOWN';
         var validated = false;
 
-        if (!isFinite(lat) || !isFinite(lng) || !isFinite(acc)) {
+        if (meta.mock) {
+            reason = 'MOCK_LOCATION';
+        } else if (!isFinite(lat) || !isFinite(lng) || !isFinite(acc)) {
             reason = 'INVALID_COORDS';
         } else if (acc > EXTREME_REJECT_M) {
             reason = 'EXTREME_ACCURACY';
@@ -227,7 +229,9 @@
     function processGeoPos(pos, source, meta) {
         var p = fixFromGeoPos(pos, source);
         if (!p) return null;
-        return evaluateRaw(p.source, p.lat, p.lng, p.acc, p.ts, meta || { ageMs: p.ageMs });
+        var nextMeta = Object.assign({ ageMs: p.ageMs }, meta || {});
+        if (pos.mock) nextMeta.mock = true;
+        return evaluateRaw(p.source, p.lat, p.lng, p.acc, p.ts, nextMeta);
     }
 
     function getValidated() {

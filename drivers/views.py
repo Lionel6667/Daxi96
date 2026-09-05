@@ -159,6 +159,10 @@ class DriverLocationUpdateView(APIView):
         if lat is None or lng is None:
             return Response({'error': 'Latitude et longitude requises.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        from julmin_taxis.gps_antispoof import is_mock_flag
+        if is_mock_flag(request.data.get('mock')):
+            return Response({'error': 'Position GPS rejetée (mock).'}, status=status.HTTP_400_BAD_REQUEST)
+
         driver.latitude = lat
         driver.longitude = lng
         from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy

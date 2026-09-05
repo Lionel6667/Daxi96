@@ -785,6 +785,7 @@ function normalizeFix(raw) {
       ts,
       nativeTs,
       ageMs,
+      mock: !!raw.mock,
     };
   }
   return {
@@ -803,6 +804,7 @@ function normalizeFix(raw) {
     precise: raw.precise,
     satellitesUsed: raw.satellitesUsed != null ? raw.satellitesUsed : null,
     satellitesInView: raw.satellitesInView != null ? raw.satellitesInView : null,
+    mock: !!raw.mock,
   };
 }
 

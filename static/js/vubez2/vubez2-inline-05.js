@@ -163,6 +163,12 @@
   };
   window._daxiOnNativeGpsFix = function(p) {
     if (!p || p.lat == null || p.lng == null) return;
+    if (p.mock) {
+      if (window.DaxiGpsDiag) {
+        DaxiGpsDiag.displaySkip('A', 'mock_location', { acc: p.accuracy, via: 'native_watch' });
+      }
+      return;
+    }
     var acc = p.accuracy != null ? +p.accuracy : 250;
     var maxM = typeof DAXI_GPS_VALIDATED_MAX_M === 'number' ? DAXI_GPS_VALIDATED_MAX_M : 300;
     var userPan = !!window._daxiForceGpsPanOnce;

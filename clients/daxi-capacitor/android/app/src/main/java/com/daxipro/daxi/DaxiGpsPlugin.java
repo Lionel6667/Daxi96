@@ -233,6 +233,7 @@ public class DaxiGpsPlugin extends Plugin {
                 + " ageMs=" + ageMs
                 + " provider=" + location.getProvider()
                 + " sats=" + engine.satellitesUsed() + "/" + engine.satellitesInView()
+                + " mock=" + isMockLocation(location)
                 + " precise=" + hasFinePermission()
         );
         for (PluginCall watch : watchingCalls.values()) {
@@ -276,6 +277,7 @@ public class DaxiGpsPlugin extends Plugin {
         ret.put("precise", hasFinePermission());
         ret.put("satellitesUsed", engine.satellitesUsed());
         ret.put("satellitesInView", engine.satellitesInView());
+        ret.put("mock", isMockLocation(location));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ret.put("altitudeAccuracy", location.getVerticalAccuracyMeters());
         }
@@ -296,6 +298,14 @@ public class DaxiGpsPlugin extends Plugin {
 
     private boolean hasFinePermission() {
         return getPermissionState(LOCATION) == PermissionState.GRANTED;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean isMockLocation(Location location) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            return location.isMock();
+        }
+        return location.isFromMockProvider();
     }
 
     private static JSObject cloneJs(JSObject src) {

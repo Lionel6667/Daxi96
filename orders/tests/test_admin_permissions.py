@@ -98,6 +98,13 @@ class GpsAntispoofTests(TestCase):
         self.assertIn('gps_speed', reason)
         self.assertLess(trust, 100)
 
+    def test_rejects_mock_location(self):
+        from julmin_taxis.gps_antispoof import validate_driver_gps
+        ok, reason, trust = validate_driver_gps(98, 18.5, -72.3, mock=True)
+        self.assertFalse(ok)
+        self.assertEqual(reason, 'gps_mock_location')
+        self.assertLess(trust, 100)
+
 
 class AdminDriverReviewTests(TestCase):
     def setUp(self):

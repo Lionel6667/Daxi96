@@ -1580,6 +1580,12 @@ function _loadGoogleMaps(cb) {
 }
 function _onGpsDisplay(d) {
     if (!d) return;
+    if (d.mock) {
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.displaySkip('B', 'mock_location', { acc: _drvGpsAccuracy(d), via: 'engine' });
+        }
+        return;
+    }
     var acc = _drvGpsAccuracy(d);
     var src = (window.DaxiAndroid && DaxiAndroid.getCurrentLocation) ? 'Android' : 'GPS';
     var isNative = !!(window.DaxiAndroid || window._daxiCapacitorApp || window._daxiUseNativeGps);
@@ -2471,6 +2477,12 @@ let _lastWSSend = 0;
 function _sendLocation(lat, lng, speed, heading, accuracy) {
     const now = Date.now();
     var accVal = (accuracy != null && !isNaN(accuracy)) ? accuracy : null;
+    if (window._daxiLastNativeGps && window._daxiLastNativeGps.mock) {
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.displaySkip('B', 'mock_location', { acc: accVal, via: '_sendLocation' });
+        }
+        return;
+    }
     if (window.DaxiGpsTrace && now - (_lastHTTPSend || 0) >= 2000) {
         DaxiGpsTrace.ok('DRIVER', 'DRIVER_SEND_LOCATION', { lat: lat, lng: lng, extra: { speed: speed, heading: heading, accuracy: accVal } });
     }
