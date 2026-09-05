@@ -2114,12 +2114,39 @@
     );
   }
   var gpsWatchId = null;
+  function gpsDiag(method, ...args) {
+    try {
+      const diag = window.DaxiGpsDiag;
+      if (diag && typeof diag[method] === "function") {
+        diag[method](...args);
+        return;
+      }
+      window._daxiGpsDiagQueue = window._daxiGpsDiagQueue || [];
+      if (window._daxiGpsDiagQueue.length < 200) {
+        window._daxiGpsDiagQueue.push([method, ...args]);
+      }
+    } catch (e) {
+    }
+  }
+  function setLastNativeGps(next, origin) {
+    gpsDiag("bridgeWrite", origin, next, window._daxiLastNativeGps);
+    window._daxiLastNativeGps = next;
+    return next;
+  }
   async function readNativeGps() {
     if (!window._daxiGpsPerm) {
       throw new Error("permission");
     }
     const last = window._daxiLastNativeGps;
-    if (last && last.ts && Date.now() - last.ts < 8e3) return last;
+    if (last && last.ts && Date.now() - last.ts < 8e3) {
+      gpsDiag("bridgeCacheHit", Date.now() - last.ts);
+      return last;
+    }
+    gpsDiag("bridgeNote", "getCurrentPosition (maximumAge=5000 -> native getLastLocation path)", {
+      enableHighAccuracy: true,
+      timeout: 12e3,
+      maximumAge: 5e3
+    });
     const pos = await Geolocation2.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 12e3,
@@ -2132,22 +2159,39 @@
       altitude: pos.coords.altitude,
       speed: pos.coords.speed,
       heading: pos.coords.heading,
-      ts: Date.now()
+      ts: Date.now(),
+      // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
+      nativeTs: pos.timestamp || null
     };
   }
   function startGpsWatch() {
     if (gpsWatchId != null) return;
+    gpsDiag("request", {
+      api: "fused/watchPosition",
+      priority: "HIGH_ACCURACY (only if ACCESS_FINE_LOCATION granted)",
+      interval: 1e4,
+      minInterval: 5e3,
+      maxDelay: 3e4
+    });
     Geolocation2.watchPosition({ enableHighAccuracy: true, timeout: 3e4 }, (pos, err) => {
-      if (err || !pos || !pos.coords) return;
-      window._daxiLastNativeGps = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-        altitude: pos.coords.altitude,
-        speed: pos.coords.speed,
-        heading: pos.coords.heading,
-        ts: Date.now()
-      };
+      if (err || !pos || !pos.coords) {
+        gpsDiag("bridgeNote", "watchPosition callback without coords", { error: err && err.message });
+        return;
+      }
+      setLastNativeGps(
+        {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          altitude: pos.coords.altitude,
+          speed: pos.coords.speed,
+          heading: pos.coords.heading,
+          ts: Date.now(),
+          // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
+          nativeTs: pos.timestamp || null
+        },
+        "watch"
+      );
       try {
         if (typeof window._daxiOnNativeGpsFix === "function") {
           window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
@@ -2156,7 +2200,9 @@
       }
     }).then((id) => {
       gpsWatchId = id;
-    }).catch(() => {
+      gpsDiag("bridgeNote", "watch registered", { id: String(id).slice(0, 12) });
+    }).catch((e) => {
+      gpsDiag("bridgeNote", "watchPosition failed", { error: e && e.message, warn: true });
     });
   }
   function pushLog(msg, extra) {
@@ -2439,8 +2485,9 @@
       refreshLocation: () => {
         if (!window._daxiGpsPerm) return;
         if (gpsWatchId != null) return;
+        gpsDiag("bridgeNote", "refreshLocation while watch id pending", { warn: true });
         readNativeGps().then((p) => {
-          window._daxiLastNativeGps = p;
+          setLastNativeGps(p, "refreshLocation");
         }).catch(() => {
         });
       },
@@ -2451,6 +2498,13 @@
         Geolocation2.requestPermissions().then(async (perm) => {
           const ok = perm.location === "granted" || perm.coarseLocation === "granted";
           window._daxiGpsPerm = ok;
+          gpsDiag("permission", {
+            source: "requestPermissions",
+            perm: perm.location === "granted" ? "fine" : perm.coarseLocation === "granted" ? "coarse" : "denied",
+            precise: perm.location === "granted",
+            location: perm.location,
+            coarseLocation: perm.coarseLocation
+          });
           if (!ok) {
             if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
             return;
@@ -2460,7 +2514,7 @@
             window._daxiOnNativeLocationGranted(void 0, void 0, void 0);
           }
           readNativeGps().then((p) => {
-            window._daxiLastNativeGps = p;
+            setLastNativeGps(p, "requestLocationPermission");
             if (window._daxiOnNativeGpsFix) window._daxiOnNativeGpsFix(p);
           }).catch(() => {
           });
@@ -2510,22 +2564,31 @@
     });
   }
   async function initGps() {
+    gpsDiag("startup", { platform: Capacitor.getPlatform(), plugin: "@capacitor/geolocation 6.1.1" });
     try {
       const perm = await Geolocation2.checkPermissions();
       const granted = perm.location === "granted" || perm.coarseLocation === "granted";
       window._daxiGpsPerm = granted;
+      gpsDiag("permission", {
+        source: "checkPermissions",
+        perm: perm.location === "granted" ? "fine" : perm.coarseLocation === "granted" ? "coarse" : "denied",
+        precise: perm.location === "granted",
+        location: perm.location,
+        coarseLocation: perm.coarseLocation
+      });
       if (!granted) return;
       startGpsWatch();
       if (window._daxiOnNativeLocationGranted) {
         window._daxiOnNativeLocationGranted(void 0, void 0, void 0);
       }
       readNativeGps().then((p) => {
-        window._daxiLastNativeGps = p;
+        setLastNativeGps(p, "initGps");
         if (window._daxiOnNativeGpsFix) window._daxiOnNativeGpsFix(p);
       }).catch(() => {
       });
     } catch (e) {
       window._daxiGpsPerm = false;
+      gpsDiag("permission", { source: "checkPermissions", perm: "error", error: String(e), warn: true });
     }
   }
   async function restoreOfflineReads() {
