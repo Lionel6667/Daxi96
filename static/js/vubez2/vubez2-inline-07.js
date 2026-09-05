@@ -2624,39 +2624,6 @@ function _fallbackClientGps(onSuccess, onError) {
     });
 }
 
-function _coarseClientGps(onSuccess, onError) {
-    function _wrap(pos) {
-        if (!pos || !pos.coords) { if (onError) onError({ code: 3, message: 'no_fix' }); return; }
-        if (window.DaxiClientGps) {
-            var ev = DaxiClientGps.processGeoPos(pos, 'coarse-fallback', { allowStale: true });
-            if (!ev || ev.decision === 'REJECT') {
-                if (onError) onError({ code: 3, message: 'coarse_rejected', accuracy: pos.coords.accuracy });
-                return;
-            }
-            if (ev.decision === 'APPROXIMATE' && !ev.allowVisual) {
-                if (onError) onError({ code: 3, message: 'coarse_imprecise', accuracy: ev.acc });
-                return;
-            }
-        } else if ((pos.coords.accuracy || 9999) > DAXI_GPS_VALIDATED_MAX_M) {
-            if (onError) onError({ code: 3, message: 'coarse_imprecise', accuracy: pos.coords.accuracy });
-            return;
-        }
-        onSuccess(pos);
-    }
-    if (window._daxiCapacitorGetPosition) {
-        window._daxiCapacitorGetPosition({ enableHighAccuracy: false, timeout: 12000 }).then(_wrap).catch(function(err) {
-            if (onError) onError(err);
-        });
-        return;
-    }
-    if (!navigator.geolocation) { if (onError) onError({ code: 0, message: 'unsupported' }); return; }
-    navigator.geolocation.getCurrentPosition(_wrap, onError, {
-        enableHighAccuracy: false,
-        maximumAge: 600000,
-        timeout: 12000
-    });
-}
-
 function _simpleClientGps(onSuccess, onError, opts) {
     opts = opts || {};
     var maxAccept = opts.maxAcceptableAccuracy || _clientGpsMaxAccept();

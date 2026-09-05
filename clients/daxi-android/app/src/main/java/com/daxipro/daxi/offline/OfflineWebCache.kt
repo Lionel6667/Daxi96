@@ -134,7 +134,6 @@ class OfflineWebCache(private val context: Context) {
             "/assets/images/img13.webp.jpg",
             "/assets/images/img15.webp.jpg",
             "/assets/images/img113.jpg",
-            "/gps-precision-engine.js",
             "/daxi-frequent-routes-data.js",
             "/daxi-frequent-routes-map.js",
             "/daxi-haiti-explorer-data.js",

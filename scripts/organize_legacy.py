@@ -18,7 +18,7 @@ KEEP_JS = {
     'manifest.json', 'sw.js', 'firebase-messaging-sw.js',
     'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js',
     'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js',
-    'daxi-push-register.js', 'gps-precision-engine.js',
+    'daxi-push-register.js',
 }
 
 LEGACY_JS_NAMES = {

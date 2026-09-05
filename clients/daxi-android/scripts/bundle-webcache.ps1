@@ -76,7 +76,6 @@ $paths = @(
     "/assets/images/daxi-map-placeholder-light.png",
     "/daxi-haiti-explorer-data.js",
     "/daxi-haiti-explorer-map.js",
-    "/gps-precision-engine.js",
     "/manifest.json"
 )
 
@@ -154,14 +153,6 @@ $vubez = Join-Path $projectRoot "vubez2.html"
 if (Test-Path $vubez) {
     Copy-Item -Force $vubez (Join-Path $OutDir "index.html")
     Write-Host "index.html <- vubez2.html"
-}
-
-$gpsJs = Join-Path $projectRoot "gps-precision-engine.js"
-if (Test-Path $gpsJs) {
-    Copy-Item -Force $gpsJs (Join-Path $OutDir "gps-precision-engine.js")
-    $destGps = Join-Path $OutDir "static\js\gps-precision-engine.js"
-    New-Item -ItemType Directory -Force -Path (Split-Path $destGps) | Out-Null
-    Copy-Item -Force $gpsJs $destGps
 }
 
 foreach ($js in @("daxi-frequent-routes-data.js", "daxi-frequent-routes-map.js", "daxi-push-register.js", "daxi-haiti-explorer-data.js", "daxi-haiti-explorer-map.js")) {

@@ -31,7 +31,6 @@ ROOT_ASSETS = [
     'daxi-haiti-explorer-data.js',
     'daxi-haiti-explorer-map.js',
     'daxi-push-register.js',
-    'gps-precision-engine.js',
 ]
 
                         
@@ -51,6 +50,7 @@ DJANGO_STATIC = [
     'static/js/daxi-push-register.js',
     'static/js/firebase-shim.js',
     'static/js/api.js',
+    'static/js/gps-precision-engine.js',
 ]
 
                    

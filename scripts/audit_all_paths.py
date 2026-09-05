@@ -30,13 +30,14 @@ ROOT_JS = [
     'manifest.json', 'sw.js', 'firebase-messaging-sw.js',
     'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js',
     'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js',
-    'daxi-push-register.js', 'gps-precision-engine.js',
+    'daxi-push-register.js',
 ]
 
 STATIC_REQUIRED = [
     'static/js/daxi-phone.js', 'static/js/daxi-offline.js',
     'static/js/firebase-shim.js', 'static/js/daxi-countdown.js',
     'static/js/daxi-auto-i18n.js',
+    'static/js/gps-precision-engine.js',
 ]
 
 ASSETS_REQUIRED = [

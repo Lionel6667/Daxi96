@@ -86,8 +86,7 @@ $assetFiles = @(
     'daxi-frequent-routes-data.js',
     'daxi-frequent-routes-map.js',
     'daxi-haiti-explorer-data.js',
-    'daxi-haiti-explorer-map.js',
-    'gps-precision-engine.js'
+    'daxi-haiti-explorer-map.js'
 )
 foreach ($f in $assetFiles) { [void](Copy-Rel $f) }
 

@@ -23,7 +23,7 @@ ROOT_ASSETS = [
     'manifest.json', 'sw.js', 'firebase-messaging-sw.js',
     'daxi-frequent-routes-data.js', 'daxi-frequent-routes-map.js',
     'daxi-haiti-explorer-data.js', 'daxi-haiti-explorer-map.js',
-    'daxi-push-register.js', 'gps-precision-engine.js',
+    'daxi-push-register.js',
 ]
 SHARED = [
     'assets/js/tailwindcss-3.4.16.js', 'assets/js/htmx.min.js',
@@ -32,6 +32,7 @@ SHARED = [
 STATIC_JS = [
     'static/js/daxi-phone.js', 'static/js/daxi-offline.js',
     'static/js/firebase-shim.js', 'static/js/api.js',
+    'static/js/gps-precision-engine.js',
 ]
 BAD_PATTERNS = [
     (r'\.\./phpscript', 'parent phpscript ref'),

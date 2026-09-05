@@ -241,7 +241,6 @@ def mobile_cache_manifest(request):
     extra_files = [
         '/',
         '/manifest.json',
-        '/gps-precision-engine.js',
         '/daxi-frequent-routes-data.js',
         '/daxi-frequent-routes-map.js',
     ]
