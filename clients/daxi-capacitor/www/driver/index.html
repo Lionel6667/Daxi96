@@ -879,8 +879,8 @@ window.RIDE = RIDE;
 const CFG = { pitch: 65, zoom: 20, lookAhead: 0.00095, resumeAfterMs: 8000 };
 const DRV_DEFAULT_CENTER = { lat: 19.7558, lng: -72.2018 };
 const DRV_DEFAULT_ZOOM = 14;
-const DRV_MIN_GPS_M = 150;
-const DRV_MAX_GPS_M = 800;
+const DRV_MIN_GPS_M = 20;
+const DRV_MAX_GPS_M = 100;
 let _drvGpsRejectLogAt = 0;
 let _drvGpsStarted = false;
 const DRV_COMPASS_SPEED_KMH = 14;
@@ -1710,11 +1710,10 @@ function _startDriverGps() {
         mode: 'vehicle',
         targetAccuracy: DRV_MIN_GPS_M,
         maxAccuracy: DRV_MAX_GPS_M,
-        displayMaxAccuracy: 3000,
         snapThreshold: 60
     });
     var scanOpts = {
-        targetAccuracy: 80,
+        targetAccuracy: DRV_MIN_GPS_M,
         fallbackAccuracy: DRV_MAX_GPS_M,
         maxAccuracy: DRV_MAX_GPS_M,
         requireTargetAccuracy: false,
