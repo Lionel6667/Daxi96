@@ -1582,11 +1582,20 @@ function _onGpsDisplay(d) {
 
     if (!_drvGpsAccUsable(acc)) {
         var now = Date.now();
+        // Diagnostic (audit phase 0): the engine already overwrote its `current`
+        // with this fix via the approx-display branch, so the driver marker stays
+        // frozen for as long as this gate keeps rejecting (audit section 8a).
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.displaySkip('B', 'accuracy_above_DRV_MAX_GPS_M', { acc: acc, limit: DRV_MAX_GPS_M, via: src });
+        }
         if (window.DaxiGpsTrace && now - _drvGpsRejectLogAt > 5000) {
             _drvGpsRejectLogAt = now;
             DaxiGpsTrace.fail('DRIVER', 'DRIVER_ON_GPS_DISPLAY_REJECT', { lat: d.lat, lng: d.lng, accuracy: acc, source: src, reason: 'accuracy_above_max_' + DRV_MAX_GPS_M });
         }
         return;
+    }
+    if (window.DaxiGpsDiag) {
+        DaxiGpsDiag.display('B', { lat: d.lat, lng: d.lng, acc: acc, via: 'engine/' + src });
     }
 
     if (window.DaxiGpsTrace && !window._drvGpsObtainedLogged) {
@@ -1622,7 +1631,15 @@ function _onGpsDisplay(d) {
 }
 function _drvPrimeGpsFast() {
     function applyCoords(lat, lng, acc) {
-        if (!_drvGpsAccUsable(acc)) return;
+        if (!_drvGpsAccUsable(acc)) {
+            if (window.DaxiGpsDiag) {
+                DaxiGpsDiag.displaySkip('D', 'accuracy_above_DRV_MAX_GPS_M', { acc: acc, limit: DRV_MAX_GPS_M, via: 'primeGpsFast' });
+            }
+            return;
+        }
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.display('D', { lat: lat, lng: lng, acc: acc, via: 'primeGpsFast' });
+        }
         pos = [lng, lat];
         targetPos = pos.slice();
         _driverGpsVisible = true;

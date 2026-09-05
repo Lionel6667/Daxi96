@@ -1219,14 +1219,57 @@ function _daxiGpsMarkerVisible() {
     return !!(window._clientLocationMarker.getMap && window._clientLocationMarker.getMap());
 }
 
+// Diagnostic only (audit phase 0): maps the opts.source strings already used by
+// callers onto the A|B|C|D producer taxonomy of audit section 9, so concurrent
+// location subsystems writing to the same marker become visible in the logs.
+function _daxiGpsDisplaySource(src) {
+    src = String(src || '');
+    if (src === 'native_watch') return 'A';
+    if (src === 'engine-live' || src === 'refine-live') return 'B';
+    if (src === 'refine-poll') return 'C';
+    if (/prime|readnative|cache/i.test(src)) return 'D';
+    return 'B';
+}
+
+// Read-only mirror of _daxiShouldCommitGpsMapPoint, used to name the skip reason.
+function _daxiGpsCommitSkipReason(acc, opts) {
+    if (!isFinite(acc)) return 'accuracy_not_finite';
+    if (opts.force || opts.forcePan || opts.forceCenter) return null;
+    if (acc > DAXI_GPS_VALIDATED_MAX_M) return 'above_validated_max';
+    if (!_daxiGpsMapCommitted) return null;
+    var need = _daxiGpsMapCommitted.acc - _daxiGpsCommitStepM(_daxiGpsMapCommitted.acc);
+    if (acc > need) return need <= 0 ? 'ratchet_unsatisfiable' : 'ratchet_not_better';
+    return null;
+}
+
 function _daxiCommitGpsMapPoint(lat, lng, acc, opts) {
     opts = opts || {};
-    if (!_daxiShouldCommitGpsMapPoint(acc, opts)) return false;
+    var _diagSrc = _daxiGpsDisplaySource(opts.source);
+    if (!_daxiShouldCommitGpsMapPoint(acc, opts)) {
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.displaySkip(_diagSrc, _daxiGpsCommitSkipReason(acc, opts) || 'unknown', {
+                acc: acc,
+                via: opts.source || '?',
+                committedAcc: _daxiGpsMapCommitted ? _daxiGpsMapCommitted.acc : null,
+                need: _daxiGpsMapCommitted
+                    ? (_daxiGpsMapCommitted.acc - _daxiGpsCommitStepM(_daxiGpsMapCommitted.acc))
+                    : null
+            });
+        }
+        return false;
+    }
+    if (window.DaxiGpsDiag) {
+        DaxiGpsDiag.display(_diagSrc, { lat: lat, lng: lng, acc: acc, via: opts.source || 'commit' });
+    }
     _updateClientLocationVisual(lat, lng, acc, false);
     if (!_daxiGpsMarkerVisible()) {
         window._daxiPendingGpsVisual = { lat: lat, lng: lng, acc: acc, scanOnly: false };
+        if (window.DaxiGpsDiag) {
+            DaxiGpsDiag.displaySkip(_diagSrc, 'marker_not_on_map_yet', { acc: acc, via: opts.source || '?' });
+        }
         return false;
     }
+    if (window.DaxiGpsDiag) DaxiGpsDiag.displayCommit(_diagSrc, { acc: acc });
     _daxiGpsMapCommitted = { lat: lat, lng: lng, acc: acc, ts: Date.now() };
     if (window._daxiPickupFromGps) {
         if (typeof _syncGpsPickupHiddenFields === 'function') _syncGpsPickupHiddenFields(lat, lng);

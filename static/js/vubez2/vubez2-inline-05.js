@@ -164,6 +164,18 @@
   window._daxiOnNativeGpsFix = function(p) {
     if (!p || p.lat == null || p.lng == null) return;
     var firstFix = !window._clientGpsPannedOnce;
+    // Diagnostic (audit phase 0): on the first fix forcePan makes the commit gate
+    // return isFinite(acc), so any accuracy lands on the map as the final point
+    // (audit section 7). nativeTs exposes the age the ts field hides.
+    if (window.DaxiGpsDiag) {
+      DaxiGpsDiag.bridgeNote('native watch -> client map', {
+        acc: p.accuracy != null ? p.accuracy : 'MISSING (fabricated as 250m)',
+        forcePan: !!(firstFix || window._daxiForceGpsPanOnce),
+        allowStale: true,
+        ageMs: p.nativeTs ? (Date.now() - p.nativeTs) : null,
+        warn: firstFix
+      });
+    }
     if (typeof _placeClientPickupOnMap === 'function') {
         _placeClientPickupOnMap(+p.lat, +p.lng, {
             acc: p.accuracy != null ? +p.accuracy : 250,
