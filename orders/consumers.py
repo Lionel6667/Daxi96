@@ -146,7 +146,9 @@ class DriverConsumer(AsyncWebsocketConsumer):
                 from julmin_taxis.driver_gps_utils import driver_location_payload
                 lat = data.get('latitude')
                 lng = data.get('longitude')
-                payload = driver_location_payload(lat, lng, self.driver_id, order_id)
+                from julmin_taxis.driver_gps_utils import parse_accuracy_m
+                acc = parse_accuracy_m(data.get('accuracy'))
+                payload = driver_location_payload(lat, lng, self.driver_id, order_id, accuracy=acc)
                 await self.channel_layer.group_send(
                     f'order_{order_id}',
                     {
@@ -193,8 +195,12 @@ class DriverConsumer(AsyncWebsocketConsumer):
             driver = Driver.objects.get(pk=self.driver_id)
             driver.latitude = data.get('latitude')
             driver.longitude = data.get('longitude')
+            from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy
+            acc = parse_accuracy_m(data.get('accuracy'))
             touch_driver_location_seen(driver, save=False)
-            driver.save(update_fields=['latitude', 'longitude', 'location_updated_at', 'last_seen_at'])
+            fields = ['latitude', 'longitude', 'location_updated_at', 'last_seen_at']
+            fields += apply_driver_accuracy(driver, acc)
+            driver.save(update_fields=fields)
             active = Order.objects.filter(
                 driver=driver,
                 status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress']

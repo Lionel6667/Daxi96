@@ -309,13 +309,15 @@ def mobile_gps_batch(request):
             continue
         driver.latitude = lat
         driver.longitude = lng
+        from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy
+        apply_driver_accuracy(driver, parse_accuracy_m(point.get('accuracy')))
         from julmin_taxis.driver_presence import touch_driver_location_seen
         touch_driver_location_seen(driver, save=False)
         last_lat, last_lng = lat, lng
         applied += 1
 
     if applied:
-        driver.save(update_fields=['latitude', 'longitude', 'location_updated_at', 'last_seen_at'])
+        driver.save(update_fields=['latitude', 'longitude', 'location_accuracy', 'location_updated_at', 'last_seen_at'])
 
     return JsonResponse({'ok': True, 'received': len(payload), 'applied': applied, 'lat': last_lat, 'lng': last_lng})
 

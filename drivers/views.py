@@ -161,9 +161,13 @@ class DriverLocationUpdateView(APIView):
 
         driver.latitude = lat
         driver.longitude = lng
+        from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy
+        acc = parse_accuracy_m(request.data.get('accuracy'))
         from julmin_taxis.driver_presence import touch_driver_location_seen
         touch_driver_location_seen(driver, save=False)
-        driver.save(update_fields=['latitude', 'longitude', 'location_updated_at', 'last_seen_at'])
+        fields = ['latitude', 'longitude', 'location_updated_at', 'last_seen_at']
+        fields += apply_driver_accuracy(driver, acc)
+        driver.save(update_fields=fields)
 
         from orders.views import notify_websocket
         from julmin_taxis.driver_gps_utils import driver_location_payload
@@ -171,7 +175,7 @@ class DriverLocationUpdateView(APIView):
             status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress']
         ).first()
         if active_order:
-            payload = driver_location_payload(lat, lng, driver.pk, active_order.pk)
+            payload = driver_location_payload(lat, lng, driver.pk, active_order.pk, accuracy=acc)
             notify_websocket(f'order_{active_order.pk}', 'driver_location', payload)
             notify_websocket('admin_orders', 'driver_location', payload)
 

@@ -80,6 +80,12 @@ class Driver(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    location_accuracy = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name='Précision GPS (m)',
+        help_text='Rayon d’incertitude du dernier fix chauffeur, en mètres.',
+    )
     location_updated_at = models.DateTimeField(null=True, blank=True, verbose_name='Dernière position GPS')
     status_updated_at = models.DateTimeField(null=True, blank=True, verbose_name='Dernier changement de statut')
     last_seen_at = models.DateTimeField(

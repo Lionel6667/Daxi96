@@ -3778,9 +3778,13 @@ def driver_update_location(request):
 
     driver.latitude = lat
     driver.longitude = lng
+    from julmin_taxis.driver_gps_utils import parse_accuracy_m, apply_driver_accuracy
+    accuracy_m = parse_accuracy_m(request.POST.get('accuracy'))
     from julmin_taxis.driver_presence import touch_driver_location_seen
     touch_driver_location_seen(driver, save=False)
-    driver.save(update_fields=['latitude', 'longitude', 'location_updated_at', 'last_seen_at'])
+    update_fields = ['latitude', 'longitude', 'location_updated_at', 'last_seen_at']
+    update_fields += apply_driver_accuracy(driver, accuracy_m)
+    driver.save(update_fields=update_fields)
     gps_trace(
         'BACKEND',
         'BACKEND_DRIVER_UPDATE_LOCATION_SAVED',
@@ -3804,7 +3808,7 @@ def driver_update_location(request):
     ).first()
     if active_order:
         from julmin_taxis.driver_gps_utils import driver_location_payload
-        payload = driver_location_payload(lat, lng, driver.pk, active_order.pk)
+        payload = driver_location_payload(lat, lng, driver.pk, active_order.pk, accuracy=accuracy_m)
         _notify_ws(f'order_{active_order.pk}', 'driver_location', payload)
         _notify_ws('admin_orders', 'driver_location', payload)
         gps_trace(

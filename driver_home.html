@@ -1629,7 +1629,7 @@ function _onGpsDisplay(d) {
 
     if (!_drvNavEntered) _drvEnterNavMode(true);
 
-    _sendLocation(d.lat, d.lng, d.speed, d.heading);
+    _sendLocation(d.lat, d.lng, d.speed, d.heading, acc);
     _checkProximity(d.lat, d.lng);
     if (activeOrder || _pendingRouteApply) _drvMaybeRefreshRoutes(false);
 }
@@ -2468,16 +2468,17 @@ let _gpsPrevTimestamp = null;
 
 let _lastHTTPSend = 0;
 let _lastWSSend = 0;
-function _sendLocation(lat, lng, speed, heading) {
+function _sendLocation(lat, lng, speed, heading, accuracy) {
     const now = Date.now();
+    var accVal = (accuracy != null && !isNaN(accuracy)) ? accuracy : null;
     if (window.DaxiGpsTrace && now - (_lastHTTPSend || 0) >= 2000) {
-        DaxiGpsTrace.ok('DRIVER', 'DRIVER_SEND_LOCATION', { lat: lat, lng: lng, extra: { speed: speed, heading: heading } });
+        DaxiGpsTrace.ok('DRIVER', 'DRIVER_SEND_LOCATION', { lat: lat, lng: lng, extra: { speed: speed, heading: heading, accuracy: accVal } });
     }
     if (_driverWSReady && now - _lastWSSend >= 1000) {
         _lastWSSend = now;
         try {
             _driverWS.send(JSON.stringify({ type: 'location_update',
-                latitude: lat, longitude: lng, speed: speed || 0, heading: heading || null }));
+                latitude: lat, longitude: lng, speed: speed || 0, heading: heading || null, accuracy: accVal }));
         } catch(e) {
             _driverWSReady = false;
         }
@@ -2486,10 +2487,12 @@ function _sendLocation(lat, lng, speed, heading) {
         return;
     }
     _lastHTTPSend = now;
+    var body = 'lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng);
+    if (accVal != null) body += '&accuracy=' + encodeURIComponent(accVal);
     fetch('/htmx/driver/location/', {
         method: 'POST',
         headers: { 'X-CSRFToken': getCsrf(), 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `lat=${lat}&lng=${lng}`
+        body: body
     }).then(function(r){
         return r.json();
     }).then(function(d){
