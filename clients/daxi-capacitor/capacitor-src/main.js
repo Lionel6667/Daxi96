@@ -713,6 +713,59 @@ function usesDaxiGpsPlugin() {
   return Capacitor.getPlatform() === 'android';
 }
 
+function classifyLocationPerm(perm) {
+  if (!perm) return 'denied';
+  if (perm.kind === 'fine' || perm.precise === true || perm.location === 'granted') return 'fine';
+  if (perm.kind === 'coarse' || perm.coarseLocation === 'granted') return 'coarse';
+  return 'denied';
+}
+
+function applyLocationPerm(perm, source) {
+  const kind = classifyLocationPerm(perm);
+  window._daxiGpsPermKind = kind;
+  window._daxiGpsPrecise = kind === 'fine';
+  window._daxiGpsPerm = kind === 'fine';
+  gpsDiag('permission', {
+    source,
+    perm: kind,
+    precise: kind === 'fine',
+    location: perm && perm.location,
+    coarseLocation: perm && perm.coarseLocation,
+    warn: kind === 'coarse',
+  });
+  return kind;
+}
+
+function notifyLocationKind(kind) {
+  if (kind === 'fine') {
+    if (window._daxiOnNativeLocationGranted) {
+      window._daxiOnNativeLocationGranted(undefined, undefined, undefined);
+    }
+    return;
+  }
+  if (kind === 'coarse') {
+    if (window._daxiOnNativeLocationApproximate) window._daxiOnNativeLocationApproximate();
+    else if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
+    return;
+  }
+  if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
+}
+
+async function requestFineLocationPerm() {
+  if (usesDaxiGpsPlugin()) {
+    await DaxiGps.requestPermissions();
+    return DaxiGps.permissionKind();
+  }
+  return Geolocation.requestPermissions();
+}
+
+async function checkFineLocationPerm() {
+  if (usesDaxiGpsPlugin()) {
+    return DaxiGps.permissionKind();
+  }
+  return Geolocation.checkPermissions();
+}
+
 function normalizeFix(raw) {
   if (!raw) return null;
   const coords = raw.coords;
@@ -1085,29 +1138,16 @@ function installNativeBridge() {
     },
     getFcmToken: () => window._daxiFcmToken || '',
     notifyMapReady: () => {},
+    openLocationSettings: () => {
+      if (usesDaxiGpsPlugin()) DaxiGps.openAppSettings().catch(() => {});
+    },
     requestLocationPermission: () => {
-      Geolocation.requestPermissions()
+      requestFineLocationPerm()
         .then(async (perm) => {
-          const ok = perm.location === 'granted' || perm.coarseLocation === 'granted';
-          window._daxiGpsPerm = ok;
-          // `location` is the FINE+COARSE alias: granted only when both are, so a
-          // false value here means the OS handed us approximate location and the
-          // native layer silently drops to BALANCED_POWER (audit section 6).
-          gpsDiag('permission', {
-            source: 'requestPermissions',
-            perm: perm.location === 'granted' ? 'fine' : (perm.coarseLocation === 'granted' ? 'coarse' : 'denied'),
-            precise: perm.location === 'granted',
-            location: perm.location,
-            coarseLocation: perm.coarseLocation,
-          });
-          if (!ok) {
-            if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
-            return;
-          }
+          const kind = applyLocationPerm(perm, 'requestPermissions');
+          notifyLocationKind(kind);
+          if (kind !== 'fine') return;
           startGpsWatch();
-          if (window._daxiOnNativeLocationGranted) {
-            window._daxiOnNativeLocationGranted(undefined, undefined, undefined);
-          }
           readNativeGps()
             .then((p) => {
               setLastNativeGps(p, 'requestLocationPermission');
@@ -1170,21 +1210,14 @@ async function initGps() {
     plugin: usesDaxiGpsPlugin() ? 'DaxiGps (1Hz, no batch)' : '@capacitor/geolocation 6.1.1',
   });
   try {
-    const perm = await Geolocation.checkPermissions();
-    const granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
-    window._daxiGpsPerm = granted;
-    gpsDiag('permission', {
-      source: 'checkPermissions',
-      perm: perm.location === 'granted' ? 'fine' : (perm.coarseLocation === 'granted' ? 'coarse' : 'denied'),
-      precise: perm.location === 'granted',
-      location: perm.location,
-      coarseLocation: perm.coarseLocation,
-    });
-    if (!granted) return;
-    startGpsWatch();
-    if (window._daxiOnNativeLocationGranted) {
-      window._daxiOnNativeLocationGranted(undefined, undefined, undefined);
+    const perm = await checkFineLocationPerm();
+    const kind = applyLocationPerm(perm, 'checkPermissions');
+    if (kind !== 'fine') {
+      if (kind === 'coarse') notifyLocationKind('coarse');
+      return;
     }
+    startGpsWatch();
+    notifyLocationKind('fine');
     readNativeGps()
       .then((p) => {
         setLastNativeGps(p, 'initGps');

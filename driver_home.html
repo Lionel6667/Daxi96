@@ -1811,7 +1811,7 @@ function _drvHasLocationPermission(cb) {
         var CapGeo = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Geolocation;
         if (CapGeo && typeof CapGeo.checkPermissions === 'function') {
             CapGeo.checkPermissions().then(function(perm) {
-                var ok = !!(perm && (perm.location === 'granted' || perm.coarseLocation === 'granted'));
+                var ok = !!(perm && perm.location === 'granted');
                 if (ok) window._daxiGpsPerm = true;
                 cb(ok);
             }).catch(function() { cb(false); });
@@ -1837,6 +1837,24 @@ function _drvExitWithoutLocation() {
         }
     } catch (e) {}
     window.location.href = '/driver/login/';
+}
+
+function _drvShowApproximateLocationRetry() {
+    var msg = 'Android n’a autorisé que la position approximative. L’espace chauffeur exige la position précise. Réglages → Applications → DAXI → Autorisations → Localisation → Autoriser la position précise.';
+    if (window.DaxiModal && typeof DaxiModal.alert === 'function') {
+        DaxiModal.alert(msg, {
+            title: 'Position précise requise',
+            type: 'warn',
+            okLabel: 'Ouvrir les réglages'
+        }).then(function() {
+            if (window.DaxiAndroid && typeof DaxiAndroid.openLocationSettings === 'function') {
+                DaxiAndroid.openLocationSettings();
+            }
+            _drvShowLocationRequiredModal();
+        });
+        return;
+    }
+    _drvShowLocationRequiredModal();
 }
 
 function _drvShowLocationDeniedRetry() {
@@ -1870,24 +1888,41 @@ function _drvRequestLocationThenStart() {
         window._daxiGpsPerm = false;
         _drvShowLocationDeniedRetry();
     }
+    function afterApprox() {
+        if (settled) return;
+        settled = true;
+        window._daxiGpsPerm = false;
+        _drvShowApproximateLocationRetry();
+    }
 
     if (window.DaxiAndroid && typeof DaxiAndroid.requestLocationPermission === 'function') {
         var prevGranted = window._daxiOnNativeLocationGranted;
         var prevDenied = window._daxiOnNativeLocationDenied;
-        window._daxiOnNativeLocationGranted = function() {
+        var prevApprox = window._daxiOnNativeLocationApproximate;
+        function restoreLocHooks() {
             window._daxiOnNativeLocationGranted = prevGranted;
             window._daxiOnNativeLocationDenied = prevDenied;
+            window._daxiOnNativeLocationApproximate = prevApprox;
+        }
+        window._daxiOnNativeLocationGranted = function() {
+            restoreLocHooks();
             afterOk();
             if (typeof prevGranted === 'function') {
                 try { prevGranted.apply(null, arguments); } catch (e1) {}
             }
         };
         window._daxiOnNativeLocationDenied = function() {
-            window._daxiOnNativeLocationGranted = prevGranted;
-            window._daxiOnNativeLocationDenied = prevDenied;
+            restoreLocHooks();
             afterDeny();
             if (typeof prevDenied === 'function') {
                 try { prevDenied.apply(null, arguments); } catch (e2) {}
+            }
+        };
+        window._daxiOnNativeLocationApproximate = function() {
+            restoreLocHooks();
+            afterApprox();
+            if (typeof prevApprox === 'function') {
+                try { prevApprox.apply(null, arguments); } catch (e3) {}
             }
         };
         try {

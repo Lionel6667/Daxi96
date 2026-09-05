@@ -190,6 +190,21 @@
         _daxiFocusMapOnReadyGps('native-gps');
     }
   };
+  window._daxiOnNativeLocationApproximate = function() {
+    window._daxiPendingNativeGpsBoot = false;
+    window._daxiGpsPerm = false;
+    window._daxiGpsPrecise = false;
+    var enableBtn = document.getElementById('locEnableBtn');
+    if (enableBtn) {
+      enableBtn.disabled = false;
+      var span = enableBtn.querySelector('span');
+      if (span && span.dataset.origLabel) span.textContent = span.dataset.origLabel;
+    }
+    if (typeof _showLocationSharePrompt === 'function') _showLocationSharePrompt('approximate');
+  };
+  if (window._daxiGpsPermKind === 'coarse') {
+    window._daxiOnNativeLocationApproximate();
+  }
   window._daxiOnNativeLocationDenied = function() {
     window._daxiPendingNativeGpsBoot = false;
     var enableBtn = document.getElementById('locEnableBtn');

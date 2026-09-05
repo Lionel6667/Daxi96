@@ -2212,9 +2212,13 @@ function _showLocationSharePrompt(forceDenied) {
     var el = document.getElementById('locationSharePrompt');
     if (!el) return;
     var desc = el.querySelector('.location-share-desc');
-    if (desc && forceDenied) {
+    if (desc && forceDenied === 'approximate') {
+        desc.textContent = 'Android n’a autorisé que la position approximative (souvent 300 m à 1 km). DAXI a besoin de la position précise. Ouvrez les réglages de l’application → Autorisations → Localisation → Autoriser la position précise.';
+    } else if (desc && forceDenied) {
         desc.textContent = 'La localisation est bloquée par le navigateur (refus répétés). Cliquez sur l’icône ⚙ / cadenas à gauche de daxipro.com → Autorisations → Localisation → Autoriser, puis rechargez la page. Ou saisissez l’adresse manuellement.';
     }
+    var settingsBtn = document.getElementById('locPreciseSettingsBtn');
+    if (settingsBtn) settingsBtn.hidden = forceDenied !== 'approximate';
     el.classList.add('show');
 }
 
@@ -2227,6 +2231,7 @@ function _initLocationSharePrompt() {
     _bindLocationSharePromptDelegation();
     var closeBtn = document.getElementById('locPromptClose');
     var enableBtn = document.getElementById('locEnableBtn');
+    var settingsBtn = document.getElementById('locPreciseSettingsBtn');
     var manualBtn = document.getElementById('locManualBtn');
     var destinationSwitch = document.getElementById('destinationSwitch');
     var destinationField = document.getElementById('destinationField');
@@ -2246,6 +2251,16 @@ function _initLocationSharePrompt() {
             if (destinationField) destinationField.classList.remove('hidden');
             _hideLocationSharePrompt();
             _daxiScheduleNotifAfterLocFlow();
+        });
+    }
+    if (settingsBtn && !settingsBtn.dataset.bound) {
+        settingsBtn.dataset.bound = '1';
+        settingsBtn.addEventListener('click', function() {
+            if (window.DaxiAndroid && typeof DaxiAndroid.openLocationSettings === 'function') {
+                DaxiAndroid.openLocationSettings();
+            } else if (window.DaxiGps && typeof DaxiGps.openAppSettings === 'function') {
+                DaxiGps.openAppSettings();
+            }
         });
     }
     if (enableBtn && !enableBtn.dataset.bound) {
