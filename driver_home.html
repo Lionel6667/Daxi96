@@ -532,13 +532,14 @@
 <script src="/static/js/daxi-gps-diag.js?v=20260905b"></script>
 <script src="/static/js/daxi-gps-diag-panel.js?v=20260905b"></script>
 <script src="/static/js/daxi-map-snap.js?v=20260728"></script>
+<script src="/static/js/daxi-routes.js?v=20260905a"></script>
     <script src="/static/js/daxi-gps-trace.js?v=20260903h"></script>
 <script src="/static/js/gps-precision-engine.js?v=20260902a"></script>
 <script src="/static/js/daxi-order-expand.js?v=20260741"></script>
 <script src="/static/js/daxi-map-markers.js?v=20260730"></script>
 <script src="/static/js/daxi-external-nav.js?v=20260772"></script>
 <script src="/static/js/daxi-driver-nav-prompt.js?v=20260772"></script>
-<script src="/static/js/daxi-order-card-map.js?v=20260903g"></script>
+<script src="/static/js/daxi-order-card-map.js?v=20260905a"></script>
 <script src="/static/js/daxi-known-places.js?v=20260776"></script>
 <script src="/static/js/daxi-order-coords-map.js?v=20260771"></script>
 <script src="/static/js/daxi-chat-media.js?v=20260769"></script>
@@ -904,6 +905,8 @@ let _carMarkerAdvanced = false;
 let _driverGpsLocked = false;
 let _driverGpsVisible = false;
 let _pendingRouteApply = false;
+let _drvRouteInFlight = false;
+let _drvRouteLastAt = 0;
 let _currentSpeed = 0;
 let _gpsEngine = null;
 let _drvNavEntered = false;
@@ -1628,7 +1631,7 @@ function _onGpsDisplay(d) {
 
     _sendLocation(d.lat, d.lng, d.speed, d.heading);
     _checkProximity(d.lat, d.lng);
-    if (activeOrder || _pendingRouteApply) _applyStateMachineRoutes();
+    if (activeOrder || _pendingRouteApply) _drvMaybeRefreshRoutes(false);
 }
 function _drvPrimeGpsFast() {
     function applyCoords(lat, lng, acc) {
@@ -1647,7 +1650,7 @@ function _drvPrimeGpsFast() {
         _driverGpsLocked = true;
         _markSplashStep('sp-gps');
         if (!_drvNavEntered) _drvEnterNavMode(true);
-        if (activeOrder) _applyStateMachineRoutes();
+        if (activeOrder) _drvMaybeRefreshRoutes(true);
     }
     // App native : Capacitor / DaxiAndroid uniquement (pas navigator.geolocation web)
     if (window.DaxiAndroid && typeof DaxiAndroid.getCurrentLocation === 'function') {
@@ -1686,6 +1689,9 @@ function _startDriverGps() {
     }
     _drvGpsStarted = true;
     _markSplashStep('sp-gps');
+    if (window.DaxiGps && typeof DaxiGps.startForegroundTracking === 'function') {
+        DaxiGps.startForegroundTracking().catch(function() {});
+    }
     // Permission OS: uniquement après consentement modal (_drvRequestLocationThenStart)
     // Jamais de session WEB GPS en app native (évite le spam WEB_GPS_FIX)
     if (window.DaxiWebGps && !isNative && !window.DaxiAndroid) {
@@ -1720,7 +1726,7 @@ function _startDriverGps() {
             _driverGpsLocked = true;
             _markSplashStep('sp-gps');
             if (!_drvNavEntered) _drvEnterNavMode(true);
-            if (activeOrder) _applyStateMachineRoutes();
+            if (activeOrder) _drvMaybeRefreshRoutes(true);
         }
         _gpsEngine.start(_onGpsDisplay, function(err) {
             console.warn('Driver GPS error:', err);
@@ -2421,7 +2427,7 @@ function _initDriverWS() {
             } else if (ev === 'client_gps_updated') {
                 _applyClientGpsAccuracyUpdate(payload);
             } else if (ev === 'pickup_updated') {
-                if (activeOrder) _applyStateMachineRoutes();
+                if (activeOrder) _drvMaybeRefreshRoutes(true);
             } else if (window.DaxiRealtime && (DaxiRealtime.isOrderEvent(ev) || (window.DaxiRealtimeSync && DaxiRealtimeSync.isRealtimeEvent(ev)))) {
                 refreshDrawerOrders(true);
                 _driverRefreshAcceptedDrawer();
@@ -3003,14 +3009,37 @@ function startCompassListeners() {
 function _transitionTo(newState) {
     if (rideState === newState) return;
     rideState = newState;
-    _applyStateMachineRoutes();
+    _drvMaybeRefreshRoutes(true);
 }
 window._transitionTo = _transitionTo;
+
+function _drvMaybeRefreshRoutes(force) {
+    if (!activeOrder && !_pendingRouteApply) return;
+    if (_drvRouteInFlight) return;
+    if (force) {
+        _applyStateMachineRoutes();
+        return;
+    }
+    var path = window.currentRoutePath;
+    var lat = pos && pos[1];
+    var lng = pos && pos[0];
+    if (window.DaxiRoutes && typeof DaxiRoutes.shouldRefreshPath === 'function') {
+        if (!DaxiRoutes.shouldRefreshPath(lat, lng, path, 45000, _drvRouteLastAt)) return;
+    } else if (path && path.length > 1 && _drvRouteLastAt && Date.now() - _drvRouteLastAt < 45000) {
+        return;
+    }
+    _applyStateMachineRoutes();
+}
+window._drvMaybeRefreshRoutes = _drvMaybeRefreshRoutes;
 
 async function _applyStateMachineRoutes() {
     if (!map || !_mapReady || !_sourcesReady) return;
     if (!activeOrder) return;
+    if (_drvRouteInFlight) return;
+    _drvRouteInFlight = true;
+    _drvRouteLastAt = Date.now();
 
+    try {
     if (!pos || pos.length < 2 || !isFinite(pos[0]) || !isFinite(pos[1])) {
         _pendingRouteApply = true;
         _setRouteGeoJSON('rt-pickup-src', null);
@@ -3108,6 +3137,9 @@ async function _applyStateMachineRoutes() {
         map.setOptions({ padding: _drvMapBottomPad() });
     }
     _syncClientGpsAccuracyHint();
+    } finally {
+        _drvRouteInFlight = false;
+    }
 
 }
 window._applyStateMachineRoutes = _applyStateMachineRoutes;
@@ -3281,30 +3313,20 @@ function _applyClientGpsAccuracyUpdate(payload) {
 
 
 async function fetchRoute(lng1, lat1, lng2, lat2) {
-    if (!_dirService) return null;
     if (!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) return null;
     if (Math.abs(lat1) > 90 || Math.abs(lng1) > 180 || Math.abs(lat2) > 90 || Math.abs(lng2) > 180) return null;
     if (Math.abs(lat1) < 1e-4 && Math.abs(lng1) < 1e-4) return null;
     if (Math.abs(lat2) < 1e-4 && Math.abs(lng2) < 1e-4) return null;
-    return new Promise(resolve => {
-        try {
-            _dirService.route({
-                origin:      { lat: lat1, lng: lng1 },
-                destination: { lat: lat2, lng: lng2 },
-                travelMode:  google.maps.TravelMode.DRIVING,
-            }, (result, status) => {
-                if (status !== 'OK' || !result || !result.routes || !result.routes[0]) {
-                    resolve(null);
-                    return;
-                }
-                const path = result.routes[0].overview_path;
-                if (!path || path.length < 2) { resolve(null); return; }
-                resolve(path.map(p => [p.lng(), p.lat()]));
-            });
-        } catch (e) {
-            resolve(null);
-        }
-    });
+    if (window.DaxiRoutes && typeof DaxiRoutes.computeRoute === 'function') {
+        var routed = await DaxiRoutes.computeRoute({ lat: lat1, lng: lng1 }, { lat: lat2, lng: lng2 });
+        if (!routed || !routed.path || routed.path.length < 2) return null;
+        return routed.path.map(function (p) {
+            var plat = typeof p.lat === 'function' ? p.lat() : p.lat;
+            var plng = typeof p.lng === 'function' ? p.lng() : p.lng;
+            return [plng, plat];
+        });
+    }
+    return null;
 }
 
 
@@ -5299,6 +5321,9 @@ function saveProfile(e) {
 
 
 function drvLogout() {
+    if (window.DaxiGps && typeof DaxiGps.stopForegroundTracking === 'function') {
+        DaxiGps.stopForegroundTracking().catch(function() {});
+    }
     _setDriverOfflineSilent();
     if (window.DaxiShellRole && DaxiShellRole.clearAuth) DaxiShellRole.clearAuth();
     fetch('/htmx/driver/logout/',{

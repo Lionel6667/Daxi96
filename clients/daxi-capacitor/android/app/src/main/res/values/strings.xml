@@ -4,4 +4,6 @@
     <string name="title_activity_main">Daxi</string>
     <string name="package_name">com.daxipro.daxi</string>
     <string name="custom_url_scheme">com.daxipro.daxi</string>
+    <string name="daxi_gps_channel">Suivi GPS</string>
+    <string name="daxi_gps_tracking">Position chauffeur active</string>
 </resources>

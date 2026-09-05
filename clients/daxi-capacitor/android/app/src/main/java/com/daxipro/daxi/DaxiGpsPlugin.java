@@ -82,6 +82,26 @@ public class DaxiGpsPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void startForegroundTracking(PluginCall call) {
+        Intent intent = new Intent(getContext(), DaxiLocationService.class);
+        intent.setAction(DaxiLocationService.ACTION_START);
+        if (Build.VERSION.SDK_INT >= 26) {
+            getContext().startForegroundService(intent);
+        } else {
+            getContext().startService(intent);
+        }
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void stopForegroundTracking(PluginCall call) {
+        Intent intent = new Intent(getContext(), DaxiLocationService.class);
+        intent.setAction(DaxiLocationService.ACTION_STOP);
+        getContext().startService(intent);
+        call.resolve();
+    }
+
+    @PluginMethod
     public void openAppSettings(PluginCall call) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(Uri.fromParts("package", getContext().getPackageName(), null));

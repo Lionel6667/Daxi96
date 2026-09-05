@@ -278,6 +278,8 @@
       rawAccuracy: state.lastRawAccuracy,
       publishedAccuracy: state.lastPublishedAccuracy,
       ageMs: state.lastAgeMs,
+      satellitesUsed: state.satellitesUsed,
+      satellitesInView: state.satellitesInView,
       bridgeLatencyMs: state.lastBridgeLatencyMs,
       ttffMs: state.firstFixAtMs,
       bestAccuracy: state.bestAccuracy,
