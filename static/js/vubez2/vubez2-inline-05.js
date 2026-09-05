@@ -163,28 +163,30 @@
   };
   window._daxiOnNativeGpsFix = function(p) {
     if (!p || p.lat == null || p.lng == null) return;
-    var firstFix = !window._clientGpsPannedOnce;
-    // Diagnostic (audit phase 0): on the first fix forcePan makes the commit gate
-    // return isFinite(acc), so any accuracy lands on the map as the final point
-    // (audit section 7). nativeTs exposes the age the ts field hides.
+    var acc = p.accuracy != null ? +p.accuracy : 250;
+    var maxM = typeof DAXI_GPS_VALIDATED_MAX_M === 'number' ? DAXI_GPS_VALIDATED_MAX_M : 300;
+    var userPan = !!window._daxiForceGpsPanOnce;
+    // First native fix is no longer force-panned: a 500 m cell fix must not
+    // become the committed map point just because it arrived first.
     if (window.DaxiGpsDiag) {
       DaxiGpsDiag.bridgeNote('native watch -> client map', {
         acc: p.accuracy != null ? p.accuracy : 'MISSING (fabricated as 250m)',
-        forcePan: !!(firstFix || window._daxiForceGpsPanOnce),
+        forcePan: userPan,
         allowStale: p.ageMs == null || p.ageMs <= 8000,
         ageMs: p.ageMs != null ? p.ageMs : (p.nativeTs ? (Date.now() - p.nativeTs) : null),
-        warn: firstFix
+        warn: acc > maxM
       });
     }
     if (typeof _placeClientPickupOnMap === 'function') {
         _placeClientPickupOnMap(+p.lat, +p.lng, {
-            acc: p.accuracy != null ? +p.accuracy : 250,
+            acc: acc,
             source: 'native_watch',
             allowStale: p.ageMs == null || p.ageMs <= 8000,
-            forcePan: firstFix || !!window._daxiForceGpsPanOnce
+            forcePan: userPan
         });
     }
-    if ((firstFix || window._daxiCommanderGpsFocusPending) && typeof _daxiFocusMapOnReadyGps === 'function') {
+    if ((window._daxiCommanderGpsFocusPending || (acc <= maxM && !window._clientGpsPannedOnce))
+        && typeof _daxiFocusMapOnReadyGps === 'function') {
         _daxiFocusMapOnReadyGps('native-gps');
     }
   };
