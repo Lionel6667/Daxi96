@@ -37,6 +37,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         t0 = SystemClock.elapsedRealtime();
         Log.i(TAG, "T0 android-start");
+        registerPlugin(DaxiGpsPlugin.class);
         super.onCreate(savedInstanceState);
         Log.i(TAG, "T1 capacitor-super " + ms() + "ms");
         applySystemBars();

@@ -1,7 +1,10 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Clipboard } from '@capacitor/clipboard';
 import { Geolocation } from '@capacitor/geolocation';
+
+const DaxiGps = registerPlugin('DaxiGps');
+if (typeof window !== 'undefined') window.DaxiGps = DaxiGps;
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Network } from '@capacitor/network';
@@ -709,11 +712,72 @@ async function readNativeGps() {
   };
 }
 
+function usesDaxiGpsPlugin() {
+  return Capacitor.getPlatform() === 'android';
+}
+
+function applyNativeFix(raw, origin) {
+  if (!raw) return null;
+  const coords = raw.coords;
+  const next = coords
+    ? {
+        lat: coords.latitude,
+        lng: coords.longitude,
+        accuracy: coords.accuracy,
+        altitude: coords.altitude,
+        speed: coords.speed,
+        heading: coords.heading,
+        ts: Date.now(),
+        nativeTs: raw.timestamp || null,
+      }
+    : {
+        lat: raw.lat,
+        lng: raw.lng,
+        accuracy: raw.accuracy,
+        altitude: raw.altitude,
+        speed: raw.speed,
+        heading: raw.heading,
+        ts: Date.now(),
+        nativeTs: raw.timestamp || null,
+        ageMs: raw.ageMs != null ? raw.ageMs : null,
+        elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
+        provider: raw.provider || null,
+        precise: raw.precise,
+      };
+  setLastNativeGps(next, origin);
+  try {
+    if (typeof window._daxiOnNativeGpsFix === 'function') {
+      window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
+    }
+  } catch (eFix) {}
+  return next;
+}
+
 function startGpsWatch() {
   if (gpsWatchId != null) return;
-  // Effective native request, per @capacitor/geolocation Geolocation.java:93-97:
-  // interval is hardcoded to 10000ms, minUpdateInterval defaults to 5000ms and
-  // `timeout` is mapped onto setMaxUpdateDelayMillis (i.e. it enables batching).
+  if (usesDaxiGpsPlugin()) {
+    gpsDiag('request', {
+      api: 'DaxiGps.watch',
+      priority: 'HIGH_ACCURACY',
+      interval: 1000,
+      minInterval: 500,
+      maxDelay: 0,
+      waitForAccurateLocation: true,
+    });
+    DaxiGps.watch({}, (pos, err) => {
+      if (err || !pos || pos.lat == null) {
+        gpsDiag('bridgeNote', 'DaxiGps.watch callback without coords', { error: err && err.message });
+        return;
+      }
+      applyNativeFix(pos, 'watch');
+    }).then((id) => {
+      gpsWatchId = id;
+      gpsDiag('bridgeNote', 'watch registered', { id: String(id).slice(0, 12), plugin: 'DaxiGps' });
+    }).catch((e) => {
+      gpsDiag('bridgeNote', 'DaxiGps.watch failed', { error: e && e.message, warn: true });
+    });
+    return;
+  }
   gpsDiag('request', {
     api: 'fused/watchPosition',
     priority: 'HIGH_ACCURACY (only if ACCESS_FINE_LOCATION granted)',
@@ -726,25 +790,7 @@ function startGpsWatch() {
       gpsDiag('bridgeNote', 'watchPosition callback without coords', { error: err && err.message });
       return;
     }
-    setLastNativeGps(
-      {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-        altitude: pos.coords.altitude,
-        speed: pos.coords.speed,
-        heading: pos.coords.heading,
-        ts: Date.now(),
-        // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
-        nativeTs: pos.timestamp || null,
-      },
-      'watch',
-    );
-    try {
-      if (typeof window._daxiOnNativeGpsFix === 'function') {
-        window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
-      }
-    } catch (eFix) {}
+    applyNativeFix(pos, 'watch');
   }).then((id) => {
     gpsWatchId = id;
     gpsDiag('bridgeNote', 'watch registered', { id: String(id).slice(0, 12) });
@@ -1109,7 +1155,10 @@ function installNativeBridge() {
 async function initGps() {
   // Never prompt OS permission on boot — driver/client UI shows a modal first,
   // then calls DaxiAndroid.requestLocationPermission().
-  gpsDiag('startup', { platform: Capacitor.getPlatform(), plugin: '@capacitor/geolocation 6.1.1' });
+  gpsDiag('startup', {
+    platform: Capacitor.getPlatform(),
+    plugin: usesDaxiGpsPlugin() ? 'DaxiGps (1Hz, no batch)' : '@capacitor/geolocation 6.1.1',
+  });
   try {
     const perm = await Geolocation.checkPermissions();
     const granted = perm.location === 'granted' || perm.coarseLocation === 'granted';
