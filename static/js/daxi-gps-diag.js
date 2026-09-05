@@ -46,6 +46,40 @@
     return global.DAXI_GPS_DIAG !== false;
   }
 
+  // vubez2.html replaces console.log/info/debug/warn with a no-op unless
+  // window.DAXI_DEBUG is set, which would silence this channel too. Recover a
+  // live console from a detached iframe so the lines still reach logcat, without
+  // un-muting the whole app. console.error is the fallback: it is left untouched.
+  var sink = null;
+
+  function getSink() {
+    if (sink) return sink;
+    var parent = document.body || document.documentElement;
+    if (parent) {
+      try {
+        var frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.style.cssText = 'display:none!important;width:0;height:0;border:0';
+        parent.appendChild(frame);
+        var c = frame.contentWindow && frame.contentWindow.console;
+        if (c && typeof c.log === 'function') {
+          // Keep the frame referenced: removing it would void contentWindow.
+          sink = { log: c.log.bind(c), warn: (c.warn || c.log).bind(c), frame: frame };
+          return sink;
+        }
+        frame.parentNode.removeChild(frame);
+      } catch (e) {}
+    }
+    var err = (typeof console !== 'undefined' && console.error)
+      ? console.error.bind(console)
+      : function () {};
+    // Not cached while the document is still parsing, so the iframe can be
+    // retried once a parent node exists.
+    var fallback = { log: err, warn: err };
+    if (parent) sink = fallback;
+    return fallback;
+  }
+
   function sinceBootMs() {
     return Date.now() - T0;
   }
@@ -80,8 +114,9 @@
     if (lines.length > MAX_LINES) lines.shift();
     if (!enabled()) return line;
     try {
-      if (data && data.warn) console.warn(line);
-      else console.log(line);
+      var out = getSink();
+      if (data && data.warn) out.warn(line);
+      else out.log(line);
     } catch (e) {}
     return line;
   }
