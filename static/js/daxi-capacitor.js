@@ -2228,7 +2228,8 @@
         heading: coords.heading,
         ts,
         nativeTs,
-        ageMs
+        ageMs,
+        mock: !!raw.mock
       };
     }
     return {
@@ -2244,7 +2245,10 @@
       ageMs,
       elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
       provider: raw.provider || null,
-      precise: raw.precise
+      precise: raw.precise,
+      satellitesUsed: raw.satellitesUsed != null ? raw.satellitesUsed : null,
+      satellitesInView: raw.satellitesInView != null ? raw.satellitesInView : null,
+      mock: !!raw.mock
     };
   }
   function applyNativeFix(raw, origin) {
