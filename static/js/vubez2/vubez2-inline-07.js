@@ -2381,6 +2381,12 @@ function _createClientGpsEngine() {
 
 var _clientGpsRefineTimer = null;
 
+function _daxiIsNativeGpsHost() {
+    return !!(window._daxiCapacitorApp || window._daxiUseNativeGps || window._daxiHybridShell
+        || window.DaxiAndroid
+        || (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()));
+}
+
 function _clientGpsRefinePollMs() {
     var v = window.DaxiClientGps && DaxiClientGps.getValidated();
     if (!v) return 1000;
@@ -2388,6 +2394,7 @@ function _clientGpsRefinePollMs() {
 }
 
 function _clientGpsRefineTick() {
+    if (_daxiIsNativeGpsHost()) return;
     if (!navigator.geolocation || !window.DaxiClientGps) return;
     if (typeof _daxiHasGpsUserConsent === 'function' && !_daxiHasGpsUserConsent()) return;
     _ensureClientGpsEngineOnly();
@@ -2425,6 +2432,13 @@ function _startClientGpsRefineLoop() {
 }
 
 function _ensureClientGpsRefineLoop() {
+    if (_daxiIsNativeGpsHost()) {
+        if (_clientGpsRefineTimer) {
+            clearTimeout(_clientGpsRefineTimer);
+            _clientGpsRefineTimer = null;
+        }
+        return;
+    }
     if (_clientGpsRefineTimer) return;
     function schedule() {
         _clientGpsRefineTimer = setTimeout(function() {
