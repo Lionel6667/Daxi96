@@ -281,6 +281,10 @@
         var onDisplayCb = null;
         var scanning = false;
         var baseSmooth = mode === 'vehicle' ? 0.22 : 0.38;
+        // Diagnostic-only state (audit phase 0).
+        var jumpDiag = null;
+        var lastSig = null;
+        var dupCount = 0;
 
         function lerp(a, b, t) { return a + (b - a) * t; }
 
@@ -313,6 +317,7 @@
             var dist = haversineM(prevRaw.lat, prevRaw.lng, lat, lng);
             var implied = dist / dt;
             var prevAcc = prevRaw.accuracy || 50;
+            jumpDiag = { dist: dist, dt: dt, implied: implied, prevAcc: prevAcc };
             if (accuracy <= targetAccuracy && accuracy < prevAcc * 0.65) return false;
             if (accuracy < prevAcc * 0.4 && dist < 400) return false;
             if (implied > maxJumpSpeed) return true;
@@ -335,6 +340,26 @@
             };
         }
 
+        // Diagnostic only (audit phase 0): every discard path funnels through here
+        // so the reason is observable, and identical consecutive measurements are
+        // counted because the 800ms native poll re-reads one push-based value.
+        function diagReject(reason, ctx) {
+            if (global.DaxiGpsDiag) global.DaxiGpsDiag.reject(reason, ctx);
+            return null;
+        }
+
+        function diagDuplicates(c, now) {
+            var sig = [c.latitude, c.longitude, c.accuracy, now].join('|');
+            if (sig === lastSig) {
+                dupCount += 1;
+                if (global.DaxiGpsDiag) global.DaxiGpsDiag.duplicate(dupCount, { raw: c.accuracy });
+            } else {
+                lastSig = sig;
+                dupCount = 1;
+            }
+            return dupCount;
+        }
+
         function handleRawPosition(pos, meta) {
             meta = meta || {};
             traceFix(pos, meta.type || 'watchPosition');
@@ -342,11 +367,23 @@
             var c = pos.coords;
             var now = pos.timestamp || Date.now();
             var rawAcc = c.accuracy || 9999;
+            var dupes = diagDuplicates(c, now);
 
-            if (rawAcc > REJECT_ACCURACY_M) return null;
+            if (rawAcc > REJECT_ACCURACY_M) {
+                return diagReject('above_REJECT_ACCURACY_M', { raw: rawAcc, limit: REJECT_ACCURACY_M });
+            }
             if (!scanning && rawAcc > maxAccuracy) {
                 if (rawAcc <= displayMaxAccuracy) {
                     var approx = rawFixFromCoords(c, now);
+                    if (global.DaxiGpsDiag) {
+                        global.DaxiGpsDiag.fix({
+                            raw: rawAcc,
+                            published: rawAcc,
+                            path: 'approx-display (bypasses rejectJump, overwrites current)',
+                            duplicates: dupes,
+                            provider: meta.type
+                        });
+                    }
                     if (!bestFix || rawAcc < (bestFix.rawAccuracy || 9999)) bestFix = approx;
                     current = approx;
                     if (!display) display = { lat: approx.raw.lat, lng: approx.raw.lng };
@@ -356,9 +393,22 @@
                     }
                     return approx;
                 }
-                return null;
+                return diagReject('above_displayMaxAccuracy', {
+                    raw: rawAcc,
+                    maxAccuracy: maxAccuracy,
+                    displayMaxAccuracy: displayMaxAccuracy
+                });
             }
-            if (rejectJump(c.latitude, c.longitude, rawAcc, now)) return null;
+            if (rejectJump(c.latitude, c.longitude, rawAcc, now)) {
+                return diagReject('impossible_jump', {
+                    raw: rawAcc,
+                    dist: jumpDiag && jumpDiag.dist,
+                    dt: jumpDiag && jumpDiag.dt,
+                    implied: jumpDiag && jumpDiag.implied,
+                    prevAcc: jumpDiag && jumpDiag.prevAcc,
+                    maxJumpSpeed: maxJumpSpeed
+                });
+            }
 
             prevRaw = { lat: c.latitude, lng: c.longitude, accuracy: rawAcc };
             prevTime = now;
@@ -372,6 +422,15 @@
                 else {
                     display.lat = precise.lat;
                     display.lng = precise.lng;
+                }
+                if (global.DaxiGpsDiag) {
+                    global.DaxiGpsDiag.fix({
+                        raw: rawAcc,
+                        published: rawAcc,
+                        path: 'precise-bypass (targetAccuracy=' + targetAccuracy + ', kalman reset)',
+                        duplicates: dupes,
+                        provider: meta.type
+                    });
                 }
                 if (global.DaxiWebGps && !isNativeGpsHost()) global.DaxiWebGps.recordEngineFix(webGpsSide(), precise, 'navigator.geolocation');
                 return precise;
@@ -391,6 +450,15 @@
             }
 
             var result = buildResult(c, filtered, snapped, bearing);
+            if (global.DaxiGpsDiag) {
+                global.DaxiGpsDiag.fix({
+                    raw: rawAcc,
+                    published: result.accuracy,
+                    path: 'kalman' + (result.snapped ? '+snap' : ''),
+                    duplicates: dupes,
+                    provider: meta.type
+                });
+            }
             if (!bestFix || rawAcc < (bestFix.rawAccuracy || 999)) bestFix = result;
             current = result;
 
@@ -587,9 +655,24 @@
                     if (nativeWatchId != null) return;
                     onDisplayCb = onUpdate;
                     startDisplayLoop();
+                    if (global.DaxiGpsDiag) {
+                        global.DaxiGpsDiag.bridgeNote('engine start: native poll 800ms over a push-based source', {
+                            targetAccuracy: targetAccuracy,
+                            maxAccuracy: maxAccuracy,
+                            displayMaxAccuracy: displayMaxAccuracy
+                        });
+                    }
+                    var emptyPolls = 0;
                     function nativePoll() {
                         var pos = nativeGeoPosition();
-                        if (!pos) return;
+                        if (!pos) {
+                            emptyPolls += 1;
+                            if (global.DaxiGpsDiag && (emptyPolls === 1 || emptyPolls % 12 === 0)) {
+                                global.DaxiGpsDiag.reject('native_no_data', { consecutivePolls: emptyPolls });
+                            }
+                            return;
+                        }
+                        emptyPolls = 0;
                         var r = handleRawPosition(pos, { type: 'native_poll' });
                         if (r && !display) display = { lat: r.raw.lat, lng: r.raw.lng };
                     }
@@ -645,6 +728,9 @@
             getTargetAccuracy: function () { return targetAccuracy; },
 
             reset: function () {
+                lastSig = null;
+                dupCount = 0;
+                jumpDiag = null;
                 kalman.reset();
                 prevRaw = null;
                 prevTime = 0;
