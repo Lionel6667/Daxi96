@@ -1200,17 +1200,34 @@ function _daxiResetGpsMapCommit() {
     _daxiGpsMapCommitted = null;
 }
 
-function _daxiGpsCommitStepM(committedAcc) {
-    return committedAcc > DAXI_GPS_TARGET_M ? 100 : 20;
+function _daxiGpsMovedM(lat1, lng1, lat2, lng2) {
+    if (window.DaxiGpsEngine && typeof DaxiGpsEngine.haversineM === 'function') {
+        return DaxiGpsEngine.haversineM(lat1, lng1, lat2, lng2);
+    }
+    var R = 6371000;
+    var p = Math.PI / 180;
+    var a = Math.sin(((lat2 - lat1) * p) / 2) * Math.sin(((lat2 - lat1) * p) / 2)
+        + Math.cos(lat1 * p) * Math.cos(lat2 * p)
+        * Math.sin(((lng2 - lng1) * p) / 2) * Math.sin(((lng2 - lng1) * p) / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-function _daxiShouldCommitGpsMapPoint(acc, opts) {
+function _daxiGpsNoiseM(prevAcc, acc) {
+    return Math.max(8, Math.min(prevAcc, acc) * 0.45);
+}
+
+function _daxiShouldCommitGpsMapPoint(lat, lng, acc, opts) {
     opts = opts || {};
     if (opts.force || opts.forcePan || opts.forceCenter) return isFinite(acc);
     if (!_daxiGpsMapCommitted) return isFinite(acc) && acc <= DAXI_GPS_VALIDATED_MAX_M;
     if (!isFinite(acc) || acc > DAXI_GPS_VALIDATED_MAX_M) return false;
-    var step = _daxiGpsCommitStepM(_daxiGpsMapCommitted.acc);
-    return acc <= (_daxiGpsMapCommitted.acc - step);
+    var prev = _daxiGpsMapCommitted;
+    var moved = _daxiGpsMovedM(prev.lat, prev.lng, lat, lng);
+    var better = acc + 5 < prev.acc;
+    var similar = acc <= prev.acc * 1.25;
+    if (better) return true;
+    if (similar && moved >= _daxiGpsNoiseM(prev.acc, acc)) return true;
+    return false;
 }
 
 function _daxiGpsMarkerVisible() {
@@ -1234,28 +1251,32 @@ function _daxiGpsDisplaySource(src) {
 }
 
 // Read-only mirror of _daxiShouldCommitGpsMapPoint, used to name the skip reason.
-function _daxiGpsCommitSkipReason(acc, opts) {
+function _daxiGpsCommitSkipReason(lat, lng, acc, opts) {
     if (!isFinite(acc)) return 'accuracy_not_finite';
     if (opts.force || opts.forcePan || opts.forceCenter) return null;
     if (acc > DAXI_GPS_VALIDATED_MAX_M) return 'above_validated_max';
     if (!_daxiGpsMapCommitted) return null;
-    var need = _daxiGpsMapCommitted.acc - _daxiGpsCommitStepM(_daxiGpsMapCommitted.acc);
-    if (acc > need) return need <= 0 ? 'ratchet_unsatisfiable' : 'ratchet_not_better';
+    var prev = _daxiGpsMapCommitted;
+    var moved = _daxiGpsMovedM(prev.lat, prev.lng, lat, lng);
+    var noise = _daxiGpsNoiseM(prev.acc, acc);
+    if (acc > prev.acc * 1.25) return 'accuracy_worse';
+    if (moved < noise) return 'jitter_inside_accuracy';
     return null;
 }
 
 function _daxiCommitGpsMapPoint(lat, lng, acc, opts) {
     opts = opts || {};
     var _diagSrc = _daxiGpsDisplaySource(opts.source);
-    if (!_daxiShouldCommitGpsMapPoint(acc, opts)) {
+    if (!_daxiShouldCommitGpsMapPoint(lat, lng, acc, opts)) {
         if (window.DaxiGpsDiag) {
-            DaxiGpsDiag.displaySkip(_diagSrc, _daxiGpsCommitSkipReason(acc, opts) || 'unknown', {
+            DaxiGpsDiag.displaySkip(_diagSrc, _daxiGpsCommitSkipReason(lat, lng, acc, opts) || 'unknown', {
                 acc: acc,
                 via: opts.source || '?',
                 committedAcc: _daxiGpsMapCommitted ? _daxiGpsMapCommitted.acc : null,
-                need: _daxiGpsMapCommitted
-                    ? (_daxiGpsMapCommitted.acc - _daxiGpsCommitStepM(_daxiGpsMapCommitted.acc))
-                    : null
+                moved: _daxiGpsMapCommitted
+                    ? Math.round(_daxiGpsMovedM(_daxiGpsMapCommitted.lat, _daxiGpsMapCommitted.lng, lat, lng))
+                    : null,
+                noise: _daxiGpsMapCommitted ? Math.round(_daxiGpsNoiseM(_daxiGpsMapCommitted.acc, acc)) : null
             });
         }
         return false;
