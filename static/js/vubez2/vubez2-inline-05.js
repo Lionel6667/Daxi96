@@ -171,8 +171,8 @@
       DaxiGpsDiag.bridgeNote('native watch -> client map', {
         acc: p.accuracy != null ? p.accuracy : 'MISSING (fabricated as 250m)',
         forcePan: !!(firstFix || window._daxiForceGpsPanOnce),
-        allowStale: true,
-        ageMs: p.nativeTs ? (Date.now() - p.nativeTs) : null,
+        allowStale: p.ageMs == null || p.ageMs <= 8000,
+        ageMs: p.ageMs != null ? p.ageMs : (p.nativeTs ? (Date.now() - p.nativeTs) : null),
         warn: firstFix
       });
     }
@@ -180,7 +180,7 @@
         _placeClientPickupOnMap(+p.lat, +p.lng, {
             acc: p.accuracy != null ? +p.accuracy : 250,
             source: 'native_watch',
-            allowStale: true,
+            allowStale: p.ageMs == null || p.ageMs <= 8000,
             forcePan: firstFix || !!window._daxiForceGpsPanOnce
         });
     }

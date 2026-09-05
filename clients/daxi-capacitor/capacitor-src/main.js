@@ -716,6 +716,11 @@ function usesDaxiGpsPlugin() {
 function normalizeFix(raw) {
   if (!raw) return null;
   const coords = raw.coords;
+  const ageMs = raw.ageMs != null ? +raw.ageMs : null;
+  const nativeTs = raw.timestamp || null;
+  // Wall clock of the fix, derived from elapsedRealtime age when we have it.
+  // Date.now() as `ts` was erasing that age (audit section 4).
+  const ts = ageMs != null && isFinite(ageMs) ? Date.now() - ageMs : (nativeTs || Date.now());
   if (coords) {
     return {
       lat: coords.latitude,
@@ -724,8 +729,9 @@ function normalizeFix(raw) {
       altitude: coords.altitude,
       speed: coords.speed,
       heading: coords.heading,
-      ts: Date.now(),
-      nativeTs: raw.timestamp || null,
+      ts,
+      nativeTs,
+      ageMs,
     };
   }
   return {
@@ -735,9 +741,10 @@ function normalizeFix(raw) {
     altitude: raw.altitude,
     speed: raw.speed,
     heading: raw.heading,
-    ts: Date.now(),
-    nativeTs: raw.timestamp || null,
-    ageMs: raw.ageMs != null ? raw.ageMs : null,
+    ts,
+    time: ts,
+    nativeTs,
+    ageMs,
     elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
     provider: raw.provider || null,
     precise: raw.precise,

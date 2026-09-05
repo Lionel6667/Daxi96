@@ -143,12 +143,16 @@
   // where an older/worse fix overwrites a fresher one (audit section 9).
   function bridgeWrite(origin, next, prev) {
     if (!next) return;
+    var ageMs = next.ageMs != null ? +next.ageMs : (next.nativeTs ? Date.now() - next.nativeTs : null);
     var data = {
       origin: origin,
       acc: next.accuracy != null ? num(next.accuracy) + 'm' : 'unknown',
+      ageMs: ageMs,
       nativeTs: next.nativeTs || null,
+      provider: next.provider || null,
       bridgeLatency: next.nativeTs ? (Date.now() - next.nativeTs) + 'ms' : null
     };
+    if (ageMs != null && isFinite(ageMs)) state.lastAgeMs = ageMs;
     if (next.nativeTs) state.lastBridgeLatencyMs = Date.now() - next.nativeTs;
     if (prev && prev.lat != null) {
       var accWorse = prev.accuracy != null && next.accuracy != null && next.accuracy > prev.accuracy;
