@@ -200,6 +200,9 @@
         this.initialized = false;
         this.lastTime = 0;
         this.variance = this.mode === 'vehicle' ? 400 : 100;
+        this._measLat = null;
+        this._measLng = null;
+        this._measAcc = null;
     };
 
     Kalman2D.prototype.process = function (coords) {
@@ -209,6 +212,20 @@
         var speed = coords.speed || 0;
         var heading = coords.heading;
         var now = coords.timestamp || Date.now();
+        if (this.initialized && this._measLat === lat && this._measLng === lng && this._measAcc === accuracy) {
+            return {
+                lat: this.lat,
+                lng: this.lng,
+                accuracy: Math.sqrt(this.variance),
+                rawAccuracy: accuracy,
+                speed: speed,
+                heading: heading,
+                timestamp: this.lastTime
+            };
+        }
+        this._measLat = lat;
+        this._measLng = lng;
+        this._measAcc = accuracy;
         var dt = this.lastTime ? (now - this.lastTime) / 1000 : 0;
 
         if (this.initialized && dt > 0 && dt < 30 && speed > 0.3 && heading != null && !isNaN(heading)) {
@@ -364,8 +381,8 @@
             return null;
         }
 
-        function diagDuplicates(c, now) {
-            var sig = [c.latitude, c.longitude, c.accuracy, now].join('|');
+        function diagDuplicates(c) {
+            var sig = [c.latitude, c.longitude, c.accuracy].join('|');
             if (sig === lastSig) {
                 dupCount += 1;
                 if (global.DaxiGpsDiag) global.DaxiGpsDiag.duplicate(dupCount, { raw: c.accuracy });
@@ -383,7 +400,7 @@
             var c = pos.coords;
             var now = pos.timestamp || Date.now();
             var rawAcc = c.accuracy || 9999;
-            var dupes = diagDuplicates(c, now);
+            var dupes = diagDuplicates(c);
 
             if (rawAcc > REJECT_ACCURACY_M) {
                 return diagReject('above_REJECT_ACCURACY_M', { raw: rawAcc, limit: REJECT_ACCURACY_M });
@@ -393,6 +410,18 @@
                     raw: rawAcc,
                     maxAccuracy: maxAccuracy
                 });
+            }
+            if (dupes > 1) {
+                if (global.DaxiGpsDiag) {
+                    global.DaxiGpsDiag.fix({
+                        raw: rawAcc,
+                        published: current ? current.accuracy : rawAcc,
+                        path: 'duplicate-skip',
+                        duplicates: dupes,
+                        provider: meta.type
+                    });
+                }
+                return current;
             }
             if (rejectJump(c.latitude, c.longitude, rawAcc, now)) {
                 return diagReject('impossible_jump', {
