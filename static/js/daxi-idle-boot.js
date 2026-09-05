@@ -22,7 +22,7 @@
 
   function loadOne(file) {
     return new Promise(function (resolve) {
-      var v = global._DAXI_ASSET_V || '20260905a';
+      var v = global._DAXI_ASSET_V || '20260905c';
       var s = document.createElement('script');
       s.src = '/static/js/' + file + '?v=' + v;
       s.defer = true;
