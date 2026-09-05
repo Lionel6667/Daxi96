@@ -1184,11 +1184,11 @@ window.daxiClientLogout = daxiClientLogout;
 })();
 
 
-var DAXI_GPS_VALIDATED_MAX_M = 300;
+var DAXI_GPS_VALIDATED_MAX_M = 200;
 var DAXI_GPS_TARGET_M = 100;
-var DAXI_GPS_QUARTIER_ACCURACY = 300;
-var DAXI_GPS_MAX_ACCEPT_M = 300;
-var DAXI_GPS_FALLBACK_M = 300;
+var DAXI_GPS_QUARTIER_ACCURACY = 200;
+var DAXI_GPS_MAX_ACCEPT_M = 200;
+var DAXI_GPS_FALLBACK_M = 200;
 var DAXI_GPS_QUARTIER_MS = 0;
 var DAXI_GPS_SCAN_MAX_MS = 15000;
 var DAXI_GEO_GRANTED_KEY = 'daxi_geo_granted';
@@ -1218,9 +1218,9 @@ function _daxiGpsNoiseM(prevAcc, acc) {
 
 function _daxiShouldCommitGpsMapPoint(lat, lng, acc, opts) {
     opts = opts || {};
-    if (opts.force || opts.forcePan || opts.forceCenter) return isFinite(acc);
-    if (!_daxiGpsMapCommitted) return isFinite(acc) && acc <= DAXI_GPS_VALIDATED_MAX_M;
     if (!isFinite(acc) || acc > DAXI_GPS_VALIDATED_MAX_M) return false;
+    if (opts.force || opts.forcePan || opts.forceCenter) return true;
+    if (!_daxiGpsMapCommitted) return true;
     var prev = _daxiGpsMapCommitted;
     var moved = _daxiGpsMovedM(prev.lat, prev.lng, lat, lng);
     var better = acc + 5 < prev.acc;
@@ -1253,8 +1253,8 @@ function _daxiGpsDisplaySource(src) {
 // Read-only mirror of _daxiShouldCommitGpsMapPoint, used to name the skip reason.
 function _daxiGpsCommitSkipReason(lat, lng, acc, opts) {
     if (!isFinite(acc)) return 'accuracy_not_finite';
-    if (opts.force || opts.forcePan || opts.forceCenter) return null;
     if (acc > DAXI_GPS_VALIDATED_MAX_M) return 'above_validated_max';
+    if (opts.force || opts.forcePan || opts.forceCenter) return null;
     if (!_daxiGpsMapCommitted) return null;
     var prev = _daxiGpsMapCommitted;
     var moved = _daxiGpsMovedM(prev.lat, prev.lng, lat, lng);
@@ -1851,7 +1851,7 @@ function _placeClientPickupOnMap(lat, lng, opts) {
             { ageMs: opts.ageMs, allowStale: !!opts.allowStale }
         );
         if (evaluated.decision === 'REJECT') {
-            if (!opts.force && !evaluated.allowVisual) return false;
+            return false;
         }
         if (evaluated.decision === 'APPROXIMATE') {
             if (!DaxiClientGps.getValidated() && evaluated.allowVisual) {
@@ -1893,14 +1893,15 @@ function _placeClientPickupOnMap(lat, lng, opts) {
     }
 
     if (!window._clientBgMap || !window.google || !google.maps) {
+        if (acc > DAXI_GPS_VALIDATED_MAX_M) return false;
         window._daxiPendingGpsVisual = { lat: lat, lng: lng, acc: acc, scanOnly: false };
-        return opts.force || acc <= DAXI_GPS_VALIDATED_MAX_M;
+        return true;
     }
 
     var isExact = acc <= DAXI_GPS_TARGET_M;
     var canShowValidated = acc <= DAXI_GPS_VALIDATED_MAX_M;
 
-    if (!canShowValidated && !opts.force) {
+    if (!canShowValidated) {
         return false;
     }
 
@@ -2070,14 +2071,14 @@ function _requestPickupGps(onSuccess, onError, opts) {
         var acc = pos.coords.accuracy || 0;
         var src = (window.DaxiAndroid && DaxiAndroid.getCurrentLocation) ? 'Android' : 'GPS';
         if (window.DaxiGpsTrace) DaxiGpsTrace.gps('CLIENT', { lat: lat, lng: lng, accuracy: acc, source: src });
-        _placeClientPickupOnMap(lat, lng, { acc: acc, force: true });
+        var placed = _placeClientPickupOnMap(lat, lng, { acc: acc, source: 'pickup-scan' });
         _ensureClientGpsLiveRunning();
         if (acc <= DAXI_GPS_VALIDATED_MAX_M) {
             _finalizeClientGpsScan(acc);
             _endGpsScanVisual();
         }
         var pickupEl = document.getElementById('pickupHidden');
-        if (pickupEl && !pickupEl.value) pickupEl.value = _daxiMyPositionLabel();
+        if (placed && pickupEl && !pickupEl.value) pickupEl.value = _daxiMyPositionLabel();
         if (onSuccess) onSuccess(pos);
     }
     function _pickupGpsFail(geoErr) {
@@ -2173,7 +2174,6 @@ function _bootClientGps() {
         _placeClientPickupOnMap(lat, lng, {
             acc: acc,
             forcePan: !orderFocused,
-            force: true,
             source: 'boot'
         });
         if (typeof _daxiSyncClientGpsOnMapReady === 'function') _daxiSyncClientGpsOnMapReady('boot');
@@ -2528,6 +2528,7 @@ function _onClientGpsLiveFix(fix) {
     if (!p) return;
     if (p.acc > DAXI_GPS_VALIDATED_MAX_M) return;
     var evaluated = window.DaxiClientGps ? DaxiClientGps.processEngineFix(fix, 'engine-live') : null;
+    if (evaluated && evaluated.decision === 'REJECT') return;
     _gpsError = false;
     var lat = evaluated ? evaluated.lat : p.lat;
     var lng = evaluated ? evaluated.lng : p.lng;
@@ -2742,12 +2743,8 @@ function _applyClientGpsSuccess(pos, btn, inp) {
             if (latEl) latEl.value = '';
             if (lngEl) lngEl.value = '';
             _rejectUncoveredPlace(inp, { lat: lat, lng: lng });
-            _daxiCommitGpsMapPoint(lat, lng, acc, { force: true, source: 'uncovered-place' });
-            if (latEl) latEl.value = lat;
-            if (lngEl) lngEl.value = lng;
-            _setMainMapBookingPoint('pickup', lat, lng, 'pickupLatHidden', 'pickupLngHidden', 'destinationAddress', { silent: true, uncovered: true, gpsLabel: true });
-            if (window._clientBgMap) {
-                _daxiCenterClientOnVisibleMap(lat, lng, { zoom: _getClientGpsZoom(acc || 60), skipPanMark: true });
+            if (window.DaxiGpsDiag) {
+                DaxiGpsDiag.displaySkip('D', 'uncovered-place', { acc: acc, via: 'applyClientGpsSuccess' });
             }
             return;
         }
@@ -2757,7 +2754,12 @@ function _applyClientGpsSuccess(pos, btn, inp) {
         window._daxiPickupFromGps = true;
         _daxiResetGpsMapCommit();
         _clearUncoveredBlock(inp);
-        _placeClientPickupOnMap(lat, lng, { acc: acc, force: true });
+        var placed = _placeClientPickupOnMap(lat, lng, { acc: acc, force: true, source: 'my-position' });
+        if (!placed) {
+            window._daxiPickupFromGps = false;
+            _daxiFinishPickupInputState(inp, btn, false);
+            return;
+        }
         _ensureClientGpsLiveRunning();
         _stopDaxiGpsScan();
         var note = document.getElementById('gpsUnavailableNote');

@@ -2,11 +2,11 @@
 (function (global) {
     'use strict';
 
-    var VALIDATED_MAX_M = 300;
+    var VALIDATED_MAX_M = 200;
     var TARGET_M = 100;
-    var EXTREME_REJECT_M = 300;
-    var APPROX_VISUAL_MAX_MOBILE = 300;
-    var APPROX_VISUAL_MAX_DESKTOP = 300;
+    var EXTREME_REJECT_M = 200;
+    var APPROX_VISUAL_MAX_MOBILE = 200;
+    var APPROX_VISUAL_MAX_DESKTOP = 200;
     var MAX_JUMP_SPEED_MS = 42;
     var MAX_FIX_AGE_MS = 45000;
 

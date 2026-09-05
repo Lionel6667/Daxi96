@@ -170,7 +170,7 @@
       return;
     }
     var acc = p.accuracy != null ? +p.accuracy : 250;
-    var maxM = typeof DAXI_GPS_VALIDATED_MAX_M === 'number' ? DAXI_GPS_VALIDATED_MAX_M : 300;
+    var maxM = typeof DAXI_GPS_VALIDATED_MAX_M === 'number' ? DAXI_GPS_VALIDATED_MAX_M : 200;
     var userPan = !!window._daxiForceGpsPanOnce;
     // First native fix is no longer force-panned: a 500 m cell fix must not
     // become the committed map point just because it arrived first.

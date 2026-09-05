@@ -2898,7 +2898,7 @@ function _syncClientGpsAccuracyHiddenFields() {
     var accH = document.getElementById('clientGpsAccHidden');
     var cLatH = document.getElementById('clientGpsLatHidden');
     var cLngH = document.getElementById('clientGpsLngHidden');
-    var maxM = (typeof DAXI_GPS_VALIDATED_MAX_M === 'number') ? DAXI_GPS_VALIDATED_MAX_M : 300;
+    var maxM = (typeof DAXI_GPS_VALIDATED_MAX_M === 'number') ? DAXI_GPS_VALIDATED_MAX_M : 200;
     var src = null;
     if (window._daxiPickupFromGps) {
         var validated = window.DaxiClientGps && DaxiClientGps.getValidated && DaxiClientGps.getValidated();
