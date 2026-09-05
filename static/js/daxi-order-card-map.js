@@ -359,44 +359,7 @@
       });
     }
 
-    const svc = getDirections();
-    if (!svc) return Promise.resolve(null);
-
-    const req = {
-      origin: origin,
-      destination: dest,
-      travelMode: global.google.maps.TravelMode.DRIVING,
-      region: 'ht',
-      optimizeWaypoints: false,
-    };
-    if (wps.length) {
-      req.waypoints = wps.map(function (w) {
-        return { location: w, stopover: true };
-      });
-    }
-
-    return new Promise(function (resolve) {
-      try {
-        svc.route(req, function (result, status) {
-          if (status !== 'OK' || !result || !result.routes || !result.routes[0]) {
-            resolve(null);
-            return;
-          }
-          const path = [];
-          result.routes[0].legs.forEach(function (leg) {
-            (leg.steps || []).forEach(function (step) {
-              (step.path || []).forEach(function (pt) {
-                path.push({ lat: pt.lat(), lng: pt.lng() });
-              });
-            });
-          });
-          if (path.length >= 2) ROUTE_CACHE[key] = path;
-          resolve(path.length >= 2 ? path : null);
-        });
-      } catch (e) {
-        resolve(null);
-      }
-    });
+    return Promise.resolve(null);
   }
 
   function drawRouteLine(store, map, key, origin, dest, waypoints, fallback, color, weight, opacity, onPath) {
@@ -873,13 +836,26 @@
       mk.setPosition(driverPos);
     }
     if (mk && mk.setIcon) mk.setIcon(driverIcon(cfg.status));
+    var existingLeg = store.routePaths && store.routePaths.leg;
+    var offM = (existingLeg && existingLeg.length > 1)
+      ? ((global.DaxiRoutes && DaxiRoutes.distToPathM)
+        ? DaxiRoutes.distToPathM(cfg.driver.lat, cfg.driver.lng, existingLeg)
+        : distMeters(cfg.driver, snapToPath(cfg.driver.lat, cfg.driver.lng, existingLeg, 100000)))
+      : Infinity;
+    if (existingLeg && existingLeg.length > 1 && offM < 150) {
+      var snappedKeep = snapToPath(cfg.driver.lat, cfg.driver.lng, existingLeg, 150);
+      if (mk && mk.setPosition) mk.setPosition(snappedKeep);
+      if (cfg.status === 'in_progress' && store.markers.pickup && store.markers.pickup.setPosition) {
+        store.markers.pickup.setPosition(snappedKeep);
+      }
+      syncClientAccuracyCircle(store, rec.map, cfg);
+      return;
+    }
     // Pendant la course : le pin départ suit le chauffeur (même véhicule)
     if (cfg.status === 'in_progress' && store.markers.pickup && store.markers.pickup.setPosition) {
       store.markers.pickup.setPosition(driverPos);
     }
     var legKey = 'leg';
-    if (store.polylines[legKey]) store.polylines[legKey].setMap(null);
-    delete store.polylines[legKey];
     var st = cfg.status;
     if (isValidGpsPoint(cfg.driver) && isValidGpsPoint(cfg.pickup) && st === 'on_way') {
       drawRouteLine(store, rec.map, legKey, cfg.driver, cfg.pickup, [], [cfg.driver, cfg.pickup], '#3b82f6', 5, 0.85, function (path) {

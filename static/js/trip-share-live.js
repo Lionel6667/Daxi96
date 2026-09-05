@@ -464,16 +464,25 @@
   DaxiTripShare.prototype._drawRoute = function (origin, destination) {
     var self = this;
     if (!this.directionsSvc) return;
-    this.directionsSvc.route({
-      origin: origin, destination: destination, travelMode: google.maps.TravelMode.DRIVING,
-    }, function (result, status) {
-      if (status !== 'OK' || !result.routes.length) return;
-      var path = result.routes[0].overview_path;
+    function paint(path) {
+      if (!path || path.length < 2) return;
       self.polylines.forEach(function (p) { p.setMap(null); });
       self.polylines = [
         new google.maps.Polyline({ path: path, map: self.map, strokeColor: '#f59e0b', strokeOpacity: 0.35, strokeWeight: 10, zIndex: 1 }),
         new google.maps.Polyline({ path: path, map: self.map, strokeColor: '#fbbf24', strokeOpacity: 0.95, strokeWeight: 4, zIndex: 2 }),
       ];
+    }
+    if (global.DaxiRoutes && typeof global.DaxiRoutes.computeRoute === 'function') {
+      global.DaxiRoutes.computeRoute(origin, destination).then(function (route) {
+        if (route && route.path) paint(route.path);
+      });
+      return;
+    }
+    this.directionsSvc.route({
+      origin: origin, destination: destination, travelMode: google.maps.TravelMode.DRIVING,
+    }, function (result, status) {
+      if (status !== 'OK' || !result.routes.length) return;
+      paint(result.routes[0].overview_path);
     });
   };
 

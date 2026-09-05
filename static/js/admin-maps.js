@@ -180,43 +180,7 @@
       });
     }
 
-    var svc = getDirectionsService();
-    if (!svc) return Promise.resolve(null);
-
-    var req = {
-      origin: origin,
-      destination: dest,
-      travelMode: global.google.maps.TravelMode.DRIVING,
-      optimizeWaypoints: false,
-    };
-    if (wps.length) {
-      req.waypoints = wps.map(function (w) {
-        return { location: w, stopover: true };
-      });
-    }
-
-    return new Promise(function (resolve) {
-      try {
-        svc.route(req, function (result, status) {
-          if (status !== 'OK' || !result || !result.routes[0]) {
-            resolve(null);
-            return;
-          }
-          var path = [];
-          result.routes[0].legs.forEach(function (leg) {
-            leg.steps.forEach(function (step) {
-              step.path.forEach(function (pt) {
-                path.push({ lat: pt.lat(), lng: pt.lng() });
-              });
-            });
-          });
-          if (path.length >= 2 && !options.skipCache) ROUTE_CACHE[key] = path;
-          resolve(path.length >= 2 ? path : null);
-        });
-      } catch (e) {
-        resolve(null);
-      }
-    });
+    return Promise.resolve(null);
   }
 
   function pinIcon(color, scale) {
@@ -705,9 +669,9 @@
 
       let legPromise = Promise.resolve(null);
       if (status === 'on_way' && driver && pickup) {
-        legPromise = fetchDrivingRoute(driver, pickup, [], { skipCache: true });
+        legPromise = fetchDrivingRoute(driver, pickup, []);
       } else if (status === 'in_progress' && driver && dest) {
-        legPromise = fetchDrivingRoute(driver, dest, [], { skipCache: true });
+        legPromise = fetchDrivingRoute(driver, dest, []);
       } else if (status === 'arrived' && pickup && dest) {
         legPromise = fetchDrivingRoute(pickup, dest, planWp);
       }

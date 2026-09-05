@@ -443,34 +443,18 @@
     }
 
     function _fetchGoogleDirectionsPath(from, to) {
-        return new Promise(function (resolve) {
-            if (!global.google || !google.maps || !google.maps.DirectionsService) {
-                resolve(null);
-                return;
-            }
-            if (!global._daxiExplorerDirectionsService) {
-                global._daxiExplorerDirectionsService = new google.maps.DirectionsService();
-            }
-            global._daxiExplorerDirectionsService.route({
-                origin: { lat: from.lat, lng: from.lng },
-                destination: { lat: to.lat, lng: to.lng },
-                travelMode: google.maps.TravelMode.DRIVING
-            }, function (result, status) {
-                if (status !== 'OK' || !result || !result.routes || !result.routes[0]) {
-                    resolve(null);
-                    return;
-                }
-                var path = [];
-                result.routes[0].legs.forEach(function (leg) {
-                    leg.steps.forEach(function (step) {
-                        step.path.forEach(function (pt) {
-                            path.push({ lat: pt.lat(), lng: pt.lng() });
-                        });
-                    });
+        if (global.DaxiRoutes && typeof global.DaxiRoutes.computeRoute === 'function') {
+            return global.DaxiRoutes.computeRoute(from, to).then(function (route) {
+                if (!route || !route.path || route.path.length < 2) return null;
+                return route.path.map(function (pt) {
+                    return {
+                        lat: typeof pt.lat === 'function' ? pt.lat() : pt.lat,
+                        lng: typeof pt.lng === 'function' ? pt.lng() : pt.lng
+                    };
                 });
-                resolve(path.length > 1 ? path : null);
             });
-        });
+        }
+        return Promise.resolve(null);
     }
 
     function _getRoutePath(fromIdx, toIdx) {

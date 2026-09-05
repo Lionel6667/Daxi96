@@ -163,13 +163,6 @@ function _fetchRoute(lng1, lat1, lng2, lat2, optWaypoints, retryOrOpts) {
     if (window.DaxiRoutes && typeof DaxiRoutes.computeRoute === 'function') {
         return DaxiRoutes.computeRoute(origin, dest, wps).then(function(route) {
             if (!route || !route.path || route.path.length < 2) {
-                if (retryCount < 2) {
-                    return new Promise(function(resolve) {
-                        setTimeout(function() {
-                            resolve(_fetchRoute(lng1, lat1, lng2, lat2, optWaypoints, retryCount + 1));
-                        }, 450 * (retryCount + 1));
-                    });
-                }
                 return null;
             }
             var path = route.path.map(function(pt) {
@@ -187,64 +180,7 @@ function _fetchRoute(lng1, lat1, lng2, lat2, optWaypoints, retryOrOpts) {
             };
         });
     }
-    return new Promise(resolve => {
-        if (!window.google || !google.maps) { resolve(null); return; }
-        if (!_dirService) _dirService = new google.maps.DirectionsService();
-        var routeReq = {
-            origin:      { lat: lat1, lng: lng1 },
-            destination: { lat: lat2, lng: lng2 },
-            travelMode:  google.maps.TravelMode.DRIVING,
-            region:      'ht'
-        };
-        if (optWaypoints && optWaypoints.length) {
-            routeReq.waypoints = optWaypoints.map(function(p) {
-                var lat = Array.isArray(p) ? p[0] : p.lat;
-                var lng = Array.isArray(p) ? p[1] : p.lng;
-                return { location: { lat: lat, lng: lng }, stopover: false };
-            });
-            routeReq.optimizeWaypoints = false;
-        }
-        _dirService.route(routeReq, (result, status) => {
-            if (status !== 'OK' || !result || !result.routes || !result.routes[0]) {
-                if (retryCount < 2) {
-                    setTimeout(function() {
-                        resolve(_fetchRoute(lng1, lat1, lng2, lat2, optWaypoints, retryCount + 1));
-                    }, 450 * (retryCount + 1));
-                    return;
-                }
-                resolve(null); return;
-            }
-            var route = result.routes[0];
-            var path = [];
-            if (route.legs) {
-                route.legs.forEach(function(leg) {
-                    (leg.steps || []).forEach(function(step) {
-                        (step.path || []).forEach(function(pt) {
-                            path.push({
-                                lat: typeof pt.lat === 'function' ? pt.lat() : pt.lat,
-                                lng: typeof pt.lng === 'function' ? pt.lng() : pt.lng
-                            });
-                        });
-                    });
-                });
-            }
-            if (path.length < 2 && route.overview_path && route.overview_path.length >= 2) {
-                path = route.overview_path.map(function(p) {
-                    return { lat: p.lat(), lng: p.lng() };
-                });
-            }
-            path = _daxiSimplifyRoutePath(path);
-            if (path.length < 2) { resolve(null); return; }
-            const leg = route.legs && route.legs[0];
-            resolve({
-                path: path,
-                distanceM: leg ? leg.distance.value : null,
-                durationS: leg ? leg.duration.value : null,
-                distanceText: leg ? leg.distance.text : null,
-                durationText: leg ? leg.duration.text : null
-            });
-        });
-    });
+    return Promise.resolve(null);
 }
 
 function _daxiHUD(id, hasDest, hasDriver, dist, dur, eta) { }
@@ -631,26 +567,33 @@ function _daxiSyncMainMapOrderTracking(el) {
         return;
     }
 
-    var routeKey = orderId + ':' + status + ':' + Math.round(vLa * 2000) + ':' + Math.round(vLo * 2000);
+    var routeKey = orderId + ':' + status + ':' + vLa.toFixed(3) + ':' + vLo.toFixed(3);
     var track = window._daxiMainOrderTrack;
-    if (track._lastRouteKey === routeKey && track.legPath && track.legPath.length > 1) {
-        var displayLat = vLa;
-        var displayLng = vLo;
-        if (status === 'on_way' || status === 'in_progress') {
-            var snappedFast = _daxiSnapPointToPath(vLa, vLo, track.legPath);
-            if (snappedFast && isFinite(snappedFast.lat)) {
-                displayLat = snappedFast.lat;
-                displayLng = snappedFast.lng;
+    if (track.legPath && track.legPath.length > 1) {
+        var offM = (window.DaxiRoutes && DaxiRoutes.distToPathM)
+            ? DaxiRoutes.distToPathM(vLa, vLo, track.legPath)
+            : 0;
+        var tooSoon = track._lastRouteAt && (Date.now() - track._lastRouteAt < 60000);
+        if (offM < 150 || tooSoon || track._lastRouteKey === routeKey) {
+            var displayLat = vLa;
+            var displayLng = vLo;
+            if (status === 'on_way' || status === 'in_progress') {
+                var snappedFast = _daxiSnapPointToPath(vLa, vLo, track.legPath);
+                if (snappedFast && isFinite(snappedFast.lat)) {
+                    displayLat = snappedFast.lat;
+                    displayLng = snappedFast.lng;
+                }
             }
+            applyPos(displayLat, displayLng);
+            return;
         }
-        applyPos(displayLat, displayLng);
-        return;
     }
 
     _fetchRoute(vLo, vLa, legTo.lng, legTo.lat).then(function(route) {
         if (!route || !route.path || String(window._daxiMainOrderTrack.orderId) !== String(orderId)) return;
         window._daxiMainOrderTrack.legPath = route.path;
         window._daxiMainOrderTrack._lastRouteKey = routeKey;
+        window._daxiMainOrderTrack._lastRouteAt = Date.now();
         if (window.DaxiMapSnap && DaxiMapSnap.setActiveRoutePath) DaxiMapSnap.setActiveRoutePath(route.path);
         var displayLat = vLa;
         var displayLng = vLo;
@@ -1208,7 +1151,16 @@ function initDaxiMaps3D(root) {
 
         function _throttledLegRouteRefresh(newVLo, newVLa) {
             var now = performance.now();
-            if (now - inst._routeLegLastAt < 12000) return;
+            if (now - inst._routeLegLastAt < 60000) return;
+            var existing = [];
+            try {
+                existing = isInProgress
+                    ? _daxiPathFromPolyline(_tripPoly.getPath())
+                    : _daxiPathFromPolyline(_pickupPoly.getPath());
+            } catch (ePath) {}
+            if (existing.length > 1 && window.DaxiRoutes && DaxiRoutes.distToPathM) {
+                if (DaxiRoutes.distToPathM(newVLa, newVLo, existing) < 150) return;
+            }
             inst._routeLegLastAt = now;
             if (caseA && pLa && pLo) {
                 _fetchRoute(newVLo, newVLa, pLo, pLa).then(function(route1) {
