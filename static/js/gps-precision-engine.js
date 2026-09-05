@@ -95,24 +95,37 @@
             !global._daxiForceWebGps;
     }
 
-    function nativeGeoPosition() {
+    function subscribeNativePush(fn) {
+        var bag = global._daxiGpsPushSubs || (global._daxiGpsPushSubs = []);
+        bag.push(fn);
+        return function () {
+            var i = bag.indexOf(fn);
+            if (i >= 0) bag.splice(i, 1);
+        };
+    }
+
+    function fixToGeoPos(fix) {
+        if (!fix || fix.lat == null || fix.lng == null || fix.error) return null;
+        return {
+            coords: {
+                latitude: fix.lat,
+                longitude: fix.lng,
+                accuracy: fix.accuracy != null ? fix.accuracy : 250,
+                altitude: fix.altitude || null,
+                heading: fix.heading != null ? fix.heading : null,
+                speed: fix.speed || 0
+            },
+            timestamp: fix.time || fix.ts || Date.now()
+        };
+    }
+
+    function nativeGeoPosition(skipRefresh) {
         if (!hasNativeGps()) return null;
         try {
-            if (global.DaxiAndroid.refreshLocation) global.DaxiAndroid.refreshLocation();
+            if (!skipRefresh && global.DaxiAndroid.refreshLocation) global.DaxiAndroid.refreshLocation();
             var raw = global.DaxiAndroid.getCurrentLocation();
             var pos = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (!pos || pos.error || pos.lat == null || pos.lng == null) return null;
-            return {
-                coords: {
-                    latitude: pos.lat,
-                    longitude: pos.lng,
-                    accuracy: pos.accuracy != null ? pos.accuracy : 250,
-                    altitude: pos.altitude || null,
-                    heading: pos.heading != null ? pos.heading : null,
-                    speed: pos.speed || 0
-                },
-                timestamp: pos.time || pos.ts || Date.now()
-            };
+            return fixToGeoPos(pos);
         } catch (e) {
             return null;
         }
@@ -124,7 +137,10 @@
         var intervalId = null;
 
         function cleanup() {
-            if (intervalId) { clearInterval(intervalId); intervalId = null; }
+            if (typeof intervalId === 'function') {
+                intervalId();
+                intervalId = null;
+            }
         }
 
         function complete(fix) {
@@ -139,7 +155,7 @@
         function ingest(pos) {
             if (done || !pos || !pos.coords) return;
             var acc = pos.coords.accuracy || 9999;
-            traceFix(pos, 'native_poll');
+            traceFix(pos, 'native_push');
             var nativeAccept = Math.max(scanMaxAccept, 1500);
             if (acc > nativeAccept) return;
             var fix = rawFixFromCoords(pos.coords, pos.timestamp || Date.now());
@@ -148,12 +164,12 @@
             if (acc <= burstTarget) complete(fix);
         }
 
-        function poll() {
-            ingest(nativeGeoPosition());
+        function onPush(fix) {
+            ingest(fixToGeoPos(fix) || nativeGeoPosition(true));
         }
 
-        poll();
-        intervalId = setInterval(poll, 400);
+        onPush(global._daxiLastNativeGps);
+        intervalId = subscribeNativePush(onPush);
 
         var hardTimer = setTimeout(function () {
             if (done) return;
@@ -270,7 +286,7 @@
         var kalman = new Kalman2D(mode === 'desktop' ? 'pedestrian' : mode);
         var bearingKalman = new BearingKalman();
         var watchId = null;
-        var nativeWatchId = null;
+        var nativeUnsub = null;
         var snapPath = null;
         var prevRaw = null;
         var prevTime = 0;
@@ -342,7 +358,7 @@
 
         // Diagnostic only (audit phase 0): every discard path funnels through here
         // so the reason is observable, and identical consecutive measurements are
-        // counted because the 800ms native poll re-reads one push-based value.
+        // counted because a fused provider can repeat the same lat/lng/acc.
         function diagReject(reason, ctx) {
             if (global.DaxiGpsDiag) global.DaxiGpsDiag.reject(reason, ctx);
             return null;
@@ -652,32 +668,29 @@
 
             start: function (onUpdate, onError) {
                 if (hasNativeGps()) {
-                    if (nativeWatchId != null) return;
+                    if (nativeUnsub) return;
                     onDisplayCb = onUpdate;
                     startDisplayLoop();
                     if (global.DaxiGpsDiag) {
-                        global.DaxiGpsDiag.bridgeNote('engine start: native poll 800ms over a push-based source', {
+                        global.DaxiGpsDiag.bridgeNote('engine start: native push (no poll)', {
                             targetAccuracy: targetAccuracy,
                             maxAccuracy: maxAccuracy,
                             displayMaxAccuracy: displayMaxAccuracy
                         });
                     }
-                    var emptyPolls = 0;
-                    function nativePoll() {
-                        var pos = nativeGeoPosition();
+                    function onNativePush(fix) {
+                        var pos = fixToGeoPos(fix) || nativeGeoPosition(true);
                         if (!pos) {
-                            emptyPolls += 1;
-                            if (global.DaxiGpsDiag && (emptyPolls === 1 || emptyPolls % 12 === 0)) {
-                                global.DaxiGpsDiag.reject('native_no_data', { consecutivePolls: emptyPolls });
+                            if (global.DaxiGpsDiag) {
+                                global.DaxiGpsDiag.reject('native_no_data', { via: 'push' });
                             }
                             return;
                         }
-                        emptyPolls = 0;
-                        var r = handleRawPosition(pos, { type: 'native_poll' });
+                        var r = handleRawPosition(pos, { type: 'native_push' });
                         if (r && !display) display = { lat: r.raw.lat, lng: r.raw.lng };
                     }
-                    nativePoll();
-                    nativeWatchId = setInterval(nativePoll, 800);
+                    nativeUnsub = subscribeNativePush(onNativePush);
+                    onNativePush(global._daxiLastNativeGps);
                     return;
                 }
                 if (!navigator.geolocation) {
@@ -709,9 +722,9 @@
             },
 
             stop: function () {
-                if (nativeWatchId != null) {
-                    clearInterval(nativeWatchId);
-                    nativeWatchId = null;
+                if (nativeUnsub) {
+                    nativeUnsub();
+                    nativeUnsub = null;
                 }
                 if (watchId != null) {
                     navigator.geolocation.clearWatch(watchId);

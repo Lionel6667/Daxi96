@@ -813,6 +813,14 @@ function applyNativeFix(raw, origin) {
       window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
     }
   } catch (eFix) {}
+  try {
+    var subs = window._daxiGpsPushSubs;
+    if (subs && subs.length) {
+      for (var i = 0; i < subs.length; i++) {
+        try { subs[i](next); } catch (eSub) {}
+      }
+    }
+  } catch (ePush) {}
   return next;
 }
 
