@@ -389,30 +389,9 @@
                 return diagReject('above_REJECT_ACCURACY_M', { raw: rawAcc, limit: REJECT_ACCURACY_M });
             }
             if (!scanning && rawAcc > maxAccuracy) {
-                if (rawAcc <= displayMaxAccuracy) {
-                    var approx = rawFixFromCoords(c, now);
-                    if (global.DaxiGpsDiag) {
-                        global.DaxiGpsDiag.fix({
-                            raw: rawAcc,
-                            published: rawAcc,
-                            path: 'approx-display (bypasses rejectJump, overwrites current)',
-                            duplicates: dupes,
-                            provider: meta.type
-                        });
-                    }
-                    if (!bestFix || rawAcc < (bestFix.rawAccuracy || 9999)) bestFix = approx;
-                    current = approx;
-                    if (!display) display = { lat: approx.raw.lat, lng: approx.raw.lng };
-                    else {
-                        display.lat = approx.raw.lat;
-                        display.lng = approx.raw.lng;
-                    }
-                    return approx;
-                }
-                return diagReject('above_displayMaxAccuracy', {
+                return diagReject('above_maxAccuracy', {
                     raw: rawAcc,
-                    maxAccuracy: maxAccuracy,
-                    displayMaxAccuracy: displayMaxAccuracy
+                    maxAccuracy: maxAccuracy
                 });
             }
             if (rejectJump(c.latitude, c.longitude, rawAcc, now)) {
