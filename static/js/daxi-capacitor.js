@@ -1529,6 +1529,8 @@
   }
 
   // capacitor-src/main.js
+  var DaxiGps = registerPlugin("DaxiGps");
+  if (typeof window !== "undefined") window.DaxiGps = DaxiGps;
   var WRITE_RE = /^(POST|PUT|PATCH|DELETE)$/i;
   var API_RE = /\/(htmx|api)\//;
   var BACKEND_FETCH_TIMEOUT_MS = 8e3;
@@ -2138,34 +2140,150 @@
       throw new Error("permission");
     }
     const last = window._daxiLastNativeGps;
-    if (last && last.ts && Date.now() - last.ts < 8e3) {
-      gpsDiag("bridgeCacheHit", Date.now() - last.ts);
+    if (last && last.lat != null && gpsWatchId != null) {
+      gpsDiag("bridgeCacheHit", last.ageMs != null ? last.ageMs : last.ts ? Date.now() - last.ts : 0);
       return last;
     }
-    gpsDiag("bridgeNote", "getCurrentPosition (maximumAge=5000 -> native getLastLocation path)", {
+    if (usesDaxiGpsPlugin()) {
+      gpsDiag("bridgeNote", "DaxiGps.getFreshPosition (no getLastLocation)", { timeout: 15e3 });
+      const pos2 = await DaxiGps.getFreshPosition({ timeout: 15e3 });
+      return normalizeFix(pos2);
+    }
+    gpsDiag("bridgeNote", "getCurrentPosition maximumAge=0 (fresh only)", {
       enableHighAccuracy: true,
       timeout: 12e3,
-      maximumAge: 5e3
+      maximumAge: 0
     });
     const pos = await Geolocation2.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 12e3,
-      maximumAge: 5e3
+      maximumAge: 0
     });
+    return normalizeFix(pos);
+  }
+  function usesDaxiGpsPlugin() {
+    return Capacitor.getPlatform() === "android";
+  }
+  function classifyLocationPerm(perm) {
+    if (!perm) return "denied";
+    if (perm.kind === "fine" || perm.precise === true || perm.location === "granted") return "fine";
+    if (perm.kind === "coarse" || perm.coarseLocation === "granted") return "coarse";
+    return "denied";
+  }
+  function applyLocationPerm(perm, source) {
+    const kind = classifyLocationPerm(perm);
+    window._daxiGpsPermKind = kind;
+    window._daxiGpsPrecise = kind === "fine";
+    window._daxiGpsPerm = kind === "fine";
+    gpsDiag("permission", {
+      source,
+      perm: kind,
+      precise: kind === "fine",
+      location: perm && perm.location,
+      coarseLocation: perm && perm.coarseLocation,
+      warn: kind === "coarse"
+    });
+    return kind;
+  }
+  function notifyLocationKind(kind) {
+    if (kind === "fine") {
+      if (window._daxiOnNativeLocationGranted) {
+        window._daxiOnNativeLocationGranted(void 0, void 0, void 0);
+      }
+      return;
+    }
+    if (kind === "coarse") {
+      if (window._daxiOnNativeLocationApproximate) window._daxiOnNativeLocationApproximate();
+      else if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
+      return;
+    }
+    if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
+  }
+  async function requestFineLocationPerm() {
+    if (usesDaxiGpsPlugin()) {
+      await DaxiGps.requestPermissions();
+      return DaxiGps.permissionKind();
+    }
+    return Geolocation2.requestPermissions();
+  }
+  async function checkFineLocationPerm() {
+    if (usesDaxiGpsPlugin()) {
+      return DaxiGps.permissionKind();
+    }
+    return Geolocation2.checkPermissions();
+  }
+  function normalizeFix(raw) {
+    if (!raw) return null;
+    const coords = raw.coords;
+    const ageMs = raw.ageMs != null ? +raw.ageMs : null;
+    const nativeTs = raw.timestamp || null;
+    const ts = ageMs != null && isFinite(ageMs) ? Date.now() - ageMs : nativeTs || Date.now();
+    if (coords) {
+      return {
+        lat: coords.latitude,
+        lng: coords.longitude,
+        accuracy: coords.accuracy,
+        altitude: coords.altitude,
+        speed: coords.speed,
+        heading: coords.heading,
+        ts,
+        nativeTs,
+        ageMs
+      };
+    }
     return {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      accuracy: pos.coords.accuracy,
-      altitude: pos.coords.altitude,
-      speed: pos.coords.speed,
-      heading: pos.coords.heading,
-      ts: Date.now(),
-      // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
-      nativeTs: pos.timestamp || null
+      lat: raw.lat,
+      lng: raw.lng,
+      accuracy: raw.accuracy,
+      altitude: raw.altitude,
+      speed: raw.speed,
+      heading: raw.heading,
+      ts,
+      time: ts,
+      nativeTs,
+      ageMs,
+      elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
+      provider: raw.provider || null,
+      precise: raw.precise
     };
+  }
+  function applyNativeFix(raw, origin) {
+    const next = normalizeFix(raw);
+    if (!next) return null;
+    setLastNativeGps(next, origin);
+    try {
+      if (typeof window._daxiOnNativeGpsFix === "function") {
+        window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
+      }
+    } catch (eFix) {
+    }
+    return next;
   }
   function startGpsWatch() {
     if (gpsWatchId != null) return;
+    if (usesDaxiGpsPlugin()) {
+      gpsDiag("request", {
+        api: "DaxiGps.watch",
+        priority: "HIGH_ACCURACY",
+        interval: 1e3,
+        minInterval: 500,
+        maxDelay: 0,
+        waitForAccurateLocation: true
+      });
+      DaxiGps.watch({}, (pos, err) => {
+        if (err || !pos || pos.lat == null) {
+          gpsDiag("bridgeNote", "DaxiGps.watch callback without coords", { error: err && err.message });
+          return;
+        }
+        applyNativeFix(pos, "watch");
+      }).then((id) => {
+        gpsWatchId = id;
+        gpsDiag("bridgeNote", "watch registered", { id: String(id).slice(0, 12), plugin: "DaxiGps" });
+      }).catch((e) => {
+        gpsDiag("bridgeNote", "DaxiGps.watch failed", { error: e && e.message, warn: true });
+      });
+      return;
+    }
     gpsDiag("request", {
       api: "fused/watchPosition",
       priority: "HIGH_ACCURACY (only if ACCESS_FINE_LOCATION granted)",
@@ -2178,26 +2296,7 @@
         gpsDiag("bridgeNote", "watchPosition callback without coords", { error: err && err.message });
         return;
       }
-      setLastNativeGps(
-        {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          altitude: pos.coords.altitude,
-          speed: pos.coords.speed,
-          heading: pos.coords.heading,
-          ts: Date.now(),
-          // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
-          nativeTs: pos.timestamp || null
-        },
-        "watch"
-      );
-      try {
-        if (typeof window._daxiOnNativeGpsFix === "function") {
-          window._daxiOnNativeGpsFix(window._daxiLastNativeGps);
-        }
-      } catch (eFix) {
-      }
+      applyNativeFix(pos, "watch");
     }).then((id) => {
       gpsWatchId = id;
       gpsDiag("bridgeNote", "watch registered", { id: String(id).slice(0, 12) });
@@ -2494,25 +2593,16 @@
       getFcmToken: () => window._daxiFcmToken || "",
       notifyMapReady: () => {
       },
+      openLocationSettings: () => {
+        if (usesDaxiGpsPlugin()) DaxiGps.openAppSettings().catch(() => {
+        });
+      },
       requestLocationPermission: () => {
-        Geolocation2.requestPermissions().then(async (perm) => {
-          const ok = perm.location === "granted" || perm.coarseLocation === "granted";
-          window._daxiGpsPerm = ok;
-          gpsDiag("permission", {
-            source: "requestPermissions",
-            perm: perm.location === "granted" ? "fine" : perm.coarseLocation === "granted" ? "coarse" : "denied",
-            precise: perm.location === "granted",
-            location: perm.location,
-            coarseLocation: perm.coarseLocation
-          });
-          if (!ok) {
-            if (window._daxiOnNativeLocationDenied) window._daxiOnNativeLocationDenied();
-            return;
-          }
+        requestFineLocationPerm().then(async (perm) => {
+          const kind = applyLocationPerm(perm, "requestPermissions");
+          notifyLocationKind(kind);
+          if (kind !== "fine") return;
           startGpsWatch();
-          if (window._daxiOnNativeLocationGranted) {
-            window._daxiOnNativeLocationGranted(void 0, void 0, void 0);
-          }
           readNativeGps().then((p) => {
             setLastNativeGps(p, "requestLocationPermission");
             if (window._daxiOnNativeGpsFix) window._daxiOnNativeGpsFix(p);
@@ -2564,23 +2654,19 @@
     });
   }
   async function initGps() {
-    gpsDiag("startup", { platform: Capacitor.getPlatform(), plugin: "@capacitor/geolocation 6.1.1" });
+    gpsDiag("startup", {
+      platform: Capacitor.getPlatform(),
+      plugin: usesDaxiGpsPlugin() ? "DaxiGps (1Hz, no batch)" : "@capacitor/geolocation 6.1.1"
+    });
     try {
-      const perm = await Geolocation2.checkPermissions();
-      const granted = perm.location === "granted" || perm.coarseLocation === "granted";
-      window._daxiGpsPerm = granted;
-      gpsDiag("permission", {
-        source: "checkPermissions",
-        perm: perm.location === "granted" ? "fine" : perm.coarseLocation === "granted" ? "coarse" : "denied",
-        precise: perm.location === "granted",
-        location: perm.location,
-        coarseLocation: perm.coarseLocation
-      });
-      if (!granted) return;
-      startGpsWatch();
-      if (window._daxiOnNativeLocationGranted) {
-        window._daxiOnNativeLocationGranted(void 0, void 0, void 0);
+      const perm = await checkFineLocationPerm();
+      const kind = applyLocationPerm(perm, "checkPermissions");
+      if (kind !== "fine") {
+        if (kind === "coarse") notifyLocationKind("coarse");
+        return;
       }
+      startGpsWatch();
+      notifyLocationKind("fine");
       readNativeGps().then((p) => {
         setLastNativeGps(p, "initGps");
         if (window._daxiOnNativeGpsFix) window._daxiOnNativeGpsFix(p);
