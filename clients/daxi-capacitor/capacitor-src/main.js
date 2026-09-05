@@ -685,65 +685,68 @@ async function readNativeGps() {
     throw new Error('permission');
   }
   const last = window._daxiLastNativeGps;
-  if (last && last.ts && Date.now() - last.ts < 8000) {
-    gpsDiag('bridgeCacheHit', Date.now() - last.ts);
+  // Live watch already has a fix: return it. Never treat a JS wall-clock cache
+  // as a reason to call getLastLocation() (maximumAge > 0 on the stock plugin).
+  if (last && last.lat != null && gpsWatchId != null) {
+    gpsDiag('bridgeCacheHit', last.ageMs != null ? last.ageMs : (last.ts ? Date.now() - last.ts : 0));
     return last;
   }
-  gpsDiag('bridgeNote', 'getCurrentPosition (maximumAge=5000 -> native getLastLocation path)', {
+  if (usesDaxiGpsPlugin()) {
+    gpsDiag('bridgeNote', 'DaxiGps.getFreshPosition (no getLastLocation)', { timeout: 15000 });
+    const pos = await DaxiGps.getFreshPosition({ timeout: 15000 });
+    return normalizeFix(pos);
+  }
+  gpsDiag('bridgeNote', 'getCurrentPosition maximumAge=0 (fresh only)', {
     enableHighAccuracy: true,
     timeout: 12000,
-    maximumAge: 5000,
+    maximumAge: 0,
   });
   const pos = await Geolocation.getCurrentPosition({
     enableHighAccuracy: true,
     timeout: 12000,
-    maximumAge: 5000,
+    maximumAge: 0,
   });
-  return {
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude,
-    accuracy: pos.coords.accuracy,
-    altitude: pos.coords.altitude,
-    speed: pos.coords.speed,
-    heading: pos.coords.heading,
-    ts: Date.now(),
-    // Diagnostic only: the true fix time, which ts overwrites (audit section 4).
-    nativeTs: pos.timestamp || null,
-  };
+  return normalizeFix(pos);
 }
 
 function usesDaxiGpsPlugin() {
   return Capacitor.getPlatform() === 'android';
 }
 
-function applyNativeFix(raw, origin) {
+function normalizeFix(raw) {
   if (!raw) return null;
   const coords = raw.coords;
-  const next = coords
-    ? {
-        lat: coords.latitude,
-        lng: coords.longitude,
-        accuracy: coords.accuracy,
-        altitude: coords.altitude,
-        speed: coords.speed,
-        heading: coords.heading,
-        ts: Date.now(),
-        nativeTs: raw.timestamp || null,
-      }
-    : {
-        lat: raw.lat,
-        lng: raw.lng,
-        accuracy: raw.accuracy,
-        altitude: raw.altitude,
-        speed: raw.speed,
-        heading: raw.heading,
-        ts: Date.now(),
-        nativeTs: raw.timestamp || null,
-        ageMs: raw.ageMs != null ? raw.ageMs : null,
-        elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
-        provider: raw.provider || null,
-        precise: raw.precise,
-      };
+  if (coords) {
+    return {
+      lat: coords.latitude,
+      lng: coords.longitude,
+      accuracy: coords.accuracy,
+      altitude: coords.altitude,
+      speed: coords.speed,
+      heading: coords.heading,
+      ts: Date.now(),
+      nativeTs: raw.timestamp || null,
+    };
+  }
+  return {
+    lat: raw.lat,
+    lng: raw.lng,
+    accuracy: raw.accuracy,
+    altitude: raw.altitude,
+    speed: raw.speed,
+    heading: raw.heading,
+    ts: Date.now(),
+    nativeTs: raw.timestamp || null,
+    ageMs: raw.ageMs != null ? raw.ageMs : null,
+    elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
+    provider: raw.provider || null,
+    precise: raw.precise,
+  };
+}
+
+function applyNativeFix(raw, origin) {
+  const next = normalizeFix(raw);
+  if (!next) return null;
   setLastNativeGps(next, origin);
   try {
     if (typeof window._daxiOnNativeGpsFix === 'function') {
