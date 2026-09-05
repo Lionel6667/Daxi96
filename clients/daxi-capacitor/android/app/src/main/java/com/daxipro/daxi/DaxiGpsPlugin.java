@@ -212,6 +212,7 @@ public class DaxiGpsPlugin extends Plugin {
             "fix acc=" + location.getAccuracy()
                 + " ageMs=" + ageMs
                 + " provider=" + location.getProvider()
+                + " sats=" + engine.satellitesUsed() + "/" + engine.satellitesInView()
                 + " precise=" + hasFinePermission()
         );
         for (PluginCall watch : watchingCalls.values()) {
@@ -253,6 +254,8 @@ public class DaxiGpsPlugin extends Plugin {
         ret.put("ageMs", ageMs);
         ret.put("provider", location.getProvider() == null ? "" : location.getProvider());
         ret.put("precise", hasFinePermission());
+        ret.put("satellitesUsed", engine.satellitesUsed());
+        ret.put("satellitesInView", engine.satellitesInView());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ret.put("altitudeAccuracy", location.getVerticalAccuracyMeters());
         }

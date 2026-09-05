@@ -1,8 +1,11 @@
 package com.daxipro.daxi;
 
 import android.content.Context;
+import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Build;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import androidx.core.location.LocationManagerCompat;
@@ -38,6 +41,9 @@ final class DaxiGpsEngine {
     private FusedLocationProviderClient fusedClient;
     private LocationCallback callback;
     private FixListener listener;
+    private GnssStatus.Callback gnssCallback;
+    private int satellitesInView;
+    private int satellitesUsed;
 
     DaxiGpsEngine(Context context) {
         this.context = context.getApplicationContext();
@@ -103,15 +109,75 @@ final class DaxiGpsEngine {
             }
         };
         fusedClient.requestLocationUpdates(request, callback, Looper.getMainLooper());
+        startGnss();
     }
 
     void stop() {
+        stopGnss();
         if (fusedClient != null && callback != null) {
             fusedClient.removeLocationUpdates(callback);
         }
         callback = null;
         listener = null;
         fusedClient = null;
+    }
+
+    int satellitesInView() {
+        return satellitesInView;
+    }
+
+    int satellitesUsed() {
+        return satellitesUsed;
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void startGnss() {
+        if (Build.VERSION.SDK_INT < 24) {
+            return;
+        }
+        LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        if (lm == null) {
+            return;
+        }
+        stopGnss();
+        gnssCallback = new GnssStatus.Callback() {
+            @Override
+            public void onSatelliteStatusChanged(GnssStatus status) {
+                int view = status.getSatelliteCount();
+                int used = 0;
+                for (int i = 0; i < view; i++) {
+                    if (status.usedInFix(i)) {
+                        used++;
+                    }
+                }
+                satellitesInView = view;
+                satellitesUsed = used;
+            }
+        };
+        try {
+            if (Build.VERSION.SDK_INT >= 30) {
+                lm.registerGnssStatusCallback(gnssCallback, new Handler(Looper.getMainLooper()));
+            } else {
+                lm.registerGnssStatusCallback(gnssCallback);
+            }
+            Log.i(TAG, "gnss status registered");
+        } catch (Exception e) {
+            Log.w(TAG, "gnss status failed: " + e.getMessage());
+            gnssCallback = null;
+        }
+    }
+
+    private void stopGnss() {
+        if (gnssCallback == null || Build.VERSION.SDK_INT < 24) {
+            return;
+        }
+        LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        if (lm != null) {
+            try {
+                lm.unregisterGnssStatusCallback(gnssCallback);
+            } catch (Exception ignored) {}
+        }
+        gnssCallback = null;
     }
 
     boolean isRunning() {

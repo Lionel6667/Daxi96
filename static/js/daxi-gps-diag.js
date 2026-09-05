@@ -28,6 +28,8 @@
     lastRawAccuracy: null,
     lastPublishedAccuracy: null,
     lastAgeMs: null,
+    satellitesUsed: null,
+    satellitesInView: null,
     lastBridgeLatencyMs: null,
     lastSource: null,
     firstFixAtMs: null,
@@ -150,8 +152,13 @@
       ageMs: ageMs,
       nativeTs: next.nativeTs || null,
       provider: next.provider || null,
+      sats: next.satellitesUsed != null
+        ? (next.satellitesUsed + '/' + next.satellitesInView)
+        : null,
       bridgeLatency: next.nativeTs ? (Date.now() - next.nativeTs) + 'ms' : null
     };
+    if (next.satellitesUsed != null) state.satellitesUsed = next.satellitesUsed;
+    if (next.satellitesInView != null) state.satellitesInView = next.satellitesInView;
     if (ageMs != null && isFinite(ageMs)) state.lastAgeMs = ageMs;
     if (next.nativeTs) state.lastBridgeLatencyMs = Date.now() - next.nativeTs;
     if (prev && prev.lat != null) {

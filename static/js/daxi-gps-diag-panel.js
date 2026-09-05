@@ -39,6 +39,7 @@
       row('priority', s.priority, /BALANCED|LOW/.test(String(s.priority))),
       row('request', d.fmt(s.request) || '-', s.request && s.request.maxDelay > 0),
       row('provider', s.provider),
+      row('satellites', s.satellitesUsed == null ? '-' : (s.satellitesUsed + '/' + s.satellitesInView), s.satellitesUsed === 0),
       row('fixes', s.fixes + (s.duplicates ? '  dup=' + s.duplicates : ''), s.duplicates > 0),
       row('TTFF', s.ttffMs == null ? '-' : (s.ttffMs / 1000).toFixed(1) + 's'),
       row('acc raw', n(s.rawAccuracy) + 'm', s.rawAccuracy > 50),

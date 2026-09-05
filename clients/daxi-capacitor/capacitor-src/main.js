@@ -801,6 +801,8 @@ function normalizeFix(raw) {
     elapsedRealtimeNanos: raw.elapsedRealtimeNanos || null,
     provider: raw.provider || null,
     precise: raw.precise,
+    satellitesUsed: raw.satellitesUsed != null ? raw.satellitesUsed : null,
+    satellitesInView: raw.satellitesInView != null ? raw.satellitesInView : null,
   };
 }
 
