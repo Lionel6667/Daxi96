@@ -65,6 +65,9 @@ final class DaxiGpsEngine {
             .setMaxUpdateDelayMillis(MAX_DELAY_MS)
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setGranularity(Granularity.GRANULARITY_FINE)
+            // 4.3 A/B 2026-09-07: false delivered ~1 Hz earlier but fix #1 was
+            // 403 m (cell) vs 37 m with true on Test G. Gate was "no worse
+            // first-fix accuracy" — keep true.
             .setWaitForAccurateLocation(true)
             .build();
     }
