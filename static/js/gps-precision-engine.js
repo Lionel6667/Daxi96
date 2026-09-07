@@ -217,7 +217,7 @@
             return {
                 lat: this.lat,
                 lng: this.lng,
-                accuracy: Math.sqrt(this.variance),
+                accuracy: Math.max(Math.sqrt(this.variance), accuracy),
                 rawAccuracy: accuracy,
                 speed: speed,
                 heading: heading,
@@ -257,7 +257,9 @@
         return {
             lat: this.lat,
             lng: this.lng,
-            accuracy: Math.sqrt(this.variance),
+            // Never advertise a tighter circle than the GNSS/fused measurement.
+            // Test G outdoor: variance collapsed to 7 m while raw stayed ~30 m.
+            accuracy: Math.max(Math.sqrt(this.variance), accuracy),
             rawAccuracy: accuracy,
             speed: speed,
             heading: heading,
@@ -501,7 +503,29 @@
         function startDisplayLoop() {
             if (rafId) return;
             display = display || (current ? { lat: current.raw ? current.raw.lat : current.lat, lng: current.raw ? current.raw.lng : current.lng } : null);
+            var mockNotified = false;
             function tick() {
+                if (global._daxiLastNativeGps && global._daxiLastNativeGps.mock) {
+                    if (onDisplayCb && !mockNotified) {
+                        mockNotified = true;
+                        onDisplayCb({
+                            lat: display ? display.lat : null,
+                            lng: display ? display.lng : null,
+                            accuracy: current ? current.accuracy : 999,
+                            rawAccuracy: current ? current.rawAccuracy : 999,
+                            speed: 0,
+                            heading: current ? current.heading : null,
+                            snapped: false,
+                            timestamp: current ? current.timestamp : 0,
+                            locked: false,
+                            raw: current && current.raw,
+                            mock: true
+                        });
+                    }
+                    rafId = requestAnimationFrame(tick);
+                    return;
+                }
+                mockNotified = false;
                 if (current && display) {
                     var targetLat = current.raw ? current.raw.lat : current.lat;
                     var targetLng = current.raw ? current.raw.lng : current.lng;
@@ -523,7 +547,8 @@
                         snapped: current.snapped,
                         timestamp: current.timestamp,
                         locked: (current.rawAccuracy || 999) <= targetAccuracy,
-                        raw: current.raw
+                        raw: current.raw,
+                        mock: false
                     });
                 }
                 rafId = requestAnimationFrame(tick);

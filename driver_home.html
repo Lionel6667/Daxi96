@@ -534,7 +534,7 @@
 <script src="/static/js/daxi-map-snap.js?v=20260728"></script>
 <script src="/static/js/daxi-routes.js?v=20260905a"></script>
     <script src="/static/js/daxi-gps-trace.js?v=20260903h"></script>
-<script src="/static/js/gps-precision-engine.js?v=20260905d"></script>
+<script src="/static/js/gps-precision-engine.js?v=20260907a"></script>
 <script src="/static/js/daxi-order-expand.js?v=20260741"></script>
 <script src="/static/js/daxi-map-markers.js?v=20260730"></script>
 <script src="/static/js/daxi-external-nav.js?v=20260772"></script>
@@ -1581,6 +1581,15 @@ function _loadGoogleMaps(cb) {
 }
 function _onGpsDisplay(d) {
     if (!d) return;
+    if (d.mock || (window._daxiLastNativeGps && window._daxiLastNativeGps.mock)) {
+        if (_drvGpsDisplayFixKey !== '__mock__') {
+            _drvGpsDisplayFixKey = '__mock__';
+            if (window.DaxiGpsDiag) {
+                DaxiGpsDiag.displaySkip('B', 'mock_location', { acc: _drvGpsAccuracy(d), via: 'engine' });
+            }
+        }
+        return;
+    }
     // Engine rAF calls this ~60/s with the same source fix. Only apply when
     // the underlying measurement changes (timestamp / raw lat-lng / acc).
     var srcTs = d.timestamp != null ? d.timestamp : 0;
@@ -1588,12 +1597,6 @@ function _onGpsDisplay(d) {
     var srcKey = srcTs + '|' + raw.lat + '|' + raw.lng + '|' + (d.rawAccuracy != null ? d.rawAccuracy : d.accuracy);
     if (srcKey === _drvGpsDisplayFixKey) return;
     _drvGpsDisplayFixKey = srcKey;
-    if (d.mock) {
-        if (window.DaxiGpsDiag) {
-            DaxiGpsDiag.displaySkip('B', 'mock_location', { acc: _drvGpsAccuracy(d), via: 'engine' });
-        }
-        return;
-    }
     var acc = _drvGpsAccuracy(d);
     var src = (window.DaxiAndroid && DaxiAndroid.getCurrentLocation) ? 'Android' : 'GPS';
     var isNative = !!(window.DaxiAndroid || window._daxiCapacitorApp || window._daxiUseNativeGps);
