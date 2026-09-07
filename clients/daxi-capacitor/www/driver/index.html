@@ -542,7 +542,7 @@
 <script src="/static/js/daxi-map-snap.js?v=20260728"></script>
 <script src="/static/js/daxi-routes.js?v=20260905a"></script>
     <script src="/static/js/daxi-gps-trace.js?v=20260903h"></script>
-<script src="/static/js/gps-precision-engine.js?v=20260902a"></script>
+<script src="/static/js/gps-precision-engine.js?v=20260905d"></script>
 <script src="/static/js/daxi-order-expand.js?v=20260741"></script>
 <script src="/static/js/daxi-map-markers.js?v=20260730"></script>
 <script src="/static/js/daxi-external-nav.js?v=20260772"></script>
@@ -890,6 +890,7 @@ const lerpBear = (a, b, t) => (a + (((b - a + 540) % 360) - 180) * t + 360) % 36
 let pos = [-72.2011, 19.7594];
 let targetPos = [-72.2011, 19.7594];
 let _gpsDisplayPos = [-72.2011, 19.7594];
+let _drvGpsDisplayFixKey = '';
 let targetBear = 0;
 let _userZoom = CFG.zoom;
 let _drvZoomCalibActive = false;
@@ -1588,6 +1589,13 @@ function _loadGoogleMaps(cb) {
 }
 function _onGpsDisplay(d) {
     if (!d) return;
+    // Engine rAF calls this ~60/s with the same source fix. Only apply when
+    // the underlying measurement changes (timestamp / raw lat-lng / acc).
+    var srcTs = d.timestamp != null ? d.timestamp : 0;
+    var raw = d.raw || d;
+    var srcKey = srcTs + '|' + raw.lat + '|' + raw.lng + '|' + (d.rawAccuracy != null ? d.rawAccuracy : d.accuracy);
+    if (srcKey === _drvGpsDisplayFixKey) return;
+    _drvGpsDisplayFixKey = srcKey;
     if (d.mock) {
         if (window.DaxiGpsDiag) {
             DaxiGpsDiag.displaySkip('B', 'mock_location', { acc: _drvGpsAccuracy(d), via: 'engine' });
