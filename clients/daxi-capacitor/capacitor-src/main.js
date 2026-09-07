@@ -656,6 +656,7 @@ function patchNetworking() {
 }
 
 let gpsWatchId = null;
+let gpsWatchStarting = false;
 
 // Diagnostic instrumentation (audit phase 0). Queues until daxi-gps-diag.js loads,
 // because this bundle runs from <head> well before the deferred asset chain.
@@ -828,8 +829,23 @@ function applyNativeFix(raw, origin) {
   return next;
 }
 
+function stopGpsWatch() {
+  const id = gpsWatchId;
+  gpsWatchId = null;
+  gpsWatchStarting = false;
+  if (id == null) return;
+  try {
+    const op = usesDaxiGpsPlugin()
+      ? DaxiGps.clearWatch({ id })
+      : Geolocation.clearWatch({ id });
+    if (op && typeof op.catch === 'function') op.catch(() => {});
+    gpsDiag('bridgeNote', 'watch cleared', { id: String(id).slice(0, 12) });
+  } catch (e) {}
+}
+
 function startGpsWatch() {
-  if (gpsWatchId != null) return;
+  if (gpsWatchId != null || gpsWatchStarting) return;
+  gpsWatchStarting = true;
   if (usesDaxiGpsPlugin()) {
     gpsDiag('request', {
       api: 'DaxiGps.watch',
@@ -847,8 +863,10 @@ function startGpsWatch() {
       applyNativeFix(pos, 'watch');
     }).then((id) => {
       gpsWatchId = id;
+      gpsWatchStarting = false;
       gpsDiag('bridgeNote', 'watch registered', { id: String(id).slice(0, 12), plugin: 'DaxiGps' });
     }).catch((e) => {
+      gpsWatchStarting = false;
       gpsDiag('bridgeNote', 'DaxiGps.watch failed', { error: e && e.message, warn: true });
     });
     return;
@@ -868,8 +886,10 @@ function startGpsWatch() {
     applyNativeFix(pos, 'watch');
   }).then((id) => {
     gpsWatchId = id;
+    gpsWatchStarting = false;
     gpsDiag('bridgeNote', 'watch registered', { id: String(id).slice(0, 12) });
   }).catch((e) => {
+    gpsWatchStarting = false;
     gpsDiag('bridgeNote', 'watchPosition failed', { error: e && e.message, warn: true });
   });
 }

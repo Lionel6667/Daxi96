@@ -2116,6 +2116,7 @@
     );
   }
   var gpsWatchId = null;
+  var gpsWatchStarting = false;
   function gpsDiag(method, ...args) {
     try {
       const diag = window.DaxiGpsDiag;
@@ -2276,7 +2277,8 @@
     return next;
   }
   function startGpsWatch() {
-    if (gpsWatchId != null) return;
+    if (gpsWatchId != null || gpsWatchStarting) return;
+    gpsWatchStarting = true;
     if (usesDaxiGpsPlugin()) {
       gpsDiag("request", {
         api: "DaxiGps.watch",
@@ -2294,8 +2296,10 @@
         applyNativeFix(pos, "watch");
       }).then((id) => {
         gpsWatchId = id;
+        gpsWatchStarting = false;
         gpsDiag("bridgeNote", "watch registered", { id: String(id).slice(0, 12), plugin: "DaxiGps" });
       }).catch((e) => {
+        gpsWatchStarting = false;
         gpsDiag("bridgeNote", "DaxiGps.watch failed", { error: e && e.message, warn: true });
       });
       return;
@@ -2315,8 +2319,10 @@
       applyNativeFix(pos, "watch");
     }).then((id) => {
       gpsWatchId = id;
+      gpsWatchStarting = false;
       gpsDiag("bridgeNote", "watch registered", { id: String(id).slice(0, 12) });
     }).catch((e) => {
+      gpsWatchStarting = false;
       gpsDiag("bridgeNote", "watchPosition failed", { error: e && e.message, warn: true });
     });
   }

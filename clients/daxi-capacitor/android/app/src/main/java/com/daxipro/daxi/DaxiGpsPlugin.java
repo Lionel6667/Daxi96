@@ -163,9 +163,19 @@ public class DaxiGpsPlugin extends Plugin {
     }
 
     private void startWatch(PluginCall call) {
+        // One live watch. The plugin outlives WebView navigation, so a page
+        // reload used to stack a second callback (two "watch registered" lines).
+        if (!watchingCalls.isEmpty()) {
+            ArrayList<String> oldIds = new ArrayList<>(watchingCalls.keySet());
+            for (PluginCall old : new ArrayList<>(watchingCalls.values())) {
+                old.release(bridge);
+            }
+            watchingCalls.clear();
+            Log.i(DaxiGpsEngine.TAG, "watch replaced old=" + oldIds + " new=" + call.getCallbackId());
+        }
         watchingCalls.put(call.getCallbackId(), call);
         ensureEngine();
-        Log.i(DaxiGpsEngine.TAG, "watch registered id=" + call.getCallbackId());
+        Log.i(DaxiGpsEngine.TAG, "watch registered id=" + call.getCallbackId() + " count=" + watchingCalls.size());
     }
 
     /**
