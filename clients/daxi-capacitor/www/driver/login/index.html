@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
     <script src="/daxi-capacitor-config.js"></script>
-    <script>window._daxiShellPage='driver_login';window._daxiCapacitorApp=true;document.documentElement.classList.add('daxi-native-shell');</script>
+    <script>window._daxiShellPage='driver_login';window._daxiCapacitorApp=true;document.documentElement.classList.add('daxi-native-shell','daxi-intro-boot');</script>
+    <style id="daxi-intro-prehide">html.daxi-intro-boot body{visibility:hidden!important}html.daxi-intro-boot #daxi-cinematic{visibility:visible!important}html.daxi-native-shell #splash,html.daxi-native-shell #daxi-web-radar,html.daxi-native-shell #admin-boot-overlay{display:none!important;visibility:hidden!important;pointer-events:none!important}html.daxi-intro-playing body,html.daxi-intro-done body{visibility:visible!important}</style>
+    <script src="/static/js/daxi-intro.js?v=20260907b"></script>
     <script src="/js/daxi-shell-context.js"></script>
     <script src="/js/daxi-capacitor.js"></script>
     <script src="/js/daxi-role-boot.js"></script>

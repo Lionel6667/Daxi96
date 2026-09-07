@@ -149,7 +149,11 @@
     'html.daxi-intro-boot #admin-app,html.daxi-intro-boot #admin-boot-overlay,' +
     'html.daxi-intro-boot #drv-map-stage,html.daxi-intro-boot #splash,' +
     'html.daxi-intro-boot #daxi-web-radar' +
-    '{display:none!important;opacity:0!important;visibility:hidden!important}'
+    '{display:none!important;opacity:0!important;visibility:hidden!important}' +
+    /* Native app: never show the website boot splash / radar under the cinematic intro. */
+    'html.daxi-native-shell #splash,html.daxi-native-shell #daxi-web-radar,' +
+    'html.daxi-native-shell #admin-boot-overlay' +
+    '{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}'
     );
   }
 
@@ -422,6 +426,35 @@
     } catch (e) {}
   }
 
+  var INTRO_PLAYED_KEY = 'daxi_intro_played';
+
+  function introAlreadyPlayedThisSession() {
+    try {
+      return sessionStorage.getItem(INTRO_PLAYED_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markIntroPlayedThisSession() {
+    try {
+      sessionStorage.setItem(INTRO_PLAYED_KEY, '1');
+    } catch (e) {}
+  }
+
+  function finishIntroWithoutPlaying() {
+    global._daxiIntroPlaying = false;
+    global._daxiIntroDone = true;
+    global._daxiSkipSecondaryBoot = true;
+    try {
+      document.documentElement.classList.add('daxi-intro-done');
+      document.documentElement.classList.remove('daxi-intro-playing');
+      document.documentElement.classList.remove('daxi-intro-boot');
+    } catch (e) {}
+    hideNativeSplash();
+    dispatchIntroEvent('daxi:intro-complete');
+  }
+
   function playDaxiIntro() {
     if (typeof document === 'undefined') return Promise.resolve();
     if (!DAXI_INTRO_ENABLED || global.DAXI_INTRO_DISABLED) {
@@ -431,6 +464,11 @@
       return Promise.resolve();
     }
     if (global._daxiIntroPromise) return global._daxiIntroPromise;
+    if (introAlreadyPlayedThisSession()) {
+      finishIntroWithoutPlaying();
+      global._daxiIntroPromise = Promise.resolve();
+      return global._daxiIntroPromise;
+    }
 
     try {
       var bootTheme = readIntroTheme();
@@ -456,6 +494,7 @@
         global._daxiIntroDone = true;
         global._daxiSkipSecondaryBoot = true;
         bootMark('intro-complete');
+        markIntroPlayedThisSession();
         try {
           document.documentElement.classList.add('daxi-intro-done');
           document.documentElement.classList.remove('daxi-intro-playing');

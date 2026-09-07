@@ -1,6 +1,7 @@
 package com.daxipro.daxi;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
@@ -56,6 +57,18 @@ public class DaxiGpsPlugin extends Plugin {
     @Override
     public void load() {
         engine = new DaxiGpsEngine(getContext());
+        try {
+            NotificationManager nm = getContext().getSystemService(NotificationManager.class);
+            if (nm != null) {
+                nm.cancel(DaxiLocationService.NOTIF_ID);
+                if (Build.VERSION.SDK_INT >= 26) {
+                    nm.deleteNotificationChannel("daxi_gps");
+                }
+            }
+            Intent stop = new Intent(getContext(), DaxiLocationService.class);
+            stop.setAction(DaxiLocationService.ACTION_STOP);
+            getContext().startService(stop);
+        } catch (Exception ignored) {}
     }
 
     @Override

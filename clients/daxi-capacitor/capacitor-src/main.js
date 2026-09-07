@@ -656,6 +656,7 @@ function patchNetworking() {
 }
 
 let gpsWatchId = null;
+let appIsActive = true;
 let gpsWatchStarting = false;
 
 // Diagnostic instrumentation (audit phase 0). Queues until daxi-gps-diag.js loads,
@@ -712,6 +713,22 @@ async function readNativeGps() {
 
 function usesDaxiGpsPlugin() {
   return Capacitor.getPlatform() === 'android';
+}
+
+function isDriverHomeShell() {
+  const page = String(window._daxiShellPage || '');
+  if (page === 'driver') return true;
+  const path = String((typeof location !== 'undefined' && location.pathname) || '').toLowerCase();
+  return path.indexOf('/driver') >= 0 && path.indexOf('/login') < 0;
+}
+
+function syncLocationForegroundService() {
+  if (!usesDaxiGpsPlugin()) return;
+  const wantFgs = !appIsActive && isDriverHomeShell() && gpsWatchId != null;
+  const op = wantFgs
+    ? DaxiGps.startForegroundTracking && DaxiGps.startForegroundTracking()
+    : DaxiGps.stopForegroundTracking && DaxiGps.stopForegroundTracking();
+  if (op && typeof op.catch === 'function') op.catch(() => {});
 }
 
 function classifyLocationPerm(perm) {
@@ -841,6 +858,7 @@ function stopGpsWatch() {
     if (op && typeof op.catch === 'function') op.catch(() => {});
     gpsDiag('bridgeNote', 'watch cleared', { id: String(id).slice(0, 12) });
   } catch (e) {}
+  syncLocationForegroundService();
 }
 
 function startGpsWatch() {
@@ -865,6 +883,7 @@ function startGpsWatch() {
       gpsWatchId = id;
       gpsWatchStarting = false;
       gpsDiag('bridgeNote', 'watch registered', { id: String(id).slice(0, 12), plugin: 'DaxiGps' });
+      syncLocationForegroundService();
     }).catch((e) => {
       gpsWatchStarting = false;
       gpsDiag('bridgeNote', 'DaxiGps.watch failed', { error: e && e.message, warn: true });
@@ -1056,6 +1075,32 @@ function registerPushIfGranted() {
   });
 }
 
+async function dismissTrayNotifications() {
+  try {
+    await PushNotifications.removeAllDeliveredNotifications();
+  } catch (e) {}
+  try {
+    await LocalNotifications.removeAllDeliveredNotifications();
+  } catch (e2) {}
+}
+
+function markInAppNotificationsRead() {
+  const headers = { 'Content-Type': 'application/json', 'X-Daxi-Native': '1' };
+  const csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1];
+  if (csrf) headers['X-CSRFToken'] = decodeURIComponent(csrf);
+  fetch(absUrl('/api/notifications/mark-all-read/'), {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: '{}',
+  }).catch(() => {});
+}
+
+function consumeOpenedNotifications() {
+  dismissTrayNotifications();
+  markInAppNotificationsRead();
+}
+
 async function initPush() {
   if (!Capacitor.isNativePlatform()) return;
   if (window._daxiPushBound) return;
@@ -1098,6 +1143,9 @@ async function initPush() {
     PushNotifications.addListener('pushNotificationReceived', (notif) => {
       pushLog('Notification received', { title: notif && notif.title });
       haptic(ImpactStyle.Medium);
+      if (document.visibilityState === 'visible') {
+        dismissTrayNotifications();
+      }
       try {
         const data = (notif && notif.data) || {};
         if (data.order_id && typeof window._daxiFocusClientOrder === 'function' && document.visibilityState === 'visible') {
@@ -1107,6 +1155,7 @@ async function initPush() {
     });
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
       pushLog('Notification action');
+      consumeOpenedNotifications();
       const data = (action && action.notification && action.notification.data) || {};
       const oid = data.order_id || '';
       const target = data.deep_link || data.url || data.link || (oid ? '/#courses/' + oid : '');
@@ -1237,10 +1286,13 @@ function installNativeBridge() {
 async function initGps() {
   // Never prompt OS permission on boot — driver/client UI shows a modal first,
   // then calls DaxiAndroid.requestLocationPermission().
-  gpsDiag('startup', {
-    platform: Capacitor.getPlatform(),
-    plugin: usesDaxiGpsPlugin() ? 'DaxiGps (1Hz, no batch)' : '@capacitor/geolocation 6.1.1',
-  });
+    gpsDiag('startup', {
+      platform: Capacitor.getPlatform(),
+      plugin: usesDaxiGpsPlugin() ? 'DaxiGps (1Hz, no batch)' : '@capacitor/geolocation 6.1.1',
+    });
+    if (usesDaxiGpsPlugin() && DaxiGps.stopForegroundTracking) {
+      DaxiGps.stopForegroundTracking().catch(() => {});
+    }
   try {
     const perm = await checkFineLocationPerm();
     const kind = applyLocationPerm(perm, 'checkPermissions');
@@ -1250,6 +1302,7 @@ async function initGps() {
     }
     startGpsWatch();
     notifyLocationKind('fine');
+    syncLocationForegroundService();
     readNativeGps()
       .then((p) => {
         setLastNativeGps(p, 'initGps');
@@ -1573,6 +1626,11 @@ function handleDeepLink(url) {
 async function initDeepLinks() {
   try {
     App.addListener('appUrlOpen', (event) => handleDeepLink(event.url));
+    App.addListener('appStateChange', (state) => {
+      appIsActive = !!(state && state.isActive);
+      syncLocationForegroundService();
+      if (appIsActive) consumeOpenedNotifications();
+    });
     App.addListener('backButton', () => {
       if (typeof window.daxiHandleSystemBack === 'function' && window.daxiHandleSystemBack()) return;
       if (window.history.length > 1) {
@@ -1724,12 +1782,20 @@ function bootMark(n) {
 }
 
 function waitIntroComplete() {
-  if (window._daxiIntroDone || !window._daxiIntroPlaying) return Promise.resolve();
+  if (window._daxiIntroDone) return Promise.resolve();
+  try {
+    if (sessionStorage.getItem('daxi_intro_played') === '1') return Promise.resolve();
+  } catch (ePlayed) {}
   return new Promise((resolve) => {
-    const done = () => resolve();
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
     window.addEventListener('daxi:intro-complete', done, { once: true });
     document.addEventListener('daxi:intro-complete', done, { once: true });
-    setTimeout(resolve, 2800);
+    setTimeout(done, 3200);
   });
 }
 
@@ -1800,7 +1866,8 @@ async function boot() {
     .then(() => restoreOfflineReads())
     .catch(() => {});
   readLaunchUrl()
-    .then((launchUrl) => {
+    .then(async (launchUrl) => {
+      await waitIntroComplete();
       if (launchUrl) handleDeepLink(launchUrl);
       restoreShellRoleAndRedirect(launchUrl).then((redirected) => {
         if (redirected) return;
@@ -1813,6 +1880,7 @@ async function boot() {
   initGps().catch(() => {});
   bootMark('push-start');
   initPush().catch(() => {});
+  consumeOpenedNotifications();
   initDeepLinks().catch(() => {});
   probeBackend().catch(() => {});
   const gid = window._daxiGuestId || localStorage.getItem('daxi_guest_id') || '';

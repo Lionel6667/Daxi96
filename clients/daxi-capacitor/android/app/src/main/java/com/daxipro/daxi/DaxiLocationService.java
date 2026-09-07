@@ -20,7 +20,7 @@ import androidx.core.app.NotificationCompat;
 public class DaxiLocationService extends Service {
     static final String ACTION_START = "com.daxipro.daxi.action.START_LOCATION";
     static final String ACTION_STOP = "com.daxipro.daxi.action.STOP_LOCATION";
-    static final String CHANNEL_ID = "daxi_gps";
+    static final String CHANNEL_ID = "daxi_gps_min";
     static final int NOTIF_ID = 7101;
 
     @Override
@@ -43,10 +43,14 @@ public class DaxiLocationService extends Service {
         );
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.daxi_gps_tracking))
+            .setContentText("")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tap)
             .setOngoing(true)
+            .setSilent(true)
+            .setShowWhen(false)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .setOnlyAlertOnce(true)
             .build();
         if (Build.VERSION.SDK_INT >= 29) {
@@ -68,15 +72,24 @@ public class DaxiLocationService extends Service {
             return;
         }
         NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm == null || nm.getNotificationChannel(CHANNEL_ID) != null) {
+        if (nm == null) {
+            return;
+        }
+        try {
+            nm.deleteNotificationChannel("daxi_gps");
+        } catch (Exception ignored) {}
+        if (nm.getNotificationChannel(CHANNEL_ID) != null) {
             return;
         }
         NotificationChannel channel = new NotificationChannel(
             CHANNEL_ID,
             getString(R.string.daxi_gps_channel),
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_MIN
         );
         channel.setShowBadge(false);
+        channel.setSound(null, null);
+        channel.enableLights(false);
+        channel.enableVibration(false);
         nm.createNotificationChannel(channel);
     }
 }

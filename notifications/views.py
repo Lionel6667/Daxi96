@@ -40,11 +40,24 @@ class MarkNotificationReadView(APIView):
 
 class MarkAllReadView(APIView):
     """Mark all notifications as read."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]
 
     def post(self, request):
-        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-        return Response({'message': 'Toutes les notifications marquées comme lues.'})
+        updated = 0
+        user = request.user if getattr(request.user, 'is_authenticated', False) else None
+        if user:
+            updated += Notification.objects.filter(user=user, is_read=False).update(is_read=True)
+            try:
+                profile = getattr(user, 'driver_profile', None)
+                if profile:
+                    updated += Notification.objects.filter(driver=profile, is_read=False).update(is_read=True)
+            except Exception:
+                pass
+        driver_id = request.session.get('driver_id')
+        if driver_id:
+            updated += Notification.objects.filter(driver_id=driver_id, is_read=False).update(is_read=True)
+        return Response({'message': 'Toutes les notifications marquées comme lues.', 'updated': updated})
 
 
 class UnreadCountView(APIView):

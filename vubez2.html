@@ -60,6 +60,13 @@
         html.daxi-intro-done body {
             visibility: visible !important;
         }
+        html.daxi-native-shell #splash,
+        html.daxi-native-shell #daxi-web-radar,
+        html.daxi-native-shell #admin-boot-overlay {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
         #initialLoader {
             position: fixed;
             inset: 0;
@@ -194,7 +201,7 @@
         }
         if (isNative) {
             var intro = document.createElement('script');
-            intro.src = '/static/js/daxi-intro.js?v=20260905a';
+            intro.src = '/static/js/daxi-intro.js?v=20260907b';
             intro.defer = true;
             document.head.appendChild(intro);
         }
