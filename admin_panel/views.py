@@ -804,7 +804,9 @@ class AdminDriversListView(APIView):
 
 def covered_departments_api(request):
     """Public GET /admin-panel/covered-departments/ — returns active departments for autocomplete bias."""
+    from geo.services.zone_admin import ensure_all_departments_seeded
     from .models import CoveredDepartment, DEPT_DEFAULT_BOUNDS
+    ensure_all_departments_seeded()
     rows = []
     for dept in CoveredDepartment.objects.all():
         row = {

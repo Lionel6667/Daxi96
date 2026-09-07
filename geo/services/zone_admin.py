@@ -12,6 +12,31 @@ from geo.models import DownloadJob, GeoZone
 from geo.services.osm_importer import run_zone_import_pipeline
 
 
+def _expand_department_bounds(obj, bounds: dict) -> None:
+    """Grow a stored bbox to at least DEPT_DEFAULT_BOUNDS. Never shrink.
+
+    Prod Nord was 19.6–19.9 / −72.6–−72.1, which excluded eastern Cap-Haïtien
+    (Kay Mr Eth ≈ −72.045). get_or_create does not update existing rows.
+    """
+    updates = {}
+    lat_min = bounds.get('lat_min')
+    lat_max = bounds.get('lat_max')
+    lng_min = bounds.get('lng_min')
+    lng_max = bounds.get('lng_max')
+    if lat_min is not None and (obj.lat_min is None or obj.lat_min > lat_min):
+        updates['lat_min'] = lat_min
+    if lat_max is not None and (obj.lat_max is None or obj.lat_max < lat_max):
+        updates['lat_max'] = lat_max
+    if lng_min is not None and (obj.lng_min is None or obj.lng_min > lng_min):
+        updates['lng_min'] = lng_min
+    if lng_max is not None and (obj.lng_max is None or obj.lng_max < lng_max):
+        updates['lng_max'] = lng_max
+    if updates:
+        CoveredDepartment.objects.filter(pk=obj.pk).update(**updates)
+        for key, value in updates.items():
+            setattr(obj, key, value)
+
+
 def ensure_all_departments_seeded() -> None:
     for slug, label in HAITI_DEPARTMENTS:
         bounds = DEPT_DEFAULT_BOUNDS.get(slug, {})
@@ -19,7 +44,9 @@ def ensure_all_departments_seeded() -> None:
         for key in ('lat_min', 'lat_max', 'lng_min', 'lng_max'):
             if key in bounds:
                 defaults[key] = bounds[key]
-        CoveredDepartment.objects.get_or_create(slug=slug, defaults=defaults)
+        obj, _created = CoveredDepartment.objects.get_or_create(slug=slug, defaults=defaults)
+        if bounds:
+            _expand_department_bounds(obj, bounds)
 
 
 def _zone_row(zone: GeoZone | None) -> dict:
