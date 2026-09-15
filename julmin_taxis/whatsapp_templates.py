@@ -29,6 +29,9 @@ DEFAULT_TEMPLATES = {
     'chauffeur_a_valider': 'chauffeur_a_valider',
     'course_annulee': 'course_annulee',
     'prix_confirme': 'prix_confirme',
+    'paiement_recu': 'paiement_recu',
+    # Optional dedicated templates — empty until WA_TPL_* set (no wrong-template fallback)
+    # attente_retour / course_reprise / trajet_prolonge intentionally omitted from defaults
     'commande_attente_coords': 'commande_attente_coords',
     'client_demande_retour': 'client_demande_retour',
 }
@@ -60,24 +63,42 @@ ENV_KEYS = {
     'chauffeur_a_valider': 'WA_TPL_CHAUFFEUR_A_VALIDER',
     'course_annulee': 'WA_TPL_COURSE_ANNULEE',
     'prix_confirme': 'WA_TPL_PRIX_CONFIRME',
+    'paiement_recu': 'WA_TPL_PAIEMENT_RECU',
+    'attente_retour': 'WA_TPL_ATTENTE_RETOUR',
+    'course_reprise': 'WA_TPL_COURSE_REPRISE',
+    'trajet_prolonge': 'WA_TPL_TRAJET_PROLONGE',
     'commande_attente_coords': 'WA_TPL_COMMANDE_ATTENTE_COORDS',
     'client_demande_retour': 'WA_TPL_CLIENT_DEMANDE_RETOUR',
 }
 
 
+# Situations without a DEFAULT — skip send if WA_TPL_* unset (never reuse a wrong template).
+OPTIONAL_SITUATIONS = frozenset({
+    'attente_retour',
+    'course_reprise',
+    'trajet_prolonge',
+})
+
+
 def template_name(situation: str) -> str:
-    """Retourne le nom Meta du template pour une situation."""
+    """Retourne le nom Meta du template pour une situation.
+
+    Optional situations (OPTIONAL_SITUATIONS) return '' when unset so callers
+    can log a clear skip instead of silently reusing another template.
+    """
     import os
 
     custom = getattr(settings, 'WHATSAPP_TEMPLATES', None) or {}
-    if situation in custom and custom[situation]:
-        return custom[situation]
+    if situation in custom:
+        return (custom[situation] or '').strip()
     env_key = ENV_KEYS.get(situation)
     if env_key:
         val = os.environ.get(env_key, '').strip()
         if val:
             return val
-    return DEFAULT_TEMPLATES.get(situation, situation)
+    if situation in OPTIONAL_SITUATIONS:
+        return ''
+    return DEFAULT_TEMPLATES.get(situation, situation) or ''
 
 
 def template_lang() -> str:

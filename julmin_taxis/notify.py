@@ -275,22 +275,6 @@ def notify_payment_ready_for_drivers(order) -> None:
         push_notify_admin('payment_confirmed', order=order)
 
 
-def _safe_whatsapp(order, fn_name: str, **kwargs) -> bool:
-    try:
-        from julmin_taxis import whatsapp_service as wa
-        fn = getattr(wa, fn_name, None)
-        if not fn:
-            return False
-        ok = fn(order, **kwargs) if kwargs else fn(order)
-        if ok:
-            logger.info('[Notify] whatsapp %s order #%s OK', fn_name, order.pk)
-        else:
-            logger.warning('[Notify] whatsapp %s order #%s → false (no send)', fn_name, order.pk)
-        return bool(ok)
-    except Exception as exc:
-        logger.warning('[Notify] whatsapp %s failed order #%s: %s', fn_name, order.pk, exc)
-        return False
-
 
 def _dispatch_whatsapp(order_pk: int, fn_name: str, **kwargs) -> None:
     def _run():

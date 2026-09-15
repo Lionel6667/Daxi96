@@ -139,6 +139,10 @@ WHATSAPP_TEMPLATES = {
         'chauffeur_a_valider': 'WA_TPL_CHAUFFEUR_A_VALIDER',
         'course_annulee': 'WA_TPL_COURSE_ANNULEE',
         'prix_confirme': 'WA_TPL_PRIX_CONFIRME',
+        'paiement_recu': 'WA_TPL_PAIEMENT_RECU',
+        'attente_retour': 'WA_TPL_ATTENTE_RETOUR',
+        'course_reprise': 'WA_TPL_COURSE_REPRISE',
+        'trajet_prolonge': 'WA_TPL_TRAJET_PROLONGE',
     }.items()
     if os.environ.get(env_key, '').strip()
 }

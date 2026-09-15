@@ -285,6 +285,33 @@ def _try_situation(
     return False
 
 
+
+def _dedicated_or_skip(
+    to_phone: str,
+    situation: str,
+    body_params: list,
+    text_fallback: str = None,
+    *,
+    order_pk=None,
+    env_hint: str = '',
+    allow_text_fallback: bool = True,
+    **kwargs,
+) -> bool:
+    """Send a dedicated template; if name empty, log clear skip (no wrong-template reuse)."""
+    name = (template_name(situation) or '').strip()
+    if not name:
+        hint = env_hint or f'WA_TPL_* for {situation}'
+        logger.info(
+            '[WhatsApp] skip %s #%s — template name empty (set %s; refusing wrong-template fallback)',
+            situation, order_pk or '?', hint,
+        )
+        return False
+    return _try_situation(
+        to_phone, situation, body_params, text_fallback,
+        allow_text_fallback=allow_text_fallback, **kwargs,
+    )
+
+
 def _first_name(label: str, default: str = 'Client') -> str:
     """Prénom pour les templates Meta ({{1}} = Bonjour …)."""
     raw = (label or default).strip()
@@ -621,10 +648,19 @@ def _scheduled_when_label(order) -> str:
 
 
 def notify_client_price_proposed(order) -> bool:
+    """Client prix proposé — at most one WhatsApp per order (create ack + admin propose share this)."""
     phone = _client_phone(order)
     if not phone:
         logger.info('[WhatsApp] skip prix_propose #%s — pas de téléphone client', order.pk)
         return False
+    try:
+        from django.core.cache import cache
+        claim = f'daxi_wa_prix_propose:{order.pk}'
+        if not cache.add(claim, 1, timeout=86400 * 7):
+            logger.info('[WhatsApp] skip prix_propose #%s — already sent (dedupe)', order.pk)
+            return False
+    except Exception as exc:
+        logger.debug('[WhatsApp] prix_propose claim skipped: %s', exc)
     pickup, dest = _trip_addresses(order)
     client = _first_name(order.client_name or 'Client', 'Client')
     price = _price_label(order)
@@ -745,6 +781,7 @@ def notify_client_trip_started(order) -> bool:
 
 
 def notify_client_waiting_return(order) -> bool:
+    """Round-trip wait — dedicated `attente_retour` (skip if WA_TPL_ATTENTE_RETOUR unset)."""
     phone = _client_phone(order)
     if not phone:
         return False
@@ -755,15 +792,18 @@ def notify_client_waiting_return(order) -> bool:
         f'Vous êtes arrivé à destination ({dest}).\n'
         f'Votre chauffeur attend pour le trajet retour vers {pickup}.'
     )
-    return _try_situation(
-        phone, 'pause_course',
-        [client, '0'],
+    return _dedicated_or_skip(
+        phone, 'attente_retour',
+        [client, dest, pickup],
         fallback,
+        order_pk=order.pk,
+        env_hint='WA_TPL_ATTENTE_RETOUR',
         allow_text_fallback=True,
     )
 
 
 def notify_client_payment_cash(order) -> bool:
+    """Cash / in_person — dedicated `paiement_recu` (never reuse prix_confirme)."""
     phone = _client_phone(order)
     if not phone:
         return False
@@ -775,15 +815,18 @@ def notify_client_payment_cash(order) -> bool:
         f'Course confirmée. Vous paierez le chauffeur en espèces ({price}).\n'
         f'📍 {pickup} → {dest}\n\nRecherche d\'un chauffeur en cours.'
     )
-    return _try_situation(
-        phone, 'prix_confirme',
+    return _dedicated_or_skip(
+        phone, 'paiement_recu',
         [client, pickup, dest, price],
         fallback,
+        order_pk=order.pk,
+        env_hint='WA_TPL_PAIEMENT_RECU',
         allow_text_fallback=True,
     )
 
 
 def notify_client_payment_confirmed(order) -> bool:
+    """Online payment success — dedicated `paiement_recu` (never reuse prix_confirme)."""
     phone = _client_phone(order)
     if not phone:
         return False
@@ -795,15 +838,18 @@ def notify_client_payment_confirmed(order) -> bool:
         f'Paiement confirmé ({price}).\n'
         f'📍 {pickup} → {dest}\n\nRecherche d\'un chauffeur en cours.'
     )
-    return _try_situation(
-        phone, 'prix_confirme',
+    return _dedicated_or_skip(
+        phone, 'paiement_recu',
         [client, pickup, dest, price],
         fallback,
+        order_pk=order.pk,
+        env_hint='WA_TPL_PAIEMENT_RECU',
         allow_text_fallback=True,
     )
 
 
 def notify_client_trip_resumed(order) -> bool:
+    """Resume after pause — dedicated `course_reprise` (skip if WA_TPL_COURSE_REPRISE unset)."""
     phone = _client_phone(order)
     if not phone:
         return False
@@ -813,15 +859,18 @@ def notify_client_trip_resumed(order) -> bool:
         f'▶️ *DAXI — Course reprise*\n\nBonjour {client},\n\n'
         f'Votre course a repris.\n📍 {pickup} → {dest}'
     )
-    return _try_situation(
-        phone, 'course_demarree',
+    return _dedicated_or_skip(
+        phone, 'course_reprise',
         [client, pickup, dest],
         fallback,
+        order_pk=order.pk,
+        env_hint='WA_TPL_COURSE_REPRISE',
         allow_text_fallback=True,
     )
 
 
 def notify_client_trip_extended(order) -> bool:
+    """Trip extend — dedicated `trajet_prolonge` (skip if WA_TPL_TRAJET_PROLONGE unset)."""
     phone = _client_phone(order)
     if not phone:
         return False
@@ -833,10 +882,12 @@ def notify_client_trip_extended(order) -> bool:
         f'Prolongation confirmée. Tarif mis à jour : {price}\n'
         f'📍 {pickup} → {dest}'
     )
-    return _try_situation(
-        phone, 'prix_confirme',
+    return _dedicated_or_skip(
+        phone, 'trajet_prolonge',
         [client, pickup, dest, price],
         fallback,
+        order_pk=order.pk,
+        env_hint='WA_TPL_TRAJET_PROLONGE',
         allow_text_fallback=True,
     )
 
@@ -955,7 +1006,12 @@ def notify_welcome_client(user) -> bool:
 
 
 def notify_client_order_received(order) -> bool:
-    """Accusé de commande. welcome_client est réservé à l'inscription réelle."""
+    """Accusé de commande quand un prix est déjà connu (auto-price).
+
+    welcome_client reste réservé à l'inscription. Sans prix → silence.
+    Avec prix → délégué à notify_client_price_proposed (dédupliqué) pour
+    éviter un second prix_propose quand l'admin propose ensuite.
+    """
     phone = _client_phone(order)
     if not phone:
         logger.info('[WhatsApp] skip order_received #%s — pas de téléphone client', order.pk)

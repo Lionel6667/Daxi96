@@ -17,6 +17,7 @@ RAW_WEBHOOK_LOG_MAX = 40
 ACTIVE_TEMPLATE_FALLBACKS = {
     'prix_propose': None,
     'prix_confirme': None,
+    'paiement_recu': None,  # never fall back to prix_confirme
     'chauffeur_assigne': 'chauffeur_en_route',
     'chauffeur_arrive': 'chauffeur_en_route',
     'course_demarree': 'chauffeur_en_route',

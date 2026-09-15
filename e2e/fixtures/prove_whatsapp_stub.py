@@ -41,6 +41,11 @@ try:
     from orders.models import Order
     o = Order.objects.order_by("-id").first()
     if o:
+        try:
+            from django.core.cache import cache
+            cache.delete(f"daxi_wa_prix_propose:{o.pk}")
+        except Exception:
+            pass
         with mock.patch("urllib.request.urlopen", side_effect=boom):
             notify_ok = _safe_whatsapp(o, "notify_client_price_proposed")
 except Exception as exc:
