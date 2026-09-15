@@ -86,8 +86,9 @@ DRIVER_IMPORTANT = frozenset({
 
 
 SKIP_IF_VIEWING_ORDER = frozenset({
-    'order_created', 'price_proposed', 'price_confirmed', 'payment_confirmed',
-    'payment_cash_confirmed',
+    'order_created', 'price_proposed', 'price_confirmed',
+    # payment_* intentionally NOT skipped: with DAXI_WHATSAPP_SKIP_PAYMENT,
+    # FCM/in-app is the sole client payment confirmation channel.
     'driver_assigned', 'on_way', 'arrived', 'in_progress', 'completed',
     'waiting_return', 'coords_needed', 'coords_set', 'trip_paused',
     'trip_resumed', 'trip_extended', 'price_updated', 'now_transition',

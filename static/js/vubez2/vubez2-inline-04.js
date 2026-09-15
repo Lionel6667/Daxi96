@@ -10166,11 +10166,13 @@ document.body.addEventListener('htmx:beforeRequest', function(evt) {
     if (seg.indexOf('payment') === 0) {
         try {
             var body = (evt.detail && evt.detail.requestConfig && evt.detail.requestConfig.parameters) || '';
+            // Cash completes immediately — suppress echo toast. Card/MonCash init is NOT
+            // confirmation yet; leave action unset so success WS/FCM toast can show.
             if (typeof body === 'string' && body.indexOf('in_person') >= 0) action = 'payment_cash_confirmed';
             else if (body && body.method === 'in_person') action = 'payment_cash_confirmed';
-            else action = 'payment_confirmed';
+            else action = null;
         } catch (ePay) {
-            action = 'payment_confirmed';
+            action = null;
         }
     }
     if (action) window.DaxiNotifPolicy.markUserAction(oid, action);

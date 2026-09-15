@@ -124,6 +124,7 @@ def _safe_push_order(order, status: str, extra: dict | None = None) -> int:
             'sos_alert', 'sos_ack', 'driver_assigned', 'on_way', 'arrived',
             'price_proposed', 'danger_zone', 'cancelled', 'order_cancelled',
             'new_message', 'driver_unassigned',
+            'payment_confirmed', 'payment_cash_confirmed', 'payment_failed',
         )
         sent = send_push_tokens(tokens, title, body, data, urgent=urgent)
         if sent:
