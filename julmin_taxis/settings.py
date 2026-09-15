@@ -109,6 +109,14 @@ DAXI_WHATSAPP_STUB_LOG = os.environ.get(
     str(BASE_DIR / 'backups' / 'whatsapp_stub.log'),
 )
 
+# Product decision (2026-09-15): skip client payment-confirmation WhatsApp to save Meta costs.
+# Default True. Re-enable later with DAXI_WHATSAPP_SKIP_PAYMENT=0 (then create paiement_recu in Meta).
+_skip_pay_raw = os.environ.get('DAXI_WHATSAPP_SKIP_PAYMENT')
+if _skip_pay_raw is None or not str(_skip_pay_raw).strip():
+    DAXI_WHATSAPP_SKIP_PAYMENT = True
+else:
+    DAXI_WHATSAPP_SKIP_PAYMENT = _env_truthy('DAXI_WHATSAPP_SKIP_PAYMENT')
+
 
 WHATSAPP_TEMPLATES = {
     k: os.environ.get(env_key, '')

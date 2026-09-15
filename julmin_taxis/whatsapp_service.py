@@ -802,8 +802,30 @@ def notify_client_waiting_return(order) -> bool:
     )
 
 
+
+def _skip_payment_whatsapp(order, fn_name: str) -> bool:
+    """Product decision: do not send payment-confirmation WA (save Meta costs).
+
+    Controlled by settings.DAXI_WHATSAPP_SKIP_PAYMENT (default True).
+    Set DAXI_WHATSAPP_SKIP_PAYMENT=0 to re-enable notify_client_payment_* / paiement_recu.
+    """
+    if not bool(getattr(settings, 'DAXI_WHATSAPP_SKIP_PAYMENT', True)):
+        return False
+    logger.info(
+        '[WhatsApp] SKIP_PAYMENT %s order #%s — DAXI_WHATSAPP_SKIP_PAYMENT=1 '
+        '(product decision; no paiement_recu send/enqueue)',
+        fn_name, getattr(order, 'pk', '?'),
+    )
+    return True
+
+
 def notify_client_payment_cash(order) -> bool:
-    """Cash / in_person — dedicated `paiement_recu` (never reuse prix_confirme)."""
+    """Cash / in_person — dedicated `paiement_recu` (never reuse prix_confirme).
+
+    No-op when DAXI_WHATSAPP_SKIP_PAYMENT (default True) — Meta template deferred.
+    """
+    if _skip_payment_whatsapp(order, 'notify_client_payment_cash'):
+        return False
     phone = _client_phone(order)
     if not phone:
         return False
@@ -826,7 +848,12 @@ def notify_client_payment_cash(order) -> bool:
 
 
 def notify_client_payment_confirmed(order) -> bool:
-    """Online payment success — dedicated `paiement_recu` (never reuse prix_confirme)."""
+    """Online payment success — dedicated `paiement_recu` (never reuse prix_confirme).
+
+    No-op when DAXI_WHATSAPP_SKIP_PAYMENT (default True) — Meta template deferred.
+    """
+    if _skip_payment_whatsapp(order, 'notify_client_payment_confirmed'):
+        return False
     phone = _client_phone(order)
     if not phone:
         return False

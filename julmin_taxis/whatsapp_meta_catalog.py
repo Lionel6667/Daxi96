@@ -177,7 +177,7 @@ META_NOT_CREATED = (
     'course_demarree',
     'course_annulee',
     'prix_confirme',
-    'paiement_recu',  # create in Meta — see /workspace/daxi-audit/WHATSAPP_META_TEMPLATES.md
+    'paiement_recu',  # deferred while DAXI_WHATSAPP_SKIP_PAYMENT — see WHATSAPP_META_TEMPLATES.md
     'attente_retour',
     'course_reprise',
     'trajet_prolonge',
