@@ -37,7 +37,8 @@ class DashboardStatsView(APIView):
 
         total_orders = Order.objects.count()
         order_filter_counts = {
-            'all': Order.objects.exclude(status__in=['completed', 'cancelled']).count(),
+            'all': Order.objects.count(),
+            'active': Order.objects.exclude(status__in=['completed', 'cancelled']).count(),
             'pending': Order.objects.filter(status='pending').count(),
             'price_proposed': Order.objects.filter(
                 Q(status='price_proposed') | Q(status='pending', price__gt=0)

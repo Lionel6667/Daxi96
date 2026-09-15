@@ -1493,7 +1493,11 @@ def _order_to_dict(o: Order, *, light: bool = False, for_driver: bool = False, f
 
 
 def admin_orders(request):
-    """GET /htmx/admin/orders/?status=pending — return order cards HTML."""
+    """GET /htmx/admin/orders/?status=pending — return order cards HTML.
+
+    status=all includes every status (including completed/cancelled) with honest
+    pagination via limit/offset so operators can see the full backlog.
+    """
     gate = _admin_gate(request)
     if gate: return gate
 
@@ -1503,13 +1507,17 @@ def admin_orders(request):
         'today': None,
         'completed': ['completed'],
         'cancelled': ['cancelled'],
+        'active': None,  # non-terminal alias
     }
     tab = request.GET.get('status', 'all')
 
     qs = Order.objects.select_related('driver', 'user', 'enterprise', 'coords_placed_by').order_by('-created_at')
 
     if tab == 'all':
-        qs = qs.exclude(status__in=['completed', 'cancelled'])[:100]
+        # Honest "Toutes": do not exclude terminals.
+        pass
+    elif tab == 'active':
+        qs = qs.exclude(status__in=['completed', 'cancelled'])
     elif tab == 'today':
         today = timezone.now().date()
         qs = qs.filter(
@@ -1521,17 +1529,32 @@ def admin_orders(request):
         qs = qs.filter(status=tab)
     elif tab in status_map and status_map[tab]:
         qs = qs.filter(status__in=status_map[tab])
-    else:
-        qs = qs[:50]
 
-    orders = [_order_to_dict(o, light=True, for_admin=True, request=request) for o in qs[:50]]
+    try:
+        limit = int(request.GET.get('limit', 50) or 50)
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 100))
+    try:
+        offset = int(request.GET.get('offset', 0) or 0)
+    except (TypeError, ValueError):
+        offset = 0
+    offset = max(0, offset)
 
-                      
+    total_count = qs.count()
+    page_qs = list(qs[offset:offset + limit])
+    orders = [_order_to_dict(o, light=True, for_admin=True, request=request) for o in page_qs]
+    next_offset = offset + len(orders)
+    has_more = next_offset < total_count
+
     pending_count = Order.objects.filter(status__in=['pending', 'price_proposed', 'price_confirmed']).count()
     ongoing_count = Order.objects.filter(status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress', 'waiting_return']).count()
     today_count = Order.objects.filter(
         Q(created_at__date=timezone.now().date()) | Q(date=timezone.now().date())
     ).exclude(status__in=['completed', 'cancelled']).count()
+    all_count = Order.objects.count()
+    completed_count = Order.objects.filter(status='completed').count()
+    cancelled_count = Order.objects.filter(status='cancelled').count()
 
     return render(request, 'htmx/admin_orders.html', {
         'orders': orders,
@@ -1539,6 +1562,14 @@ def admin_orders(request):
         'pending_count': pending_count,
         'ongoing_count': ongoing_count,
         'today_count': today_count,
+        'all_count': all_count,
+        'completed_count': completed_count,
+        'cancelled_count': cancelled_count,
+        'total_count': total_count,
+        'offset': offset,
+        'limit': limit,
+        'next_offset': next_offset,
+        'has_more': has_more,
         'google_maps_key': getattr(settings, 'GOOGLE_MAPS_API_KEY', ''),
     })
 
@@ -3018,24 +3049,26 @@ def driver_orders(request):
     tab = request.GET.get('tab', 'available')
 
     if tab == 'available':
+        # Paid / in-person only — unpaid pending bloated the list (~OSRM per row).
         qs = Order.objects.filter(
-            Q(status__in=['pending', 'price_proposed'])
-            | Q(status='price_confirmed', payment_status__in=['paid', 'in_person'])
-            | Q(status='driver_assigned', driver__isnull=True),
             driver__isnull=True,
-        ).order_by('created_at')[:30]
+        ).filter(
+            Q(status='price_confirmed', payment_status__in=['paid', 'in_person'])
+            | Q(status='driver_assigned'),
+        ).order_by('created_at')[:40]
 
     elif tab == 'accepted':
         qs = Order.objects.filter(
             driver=driver,
-            status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress', 'price_proposed', 'price_confirmed']
+            status__in=['driver_assigned', 'on_way', 'arrived', 'in_progress', 'waiting_return', 'price_proposed', 'price_confirmed']
         ).order_by('-created_at')[:30]
 
-    elif tab == 'history':
+    elif tab in ('history', 'completed'):
         qs = Order.objects.filter(
             driver=driver,
             status__in=['completed', 'cancelled']
         ).order_by('-created_at')[:50]
+        tab = 'history'
 
     else:
         qs = Order.objects.none()
@@ -3043,7 +3076,8 @@ def driver_orders(request):
     if qs.model:
         qs = qs.select_related('enterprise', 'driver', 'user', 'coords_placed_by')
 
-    orders_data = [_order_to_dict(o, for_driver=True, request=request) for o in qs]
+    # light=True skips OSRM — critical for available-tab fluidity under load.
+    orders_data = [_order_to_dict(o, light=True, for_driver=True, request=request) for o in qs]
 
                                                     
     if tab == 'available':
@@ -3136,6 +3170,8 @@ def driver_accept_order(request, order_id):
             order.driver_assigned_at = timezone.now()
             order.save()
     except Exception as e:
+        import logging
+        logging.getLogger(__name__).exception('driver_accept_order failed order_id=%s: %s', order_id, e)
         return _htmx_error('Erreur lors de l\'acceptation de la commande')
 
                                                               
@@ -3258,16 +3294,19 @@ def driver_update_status(request, order_id):
 
         _process_driver_commission(order, driver)
 
-    _notify_ws(f'order_{order.pk}', 'status_updated', {
+    _status_payload = {
         'status': new_status,
         'order_id': order.pk,
         'round_trip_phase': order.round_trip_phase or '',
-    })
-    _notify_ws('admin', 'order_updated', {
-        'order_id': order.pk,
-        'status': new_status,
-        'round_trip_phase': order.round_trip_phase or '',
-    })
+        'user_id': order.user_id,
+        'enterprise_id': order.enterprise_id,
+    }
+    _notify_ws(f'order_{order.pk}', 'status_updated', _status_payload)
+    _notify_ws('admin', 'order_updated', _status_payload)
+    # Driver list / drawer cards listen on driver_{id}; without this they only
+    # refresh from the HTMX response of the actor who POSTed.
+    if order.driver_id:
+        _notify_ws(f'driver_{order.driver_id}', 'order_updated', _status_payload)
 
     if new_status == 'on_way':
         _notify_ws(f'order_{order.pk}', 'driver_on_the_way', {
@@ -6079,12 +6118,13 @@ def _client_orders_base_filter(request):
 
 
 def _render_client_sheet_fragment(request, order):
+    from django.middleware.csrf import get_token
     o = _order_to_dict(order)
     ctx = {
         'order': o,
         'order_id': order.pk,
         'o': o,
-        'csrf_token': request.META.get('CSRF_COOKIE', ''),
+        'csrf_token': get_token(request),
         'mapbox_token': getattr(settings, 'MAPBOX_ACCESS_TOKEN', ''),
         'sheet_mode': True,
     }
@@ -6115,6 +6155,12 @@ def _render_client_sheet_fragment(request, order):
             'distance_km': o.get('distance_km'),
             'trip_type': order.trip_type,
             'passengers': order.passengers,
+            'service_plan': o.get('service_plan') or '',
+            'service_plan_key': o.get('service_plan_key') or '',
+            'service_plan_display': o.get('service_plan_display') or '',
+            'service_plan_hint': o.get('service_plan_hint') or '',
+            'is_service_plan': bool(o.get('is_service_plan')),
+            'is_plan_order': bool(o.get('is_plan_order')),
         })
         return render(request, 'htmx/client_price_proposal.html', ctx)
     if _order_needs_payment(order):
@@ -6193,11 +6239,19 @@ def client_order_sheet(request, order_id):
     order, err = _get_order_for_client(request, order_id)
     if err:
         return err
+    # Completed / cancelled: render the real card (receipt + rating / terminal UI)
+    # instead of swallowing into an empty stub.
     if order.status in ('completed', 'cancelled'):
-        return HttpResponse(
-            '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:12px;">Course terminée ou annulée.</div>'
-            '<script>if(window._loadDaxiSheetOrders)window._loadDaxiSheetOrders();</script>'
-        )
+        from django.middleware.csrf import get_token as _get_token
+        o = _order_to_dict(order, request=request)
+        return render(request, 'htmx/_client_order_card.html', {
+            'order': o,
+            'order_id': order.pk,
+            'o': o,
+            'csrf_token': _get_token(request),
+            'mapbox_token': getattr(settings, 'MAPBOX_ACCESS_TOKEN', ''),
+            'sheet_mode': True,
+        })
     return _render_client_sheet_fragment(request, order)
 
 
@@ -8297,17 +8351,28 @@ def enterprise_orders(request):
     if not ent:
         return _htmx_error("Non connecté.", 200)
     tab = request.GET.get("tab", "active")
+    base = Order.objects.filter(enterprise=ent)
+    active_count = base.exclude(status__in=["completed", "cancelled"]).count()
+    history_count = base.filter(status__in=["completed", "cancelled"]).count()
     if tab == "history":
-        qs = Order.objects.filter(enterprise=ent, status__in=["completed", "cancelled"])
+        qs = base.filter(status__in=["completed", "cancelled"])
     else:
-        qs = Order.objects.filter(enterprise=ent).exclude(status__in=["completed", "cancelled"])
-    orders = qs.select_related("driver").order_by("-created_at")[:40]
+        qs = base.exclude(status__in=["completed", "cancelled"])
+        tab = "active"
+    try:
+        limit = int(request.GET.get("limit", 40) or 40)
+    except (TypeError, ValueError):
+        limit = 40
+    limit = max(1, min(limit, 100))
+    orders = qs.select_related("driver").order_by("-created_at")[:limit]
     from django.middleware.csrf import get_token
     return render(request, "htmx/enterprise_orders.html", {
-        "orders": [_order_to_dict(o) for o in orders],
+        "orders": [_order_to_dict(o, light=True) for o in orders],
         "enterprise": ent,
         "mode": ent.mode,
         "tab": tab,
+        "active_count": active_count,
+        "history_count": history_count,
         "csrf_token": get_token(request),
     })
 

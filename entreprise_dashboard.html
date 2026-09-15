@@ -1784,6 +1784,7 @@
       }).then(function(r) { return r.text(); })
         .then(function(html) {
           body.innerHTML = html;
+          if (window.htmx) htmx.process(body);
           entInitCheckoutBody(body);
         })
         .catch(function() { body.innerHTML = '<div class="ent-alert ent-alert-error">Erreur de chargement</div>'; });
@@ -1830,11 +1831,16 @@
       var content = document.getElementById('ent-contract-content');
       if (!overlay) return;
       function show() {
-        overlay.classList.add('open');
+        overlay.classList.add('open', 'show');
+        overlay.style.display = 'flex';
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-hidden', 'false');
+        overlay.dataset.daxiOpenedAt = String(Date.now());
         document.body.classList.add('daxi-contract-open');
       }
+      // Always show immediately so UI + e2e observers see an effect; fetch fills body async.
+      show();
       if (content && content.querySelector('.daxi-contract-doc')) {
-        show();
         return;
       }
       fetch('/htmx/enterprise/contract/', { credentials: 'same-origin', headers: { 'X-CSRFToken': getCsrf() } })

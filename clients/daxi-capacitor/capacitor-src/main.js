@@ -913,6 +913,16 @@ function startGpsWatch() {
   });
 }
 
+/** TTFF warmup: keep Fused/DaxiGps watch alive across brief background without changing request params. */
+function ensureGpsWatchAlive(reason) {
+  if (!window._daxiGpsPerm) return false;
+  if (gpsWatchId != null || gpsWatchStarting) return true;
+  gpsDiag('bridgeNote', 'ensureGpsWatchAlive restart', { reason: reason || 'unspecified' });
+  startGpsWatch();
+  return true;
+}
+window._daxiEnsureGpsWatch = ensureGpsWatchAlive;
+
 function pushLog(msg, extra) {
   try {
     const debug = !!(window.DAXI_API_DEBUG_LOGS || window.DAXI_PUSH_DEBUG);
@@ -1629,7 +1639,11 @@ async function initDeepLinks() {
     App.addListener('appStateChange', (state) => {
       appIsActive = !!(state && state.isActive);
       syncLocationForegroundService();
-      if (appIsActive) consumeOpenedNotifications();
+      if (appIsActive) {
+        consumeOpenedNotifications();
+        // Warmup keep-alive: restart continuous watch if OS dropped it while backgrounded.
+        try { ensureGpsWatchAlive('app-resume'); } catch (eWarm) {}
+      }
     });
     App.addListener('backButton', () => {
       if (typeof window.daxiHandleSystemBack === 'function' && window.daxiHandleSystemBack()) return;

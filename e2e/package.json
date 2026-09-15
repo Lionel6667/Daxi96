@@ -1,0 +1,17 @@
+﻿{
+  "name": "daxi-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DAXI Playwright E2E (Phases 2–4) — self-contained under e2e/",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test client/home.smoke.spec.js",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "inventory": "python ../tools/daxi_interaction_inventory.py --root ..",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

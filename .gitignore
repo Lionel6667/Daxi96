@@ -92,3 +92,9 @@ legacy/**/*.zip
 _fix_*.py
 moncash-original-black.png
 static/payments/moncash-original-black.png
+
+# E2E runtime
+e2e/artifacts/
+e2e/playwright-report/
+e2e/test-results/
+e2e/helpers/*.bak*

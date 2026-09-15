@@ -3,9 +3,17 @@
      class="daxi-price-proposal">
 
   <div class="daxi-pp-head">
-    <div class="daxi-pp-head-icon"><i class="ri-taxi-fill"></i></div>
-    <div class="daxi-pp-head-title">Confirmer votre trajet</div>
-    <div class="daxi-pp-head-sub">Prix estimé — validez pour lancer la recherche chauffeur</div>
+    <div class="daxi-pp-head-icon"><i class="{% if is_service_plan or is_plan_order %}ri-vip-crown-fill{% else %}ri-taxi-fill{% endif %}"></i></div>
+    <div class="daxi-pp-head-title">{% if service_plan_display %}{{ service_plan_display }}{% else %}Confirmer votre trajet{% endif %}</div>
+    <div class="daxi-pp-head-sub">
+      {% if is_service_plan and service_plan_display %}
+        Forfait {{ service_plan_display }}{% if service_plan_hint %} · {{ service_plan_hint }}{% endif %} — validez pour continuer
+      {% elif is_plan_order and service_plan_display %}
+        Plan {{ service_plan_display }}{% if service_plan_hint %} · {{ service_plan_hint }}{% endif %} — validez le prix
+      {% else %}
+        Prix estimé — validez pour lancer la recherche chauffeur
+      {% endif %}
+    </div>
   </div>
 
   <div class="daxi-pp-route">
@@ -26,9 +34,12 @@
     </div>
   </div>
 
-  {% if distance_km or trip_type or passengers > 1 %}
+  {% if distance_km or trip_type or passengers > 1 or service_plan_display %}
   <div class="daxi-pp-meta">
-    {% if distance_km %}
+    {% if service_plan_display %}
+    <span class="daxi-pp-chip daxi-pp-chip--plan"><i class="ri-vip-crown-line"></i> {{ service_plan_display }}{% if service_plan_hint %} · {{ service_plan_hint }}{% endif %}</span>
+    {% endif %}
+    {% if distance_km and not is_service_plan %}
     <span class="daxi-pp-chip"><i class="ri-route-line"></i> {{ distance_km|floatformat:1 }} km</span>
     {% endif %}
     {% if trip_type == 'round_trip' %}
@@ -46,7 +57,7 @@
 
   {% if auto_price %}
   <div class="daxi-pp-price">
-    <div class="daxi-pp-price-label">Prix estimé</div>
+    <div class="daxi-pp-price-label">{% if is_service_plan %}Prix forfait{% elif is_plan_order %}Prix du plan{% else %}Prix estimé{% endif %}</div>
     <div class="daxi-pp-price-val"><span class="daxi-pp-price-cur">$</span><span class="daxi-pp-price-num">{{ auto_price|floatformat:2 }}</span></div>
   </div>
 

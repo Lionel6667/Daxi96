@@ -52,9 +52,14 @@ WHATSAPP_BY_STATUS = {
 
 
 def _safe_email(order, method_name: str) -> bool:
-    email = (getattr(order, 'client_email', None) or '').strip()
-    if not email:
-        return False
+    # send_trip_completed fans out to client/driver/admin/enterprise itself;
+    # do not require client_email up-front or other audiences are skipped.
+    if method_name != 'send_trip_completed':
+        email = (getattr(order, 'client_email', None) or '').strip()
+        if not email:
+            return False
+    else:
+        email = (getattr(order, 'client_email', None) or '').strip() or 'multi-recipient'
     try:
         from notifications.email_service import EmailService
         fn = getattr(EmailService, method_name, None)
@@ -303,13 +308,9 @@ def notify_order_status_sync(order, status: str) -> None:
     """Dispatch email + WhatsApp + push for a status transition (synchronous)."""
     status = (status or '').strip()
 
+    # Email channel: thank-you + receipt PDF only at trip completion.
+    # Intermediate statuses use WhatsApp/push only (see WHATSAPP_BY_STATUS / push).
     email_map = {
-        'price_proposed': 'send_price_proposed',
-        'price_confirmed': 'send_price_proposed',
-        'driver_assigned': 'send_driver_assigned',
-        'on_way': 'send_driver_on_way',
-        'arrived': 'send_driver_arrived',
-        'in_progress': 'send_trip_started',
         'completed': 'send_trip_completed',
     }
     if status in email_map:

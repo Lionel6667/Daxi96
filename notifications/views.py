@@ -226,6 +226,13 @@ class SendOrderEmailView(APIView):
         }
         email_type = aliases.get(email_type, email_type)
 
+        # Completed-only email policy (staff API aligned with EmailService).
+        if email_type != 'trip_completed':
+            return Response({
+                'success': False,
+                'message': 'Emails de statut intermédiaires désactivés. Seul trip_completed est autorisé.',
+            }, status=400)
+
         subject = subjects.get(email_type, f'Mise à jour DAXI - {email_type}')
         status_label = status_labels.get(email_type, email_type)
 

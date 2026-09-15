@@ -1,3 +1,33 @@
+<div id="ent-orders-meta" hidden
+     data-ent-active-count="{{ active_count|default:0 }}"
+     data-ent-history-count="{{ history_count|default:0 }}"
+     data-ent-tab="{{ tab }}"></div>
+<script>
+(function(){
+  var m = document.getElementById('ent-orders-meta');
+  if (!m) return;
+  var a = m.getAttribute('data-ent-active-count') || '0';
+  var h = m.getAttribute('data-ent-history-count') || '0';
+  var ba = document.getElementById('etab-active');
+  var bh = document.getElementById('etab-history');
+  function setBadge(btn, n, label) {
+    if (!btn) return;
+    var base = label;
+    btn.innerHTML = '<i class="' + (btn.querySelector('i') ? btn.querySelector('i').className : '') + '"></i> ' + base +
+      (n && n !== '0' ? ' <span class="ent-tab-count">(' + n + ')</span>' : '');
+  }
+  if (ba) {
+    var iconA = ba.querySelector('i');
+    var icA = iconA ? iconA.className : 'ri-radar-line';
+    ba.innerHTML = '<i class="' + icA + '"></i> En cours' + (a !== '0' ? ' <span class="ent-tab-count">(' + a + ')</span>' : '');
+  }
+  if (bh) {
+    var iconH = bh.querySelector('i');
+    var icH = iconH ? iconH.className : 'ri-history-line';
+    bh.innerHTML = '<i class="' + icH + '"></i> Historique' + (h !== '0' ? ' <span class="ent-tab-count">(' + h + ')</span>' : '');
+  }
+})();
+</script>
 {% if success_msg %}
 <div class="ent-oc-alert ent-oc-alert--success"><i class="ri-checkbox-circle-line"></i> {{ success_msg }}</div>
 {% endif %}
@@ -51,5 +81,16 @@
   <div class="ent-oc-empty">
     <i class="ri-inbox-line"></i>
     <div>{% if tab == 'history' %}Aucune commande dans l'historique{% else %}Aucune commande en cours{% endif %}</div>
+    {% if tab != 'history' and history_count %}
+    <button type="button" class="ent-oc-history-cta" onclick="typeof switchOrdersTab==='function' && switchOrdersTab('history')"
+            style="margin-top:12px;padding:10px 16px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:#334155;font-weight:700;cursor:pointer;">
+      <i class="ri-history-line"></i> Voir l'historique ({{ history_count }})
+    </button>
+    {% elif tab == 'history' and active_count %}
+    <button type="button" class="ent-oc-history-cta" onclick="typeof switchOrdersTab==='function' && switchOrdersTab('active')"
+            style="margin-top:12px;padding:10px 16px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.04);color:#334155;font-weight:700;cursor:pointer;">
+      <i class="ri-radar-line"></i> Voir les commandes en cours ({{ active_count }})
+    </button>
+    {% endif %}
   </div>
 {% endif %}

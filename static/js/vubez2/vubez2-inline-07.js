@@ -2134,6 +2134,77 @@ function _requestPickupGps(onSuccess, onError, opts) {
 }
 
 var _clientGpsBootRetries = 0;
+var _clientGpsWarmStarted = false;
+
+/**
+ * TTFF warmup ONLY: start DaxiGpsEngine watch as soon as page allows,
+ * without waiting for booking UI / map commit. Display/send still gated
+ * by existing DaxiClientGps / VALIDATED_MAX paths in _onClientGpsLiveFix.
+ * Does not prompt for permission and does not loosen accuracy gates.
+ */
+function _warmClientGpsEarly(reason) {
+    if (_clientGpsWarmStarted && _clientGpsEngine) {
+        try { _ensureClientGpsEngineOnly(); } catch (e0) {}
+        return true;
+    }
+    try {
+        if (window._daxiGeoBrowserBlocked) return false;
+        var native = (typeof _daxiIsNativeClientApp === 'function') && _daxiIsNativeClientApp();
+        if (native) {
+            if (typeof _daxiNativeGpsGranted === 'function' && !_daxiNativeGpsGranted() && !window._daxiGpsPerm) {
+                return false;
+            }
+        } else {
+            var hasConsent = (typeof _daxiHasGpsUserConsent === 'function' && _daxiHasGpsUserConsent())
+                || (typeof _wasLocPromptDone === 'function' && _wasLocPromptDone())
+                || (typeof _wasGeoPreviouslyGranted === 'function' && _wasGeoPreviouslyGranted());
+            if (!hasConsent) return false;
+        }
+        if (typeof _daxiGrantGpsUserConsent === 'function') {
+            try { _daxiGrantGpsUserConsent(); } catch (e1) {}
+        }
+        if (typeof _markGeoGranted === 'function' && (window._daxiGpsPerm || !native)) {
+            try { _markGeoGranted(); } catch (e2) {}
+        }
+        _clientGpsWarmStarted = true;
+        if (window.DaxiWebGps && !window.DaxiAndroid && !DaxiWebGps.getSession('CLIENT')) {
+            try {
+                DaxiWebGps.startSession('CLIENT', {
+                    exploitableM: DAXI_GPS_FALLBACK_M,
+                    targetAccuracy: DAXI_GPS_TARGET_M,
+                    timeoutMs: 15000
+                });
+            } catch (e3) {}
+        }
+        // Hidden engine start — _onClientGpsLiveFix still enforces gates before map/send.
+        if (typeof _ensureClientGpsEngineOnly === 'function') _ensureClientGpsEngineOnly();
+        // Prefer Cap native continuous watch if bridge exposes keep-alive.
+        try {
+            if (typeof window._daxiEnsureGpsWatch === 'function') window._daxiEnsureGpsWatch(reason || 'client-page-warm');
+        } catch (e4) {}
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+window._daxiWarmClientGpsEarly = _warmClientGpsEarly;
+
+function _scheduleClientGpsWarmup() {
+    function go() {
+        try { _warmClientGpsEarly('dom-ready'); } catch (e) {}
+        // Native bridge may set _daxiGpsPerm a moment later — retry briefly, still no prompt.
+        var tries = 0;
+        (function retry() {
+            tries += 1;
+            if (_clientGpsEngine || tries > 20) return;
+            try { _warmClientGpsEarly('retry-' + tries); } catch (e2) {}
+            if (!_clientGpsEngine) setTimeout(retry, 200);
+        })();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+}
+_scheduleClientGpsWarmup();
 
 function _bootClientGps() {
     if (window._daxiGeoBrowserBlocked) {
@@ -2153,6 +2224,7 @@ function _bootClientGps() {
         return;
     }
     _clientGpsBootStarted = true;
+    _clientGpsWarmStarted = true;
     _daxiResetGpsMapCommit();
     if (window.DaxiClientGps) DaxiClientGps.reset();
     if (window.DaxiWebGps && !window.DaxiAndroid && !DaxiWebGps.getSession('CLIENT')) {

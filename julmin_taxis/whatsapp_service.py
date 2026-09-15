@@ -47,6 +47,24 @@ def _normalize_phone(phone: str) -> str:
 
 
 def _graph_post(payload: dict) -> bool:
+    """POST to Meta Graph. When DAXI_STUB_WHATSAPP is set, NEVER opens a socket — log only."""
+    stub = bool(getattr(settings, 'DAXI_STUB_WHATSAPP', False))
+    if stub:
+        tmpl = (payload.get('template') or {}).get('name') or payload.get('type') or 'text'
+        to = payload.get('to')
+        logger.info('[WhatsApp STUB] no-op template=%s to=%s (zero HTTP to Meta)', tmpl, to)
+        try:
+            log_path = getattr(settings, 'DAXI_WHATSAPP_STUB_LOG', '') or ''
+            if log_path:
+                import time
+                from pathlib import Path as _P
+                _P(log_path).parent.mkdir(parents=True, exist_ok=True)
+                with open(log_path, 'a', encoding='utf-8') as fh:
+                    fh.write(f'{time.time():.3f}\tSTUB\t{tmpl}\t{to}\n')
+        except Exception as exc:
+            logger.debug('[WhatsApp STUB] log write skipped: %s', exc)
+        return True  # pretend success so notify paths continue without retries
+
     token = getattr(settings, 'WHATSAPP_ACCESS_TOKEN', '')
     phone_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', '')
     if not token or not phone_id:

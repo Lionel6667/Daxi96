@@ -64,8 +64,12 @@
     if (global._daxiOnClientOrdersRealtime) global._daxiOnClientOrdersRealtime(orderId, ev, data);
     if (ev === 'price_proposed' || ev === 'payment_confirmed' || ev === 'coords_set'
         || ev === 'driver_accepted' || ev === 'driver_assigned' || ev === 'driver_on_the_way'
-        || ev === 'driver_arrived' || ev === 'in_progress') {
+        || ev === 'driver_arrived' || ev === 'in_progress' || ev === 'waiting_return'
+        || ev === 'order_completed' || ev === 'status_updated' || ev === 'order_updated') {
       if (orderId && global._daxiRefreshOrderSheet) global._daxiRefreshOrderSheet(orderId, { forceDom: true });
+      else if (typeof global._loadDaxiSheetOrders === 'function') {
+        global._loadDaxiSheetOrders({ keepOpen: true, refreshActiveDetail: true });
+      }
     } else if (typeof global._loadDaxiSheetOrders === 'function') {
       global._loadDaxiSheetOrders({ keepOpen: true, metaOnly: true });
     }

@@ -2341,6 +2341,14 @@
       gpsDiag("bridgeNote", "watchPosition failed", { error: e && e.message, warn: true });
     });
   }
+  function ensureGpsWatchAlive(reason) {
+    if (!window._daxiGpsPerm) return false;
+    if (gpsWatchId != null || gpsWatchStarting) return true;
+    gpsDiag("bridgeNote", "ensureGpsWatchAlive restart", { reason: reason || "unspecified" });
+    startGpsWatch();
+    return true;
+  }
+  window._daxiEnsureGpsWatch = ensureGpsWatchAlive;
   function pushLog(msg, extra) {
     try {
       const debug = !!(window.DAXI_API_DEBUG_LOGS || window.DAXI_PUSH_DEBUG);
@@ -3051,7 +3059,13 @@
       App.addListener("appStateChange", (state) => {
         appIsActive = !!(state && state.isActive);
         syncLocationForegroundService();
-        if (appIsActive) consumeOpenedNotifications();
+        if (appIsActive) {
+          consumeOpenedNotifications();
+          try {
+            ensureGpsWatchAlive("app-resume");
+          } catch (eWarm) {
+          }
+        }
       });
       App.addListener("backButton", () => {
         if (typeof window.daxiHandleSystemBack === "function" && window.daxiHandleSystemBack()) return;

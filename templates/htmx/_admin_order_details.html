@@ -50,7 +50,7 @@
               hx-get="/htmx/admin/drivers/available/?order_id={{ o.id }}"
               hx-target="#assign-modal-content-{{ o.id }}"
               hx-swap="innerHTML"
-              onclick="document.getElementById('assign-modal-{{ o.id }}').style.display='flex'"
+              onclick="(function(m){ if(!m) return; m.style.display='flex'; m.classList.add('show','open'); m.setAttribute('aria-modal','true'); })(document.getElementById('assign-modal-{{ o.id }}'))"
               class="adm-action-btn adm-action-btn--assign">
         <i class="ri-user-add-line"></i> Assigner chauffeur
       </button>
@@ -73,7 +73,7 @@
       <div class="adm-assign-modal__dialog">
         <div class="adm-assign-modal__head">
           <h3>Choisir un chauffeur</h3>
-          <button type="button" onclick="document.getElementById('assign-modal-{{ o.id }}').style.display='none'" class="adm-assign-modal__close"><i class="ri-close-line"></i></button>
+          <button type="button" onclick="(function(m){ if(!m) return; m.style.display='none'; m.classList.remove('show','open'); m.removeAttribute('aria-modal'); })(document.getElementById('assign-modal-{{ o.id }}'))" class="adm-assign-modal__close"><i class="ri-close-line"></i></button>
         </div>
         <div id="assign-modal-content-{{ o.id }}">
           <p class="adm-assign-modal__loading">Chargement des chauffeurs...</p>

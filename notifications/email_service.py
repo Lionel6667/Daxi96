@@ -1,8 +1,12 @@
 """
 Email service for DAXI - replaces all PHP email scripts.
-Handles: OTP, price proposals, driver assignment, trip updates, password reset.
+Handles: OTP, password reset, and completed-trip thank-you + receipt PDF.
+
+Policy (email channel): only trip-completion thank-you emails (with receipt PDF)
+are sent for order status. Intermediate status emails (price_proposed, assigned,
+on_way, arrived, started, reminder) are no-ops. WhatsApp/push are unchanged.
 """
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.utils import timezone
 
@@ -10,10 +14,67 @@ from julmin_taxis.address_utils import clean_address_display
 from julmin_taxis.currency_utils import format_price
 
 
-def _send_html_email(subject, to_email, html_content, text_content=None):
-    """Internal helper to send HTML email."""
+def _fmt_date(value, fmt='%d/%m/%Y', fallback='—'):
+    """Safe strftime for optional date/datetime fields."""
+    if value is None:
+        return fallback
+    try:
+        return value.strftime(fmt)
+    except Exception:
+        return fallback
+
+
+def _fmt_time(value, fmt='%H:%M', fallback='—'):
+    """Safe strftime for optional time/datetime fields."""
+    if value is None:
+        return fallback
+    try:
+        return value.strftime(fmt)
+    except Exception:
+        return fallback
+
+
+def _order_date_display(order):
+    if getattr(order, 'date', None):
+        return _fmt_date(order.date)
+    if getattr(order, 'completed_at', None):
+        return _fmt_date(order.completed_at)
+    if getattr(order, 'scheduled_at', None):
+        return _fmt_date(order.scheduled_at)
+    if getattr(order, 'created_at', None):
+        return _fmt_date(order.created_at)
+    return '—'
+
+
+def _order_time_display(order):
+    if getattr(order, 'time', None):
+        return _fmt_time(order.time)
+    if getattr(order, 'scheduled_at', None):
+        return _fmt_time(order.scheduled_at)
+    if getattr(order, 'completed_at', None):
+        return _fmt_time(order.completed_at)
+    return '—'
+
+
+def _admin_inbox_emails():
+    """Ops inbox for admin thank-you copies."""
+    emails = []
+    raw = (getattr(settings, 'ADMIN_EMAIL', None) or '').strip()
+    if raw:
+        emails.append(raw)
+    host_user = (getattr(settings, 'EMAIL_HOST_USER', None) or '').strip()
+    if host_user and '@' in host_user and host_user not in emails:
+        emails.append(host_user)
+    if not emails:
+        emails.append('info@daxipro.com')
+    return emails
+
+
+def _send_html_email(subject, to_email, html_content, text_content=None, attachments=None):
+    """Internal helper to send HTML email, optionally with attachments."""
+    if not to_email:
+        return
     if text_content is None:
-                                           
         import re
         text_content = re.sub(r'<[^>]+>', '', html_content)
 
@@ -21,9 +82,19 @@ def _send_html_email(subject, to_email, html_content, text_content=None):
         subject=subject,
         body=text_content,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[to_email]
+        to=[to_email],
     )
     msg.attach_alternative(html_content, 'text/html')
+    if attachments:
+        for item in attachments:
+            if not item:
+                continue
+            if len(item) == 3:
+                filename, content, mimetype = item
+                msg.attach(filename, content, mimetype)
+            elif len(item) == 2:
+                filename, content = item
+                msg.attach(filename, content)
     try:
         msg.send(fail_silently=False)
     except Exception as exc:
@@ -105,134 +176,36 @@ class EmailService:
 
     @staticmethod
     def send_price_proposed(order):
-        """Send price proposal email to client (replaces send_order_email.php type=price_proposed)."""
-        content = f"""
-        <h2>Prix proposé pour votre course</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Nous avons évalué votre demande de transport et vous proposons le tarif suivant :</p>
-        <div class="card">
-          <div class="row"><span class="label">Départ</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          <div class="row"><span class="label">Destination</span><span class="value">{clean_address_display(order.destination)}</span></div>
-          <div class="row"><span class="label">Date</span><span class="value">{order.date.strftime('%d/%m/%Y')}</span></div>
-          <div class="row"><span class="label">Heure</span><span class="value">{order.time.strftime('%H:%M')}</span></div>
-          <div class="row"><span class="label">Prix proposé</span><span class="value" style="color:#00d4ff;font-size:20px">{format_price(order.price)}</span></div>
-        </div>
-        <p>Connectez-vous à votre espace DAXI pour <strong>accepter ou refuser</strong> ce prix.</p>
-        <a href="{settings.SITE_URL}" class="btn">Voir ma commande</a>
-        """
-        html = _base_template('Prix proposé - DAXI', content)
-        _send_html_email(
-            subject=f'Prix proposé pour votre course DAXI — {format_price(order.price)}',
-            to_email=order.client_email,
-            html_content=html
-        )
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
 
     @staticmethod
     def send_driver_assigned(order):
-        """Send driver assignment notification (replaces send_order_email.php type=driver_accepted)."""
-        driver = order.driver
-        if not driver:
-            return
-
-        content = f"""
-        <h2>Un chauffeur a été assigné à votre course !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Excellente nouvelle ! Un chauffeur a été assigné à votre course :</p>
-        <div class="card">
-          <div class="row"><span class="label">Chauffeur</span><span class="value">{driver.full_name}</span></div>
-          <div class="row"><span class="label">Téléphone</span><span class="value">{driver.phone}</span></div>
-          <div class="row"><span class="label">Véhicule</span><span class="value">{driver.vehicle}</span></div>
-          <div class="row"><span class="label">Plaque</span><span class="value">{driver.plate}</span></div>
-          <div class="row"><span class="label">Note</span><span class="value">{driver.rating}/5</span></div>
-        </div>
-        <div class="card">
-          <div class="row"><span class="label">Départ</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          <div class="row"><span class="label">Destination</span><span class="value">{clean_address_display(order.destination)}</span></div>
-          <div class="row"><span class="label">Date & Heure</span><span class="value">{order.date.strftime('%d/%m/%Y')} à {order.time.strftime('%H:%M')}</span></div>
-          <div class="row"><span class="label">Prix</span><span class="value">{format_price(order.price)}</span></div>
-        </div>
-        <a href="{settings.SITE_URL}" class="btn">Suivre ma course</a>
-        """
-        html = _base_template('Chauffeur assigné - DAXI', content)
-        _send_html_email(
-            subject=f'Votre chauffeur DAXI est assigné — {driver.full_name}',
-            to_email=order.client_email,
-            html_content=html
-        )
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
 
     @staticmethod
     def send_driver_on_way(order):
-        """Send driver on the way notification (replaces send_on_the_way_email.php)."""
-        driver = order.driver
-        content = f"""
-        <h2>Votre chauffeur est en route !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Votre chauffeur <strong>{driver.full_name if driver else 'DAXI'}</strong> est en route vers votre lieu de départ.</p>
-        <div class="card">
-          <div class="row"><span class="label">Lieu de prise en charge</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          <div class="row"><span class="label">Heure prévue</span><span class="value">{order.time.strftime('%H:%M')}</span></div>
-          {'<div class="row"><span class="label">Contact</span><span class="value">' + driver.phone + '</span></div>' if driver else ''}
-        </div>
-        <p>Préparez-vous, votre chauffeur arrive bientôt !</p>
-        <a href="{settings.SITE_URL}" class="btn">Suivre en temps réel</a>
-        """
-        html = _base_template('Chauffeur en route - DAXI', content)
-        _send_html_email(
-            subject='Votre chauffeur DAXI est en route',
-            to_email=order.client_email,
-            html_content=html
-        )
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
 
     @staticmethod
     def send_driver_arrived(order):
-        """Send driver arrived notification (replaces send_arrived_email.php)."""
-        driver = order.driver
-        content = f"""
-        <h2>Votre chauffeur est arrivé !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Votre chauffeur <strong>{driver.full_name if driver else 'DAXI'}</strong> vous attend au lieu de départ.</p>
-        <div class="card">
-          <div class="row"><span class="label">Lieu de prise en charge</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          {'<div class="row"><span class="label">Véhicule</span><span class="value">' + (driver.vehicle + ' - ' + driver.plate if driver else '') + '</span></div>' if driver else ''}
-          {'<div class="row"><span class="label">Contact</span><span class="value">' + driver.phone + '</span></div>' if driver else ''}
-        </div>
-        <p><strong>Votre chauffeur vous attend. Rejoignez-le dès que possible !</strong></p>
-        """
-        html = _base_template('Chauffeur arrivé - DAXI', content)
-        _send_html_email(
-            subject='Votre chauffeur DAXI est arrivé',
-            to_email=order.client_email,
-            html_content=html
-        )
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
 
     @staticmethod
     def send_trip_started(order):
-        """Send trip started notification."""
-        content = f"""
-        <h2>Votre course a démarré !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Votre course est en cours. Bon voyage !</p>
-        <div class="card">
-          <div class="row"><span class="label">Départ</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          <div class="row"><span class="label">Destination</span><span class="value">{clean_address_display(order.destination)}</span></div>
-          {'<div class="row"><span class="label">Chauffeur</span><span class="value">' + order.driver.full_name + '</span></div>' if order.driver else ''}
-        </div>
-        """
-        html = _base_template('Course démarrée - DAXI', content)
-        _send_html_email(
-            subject='Votre course DAXI a démarré',
-            to_email=order.client_email,
-            html_content=html
-        )
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
 
     @staticmethod
-    def send_trip_completed(order):
-        """Email de remerciement avec récapitulatif et lien vers le reçu PDF."""
-        site = getattr(settings, 'SITE_URL', 'http://localhost:8000').rstrip('/')
-        receipt_url = f'{site}/htmx/client/orders/{order.pk}/receipt.pdf'
-        guest_id = (getattr(order, 'guest_id', None) or '').strip()
-        if guest_id:
-            receipt_url = f'{receipt_url}?guest_id={guest_id}'
+    def send_trip_reminder(order):
+        """Disabled — status emails only at trip completion (email channel)."""
+        return
+
+    @staticmethod
+    def _build_completed_html(order, greeting_name, receipt_url):
         duration = order.duration_minutes
         duration_text = f"{duration} minutes" if duration else "N/A"
         total = order.total_price
@@ -246,50 +219,99 @@ class EmailService:
           {'<div class="row"><span class="label">Frais d\'attente</span><span class="value">' + format_price(pause) + '</span></div>' if float(pause or 0) > 0 else ''}
           {'<div class="row"><span class="label">Extension</span><span class="value">' + format_price(extra) + '</span></div>' if float(extra or 0) > 0 else ''}
             """
+        driver_name = ''
+        if order.driver:
+            driver_name = getattr(order.driver, 'full_name', None) or (
+                order.driver.get_full_name() if hasattr(order.driver, 'get_full_name') else ''
+            )
         content = f"""
         <h2>Course terminée avec succès !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
+        <p>Bonjour <strong>{greeting_name}</strong>,</p>
         <p>Merci d'avoir utilisé DAXI. Votre course est terminée. Voici le récapitulatif :</p>
         <div class="card">
           <div class="row"><span class="label">Départ</span><span class="value">{clean_address_display(order.pickup)}</span></div>
           <div class="row"><span class="label">Destination</span><span class="value">{clean_address_display(order.destination)}</span></div>
-          <div class="row"><span class="label">Date</span><span class="value">{order.date.strftime('%d/%m/%Y') if order.date else (order.completed_at.strftime('%d/%m/%Y') if order.completed_at else '—')}</span></div>
+          <div class="row"><span class="label">Date</span><span class="value">{_order_date_display(order)}</span></div>
+          <div class="row"><span class="label">Heure</span><span class="value">{_order_time_display(order)}</span></div>
           <div class="row"><span class="label">Durée réelle</span><span class="value">{duration_text}</span></div>
           {extras_html}
           <div class="row"><span class="label">Montant total payé</span><span class="value" style="color:#00d4ff;font-size:18px">{format_price(total)}</span></div>
-          {'<div class="row"><span class="label">Chauffeur</span><span class="value">' + order.driver.full_name + '</span></div>' if order.driver else ''}
+          {'<div class="row"><span class="label">Chauffeur</span><span class="value">' + driver_name + '</span></div>' if driver_name else ''}
         </div>
-        <p style="margin:20px 0 12px;">Téléchargez votre reçu officiel au format PDF :</p>
+        <p style="margin:20px 0 12px;">Votre reçu officiel PDF est joint à cet email. Vous pouvez aussi le télécharger :</p>
         <a href="{receipt_url}" class="btn" style="display:inline-block;margin-bottom:16px;">🧾 Télécharger le reçu PDF</a>
         <p>Vous avez été satisfait de votre course ? N'hésitez pas à noter votre chauffeur sur l'application !</p>
         <a href="{settings.SITE_URL}" class="btn">Réserver une nouvelle course</a>
         """
-        html = _base_template('Course terminée - DAXI', content)
-        _send_html_email(
-            subject='Course DAXI terminée — Merci pour votre confiance',
-            to_email=order.client_email,
-            html_content=html
-        )
+        return _base_template('Course terminée - DAXI', content)
 
     @staticmethod
-    def send_trip_reminder(order):
-        """Send 30-minute reminder before trip (replaces firebase_order_watcher.php reminder logic)."""
-        content = f"""
-        <h2>Rappel : Votre course dans 30 minutes !</h2>
-        <p>Bonjour <strong>{order.client_name}</strong>,</p>
-        <p>Ceci est un rappel pour votre course prévue dans <strong>30 minutes</strong>.</p>
-        <div class="card">
-          <div class="row"><span class="label">Départ</span><span class="value">{clean_address_display(order.pickup)}</span></div>
-          <div class="row"><span class="label">Destination</span><span class="value">{clean_address_display(order.destination)}</span></div>
-          <div class="row"><span class="label">Date</span><span class="value">{order.date.strftime('%d/%m/%Y')}</span></div>
-          <div class="row"><span class="label">Heure</span><span class="value">{order.time.strftime('%H:%M')}</span></div>
-          {'<div class="row"><span class="label">Chauffeur</span><span class="value">' + order.driver.full_name + '</span></div>' if order.driver else ''}
-        </div>
-        <p>Préparez-vous ! Votre chauffeur sera bientôt chez vous.</p>
-        """
-        html = _base_template('Rappel course - DAXI', content)
-        _send_html_email(
-            subject='Rappel : Votre course DAXI dans 30 minutes',
-            to_email=order.client_email,
-            html_content=html
-        )
+    def _receipt_pdf_attachment(order):
+        try:
+            from julmin_taxis.receipt_pdf import generate_order_receipt_pdf
+            pdf_bytes = generate_order_receipt_pdf(order)
+            if not pdf_bytes:
+                return None
+            return (f'daxi-recu-{order.pk}.pdf', pdf_bytes, 'application/pdf')
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                '[Email] receipt PDF failed order #%s: %s', getattr(order, 'pk', '?'), exc
+            )
+            return None
+
+    @staticmethod
+    def _completed_recipients(order):
+        """Unique (email, greeting) for client / driver / admin / enterprise."""
+        seen = set()
+        recipients = []
+
+        def _add(email, name):
+            addr = (email or '').strip()
+            if not addr or '@' not in addr:
+                return
+            key = addr.lower()
+            if key in seen:
+                return
+            seen.add(key)
+            recipients.append((addr, (name or addr.split('@')[0]).strip() or 'DAXI'))
+
+        _add(getattr(order, 'client_email', None), getattr(order, 'client_name', None) or 'Client')
+
+        driver = getattr(order, 'driver', None)
+        if driver:
+            dname = getattr(driver, 'full_name', None) or (
+                driver.get_full_name() if hasattr(driver, 'get_full_name') else 'Chauffeur'
+            )
+            _add(getattr(driver, 'email', None), dname)
+
+        for admin_email in _admin_inbox_emails():
+            _add(admin_email, 'Équipe DAXI')
+
+        enterprise = getattr(order, 'enterprise', None)
+        if enterprise:
+            _add(getattr(enterprise, 'email', None), getattr(enterprise, 'name', None) or 'Entreprise')
+
+        return recipients
+
+    @staticmethod
+    def send_trip_completed(order):
+        """Thank-you email with receipt PDF attachment — client, driver, admin, enterprise."""
+        site = getattr(settings, 'SITE_URL', 'http://localhost:8000').rstrip('/')
+        receipt_url = f'{site}/htmx/client/orders/{order.pk}/receipt.pdf'
+        guest_id = (getattr(order, 'guest_id', None) or '').strip()
+        if guest_id:
+            receipt_url = f'{receipt_url}?guest_id={guest_id}'
+
+        attachment = EmailService._receipt_pdf_attachment(order)
+        attachments = [attachment] if attachment else None
+        subject = 'Course DAXI terminée — Merci pour votre confiance'
+
+        for email, name in EmailService._completed_recipients(order):
+            html = EmailService._build_completed_html(order, name, receipt_url)
+            _send_html_email(
+                subject=subject,
+                to_email=email,
+                html_content=html,
+                attachments=attachments,
+            )

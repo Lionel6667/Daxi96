@@ -15,7 +15,8 @@
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
     <span class="adm-order-status-badge adm-order-status-badge--{{ o.status }}">
-      {% if o.status == 'pending' %}<i class="ri-add-circle-line"></i> Nouvelle — en attente chauffeur
+      {% if o.status == 'pending' %}<i class="ri-add-circle-line"></i> Nouvelle — {% if o.price %}en attente confirmation{% else %}fixer un prix{% endif %}
+      {% elif o.status == 'price_proposed' %}<i class="ri-money-dollar-circle-line"></i> Prix proposé — en attente client
       {% elif o.status == 'price_confirmed' %}<i class="ri-check-line"></i> Prix calculé — assigner chauffeur
       {% elif o.status == 'driver_assigned' %}<i class="ri-car-line"></i> Chauffeur assigné
       {% elif o.status == 'on_way' %}<i class="ri-route-line"></i> En route

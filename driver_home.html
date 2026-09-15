@@ -1777,6 +1777,13 @@ function bootDriverApp() {
     populateSidebar();
     _drvSyncSystemStatus('open');
     loadProfile();
+    // TTFF warmup: start consent/engine ASAP — do not wait for Google Maps to load.
+    // Display/send still gated by DRV_MAX_GPS_M / DRV_MIN_GPS_M (unchanged).
+    // Cap keep-alive only if fine permission already known (no new OS prompt).
+    try {
+        if (typeof window._daxiEnsureGpsWatch === 'function') window._daxiEnsureGpsWatch('driver-boot');
+    } catch (eWarmCap) {}
+    try { _drvEnsureLocationConsentThenStartGps(); } catch (eGps) {}
     prefetchDriverOrders().finally(function() {
         _markSplashStep('sp-orders');
         window._pageLoaded = true;
@@ -1809,7 +1816,8 @@ function bootDriverApp() {
                 }
             });
         }
-        _drvEnsureLocationConsentThenStartGps();
+        // Safety re-ensure if early boot raced before native bridge / permission flag.
+        if (!_drvGpsStarted) _drvEnsureLocationConsentThenStartGps();
         var list = document.getElementById('orders-list');
         var sb = document.getElementById('sb-orders');
         if (list) _initDriverOrderMapsAll(list);
@@ -2992,10 +3000,22 @@ function startCompassAuto() {
         if (btn) {
             btn.style.display = 'flex';
             const ask = async () => {
+                btn.classList.add('is-compass-pending');
                 try {
                     const r = await DeviceOrientationEvent.requestPermission();
                     if (r === 'granted') { startCompassListeners(); btn.style.display = 'none'; }
-                } catch (e) {}
+                    else {
+                        btn.classList.add('is-compass-denied');
+                        btn.title = 'Permission boussole refusée';
+                        btn.setAttribute('data-no-op', '1');
+                    }
+                } catch (e) {
+                    btn.classList.add('is-compass-unavailable');
+                    btn.title = 'Boussole indisponible sur cet appareil';
+                    btn.setAttribute('data-no-op', '1');
+                } finally {
+                    btn.classList.remove('is-compass-pending');
+                }
             };
             btn.addEventListener('click', ask, { once: true });
             document.addEventListener('touchend', function _once() {

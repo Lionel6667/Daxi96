@@ -90,6 +90,26 @@ WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID', '')
 WHATSAPP_WABA_ID = os.environ.get('WHATSAPP_WABA_ID', '')
 WHATSAPP_TEMPLATE_LANG = os.environ.get('WHATSAPP_TEMPLATE_LANG', 'fr')
 
+
+# --- E2E / local outbound stubs (NEVER hit Meta WhatsApp or real SMTP during audits) ---
+# Set DAXI_STUB_WHATSAPP=1 (default when DEBUG and token empty) to no-op Meta Graph HTTP.
+# Set DAXI_STUB_EMAIL=1 (or EMAIL_BACKEND=console) to avoid external SMTP.
+def _env_truthy(name, default=''):
+    return os.environ.get(name, default).strip().lower() in ('1', 'true', 'yes', 'on')
+
+_DAXI_STUB_WA_ENV = _env_truthy('DAXI_STUB_WHATSAPP')
+_DAXI_STUB_EMAIL_ENV = _env_truthy('DAXI_STUB_EMAIL')
+# Auto-stub WhatsApp when DEBUG and no Meta token (safe default for local SQLite audits)
+DAXI_STUB_WHATSAPP = _DAXI_STUB_WA_ENV or (
+    _env_is_debug() and not (os.environ.get('WHATSAPP_ACCESS_TOKEN') or '').strip()
+)
+DAXI_STUB_EMAIL = _DAXI_STUB_EMAIL_ENV or _env_truthy('DAXI_E2E_STUB_OUTBOUND')
+DAXI_WHATSAPP_STUB_LOG = os.environ.get(
+    'DAXI_WHATSAPP_STUB_LOG',
+    str(BASE_DIR / 'backups' / 'whatsapp_stub.log'),
+)
+
+
 WHATSAPP_TEMPLATES = {
     k: os.environ.get(env_key, '')
     for k, env_key in {
@@ -324,7 +344,20 @@ BACKUP_CLOUDINARY_FOLDER = os.environ.get('BACKUP_CLOUDINARY_FOLDER', 'daxi/back
 
 
 REDIS_URL = os.environ.get('REDIS_URL', '')
-if REDIS_URL:
+
+def _redis_supports_channels_lua(url: str) -> bool:
+    """channels_redis needs Redis Lua EVAL; FakeRedis does not — fall back to InMemory."""
+    if os.environ.get('DAXI_INMEMORY_CHANNELS', '').strip().lower() in ('1', 'true', 'yes', 'on'):
+        return False
+    try:
+        import redis
+        client = redis.from_url(url, socket_connect_timeout=1, socket_timeout=1)
+        client.execute_command('EVAL', 'return 1', 0)
+        return True
+    except Exception:
+        return False
+
+if REDIS_URL and _redis_supports_channels_lua(REDIS_URL):
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -340,6 +373,28 @@ if REDIS_URL:
             'LOCATION': REDIS_URL,
         },
     }
+elif REDIS_URL:
+    # FakeRedis / limited Redis: keep optional cache if possible, Channels in-process.
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+    try:
+        import redis
+        redis.from_url(REDIS_URL, socket_connect_timeout=1, socket_timeout=1).ping()
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                'LOCATION': REDIS_URL,
+            },
+        }
+    except Exception:
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            },
+        }
 else:
     CHANNEL_LAYERS = {
         'default': {
@@ -493,7 +548,19 @@ except Exception:
     pass
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Prefer console/file email for local/E2E — never blast Zoho during matrix audits
+if DAXI_STUB_EMAIL or _env_truthy('DAXI_E2E_STUB_OUTBOUND') or (
+    _env_is_debug() and not (os.environ.get('EMAIL_HOST_PASSWORD') or '').strip()
+) or _env_truthy('DAXI_FORCE_CONSOLE_EMAIL'):
+    EMAIL_BACKEND = os.environ.get(
+        'EMAIL_BACKEND',
+        'django.core.mail.backends.console.EmailBackend',
+    )
+else:
+    EMAIL_BACKEND = os.environ.get(
+        'EMAIL_BACKEND',
+        'django.core.mail.backends.smtp.EmailBackend',
+    )
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.zoho.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'info@daxipro.com')

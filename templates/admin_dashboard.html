@@ -357,7 +357,8 @@
       <section id="admin-section-orders" class="adm-pro-page hidden p-4 sm:p-6 space-y-6">
         <div class="flex items-center justify-between flex-wrap gap-3">
           <div class="flex gap-2 flex-wrap">
-            <button type="button" onclick="filterAdminOrders('all')" class="admin-order-filter px-4 py-2 rounded-xl bg-daxi-cyan text-white text-sm font-semibold" data-status="all">Actives <span class="admin-filter-count" data-filter="all">0</span></button>
+            <button type="button" onclick="filterAdminOrders('all')" class="admin-order-filter px-4 py-2 rounded-xl bg-daxi-cyan text-white text-sm font-semibold" data-status="all" title="Toutes les commandes (actives + terminées + annulées)">Toutes <span class="admin-filter-count" data-filter="all">0</span></button>
+            <button type="button" onclick="filterAdminOrders('active')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="active" title="Hors terminées / annulées">Actives <span class="admin-filter-count" data-filter="active">0</span></button>
             <button type="button" onclick="filterAdminOrders('pending')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="pending">En attente <span class="admin-filter-count" data-filter="pending">0</span></button>
             <button type="button" onclick="filterAdminOrders('price_proposed')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="price_proposed">Prix proposé <span class="admin-filter-count" data-filter="price_proposed">0</span></button>
             <button type="button" onclick="filterAdminOrders('price_confirmed')" class="admin-order-filter px-4 py-2 rounded-xl bg-gray-700 text-gray-300 text-sm" data-status="price_confirmed">Prix confirmé <span class="admin-filter-count" data-filter="price_confirmed">0</span></button>
@@ -1370,7 +1371,7 @@ function renderRecentOrdersTable(orders) {
       <td class="admin-price">${formatPrice(o.price)}</td>
       <td>
         <div class="flex gap-1 flex-wrap" onclick="event.stopPropagation()">
-          ${o.status === 'pending' ? `<button onclick="openPriceModal(${o.id},'${escapeHtml(o.pickup)}→${escapeHtml(o.destination)}')" class="admin-btn-icon admin-btn-price" title="Proposer un prix"><i class="ri-price-tag-3-line"></i></button>` : ''}
+          ${o.status === 'pending' ? `<button onclick="openProposePrice(${o.id})" class="admin-btn-icon admin-btn-price" title="Proposer un prix"><i class="ri-price-tag-3-line"></i></button>` : ''}
           ${['price_confirmed'].includes(o.status) ? `<button onclick="openAssignModal(${o.id})" class="admin-btn-icon admin-btn-assign" title="Assigner"><i class="ri-user-add-line"></i></button>` : ''}
           <button onclick="openOrderModal(${o.id})" class="admin-btn-icon admin-btn-view" title="Détails"><i class="ri-eye-line"></i></button>
         </div>
@@ -1545,8 +1546,10 @@ async function loadAdminOrders(statusFilter = 'all', opts = {}) {
 }
 
 function filterAdminOrders(status, reload = true) {
+  // Always reflect active filter in the chrome first so clicks are never silent
+  // when the HTMX reload is slow, stubbed, or fails.
+  filterAdminOrdersUI(status);
   if (reload) loadAdminOrders(status);
-  else filterAdminOrdersUI(status);
 }
 
 function filterAdminOrdersUI(status) {
@@ -1570,6 +1573,46 @@ function reloadAdminOrdersHtmx() {
     _adminOrdersCache = null;
     const loader = document.getElementById('orders-htmx-loader');
     if (loader?.dataset.currentUrl) loadAdminOrders(adminOrdersCurrentFilter);
+}
+
+async function loadAdminOrdersMore(btn) {
+  const loader = document.getElementById('orders-htmx-loader');
+  if (!loader) return;
+  const status = (btn && btn.dataset.status) || adminOrdersCurrentFilter || 'all';
+  const offset = parseInt((btn && btn.dataset.nextOffset) || '0', 10) || 0;
+  const limit = parseInt((btn && btn.dataset.limit) || '50', 10) || 50;
+  if (btn) { btn.disabled = true; btn.textContent = 'Chargement…'; }
+  try {
+    const url = `/htmx/admin/orders/?status=${encodeURIComponent(status)}&offset=${offset}&limit=${limit}`;
+    const res = await adminFetch(url);
+    const html = await res.text();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const newGrid = tmp.querySelector('#orders-container');
+    const grid = loader.querySelector('#orders-container');
+    if (newGrid && grid) {
+      Array.from(newGrid.children).forEach(ch => grid.appendChild(ch));
+      grid.dataset.offset = newGrid.dataset.offset || String(offset);
+      grid.dataset.nextOffset = newGrid.dataset.nextOffset || '';
+      grid.dataset.hasMore = newGrid.dataset.hasMore || '0';
+      grid.dataset.total = newGrid.dataset.total || grid.dataset.total || '';
+    }
+    const oldPager = loader.querySelector('.admin-orders-pager');
+    const newPager = tmp.querySelector('.admin-orders-pager');
+    if (oldPager) oldPager.remove();
+    if (newPager) loader.appendChild(newPager);
+    _adminOrdersCache = null;
+    if (window.htmx) htmx.process(loader);
+    if (window.DaxiChatComposer) DaxiChatComposer.init();
+    bindAdminCancelOrderButtons(loader);
+    ensureAdminMapsReady().then(() => {
+      window.googleMapsLoaded = true;
+      if (typeof initAdminOrderMaps === 'function') initAdminOrderMaps();
+    }).catch(() => {});
+  } catch (e) {
+    console.warn('loadAdminOrdersMore:', e);
+    if (btn) { btn.disabled = false; btn.textContent = 'Charger la suite'; }
+  }
 }
 
 function invalidateAdminOrdersCache() {

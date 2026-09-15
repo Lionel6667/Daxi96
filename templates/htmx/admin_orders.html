@@ -1,6 +1,12 @@
 {% load static %}
 
-<div id="orders-container" class="admin-orders-card-grid">
+<div id="orders-container" class="admin-orders-card-grid"
+     data-tab="{{ tab }}"
+     data-total="{{ total_count|default:0 }}"
+     data-offset="{{ offset|default:0 }}"
+     data-limit="{{ limit|default:50 }}"
+     data-next-offset="{{ next_offset|default:0 }}"
+     data-has-more="{% if has_more %}1{% else %}0{% endif %}">
 
 {% if not orders %}
 <div class="text-center py-12 text-gray-500">
@@ -18,3 +24,22 @@
 {% endfor %}
 
 </div>
+
+{% if orders %}
+<div class="admin-orders-pager" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:14px 4px 4px;color:#94a3b8;font-size:13px;">
+  <div>
+    Affichage {{ offset|add:1 }}–{{ next_offset }} sur {{ total_count }}
+    {% if tab == 'all' %}<span style="opacity:.8;"> · onglet Toutes (actives + terminées + annulées)</span>{% endif %}
+  </div>
+  {% if has_more %}
+  <button type="button"
+          class="admin-orders-load-more px-4 py-2 rounded-xl bg-gray-700 text-gray-100 text-sm font-semibold hover:bg-gray-600"
+          data-status="{{ tab }}"
+          data-next-offset="{{ next_offset }}"
+          data-limit="{{ limit }}"
+          onclick="typeof loadAdminOrdersMore==='function' && loadAdminOrdersMore(this)">
+    Charger la suite
+  </button>
+  {% endif %}
+</div>
+{% endif %}

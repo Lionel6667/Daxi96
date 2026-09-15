@@ -489,13 +489,8 @@ def check_gps_reminders():
                     'message': f'Votre chauffeur {driver.get_full_name()} sera en route dans moins d\'1 heure !',
                     'scheduled_at': order.scheduled_at.isoformat(),
                 })
-                try:
-                    from notifications.email_service import EmailService
-                    if order.client_email:
-                        EmailService.send_driver_assigned(order)
-                except Exception as _e:
-                    import logging
-                    logging.getLogger(__name__).warning('1h email failed order %s: %s', order.pk, _e)
+                # Intermediate status emails disabled (completed-only email policy).
+                # WS notification above still fires for in-app UX.
 
     return count
 

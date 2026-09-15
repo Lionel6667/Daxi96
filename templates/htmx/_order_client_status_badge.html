@@ -7,6 +7,7 @@
   {% elif o.status == 'on_way' %}<span data-translate="status_on_way">En route</span>
   {% elif o.status == 'arrived' %}<span data-translate="status_arrived">Sur place</span>
   {% elif o.status == 'in_progress' %}<span data-translate="status_in_progress">Course en cours</span>
+  {% elif o.status == 'waiting_return' %}<span data-translate="status_waiting_return">Attente retour</span>
   {% elif o.status == 'completed' %}<span data-translate="status_completed">Terminé</span>
   {% elif o.status == 'cancelled' %}<span data-translate="status_cancelled">Annulé</span>
   {% else %}{{ o.status_display }}{% endif %}

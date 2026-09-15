@@ -147,18 +147,9 @@ class OrderStatusUpdateView(APIView):
         return Response({'message': f'Statut mis à jour: {new_status}', 'order': order_data})
 
     def _send_status_email(self, order, new_status):
+        # Email channel: thank-you + receipt only at completion.
         try:
-            if new_status == 'price_proposed':
-                EmailService.send_price_proposed(order)
-                order.price_email_sent = True
-                order.save(update_fields=['price_email_sent'])
-            elif new_status == 'driver_assigned':
-                EmailService.send_driver_assigned(order)
-            elif new_status == 'on_way':
-                EmailService.send_driver_on_way(order)
-            elif new_status == 'arrived':
-                EmailService.send_driver_arrived(order)
-            elif new_status == 'completed':
+            if new_status == 'completed':
                 EmailService.send_trip_completed(order)
                 order.completion_email_sent = True
                 order.save(update_fields=['completion_email_sent'])
@@ -187,12 +178,7 @@ class ProposePrice(APIView):
         order.update_status('price_proposed')
 
                           
-        try:
-            EmailService.send_price_proposed(order)
-            order.price_email_sent = True
-            order.save(update_fields=['price_email_sent'])
-        except Exception:
-            pass
+        # Intermediate status emails disabled (completed-only email policy).
 
         order_data = OrderSerializer(order).data
         notify_websocket(f'order_{order.pk}', 'price_proposed', order_data)
@@ -258,10 +244,7 @@ class AssignDriverView(APIView):
         notify_websocket(f'order_{order.pk}', 'driver_assigned', order_data)
 
                     
-        try:
-            EmailService.send_driver_assigned(order)
-        except Exception:
-            pass
+        # Intermediate status emails disabled (completed-only email policy).
 
         return Response({'message': f'Chauffeur {driver.full_name} assigné.', 'order': order_data})
 
